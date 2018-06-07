@@ -1,0 +1,24 @@
+TODO: This is a running collection of OSS used within, to be used later when creating the third party license file
+
+[1] name:       Detours Express
+    original:   https://www.microsoft.com/en-us/download/details.aspx?id=52586
+    version:    v3.0 Build 343
+    paths:      /Detours/*
+                /include/detours.h
+                /include/detver.h
+
+
+
+[2] name:       nlohmann/json
+    original:   https://github.com/nlohmann/json
+    ossmsft:    https://ossmsft.visualstudio.com/DefaultCollection/Project6/_git/GitHub_nlohmann_json?version=GBMicrosoft%2Fv3.1.2_d2dd27
+    version:    v3.1.2(Commit: d2dd27d)
+    paths:      /include/nlohmann/*
+
+
+
+[3] name:       Tencent/rapidjson
+    original:   https://github.com/Tencent/rapidjson
+    ossmsft:    https://ossmsft.visualstudio.com/DefaultCollection/Project1/_git/GitHub_Tencent_rapidjson?version=GBMicrosoft%2Fmaster_8022a5
+    version:    Commit: 8022a5
+    paths:      /include/rapidjson/*

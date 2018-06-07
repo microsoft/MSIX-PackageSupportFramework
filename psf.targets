@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Platform)'=='Win32'">
+    <ShimLauncherExe>ShimLauncher32.exe</ShimLauncherExe>
+    <ShimRunDllExe>ShimRunDll32.exe</ShimRunDllExe>
+    <ShimRuntimeLib>ShimRuntime32.lib</ShimRuntimeLib>
+    <ShimRuntimeDll>ShimRuntime32.dll</ShimRuntimeDll>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <ShimLauncherExe>ShimLauncher64.exe</ShimLauncherExe>
+    <ShimRunDllExe>ShimRunDll64.exe</ShimRunDllExe>
+    <ShimRuntimeLib>ShimRuntime64.lib</ShimRuntimeLib>
+    <ShimRuntimeDll>ShimRuntime64.dll</ShimRuntimeDll>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)..\..\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>%(AdditionalDependencies);$(MSBuildThisFileDirectory)..\..\lib\$(Platform)\Release\$(ShimRuntimeLib)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

@@ -1,0 +1,34 @@
+{
+    "applications": [
+        {
+            "id": "Shimmed",
+            "executable": "FileSystemTest.exe",
+            "working_directory": ""
+        }
+    ],
+    "processes": [
+        {
+            "executable": "ShimLauncher.*"
+        },
+        {
+            "executable": ".*",
+            "shims": [
+                {
+                    "dll": "FileRedirectionShim.dll",
+                    "config": {
+                        "redirected_paths": {
+                            "package_drive_relative": [
+                                {
+                                    "base": "",
+                                    "patterns": [
+                                        ".*\\.txt"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

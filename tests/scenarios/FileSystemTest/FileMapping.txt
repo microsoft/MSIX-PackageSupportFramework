@@ -1,0 +1,28 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\${Architecture}${Configuration}\FileSystemTest.exe" "FileSystemTest.exe"
+"..\..\..\${Architecture}${Configuration}\ShimLauncher${Bitness}.exe" "ShimLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\ShimRuntime${Bitness}.dll" "ShimRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\FileRedirectionShim${Bitness}.dll" "FileRedirectionShim${Bitness}.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"file.txt" "VFS\SystemX86\SystemX86File.txt"
+"file.txt" "VFS\SystemX64\SystemX64File.txt"
+"file.txt" "VFS\ProgramFilesX86\ProgramFilesX86File.txt"
+"file.txt" "VFS\ProgramFilesX64\ProgramFilesX64File.txt"
+"file.txt" "VFS\ProgramFilesCommonX86\ProgramFilesCommonX86File.txt"
+"file.txt" "VFS\ProgramFilesCommonX64\ProgramFilesCommonX64File.txt"
+"file.txt" "VFS\Windows\WindowsFile.txt"
+"file.txt" "VFS\Common AppData\CommonAppDataFile.txt"
+"file.txt" "VFS\AppVSystem32Catroot\CatrootFile.txt"
+"file.txt" "VFS\AppVSystem32Catroot2\Catroot2File.txt"
+"file.txt" "VFS\AppVSystem32DriversEtc\DriversEtcFile.txt"
+"file.txt" "VFS\AppVSystem32Driverstore\DriverStoreFile.txt"
+"file.txt" "VFS\AppVSystem32Logfiles\LogFilesFile.txt"
+"file.txt" "VFS\AppVSystem32Spool\SpoolFile.txt"
+
+"file.txt" "PackageFile.txt"

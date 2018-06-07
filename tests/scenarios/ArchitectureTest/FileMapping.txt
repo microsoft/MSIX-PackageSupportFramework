@@ -1,0 +1,17 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\..\Win32\${Configuration}\ShimLauncher32.exe" "ShimLauncher32.exe"
+"..\..\..\x64\${Configuration}\ShimLauncher64.exe" "ShimLauncher64.exe"
+"..\..\..\Win32\${Configuration}\ShimRunDll32.exe" "ShimRunDll32.exe"
+"..\..\..\x64\${Configuration}\ShimRunDll64.exe" "ShimRunDll64.exe"
+"..\..\..\Win32\${Configuration}\ShimRuntime32.dll" "ShimRuntime32.dll"
+"..\..\..\x64\${Configuration}\ShimRuntime64.dll" "ShimRuntime64.dll"
+"..\..\..\Win32\${Configuration}\MessageBoxTestShim32.dll" "MessageBoxTestShim32.dll"
+"..\..\..\x64\${Configuration}\MessageBoxTestShim64.dll" "MessageBoxTestShim64.dll"
+"..\..\Win32\${Configuration}\ArchitectureTest.exe" "ArchitectureTest32.exe"
+"..\..\x64\${Configuration}\ArchitectureTest.exe" "ArchitectureTest64.exe"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

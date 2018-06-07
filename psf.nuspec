@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>PSF</id>
+    <version>0.0.0-SpecifyVersionOnCommandline</version>
+    <title>Package Support Framework</title>
+    <authors>Duncan Horn, Scott Jones</authors>
+    <owners>dunhor, sjones</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Tools to build compatibility fixups for Desktop Bridge apps</description>
+    <releaseNotes></releaseNotes>
+    <tags>native, PSF, shim, fixup, Centennial, Bridge</tags>
+    <copyright>Copyright 2018</copyright>
+  </metadata>
+  <files>
+    <file src="psf.targets" target="build\native"/>
+    <file src="include\shim_config.h" target="include"/>
+    <file src="include\shim_framework.h" target="include"/>
+    <file src="include\shim_runtime.h" target="include"/>
+    <file src="include\shim_utils.h" target="include"/>
+    <file src="include\utilities.h" target="include"/>
+    <file src="include\win32_error.h" target="include"/>
+    <file src="**\Release\ShimRuntime*.lib" target="lib"/>
+    <file src="**\Release\ShimLauncher*.exe" target="bin"/>
+    <file src="**\Release\ShimRunDll*.exe" target="bin"/>
+    <file src="**\Release\ShimRuntime*.dll" target="bin"/>
+    <file src="**\Release\FileRedirectionShim*.dll" target="bin"/>
+    <file src="**\Release\TraceShim*.dll" target="bin"/>
+    <file src="**\Release\WaitForDebuggerShim*.dll" target="bin"/>
+    <!--<file src="**\*.ps1" target="tools"/>-->
+  </files>
+</package>

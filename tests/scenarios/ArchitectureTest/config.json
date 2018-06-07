@@ -1,0 +1,25 @@
+{
+    "applications": [
+        {
+            "id": "Shimmed32",
+            "executable": "ArchitectureTest32.exe"
+        },
+        {
+            "id": "Shimmed64",
+            "executable": "ArchitectureTest64.exe"
+        }
+    ],
+    "processes": [
+        {
+            "executable": "ShimLauncher.*"
+        },
+        {
+            "executable": ".*",
+            "shims": [
+                {
+                    "dll": "MessageBoxTestShim.dll"
+                }
+            ]
+        }
+    ]
+}

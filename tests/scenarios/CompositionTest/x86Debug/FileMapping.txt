@@ -1,0 +1,12 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\Win32\Debug\CompositionTest.exe" "CompositionTest.exe"
+"..\..\..\Win32\Debug\ShimLauncher32.exe" "ShimLauncher.exe"
+"..\..\..\Win32\Debug\ShimRuntime32.dll" "ShimRuntime32.dll"
+"..\..\..\Win32\Debug\CompositionTestShim32.dll" "CompositionTestShim32.dll"
+"..\..\..\Win32\Debug\MessageBoxTestShim32.dll" "MessageBoxTestShim32.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

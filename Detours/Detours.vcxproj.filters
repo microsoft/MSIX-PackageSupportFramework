@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{1273c11d-f435-4e99-95eb-788f93c9a50f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{07063ba2-aec1-4311-aca8-03baa074d06d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="detver.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="detours.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="creatwth.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="detours.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="disasm.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="disolarm.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="disolarm64.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="disolia64.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="disolx64.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="disolx86.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="image.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="modules.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="uimports.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
