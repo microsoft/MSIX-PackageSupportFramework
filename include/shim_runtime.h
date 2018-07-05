@@ -49,4 +49,6 @@ inline const shims::json_value* ShimQueryCurrentDllConfig()
     return ShimQueryDllConfig(shims::current_module_path().filename().c_str());
 }
 
+SHIMAPI void __stdcall ShimReportError(const wchar_t* error) noexcept;
+
 }

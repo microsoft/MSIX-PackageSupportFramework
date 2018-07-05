@@ -14,7 +14,16 @@ BOOL __stdcall RemoveDirectoryShim(_In_ const CharT* pathName) noexcept
             auto [shouldRedirect, redirectPath] = ShouldRedirect(pathName, redirect_flags::none);
             if (shouldRedirect)
             {
-                return impl::RemoveDirectory(redirectPath.c_str());
+                if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(pathName))
+                {
+                    // If the directory does not exist in the redirected location, but does in the non-redirected
+                    // location, then we want to give the "illusion" that the delete succeeded
+                    return TRUE;
+                }
+                else
+                {
+                    return impl::RemoveDirectory(redirectPath.c_str());
+                }
             }
         }
     }

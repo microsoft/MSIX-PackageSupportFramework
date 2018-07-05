@@ -3,7 +3,7 @@
         {
             "id": "Shimmed",
             "executable": "WorkingDirectoryTest.exe",
-            "working_directory": "VFS\\ProgramFilesX64\\WorkingDirectoryTest\\"
+            "workingDirectory": "VFS\\ProgramFilesX64\\WorkingDirectoryTest\\"
         }
     ]
 }

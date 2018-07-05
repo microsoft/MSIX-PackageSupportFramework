@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata>
+  <metadata minClientVersion="2.5">
     <id>PSF</id>
     <version>0.0.0-SpecifyVersionOnCommandline</version>
     <title>Package Support Framework</title>
@@ -20,13 +20,13 @@
     <file src="include\shim_utils.h" target="include"/>
     <file src="include\utilities.h" target="include"/>
     <file src="include\win32_error.h" target="include"/>
-    <file src="**\Release\ShimRuntime*.lib" target="lib"/>
-    <file src="**\Release\ShimLauncher*.exe" target="bin"/>
-    <file src="**\Release\ShimRunDll*.exe" target="bin"/>
-    <file src="**\Release\ShimRuntime*.dll" target="bin"/>
-    <file src="**\Release\FileRedirectionShim*.dll" target="bin"/>
-    <file src="**\Release\TraceShim*.dll" target="bin"/>
-    <file src="**\Release\WaitForDebuggerShim*.dll" target="bin"/>
-    <!--<file src="**\*.ps1" target="tools"/>-->
+    <file src="*\Release\ShimRuntime*.lib" target="lib"/>
+    <file src="*\Release\ShimLauncher*.exe" target="bin"/>
+    <file src="*\Release\ShimRunDll*.exe" target="bin"/>
+    <file src="*\Release\ShimRuntime*.dll" target="bin"/>
+    <file src="*\Release\FileRedirectionShim*.dll" target="bin"/>
+    <file src="*\Release\TraceShim*.dll" target="bin"/>
+    <file src="*\Release\WaitForDebuggerShim*.dll" target="bin"/>
+    <file src="readme.txt" target="" />
   </files>
 </package>

@@ -19,9 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CopyFileTest.cpp" />
+    <ClCompile Include="CreateDirectoryTest.cpp" />
+    <ClCompile Include="CreateHardLinkTest.cpp" />
+    <ClCompile Include="CreateNewFileTest.cpp" />
+    <ClCompile Include="CreateSymbolicLinkTest.cpp" />
+    <ClCompile Include="DeleteFileTest.cpp" />
+    <ClCompile Include="EnumerateDirectoriesTest.cpp" />
     <ClCompile Include="EnumerateFilesTest.cpp" />
+    <ClCompile Include="FileAttributesTest.cpp" />
     <ClCompile Include="ModifyFileTest.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MoveFileTest.cpp" />
+    <ClCompile Include="RemoveDirectoryTest.cpp" />
+    <ClCompile Include="ReplaceFileTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json" />
@@ -34,6 +45,7 @@
     <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="attributes.h" />
     <ClInclude Include="common_paths.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

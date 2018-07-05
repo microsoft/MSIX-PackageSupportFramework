@@ -23,7 +23,7 @@ namespace shims
 
     using unique_cotaskmem_string = std::unique_ptr<wchar_t, cotaskmemfree_deleter>;
 
-    std::filesystem::path remove_trailing_path_separators(std::filesystem::path path)
+    inline std::filesystem::path remove_trailing_path_separators(std::filesystem::path path)
     {
         // To make string comparisons easier, don't terminate directory paths with trailing separators
         return path.has_filename() ? path : path.parent_path();

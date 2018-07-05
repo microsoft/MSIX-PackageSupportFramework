@@ -1,0 +1,35 @@
+{
+    "applications": [
+        {
+            "id": "Shimmed",
+            "executable": "LongPathsTest.exe"
+        }
+    ],
+    "processes": [
+        {
+            "executable": "LongPathsTest",
+            "shims": [
+                {
+                    "dll": "FileRedirectionShim.dll",
+                    "config": {
+                        "redirectedPaths": {
+                            "knownFolders": [
+                                {
+                                    "id": "ProgramFilesX64",
+                                    "relativePaths": [
+                                        {
+                                            "base": "this\\is\\a\\moderately\\long\\path\\and\\will\\turn\\into\\an\\even\\longer\\path\\when\\we\\take\\into\\account\\the\\fact\\that\\it\\will\\have\\the\\package\\path\\appended\\to\\it\\when\\the\\app\\is\\installed\\to\\the\\WindowsApps\\directory",
+                                            "patterns": [
+                                                ".*"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

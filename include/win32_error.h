@@ -5,31 +5,31 @@
 #include <windows.h>
 
 [[noreturn]]
-inline void throw_win32(int errorCode)
+inline void throw_win32(int errorCode, const char* message = "")
 {
     assert(errorCode != NO_ERROR);
-    throw std::system_error(errorCode, std::system_category());
+    throw std::system_error(errorCode, std::system_category(), message);
 }
 
 [[noreturn]]
-inline void throw_last_error()
+inline void throw_last_error(const char* message = "")
 {
-    throw_win32(::GetLastError());
+    throw_win32(::GetLastError(), message);
 }
 
-inline void check_win32(int errorCode)
+inline void check_win32(int errorCode, const char* message = "")
 {
     if (errorCode != NO_ERROR)
     {
-        throw_win32(errorCode);
+        throw_win32(errorCode, message);
     }
 }
 
-inline void check_win32_bool(BOOL result)
+inline void check_win32_bool(BOOL result, const char* message = "")
 {
     if (!result)
     {
-        throw_last_error();
+        throw_last_error(message);
     }
 }
 
@@ -42,6 +42,23 @@ inline int win32_from_error_code(const std::error_code& err)
 
     // Currently unnecessary to try and map other values
     return ERROR_UNHANDLED_EXCEPTION;
+}
+
+inline std::string message_from_caught_exception()
+{
+    try
+    {
+        throw;
+    }
+    catch (std::exception & e)
+    {
+        return e.what();
+    }
+    catch (...)
+    {
+        // fall through to unknown error message
+    }
+    return "Unknown Error";
 }
 
 inline int win32_from_caught_exception()

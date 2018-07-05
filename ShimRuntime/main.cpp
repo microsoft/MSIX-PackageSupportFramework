@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include <sstream>
 
 #include <detour_transaction.h>
 #include <shim_framework.h>
@@ -45,6 +46,8 @@ std::vector<loaded_shim> loaded_shims;
 
 void load_shims()
 {
+    using namespace std::literals;
+
     if (auto config = ShimQueryCurrentExeConfig())
     {
         if (auto shims = config->try_get("shims"))
@@ -63,15 +66,22 @@ void load_shims()
 
                     if (!shim.module_handle)
                     {
-                        throw_last_error();
+                        auto message = narrow(path.c_str());
+                        throw_last_error(message.c_str());
                     }
                 }
 
                 auto initialize = reinterpret_cast<ShimInitializeProc>(::GetProcAddress(shim.module_handle, "ShimInitialize"));
-                auto uninitialize = reinterpret_cast<ShimUninitializeProc>(::GetProcAddress(shim.module_handle, "ShimUninitialize"));
-                if (!initialize || !uninitialize)
+                if (!initialize)
                 {
-                    throw_win32(ERROR_PROC_NOT_FOUND);
+                    auto message = "ShimInitialize export not found in "s + narrow(path.c_str());
+                    throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
+                }
+                auto uninitialize = reinterpret_cast<ShimUninitializeProc>(::GetProcAddress(shim.module_handle, "ShimUninitialize"));
+                if (!uninitialize)
+                {
+                    auto message = "ShimUninitialize export not found in "s + narrow(path.c_str());
+                    throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
                 }
 
                 auto transaction = detours::transaction();
@@ -105,6 +115,18 @@ void unload_shims()
     }
 }
 
+using EntryPoint_t = int (__stdcall*)();
+EntryPoint_t ApplicationEntryPoint = nullptr;
+static int __stdcall ShimmedEntryPoint() noexcept try
+{
+    load_shims();
+    return ApplicationEntryPoint();
+}
+catch (...)
+{
+    return win32_from_caught_exception();
+}
+
 void attach()
 {
     LoadConfig();
@@ -114,10 +136,19 @@ void attach()
 
     auto transaction = detours::transaction();
     check_win32(::DetourUpdateThread(::GetCurrentThread()));
-    shims::attach_all();
-    transaction.commit();
 
-    load_shims();
+    // Call DetourAttach for all APIs that ShimRuntime detours
+    shims::attach_all();
+
+    // We can't call LoadLibrary in DllMain, so hook the application's entry point and do initialization then
+    ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
+    if (!ApplicationEntryPoint)
+    {
+        throw_last_error();
+    }
+    check_win32(::DetourAttach(reinterpret_cast<void**>(&ApplicationEntryPoint), ShimmedEntryPoint));
+
+    transaction.commit();
 }
 
 void detach()
@@ -162,6 +193,11 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
 }
 catch (...)
 {
-    ::SetLastError(win32_from_caught_exception());
+    std::wostringstream ss;
+    auto error_message{ widen(message_from_caught_exception()) };
+    auto error_code{ win32_from_caught_exception() };
+    ss << error_message << " (" << std::hex << error_code << ")";
+    ::ShimReportError(ss.str().c_str());
+    ::SetLastError(error_code);
     return FALSE;
 }

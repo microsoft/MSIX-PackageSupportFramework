@@ -1,0 +1,14 @@
+[Files]
+"AppxManifest${Bitness}.xml" "AppxManifest.xml"
+"config${Bitness}.json" "config.json"
+
+"..\..\${Architecture}${Configuration}\LongPathsTest.exe" "LongPathsTest.exe"
+
+"..\..\..\${Architecture}${Configuration}\ShimLauncher${Bitness}.exe" "ShimLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\ShimRuntime${Bitness}.dll" "ShimRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\FileRedirectionShim${Bitness}.dll" "FileRedirectionShim${Bitness}.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"file.txt" "VFS\ProgramFiles${ArchFolderId}\this\is\a\moderately\long\path\and\will\turn\into\an\even\longer\path\when\we\take\into\account\the\fact\that\it\will\have\the\package\path\appended\to\it\when\the\app\is\installed\to\the\WindowsApps\directory\file.txt"

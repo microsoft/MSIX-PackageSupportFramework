@@ -17,7 +17,7 @@
             "executable": ".*",
             "shims": [
                 {
-                    "dll": "MessageBoxTestShim.dll"
+                    "dll": "MultiByteToWideCharTestShim.dll"
                 }
             ]
         }

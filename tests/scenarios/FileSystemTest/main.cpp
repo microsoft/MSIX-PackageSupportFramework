@@ -1,17 +1,19 @@
 
 #include <conio.h>
+#include <fcntl.h>
+#include <io.h>
 
 #include <known_folders.h>
 #include <shim_runtime.h>
 
-#include <error_logging.h>
+#include <test_config.h>
 
 #include "common_paths.h"
 
 void InitializeFolderMappings()
 {
     g_packageRootPath = shims::current_package_path();
-    std::wcout << L"Package Root: " << console::change_foreground(console::color::dark_gray) << g_packageRootPath.native() << L"\n";
+    std::wcout << "Package Root: " << info_text() << g_packageRootPath.native() << "\n";
 
     auto initMapping = [](vfs_mapping& mapping, const KNOWNFOLDERID& knownFolder, const wchar_t* vfsRelativePath, const wchar_t* knownFolderRelativePath = nullptr)
     {
@@ -22,8 +24,8 @@ void InitializeFolderMappings()
             mapping.path /= knownFolderRelativePath;
         }
 
-        std::wcout << L"VFS Mapping: " << console::change_foreground(console::color::dark_gray) << mapping.package_path.native();
-        std::wcout << L" -> " << console::change_foreground(console::color::dark_gray) << mapping.path.native() << L"\n";
+        std::wcout << "VFS Mapping: " << info_text() << mapping.package_path.native();
+        std::wcout << " -> " << info_text() << mapping.path.native() << "\n";
     };
 
     initMapping(g_systemX86Mapping, FOLDERID_SystemX86, LR"(VFS\SystemX86)");
@@ -45,26 +47,91 @@ void InitializeFolderMappings()
 }
 
 int ModifyFileTests();
+int CreateNewFileTests();
 int EnumerateFilesTests();
+int CopyFileTests();
+int DeleteFileTests();
+int CreateHardLinkTests();
+int CreateSymbolicLinkTests();
+int FileAttributesTests();
+int MoveFileTests();
+int ReplaceFileTests();
+int CreateDirectoryTests();
+int RemoveDirectoryTests();
+int EnumerateDirectoriesTests();
 
 int run()
 {
-    auto result = ModifyFileTests();
-    if (result) return result;
+    int result = ERROR_SUCCESS;
+    int testResult;
 
-    result = EnumerateFilesTests();
-    if (result) return result;
+    testResult = ModifyFileTests();
+    result = result ? result : testResult;
 
-    return ERROR_SUCCESS;
+    testResult = CreateNewFileTests();
+    result = result ? result : testResult;
+
+    testResult = EnumerateFilesTests();
+    result = result ? result : testResult;
+
+    testResult = CopyFileTests();
+    result = result ? result : testResult;
+
+    testResult = DeleteFileTests();
+    result = result ? result : testResult;
+
+    testResult = CreateHardLinkTests();
+    result = result ? result : testResult;
+
+    testResult = CreateSymbolicLinkTests();
+    result = result ? result : testResult;
+
+    testResult = FileAttributesTests();
+    result = result ? result : testResult;
+
+    testResult = MoveFileTests();
+    result = result ? result : testResult;
+
+    testResult = ReplaceFileTests();
+    result = result ? result : testResult;
+
+    testResult = CreateDirectoryTests();
+    result = result ? result : testResult;
+
+    testResult = RemoveDirectoryTests();
+    result = result ? result : testResult;
+
+    testResult = EnumerateDirectoriesTests();
+    result = result ? result : testResult;
+
+    return result;
 }
 
-int main()
+int wmain(int argc, const wchar_t** argv)
 {
-    InitializeFolderMappings();
+    // Display UTF-16 correctly...
+    _setmode(_fileno(stdout), _O_U16TEXT);
 
-    auto result = run();
+    auto result = parse_args(argc, argv);
+    if (result == ERROR_SUCCESS)
+    {
+        // The number of file mappings is different in 32-bit vs 64-bit
+#if !_M_IX86
+        test_initialize("File System Tests", 79);
+#else
+        test_initialize("File System Tests", 70);
+#endif
 
-    std::cout << "Press any key to continue . . . ";
-    _getch();
+        InitializeFolderMappings();
+        result = run();
+
+        test_cleanup();
+    }
+
+    if (!g_testRunnerPipe)
+    {
+        system("pause");
+    }
+
     return result;
 }

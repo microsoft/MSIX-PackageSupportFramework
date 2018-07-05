@@ -17,7 +17,8 @@ HANDLE __stdcall CreateFileShim(
     {
         if (guard)
         {
-            // TODO: Smarter redirect flags using creationDisposition?
+            // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
+            //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
             auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
@@ -46,7 +47,8 @@ HANDLE __stdcall CreateFile2Shim(
     {
         if (guard)
         {
-            // TODO: Smarter redirect flags using creationDisposition?
+            // FUTURE: See comment in CreateFileShim about using 'creationDisposition' to choose a potentially better
+            //         redirect flags value
             auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {

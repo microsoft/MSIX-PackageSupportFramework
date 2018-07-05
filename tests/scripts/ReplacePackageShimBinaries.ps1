@@ -15,15 +15,19 @@
 [CmdletBinding()]
 Param (
     [Parameter(Mandatory=$True)]
-    [string]$Name
+    [string]$Name,
+
+    [Parameter(Mandatory=$False)]
+    [ValidateSet('Debug','Release')]
+    [string]$Configuration="Debug"
 )
 
 function ReplaceBinaries($pkg)
 {
     # All files we want to replace live at the root of the package path
     $pkgRoot = $pkg.InstallLocation
-    $x64Path = "$PSScriptRoot\..\..\x64\Debug"
-    $x86Path = "$PSScriptRoot\..\..\win32\Debug"
+    $x64Path = "$PSScriptRoot\..\..\x64\$Configuration"
+    $x86Path = "$PSScriptRoot\..\..\win32\$Configuration"
 
     function DoCopy($binary)
     {
@@ -31,6 +35,7 @@ function ReplaceBinaries($pkg)
         {
             if (Test-Path "$src")
             {
+                Write-Host "Copying" (Get-Item $src).FullName
                 Copy-Item -Path "$src" -Destination "$pkgRoot\$binary"
             }
         }

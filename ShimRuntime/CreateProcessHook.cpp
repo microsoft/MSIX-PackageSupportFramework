@@ -24,64 +24,29 @@
 using namespace std::literals;
 
 auto CreateProcessImpl = shims::detoured_string_function(&::CreateProcessA, &::CreateProcessW);
-// TODO: CreateProcessAsUser, CreateProcessWithLogon, CreateProcessWithToken?
 
-template <typename CharT>
-using create_process_t = std::conditional_t<std::is_same_v<CharT, char>, decltype(&::CreateProcessA), decltype(&::CreateProcessW)>;
-
-template <typename CharT>
-using startup_info_t = std::conditional_t<std::is_same_v<CharT, char>, STARTUPINFOA, STARTUPINFOW>;
-
-// Detours attempts to use rundll32.exe when architectures don't match. This is a problem since rundll32 exists under
-// System32/SysWOW64 and will cause a "break-away" from the Centennial container. Intercept these attempts and replace
-// with our own custom rundll32-like executable
-template <typename CharT>
-BOOL WINAPI CreateProcessInterceptRunDll32(
-    _In_opt_ const CharT* applicationName,
-    _Inout_opt_ CharT* commandLine,
+BOOL WINAPI CreateProcessWithShimRunDll(
+    [[maybe_unused]] _In_opt_ LPCWSTR applicationName,
+    _Inout_opt_ LPWSTR commandLine,
     _In_opt_ LPSECURITY_ATTRIBUTES processAttributes,
     _In_opt_ LPSECURITY_ATTRIBUTES threadAttributes,
     _In_ BOOL inheritHandles,
     _In_ DWORD creationFlags,
     _In_opt_ LPVOID environment,
-    _In_opt_ const CharT* currentDirectory,
-    _In_ startup_info_t<CharT>* startupInfo,
-    _Out_ LPPROCESS_INFORMATION processInformation)
+    _In_opt_ LPCWSTR currentDirectory,
+    _In_ LPSTARTUPINFOW startupInfo,
+    _Out_ LPPROCESS_INFORMATION processInformation) noexcept try
 {
-    // Used to hold the values of applicationName/commandLine _only_ if we're modifying them
-    std::basic_string<CharT> appName;
-    std::basic_string<CharT> cmdLine;
+    // Detours should only be calling this function with the intent to execute "rundll32.exe"
+    assert(std::wcsstr(applicationName, L"rundll32.exe"));
+    assert(std::wcsstr(commandLine, L"rundll32.exe"));
 
-    if constexpr (std::is_same_v<CharT, char>)
-    {
-        if (auto exeStart = std::strstr(commandLine, "rundll32.exe"))
-        {
-            cmdLine = shims::run_dll_name;
-            cmdLine += (exeStart + 12); // +12 to get to the first space
-
-            appName = (PackageRootPath() / shims::wrun_dll_name).string();
-        }
-    }
-    else
-    {
-        if (auto exeStart = std::wcsstr(commandLine, L"rundll32.exe"))
-        {
-            cmdLine = shims::wrun_dll_name;
-            cmdLine += (exeStart + 12); // +12 to get to the first space
-
-            appName = (PackageRootPath() / shims::wrun_dll_name).wstring();
-        }
-    }
-
-    if (!appName.empty())
-    {
-        applicationName = appName.c_str();
-        commandLine = cmdLine.data();
-    }
+    std::wstring cmdLine = shims::wrun_dll_name;
+    cmdLine += (commandLine + 12); // +12 to get to the first space after "rundll32.exe"
 
     return CreateProcessImpl(
-        applicationName,
-        commandLine,
+        (PackageRootPath() / shims::wrun_dll_name).c_str(),
+        cmdLine.data(),
         processAttributes,
         threadAttributes,
         inheritHandles,
@@ -91,24 +56,14 @@ BOOL WINAPI CreateProcessInterceptRunDll32(
         startupInfo,
         processInformation);
 }
+catch (...)
+{
+    ::SetLastError(win32_from_caught_exception());
+    return FALSE;
+}
 
 template <typename CharT>
-struct detour_create_process;
-
-template <typename CharT>
-constexpr auto detour_create_process_v = detour_create_process<CharT>::value;
-
-template <>
-struct detour_create_process<char>
-{
-    static constexpr auto value = &::DetourCreateProcessWithDllsA;
-};
-
-template <>
-struct detour_create_process<wchar_t>
-{
-    static constexpr auto value = &::DetourCreateProcessWithDllsW;
-};
+using startup_info_t = std::conditional_t<std::is_same_v<CharT, char>, STARTUPINFOA, STARTUPINFOW>;
 
 template <typename CharT>
 BOOL WINAPI CreateProcessShim(
@@ -121,26 +76,114 @@ BOOL WINAPI CreateProcessShim(
     _In_opt_ LPVOID environment,
     _In_opt_ const CharT* currentDirectory,
     _In_ startup_info_t<CharT>* startupInfo,
-    _Out_ LPPROCESS_INFORMATION processInformation)
+    _Out_ LPPROCESS_INFORMATION processInformation) noexcept try
 {
-    // TODO: Load from config? (NOTE: Unnecessary if we go with the ShimRuntime-loads-shims approach)
-    std::vector<std::string> shimDllPaths = { (PackageRootPath() / shims::runtime_dll_name).string() };
-    std::vector<const char*> shimDlls = { shimDllPaths[0].c_str() };
+    // We can't detour child processes whose executables are located outside of the package as they won't have execute
+    // access to the shim dlls. Instead of trying to replicate the executable search logic when determining the location
+    // of the target executable, create the process as suspended and let the system tell us where the executable is
+    PROCESS_INFORMATION pi;
+    if (!processInformation)
+    {
+        processInformation = &pi;
+    }
 
-    return detour_create_process_v<CharT>(
+    if (!CreateProcessImpl(
         applicationName,
         commandLine,
         processAttributes,
         threadAttributes,
         inheritHandles,
-        creationFlags,
+        creationFlags | CREATE_SUSPENDED,
         environment,
         currentDirectory,
         startupInfo,
-        processInformation,
-        static_cast<DWORD>(shimDlls.size()),
-        shimDlls.data(),
-        CreateProcessInterceptRunDll32<CharT>);
+        processInformation))
+    {
+        return FALSE;
+    }
+
+    iwstring path;
+    DWORD size = MAX_PATH;
+    path.resize(size - 1);
+    while (true)
+    {
+        if (::QueryFullProcessImageNameW(processInformation->hProcess, 0, path.data(), &size))
+        {
+            path.resize(size);
+            break;
+        }
+        else if (auto err = ::GetLastError(); err == ERROR_INSUFFICIENT_BUFFER)
+        {
+            size *= 2;
+            path.resize(size - 1);
+        }
+        else
+        {
+            // Unexpected error
+            ::TerminateProcess(processInformation->hProcess, ~0u);
+            ::CloseHandle(processInformation->hProcess);
+            ::CloseHandle(processInformation->hThread);
+
+            ::SetLastError(err);
+            return FALSE;
+        }
+    }
+
+    // std::filesystem::path comparison doesn't seem to handle case-insensitivity or root-local device paths...
+    iwstring_view packagePath(PackageRootPath().native().c_str(), PackageRootPath().native().length());
+    iwstring_view exePath = path;
+    auto fixupPath = [](iwstring_view& p)
+    {
+        if ((p.length() >= 4) && (p.substr(0, 4) == LR"(\\?\)"_isv))
+        {
+            p = p.substr(4);
+        }
+    };
+    fixupPath(packagePath);
+    fixupPath(exePath);
+
+    if ((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath))
+    {
+        // The target executable is in the package, so we _do_ want to shim it
+        static const auto pathToShimRuntime = (PackageRootPath() / shims::runtime_dll_name).string();
+        PCSTR targetDll = pathToShimRuntime.c_str();
+        if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDll, 1))
+        {
+            // We failed to detour the created process. Assume that it the failure was due to an architecture mis-match
+            // and try the launch using ShimRunDll
+            if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDll, CreateProcessWithShimRunDll))
+            {
+                // Could not detour the target process, so return failure
+                auto err = ::GetLastError();
+
+                ::TerminateProcess(processInformation->hProcess, ~0u);
+                ::CloseHandle(processInformation->hProcess);
+                ::CloseHandle(processInformation->hThread);
+
+                ::SetLastError(err);
+                return FALSE;
+            }
+        }
+    }
+
+    if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
+    {
+        // Caller did not want the process to start suspended
+        ::ResumeThread(processInformation->hThread);
+    }
+
+    if (processInformation == &pi)
+    {
+        ::CloseHandle(processInformation->hProcess);
+        ::CloseHandle(processInformation->hThread);
+    }
+
+    return TRUE;
+}
+catch (...)
+{
+    ::SetLastError(win32_from_caught_exception());
+    return FALSE;
 }
 
 DECLARE_STRING_SHIM(CreateProcessImpl, CreateProcessShim);

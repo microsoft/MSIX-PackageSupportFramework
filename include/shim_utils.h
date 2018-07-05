@@ -68,7 +68,7 @@ namespace shims
             const auto err = AppModelFunc(&length, result.data());
             if ((err != ERROR_SUCCESS) && (err != ERROR_INSUFFICIENT_BUFFER))
             {
-                throw_win32(err);
+                throw_win32(err, "could not retrieve AppModel string");
             }
 
             assert(length > 0);

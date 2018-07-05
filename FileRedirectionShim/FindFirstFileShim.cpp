@@ -159,7 +159,7 @@ HANDLE __stdcall FindFirstFileExShim(
     findData = (result->find_handles[0] || shims::is_ansi<CharT>) ? &result->cached_data : wideData;
 
     // Open the non-redirected find handle
-    result->find_handles[1].reset(impl::FindFirstFileEx(path.c_str(), infoLevelId, &result->cached_data, searchOp, searchFilter, additionalFlags));
+    result->find_handles[1].reset(impl::FindFirstFileEx(path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
     if (!result->find_handles[0])
     {
         if (!result->find_handles[1])

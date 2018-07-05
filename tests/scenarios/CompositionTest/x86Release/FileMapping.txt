@@ -6,7 +6,7 @@
 "..\..\..\Win32\Release\ShimLauncher32.exe" "ShimLauncher.exe"
 "..\..\..\Win32\Release\ShimRuntime32.dll" "ShimRuntime32.dll"
 "..\..\..\Win32\Release\CompositionTestShim32.dll" "CompositionTestShim32.dll"
-"..\..\..\Win32\Release\MessageBoxTestShim32.dll" "MessageBoxTestShim32.dll"
+"..\..\..\Win32\Release\MultiByteToWideCharTestShim32.dll" "MultiByteToWideCharTestShim32.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

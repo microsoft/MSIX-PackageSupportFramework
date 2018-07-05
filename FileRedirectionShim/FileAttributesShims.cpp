@@ -10,8 +10,6 @@ DWORD __stdcall GetFileAttributesShim(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-            // TODO: Should we copy on read here, or just assume that the file attributes will be the same when we do
-            //       get around to copying the file/directory?
             auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
             {
@@ -39,7 +37,6 @@ BOOL __stdcall GetFileAttributesExShim(
     {
         if (guard)
         {
-            // See note in GetFileAttributesShim for commentary on copy-on-read policy
             auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
             {

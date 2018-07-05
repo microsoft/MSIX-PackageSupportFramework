@@ -1,5 +1,6 @@
 # Package Support Framework
-TODO: Some generic high level overview
+
+This project provides tools, libraries, documentation and samples for creating app-compat fixups to enable classic Win32 applications to be packaged for distribution and execution as Microsoft Store apps.  For more information on creating and applying fixups, please see the complete [Microsoft Desktop UWP Fixup](https://docs.microsoft.com/windows/uwp/porting/desktop-to-uwp-fix) documentation.
 
 ## Package Layout
 The Package Support Framework makes some assumptions about which files are present in the package, their location in the package, and what their file names are. These requirements are:
@@ -18,7 +19,7 @@ The `config.json` file serves two major purposes: instruct the Shim Launcher on 
 * `applications` - This is an `array` whose elements are `object`s describing a mapping from app id to executable/working directory. The properties of each of these `object`s are:
   * `id` - The application id that this configuration applies to (the `Id` attribute of the `Application` tag in the AppxManifest). This is expected to be a value of type `string`
   * `executable` - The package-relative path to the executable that should get launched for the specified application id. This is expected to be a value of type `string`
-  * `working_directory` - An optional `string` that specifies a package-relative path to use as the working directory for the launched application (typically set to be the directory of the executable). When this value is not present, the working directory is left unchanged (i.e. System32)
+  * `workingDirectory` - An optional `string` that specifies a package-relative path to use as the working directory for the launched application (typically set to be the directory of the executable). When this value is not present, the working directory is left unchanged (i.e. System32)
 * `processes` - This is an `array` whose elements are `object`s describing a mapping from executable name to a set of shims that should get loaded for that executable. Note that the order of this array _is_ important: if more than one element matches the current executable, the first one "wins." The properties of each of these `object`s are:
   * `executable` - This is a `string` regular expression pattern that gets compared against the current executable's name (without the `.exe` suffix). If it matches, then the shim dlls listed in that object are loaded by the Shim Runtime.
   * `shims` - This is an `array` whose elements are `object`s that describe the dlls to load and the configuration to use for that dll. The properties of each of these `object`s are:
@@ -33,7 +34,7 @@ An example `config.json` file might look like:
         {
             "id": "ContosoApp",
             "executable": "VFS\\ProgramFilesX64\\Contoso\\App.exe",
-            "working_directory": "VFS\\ProgramFilesX64\\Contoso\\"
+            "workingDirectory": "VFS\\ProgramFilesX64\\Contoso\\"
         }
     ],
     "processes": [

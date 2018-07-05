@@ -183,6 +183,8 @@ static struct
     //       for objects and arrays
     std::vector<std::variant<json_object_impl*, json_array_impl*>> state_stack;
     std::string object_key;
+
+    bool enableReportError{ true };
 } g_JsonHandler;
 
 static const shims::json_object* g_CurrentExeConfig = nullptr;
@@ -193,7 +195,7 @@ void load_json()
     auto file = _wfopen((g_PackageRootPath / L"config.json").c_str(), L"rb, ccs=UTF-8");
     if (!file)
     {
-        throw std::system_error(errno, std::generic_category());
+        throw std::system_error(errno, std::generic_category(), "config.json could not be opened");
     }
 
     char buffer[2048];
@@ -229,6 +231,13 @@ void load_json()
             }
         }
     }
+
+    // Permit ReportError disabling iff basic config.json parse succeeded
+    auto enableReportError = g_JsonHandler.root->as_object().try_get("enableReportError");
+    if (enableReportError)
+    {
+        g_JsonHandler.enableReportError = enableReportError->as_boolean().get();
+    }
 }
 
 void LoadConfig()
@@ -243,7 +252,9 @@ void LoadConfig()
     }
     else
     {
-        // TODO: This will need to get passed as a payload
+        // FUTURE: It may be useful to enable testing outside of a packaged environment. For now, finding ourselves in
+        //         this situation almost certainly indicates a bug, so bail out early
+        std::terminate();
     }
 
     load_json();
@@ -415,4 +426,22 @@ SHIMAPI const shims::json_value* __stdcall ShimQueryDllConfig(const wchar_t* dll
 catch (...)
 {
     return nullptr;
+}
+
+SHIMAPI void __stdcall ShimReportError(const wchar_t* error) noexcept 
+{
+    if (!g_JsonHandler.enableReportError)
+    {
+        return;
+    }
+    if (IsDebuggerPresent())
+    {
+        OutputDebugStringW(error);
+        OutputDebugStringW(L"\n");
+        DebugBreak();
+    }
+    else
+    {
+        MessageBoxW(NULL, error, L"Package Support Framework", MB_OK);
+    }
 }

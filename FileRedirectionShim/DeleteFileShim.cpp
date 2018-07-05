@@ -19,7 +19,16 @@ BOOL __stdcall DeleteFileShim(_In_ const CharT* fileName) noexcept
             auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::none);
             if (shouldRedirect)
             {
-                return impl::DeleteFile(redirectPath.c_str());
+                if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(fileName))
+                {
+                    // If the file does not exist in the redirected location, but does in the non-redirected location,
+                    // then we want to give the "illusion" that the delete succeeded
+                    return TRUE;
+                }
+                else
+                {
+                    return impl::DeleteFile(redirectPath.c_str());
+                }
             }
         }
     }

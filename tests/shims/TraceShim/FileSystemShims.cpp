@@ -305,8 +305,6 @@ BOOL __stdcall MoveFileExShim(_In_ const CharT* existingFileName, _In_opt_ const
 }
 DECLARE_STRING_SHIM(MoveFileExImpl, MoveFileExShim);
 
-// TODO: OpenFile?
-
 auto ReplaceFileImpl = shims::detoured_string_function(&::ReplaceFileA, &::ReplaceFileW);
 template <typename CharT>
 BOOL __stdcall ReplaceFileShim(

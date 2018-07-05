@@ -9,14 +9,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="detver.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="detours.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="creatwth.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -50,5 +42,13 @@
     <ClCompile Include="uimports.cpp">
       <Filter>src</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\detours.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\detver.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

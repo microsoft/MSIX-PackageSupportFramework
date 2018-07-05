@@ -8,8 +8,8 @@
 "..\..\..\x64\Debug\ShimRunDll64.exe" "ShimRunDll64.exe"
 "..\..\..\Win32\Debug\ShimRuntime32.dll" "ShimRuntime32.dll"
 "..\..\..\x64\Debug\ShimRuntime64.dll" "ShimRuntime64.dll"
-"..\..\..\Win32\Debug\MessageBoxTestShim32.dll" "MessageBoxTestShim32.dll"
-"..\..\..\x64\Debug\MessageBoxTestShim64.dll" "MessageBoxTestShim64.dll"
+"..\..\..\Win32\Debug\MultiByteToWideCharTestShim32.dll" "MultiByteToWideCharTestShim32.dll"
+"..\..\..\x64\Debug\MultiByteToWideCharTestShim64.dll" "MultiByteToWideCharTestShim64.dll"
 "..\..\Win32\Debug\ArchitectureTest.exe" "ArchitectureTest32.exe"
 "..\..\x64\Debug\ArchitectureTest.exe" "ArchitectureTest64.exe"
 

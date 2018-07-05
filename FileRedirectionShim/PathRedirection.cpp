@@ -62,12 +62,12 @@ void InitializePaths()
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ shims::known_folder(FOLDERID_ProgramFilesX86), LR"(ProgramFilesX86)"sv });
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ shims::known_folder(FOLDERID_ProgramFilesCommonX86), LR"(ProgramFilesCommonX86)"sv });
 #if !_M_IX86
-    // TODO: Is there any legitimate reason for a 32-bit application to try and reference "%windir%\sysnative\"? If so,
-    //       we'll have to get smarter about how we resolve paths
+    // FUTURE: We may want to consider the possibility of a 32-bit application trying to reference "%windir%\sysnative\"
+    //         in which case we'll have to get smarter about how we resolve paths
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ shims::known_folder(FOLDERID_System), LR"(SystemX64)"sv });
     // FOLDERID_ProgramFilesX64* not supported for 32-bit applications
-    // TODO: Do we need to attempt to handle this? E.g. a 32-bit child process of a 64-bit process that wrote to a file
-    //       with a working directory inside of ProgramFilesX64
+    // FUTURE: We may want to consider the possibility of a 32-bit process trying to access this path anyway. E.g. a
+    //         32-bit child process of a 64-bit process that set the current directory
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ shims::known_folder(FOLDERID_ProgramFilesX64), LR"(ProgramFilesX64)"sv });
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ shims::known_folder(FOLDERID_ProgramFilesCommonX64), LR"(ProgramFilesCommonX64)"sv });
 #endif
@@ -97,18 +97,25 @@ std::filesystem::path path_from_known_folder_string(std::wstring_view str)
     {
         id = FOLDERID_ProgramFilesX86;
     }
-    else if (str == L"ProgramFilesX64"sv)
-    {
-        id = FOLDERID_ProgramFilesX64;
-    }
     else if (str == L"ProgramFilesCommonX86"sv)
     {
         id = FOLDERID_ProgramFilesCommonX86;
+    }
+#if _M_IX86
+    else if ((str == L"ProgramFilesX64"sv) || (str == L"ProgramFilesCommonX64"sv))
+    {
+        return {};
+    }
+#else
+    else if (str == L"ProgramFilesX64"sv)
+    {
+        id = FOLDERID_ProgramFilesX64;
     }
     else if (str == L"ProgramFilesCommonX64"sv)
     {
         id = FOLDERID_ProgramFilesCommonX64;
     }
+#endif
     else if (str == L"Windows"sv)
     {
         id = FOLDERID_Windows;
@@ -146,7 +153,7 @@ void InitializeConfiguration()
     if (auto rootConfig = ::ShimQueryCurrentDllConfig())
     {
         auto& rootObject = rootConfig->as_object();
-        if (auto pathsValue = rootObject.try_get("redirected_paths"))
+        if (auto pathsValue = rootObject.try_get("redirectedPaths"))
         {
             auto& redirectedPathsObject = pathsValue->as_object();
             auto initializeRedirection = [](const std::filesystem::path& basePath, const shims::json_array& specs)
@@ -166,17 +173,17 @@ void InitializeConfiguration()
                 }
             };
 
-            if (auto packageRelativeValue = redirectedPathsObject.try_get("package_relative"))
+            if (auto packageRelativeValue = redirectedPathsObject.try_get("packageRelative"))
             {
                 initializeRedirection(g_packageRootPath, packageRelativeValue->as_array());
             }
 
-            if (auto packageDriveRelativeValue = redirectedPathsObject.try_get("package_drive_relative"))
+            if (auto packageDriveRelativeValue = redirectedPathsObject.try_get("packageDriveRelative"))
             {
                 initializeRedirection(g_packageRootPath.root_name(), packageDriveRelativeValue->as_array());
             }
 
-            if (auto knownFoldersValue = redirectedPathsObject.try_get("known_folders"))
+            if (auto knownFoldersValue = redirectedPathsObject.try_get("knownFolders"))
             {
                 for (auto& knownFolderValue : knownFoldersValue->as_array())
                 {
@@ -184,7 +191,7 @@ void InitializeConfiguration()
                     auto path = path_from_known_folder_string(knownFolderObject.get("id").as_string().wstring());
                     if (!path.empty())
                     {
-                        initializeRedirection(path, knownFolderObject.get("relative_paths").as_array());
+                        initializeRedirection(path, knownFolderObject.get("relativePaths").as_array());
                     }
                 }
             }
@@ -295,7 +302,7 @@ normalized_path DeVirtualizePath(normalized_path path)
 
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
-    auto result = g_redirectRootPath.native();
+    auto result = LR"(\\?\)" + g_redirectRootPath.native();
 
     // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
     // similar to what's done for UNC paths
@@ -342,6 +349,11 @@ template <typename CharT>
 static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags flags)
 {
     path_redirect_info result;
+
+    if (!path)
+    {
+        return result;
+    }
 
     auto normalizedPath = NormalizePath(path);
     if (!normalizedPath.drive_absolute_path)
@@ -395,16 +407,25 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
     if (flag_set(flags, redirect_flags::copy_file))
     {
-        [[maybe_unused]] auto copyResult = impl::CopyFileEx(
-            normalizedPath.drive_absolute_path,
-            result.redirect_path.c_str(),
-            nullptr,
-            nullptr,
-            nullptr,
-            COPY_FILE_FAIL_IF_EXISTS | COPY_FILE_NO_BUFFERING);
+        [[maybe_unused]] BOOL copyResult;
+        auto attr = impl::GetFileAttributes(normalizedPath.drive_absolute_path);
+        if ((attr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY)
+        {
+            copyResult = impl::CopyFileEx(
+                normalizedPath.drive_absolute_path,
+                result.redirect_path.c_str(),
+                nullptr,
+                nullptr,
+                nullptr,
+                COPY_FILE_FAIL_IF_EXISTS | COPY_FILE_NO_BUFFERING);
+        }
+        else
+        {
+            copyResult = impl::CreateDirectoryEx(normalizedPath.drive_absolute_path, result.redirect_path.c_str(), nullptr);
+        }
 #if _DEBUG
         auto err = ::GetLastError();
-        assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND));
+        assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND) || (err == ERROR_ALREADY_EXISTS));
 #endif
     }
 

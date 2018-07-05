@@ -26,15 +26,15 @@ static trace_level trace_level_from_configuration(std::string_view str, trace_le
     {
         return trace_level::always;
     }
-    else if (str == "ignore_success"sv)
+    else if (str == "ignoreSuccess"sv)
     {
         return trace_level::ignore_success;
     }
-    else if (str == "all_failures"sv)
+    else if (str == "allFailures"sv)
     {
         return trace_level::all_failures;
     }
-    else if (str == "unexpected_failures"sv)
+    else if (str == "unexpectedFailures"sv)
     {
         return trace_level::unexpected_failures;
     }
@@ -73,11 +73,11 @@ static trace_level configured_level(function_type type, const shims::json_object
         return impl("registry");
 
     case function_type::process_and_thread:
-        return impl("process_and_thread");
+        return impl("processAndThread");
         break;
 
     case function_type::dynamic_link_library:
-        return impl("dynamic_link_library");
+        return impl("dynamicLinkLibrary");
         break;
     }
 
@@ -134,7 +134,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
         {
             auto& configObj = config->as_object();
 
-            if (auto method = configObj.try_get("trace_method"))
+            if (auto method = configObj.try_get("traceMethod"))
             {
                 auto methodStr = method->as_string().string();
                 if (methodStr == "printf"sv)
@@ -147,7 +147,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 }
             }
 
-            if (auto levels = configObj.try_get("trace_levels"))
+            if (auto levels = configObj.try_get("traceLevels"))
             {
                 g_traceLevels = &levels->as_object();
 
@@ -158,7 +158,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 }
             }
 
-            if (auto levels = configObj.try_get("break_on"))
+            if (auto levels = configObj.try_get("breakOn"))
             {
                 g_breakLevels = &levels->as_object();
 
@@ -169,22 +169,22 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 }
             }
 
-            if (auto debuggerConfig = configObj.try_get("wait_for_debugger"))
+            if (auto debuggerConfig = configObj.try_get("waitForDebugger"))
             {
                 wait_for_debugger = static_cast<bool>(debuggerConfig->as_boolean());
             }
 
-            if (auto traceEntryConfig = configObj.try_get("trace_function_entry"))
+            if (auto traceEntryConfig = configObj.try_get("traceFunctionEntry"))
             {
                 trace_function_entry = static_cast<bool>(traceEntryConfig->as_boolean());
             }
 
-            if (auto callerConfig = configObj.try_get("trace_calling_module"))
+            if (auto callerConfig = configObj.try_get("traceCallingModule"))
             {
                 trace_calling_module = static_cast<bool>(callerConfig->as_boolean());
             }
 
-            if (auto ignoreDllConfig = configObj.try_get("ignore_dll_load"))
+            if (auto ignoreDllConfig = configObj.try_get("ignoreDllLoad"))
             {
                 ignore_dll_load = static_cast<bool>(ignoreDllConfig->as_boolean());
             }

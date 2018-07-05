@@ -311,7 +311,7 @@ inline output_lock acquire_output_lock(function_type type, function_result resul
     return output_lock(type, result);
 }
 
-// RAII helper for handling the 'trace_function_entry' configuration
+// RAII helper for handling the 'traceFunctionEntry' configuration
 struct function_entry_tracker
 {
     // Used for printing function entry/exit separators

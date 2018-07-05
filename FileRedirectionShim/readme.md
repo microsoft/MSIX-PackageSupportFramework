@@ -4,10 +4,10 @@
 ## Configuration
 The configuration for the file redirection shim builds a collection of `[base path, relative path, pattern]` tuples. The `base path` is some filesystem path determined at runtime, e.g. the package path or the runtime value of `FOLDERID_SystemX64`, etc. The `relative path` is some path relative to that directory. The pattern is a regular expression intended to match paths relative to the combination of `base path` and `relative path`. For example, to redirect accesses to `.txt` files under System32, you'd want the tuple `[FOLDERID_System, "", ".*\.txt"]`. This will match paths such as `C:\Windows\System32\foo.txt` or `C:\Windows\System32\subdir\bar.txt`. The `config` object inside of `config.json` for the FileRedirectionShim dll is expected to have the following form:
 
-`redirected_paths` - This is the root element that all of these tuples are declared in. It is expected to be a value of type `object` whose properties correspond to some folder identifier. The allowed folder identifiers are:
-* `package_relative` - Uses the package's installation root path as the base path. E.g. some path under `C:\Program Files\WindowsApps\`. This is expected to be a value of type `array` whose elements specify the relative paths/patterns described in more detail below
-* `package_drive_relative` - Uses the drive that the application is installed on as the base path (e.g. `C:\`). This is expected to be a value of type `array` whose elements specify the relative paths/patterns described in more detail below
-* `known_folders` - The base path in the tuple is resolved using `SHGetKnownFolderPath` for some known folder id. This is expected to be a value of type `array`. Each element is expected to be of type `object` with the following properties:
+`redirectedPaths` - This is the root element that all of these tuples are declared in. It is expected to be a value of type `object` whose properties correspond to some folder identifier. The allowed folder identifiers are:
+* `packageRelative` - Uses the package's installation root path as the base path. E.g. some path under `C:\Program Files\WindowsApps\`. This is expected to be a value of type `array` whose elements specify the relative paths/patterns described in more detail below
+* `packageDriveRelative` - Uses the drive that the application is installed on as the base path (e.g. `C:\`). This is expected to be a value of type `array` whose elements specify the relative paths/patterns described in more detail below
+* `knownFolders` - The base path in the tuple is resolved using `SHGetKnownFolderPath` for some known folder id. This is expected to be a value of type `array`. Each element is expected to be of type `object` with the following properties:
   * `id` - A string identifier indicating the input to `SHGetKnownFolderPath`. This can be one of the strings below or a string of the form `"{GUID}"` for some `KNOWNFOLDERID` value. The supported non-GUID string identifiers mostly correspond to the [VFS redirected paths under the package root](https://docs.microsoft.com/en-us/windows/uwp/porting/desktop-to-uwp-behind-the-scenes), but with the `FOLDERID_` prefix removed. The supported values are:
     * `System` - Corresponds to `FOLDERID_System`
     * `SystemX86` - Corresponds to `FOLDERID_SystemX86`
@@ -17,7 +17,7 @@ The configuration for the file redirection shim builds a collection of `[base pa
     * `ProgramFilesCommonX64` - Corresponds to `FOLDERID_ProgramFilesCommonX64`
     * `Windows` - Corresponds to `FOLDERID_Windows`
     * `ProgramData` - Corresponds to `FOLDERID_ProgramData`
-  * `relative_paths` - This is expected to be a value of type `array` whose elements specify the relative paths/patterns described in more detail below
+  * `relativePaths` - This is expected to be a value of type `array` whose elements specify the relative paths/patterns described in more detail below
 
 Each base path (known folder, package relative, drive relative) gets associated with a collection of relative paths and patterns. The format of each is identical and is an `object` whose properties are:
 * `base` - Specifies the relative path portion of the tuple. This value gets appended to (with a directory separator) the base path to form a directory structure that's a candidate for redirection.
@@ -27,8 +27,8 @@ To make things simpler to understand, an example configuration object might look
 
 ```json
 {
-    "redirected_paths": {
-        "package_relative": [
+    "redirectedPaths": {
+        "packageRelative": [
             {
                 "base": "logs",
                 "patterns": [
@@ -36,7 +36,7 @@ To make things simpler to understand, an example configuration object might look
                 ]
             }
         ],
-        "package_drive_relative": [
+        "packageDriveRelative": [
             {
                 "base": "temp",
                 "patterns": [
@@ -44,10 +44,10 @@ To make things simpler to understand, an example configuration object might look
                 ]
             }
         ],
-        "known_folders": [
+        "knownFolders": [
             {
                 "id": "ProgramFilesX64",
-                "relative_paths": [
+                "relativePaths": [
                     {
                         "base": "Contoso\\config",
                         "patterns": [
@@ -58,7 +58,7 @@ To make things simpler to understand, an example configuration object might look
             },
             {
                 "id": "	{FDD39AD0-238F-46AF-ADB4-6C85480369C7}",
-                "relative_paths": [
+                "relativePaths": [
                     {
                         "base": "MyApplication",
                         "patterns": [

@@ -13,10 +13,10 @@
             "executable": ".*",
             "shims": [
                 {
-                    "dll": "CompositionTestShim.dll"
+                    "dll": "MultiByteToWideCharTestShim.dll"
                 },
                 {
-                    "dll": "MessageBoxTestShim.dll"
+                    "dll": "CompositionTestShim.dll"
                 }
             ]
         }

@@ -1,0 +1,15 @@
+{
+  "applications": [
+    {
+      "id": "PSFSample",
+      "executable": "PSFSampleApp/PSFSample.exe",
+      "workingDirectory": "PSFSampleApp"
+    }
+  ],
+  "processes": [
+    {
+      "executable": ".*PSFSample.*",
+      "shims": [ { "dll": "PSFSampleFixups.dll" } ]
+    }
+  ]
+}

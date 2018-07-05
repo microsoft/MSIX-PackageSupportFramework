@@ -13,10 +13,12 @@ BOOL __stdcall CreateHardLinkShim(
     {
         if (guard)
         {
-            // TODO: If the link already exists in a non-redirected location, should we try and copy it? For now just
-            //       assume that this is not a scenario that we'll ever see and that if we do ever run into it, not
-            //       copying the file is likely the correct course of action. Alternatively, we could check to see if
-            //       the file exists and then just fail if so without doing the copy.
+            // NOTE: We need to copy-on-read the existing file since the application may want to open the hard-link file
+            //       for write in the future. As for the link file, we currently _don't_ copy-on-read it due to the fact
+            //       that we don't handle file deletions as robustly as we could and CreateHardLink will fail if the
+            //       link file already exists. I.e. we're giving the application the benefit of the doubt that, if they
+            //       are trying to create a hard-link with the same path as a file inside the package, they had
+            //       previously attempted to delete that file.
             auto [redirectLink, redirectPath] = ShouldRedirect(fileName, redirect_flags::ensure_directory_structure);
             auto [redirectTarget, redirectTargetPath] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
             if (redirectLink || redirectTarget)

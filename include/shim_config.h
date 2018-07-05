@@ -15,15 +15,36 @@ namespace shims
     struct json_object;
     struct json_array;
 
-    enum class json_type
+#define JSON_TYPES \
+    JSON_TYPE(null), \
+    JSON_TYPE(string), \
+    JSON_TYPE(number), \
+    JSON_TYPE(boolean), \
+    JSON_TYPE(object), \
+    JSON_TYPE(array)
+
+#define JSON_TYPE(t) t
+    enum class json_type { JSON_TYPES };
+
+#undef JSON_TYPE
+#define JSON_TYPE(t) #t
+    static constexpr std::string_view json_type_names[] = { JSON_TYPES };
+
+    namespace details
     {
-        null,
-        string,
-        number,
-        boolean,
-        object,
-        array,
-    };
+        template <typename Interface>
+        struct json_type_from_interface;
+
+        template <> struct json_type_from_interface<json_null> { static constexpr json_type value = json_type::null; };
+        template <> struct json_type_from_interface<json_string> { static constexpr json_type value = json_type::string; };
+        template <> struct json_type_from_interface<json_number> { static constexpr json_type value = json_type::number; };
+        template <> struct json_type_from_interface<json_boolean> { static constexpr json_type value = json_type::boolean; };
+        template <> struct json_type_from_interface<json_object> { static constexpr json_type value = json_type::object; };
+        template <> struct json_type_from_interface<json_array> { static constexpr json_type value = json_type::array; };
+
+        template <typename Interface>
+        constexpr json_type json_type_v = json_type_from_interface<Interface>::value;
+    }
 
     struct json_value
     {
@@ -104,10 +125,15 @@ namespace shims
         template <typename T>
         const T& as() const
         {
+            using namespace std::literals;
+
             auto result = try_as<T>();
             if (!result)
             {
-                throw std::bad_cast();
+                std::string source{ json_type_names[static_cast<std::underlying_type_t<json_type>>(json_type())] };
+                std::string target{ json_type_names[static_cast<std::underlying_type_t<json_type>>(details::json_type_v<T>)] };
+                auto error{ "Invalid JSON cast: cannot convert from "s + source + " to "s + target };
+                throw std::runtime_error(error);
             }
 
             return *result;
@@ -116,19 +142,6 @@ namespace shims
 
     namespace details
     {
-        template <typename Interface>
-        struct json_type_from_interface;
-
-        template <> struct json_type_from_interface<json_null> { static constexpr json_type value = json_type::null; };
-        template <> struct json_type_from_interface<json_string> { static constexpr json_type value = json_type::string; };
-        template <> struct json_type_from_interface<json_number> { static constexpr json_type value = json_type::number; };
-        template <> struct json_type_from_interface<json_boolean> { static constexpr json_type value = json_type::boolean; };
-        template <> struct json_type_from_interface<json_object> { static constexpr json_type value = json_type::object; };
-        template <> struct json_type_from_interface<json_array> { static constexpr json_type value = json_type::array; };
-
-        template <typename Interface>
-        constexpr json_type json_type_v = json_type_from_interface<Interface>::value;
-
         template <typename Interface>
         struct json_value_base : json_value
         {
@@ -281,7 +294,8 @@ namespace shims
             auto result = try_get(key);
             if (!result)
             {
-                throw std::out_of_range("Key does not exist in the JSON object");
+                auto message = std::string{ "Key '" } + key + "' does not exist in the JSON object";
+                throw std::out_of_range(message);
             }
 
             return *result;
@@ -321,8 +335,8 @@ namespace shims
                 std::swap(data, other.data);
             }
 
-            // TODO: Would it be worth having copy support? Would be easy, but leaving out until proven necessary. Until
-            // then, we must remain, at best, an InputIterator
+            // NOTE: enumeration_handles are not copy-able, so for the time being we must remain, at best, an
+            //       InputIterator
             iterator(const iterator&) = delete;
             iterator& operator=(const iterator&) = delete;
 

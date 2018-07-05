@@ -21,6 +21,39 @@
     <ClCompile Include="EnumerateFilesTest.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="CreateNewFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="DeleteFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateHardLinkTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateSymbolicLinkTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="FileAttributesTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ReplaceFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateDirectoryTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="RemoveDirectoryTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumerateDirectoriesTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
@@ -40,6 +73,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_paths.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="attributes.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>

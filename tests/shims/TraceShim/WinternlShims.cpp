@@ -1,10 +1,9 @@
 // NOTE: For the functions here, the declaration/documentation was taken from the MSDN page for the Zw*** equivalent
 //       functions. E.g. NtCreateDirectoryObject from ZwCreateDirectoryObject, etc. The intention of these shims is to
 //       serve as a kind of "catch all" to try and identify failures that occur from calling a not-otherwise-shimmed
-//       function. E.g. when executed with `only_trace_failures` set to false, you will see several calls to
-//       NtCreateFile that appear to come out of nowhere. In general, not knowing the cause is not of significant
-//       concern. Only when application failures occur around the same time as one of these failures should you try and
-//       dig deeper into the root cause
+//       function. E.g. you may see several calls to NtCreateFile that appear to come out of nowhere. In general, not
+//       knowing the cause is not of significant concern. Only when application failures occur around the same time as
+//       one of these failures should you try and dig deeper into the root cause
 
 #include <shim_framework.h>
 #include <utilities.h>
@@ -165,8 +164,6 @@ NTSTATUS __stdcall NtOpenFileShim(
     return result;
 }
 DECLARE_SHIM(NtOpenFileImpl, NtOpenFileShim);
-
-// TODO: NtReadFile/NtWriteFile?
 
 // NOTE: NtCreateDirectoryObject is only documented; it has no declaration
 NTSTATUS WINAPI NtCreateDirectoryObject(
@@ -606,6 +603,3 @@ NTSTATUS __stdcall NtQueryValueKeyShim(
     return result;
 }
 DECLARE_SHIM(impl::NtQueryValueKey, NtQueryValueKeyShim);
-
-// TODO: NtDeleteKey/NtDeleteValueKey, NtEnumerateKey/NtEnumerateValueKey? Need to resolve HANDLE -> key for it to be useful
-// TODO: NtQueryKey?

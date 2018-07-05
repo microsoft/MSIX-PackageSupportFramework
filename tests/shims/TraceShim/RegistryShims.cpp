@@ -207,7 +207,7 @@ LSTATUS __stdcall RegQueryValueShim(
         }
         else if (data && dataSize)
         {
-            // TODO: How to tell the type? Can we assume REG_SZ?
+            LogCountedString("Data", data, *dataSize / sizeof(CharT));
         }
         LogCallingModule();
     }
