@@ -4,9 +4,9 @@
 
 This sample demonstrates a simple PSF application.  For details on the
 solution structure, including how to assemble a PSF app from scratch,
-please see the readme.txt included in the PSF Nuget package, which can 
-be installed from here:
-https://microsoft.pkgs.visualstudio.com/_packaging/PSF/nuget/v3/index.json
+please see the readme.txt included in the Package Support Framework 
+Nuget package, which can be installed from Visual Studio, or from here:
+https://www.nuget.org/packages/Microsoft.PackageSupportFramework
 
 The PSF Sample Application demonstrates fixups for two typical app compat 
 issues:

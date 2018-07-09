@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata minClientVersion="2.5">
-    <id>PSF</id>
+    <id>Microsoft.PackageSupportFramework</id>
     <version>0.0.0-SpecifyVersionOnCommandline</version>
-    <title>Package Support Framework</title>
-    <authors>Duncan Horn, Scott Jones</authors>
-    <owners>dunhor, sjones</owners>
+    <title>Microsoft Package Support Framework</title>
+    <authors>PSF Team</authors>
+    <owners>PSF Team</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Tools to build compatibility fixups for Desktop Bridge apps</description>
+    <description>Tools to build compatibility fixes for packaged desktop apps</description>
     <releaseNotes></releaseNotes>
     <tags>native, PSF, shim, fixup, Centennial, Bridge</tags>
     <copyright>Copyright 2018</copyright>
   </metadata>
   <files>
-    <file src="psf.targets" target="build\native"/>
+    <file src="Microsoft.PackageSupportFramework.targets" target="build\native"/>
     <file src="include\shim_config.h" target="include"/>
     <file src="include\shim_framework.h" target="include"/>
     <file src="include\shim_runtime.h" target="include"/>

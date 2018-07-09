@@ -2,17 +2,54 @@
 The only two requirements are the two required dll exports: `ShimInitialize` and `ShimUninitialize`. Other than that, the shim is relatively free to do whatever it wants.
 
 ## Shim Loading
-The shim loading process is described in more detail [here](ShimRuntime/readme.md#Shim%20Loading), but in short, when the process starts up, the Shim Runtime will enumerate the set of dlls configured for the current process, loading them before calling `ShimInitialize` within a Detours transaction. Typical shim behavior is to call `ShimRegister` for each function it wishes to detour at this time.
+The shim loading process is described in more detail [here](ShimRuntime/readme.md#Shim-Loading), but in short, when the process starts up, the Shim Runtime will enumerate the set of dlls configured for the current process, loading them before calling `ShimInitialize` within a Detours transaction. Typical shim behavior is to call `ShimRegister` for each function it wishes to detour at this time. This process can be somewhat automated by using the `DECLARE_SHIM` and `DECLARE_STRING_SHIM` macros. For example, consider the declarations for the `GetFileAttributes` functions:
+
+```c++
+DWORD WINAPI GetFileAttributesA(LPCSTR fileName);
+DWORD WINAPI GetFileAttributesW(LPCWTR fileName);
+```
+
+Shimming a single function might look like:
+
+```c++
+auto GetFileAttributesWImpl = &::GetFileAttributesW;
+DWORD __stdcall GetFileAttributesWShim(LPCWSTR fileName)
+{
+    // ...
+}
+DECLARE_SHIM(GetFileAttributesWImpl, GetFileAttributesWShim);
+```
+
+Or shimming both with the same function might look like:
+
+```c++
+auto GetFileAttributesImpl = shims::detoured_string_function(
+    &::GetFileAttributesA,
+    &::GetFileAttributesW);
+template <typename CharT>
+DWORD GetFileAttributesShim(const CharT* fileName)
+{
+    // ...
+}
+DECLARE_STRING_SHIM(GetFileAttributesImpl, GetFileAttributesShim);
+```
+
+In either case, the `DECLARE_SHIM`/`DECLARE_STRING_SHIM` macros write the function pointers to a named section of memory that can be enumerated at runtime, typically by using the `shims::attach_all` and `shims::detach_all` functions inside the definitions of `ShimInitialize` and `ShimUninitialize` respectively. You can also optionally `#define SHIM_DEFINE_EXPORTS` before `#include`-ing `shim_framework.h` _in a single translation unit_, which will define both of these functions for you as well as take care of exporting the functions with the correct names. For example, it is not uncommon to have a `main.cpp` that contains nothing more than:
+
+```c++
+#define SHIM_DEFINE_EXPORTS
+#include <shim_framework.h>
+```
 
 ## Shim Configuration
-While a shim is free to dictate and read its configuration however it wishes, [the established pattern is to put the configuration alongside the shim declaration in `config.json`](readme.md#JSON%20Configuration). When this pattern is followed, the `ShimQueryCurrentDllConfig` function can be used to easily retrieve the already parsed JSON value from `config.json`. As a simple example, the following code demonstrates how to read a few configuration values:
+While a shim is free to dictate and read its configuration however it wishes, the established pattern is to put the configuration alongside the shim declaration in `config.json`. When this pattern is followed, the `ShimQueryCurrentDllConfig` function can be used to easily retrieve the already parsed JSON value from `config.json`. As a simple example, the following code demonstrates how to read a few configuration values:
 
 ```C++
 // For this example, configuration is optional (ShimQueryCurrentDllConfig returns null)
 if (auto configRoot = ::ShimQueryCurrentDllConfig())
 {
-    // NOTE: the "as_" functions throw on failure, if the value is not of the desired type.
-    // This example could be made better by providing better diagnostic information if the
+    // NOTE: the "as_" functions throw on failure if the value is not of the desired type.
+    // This example could be improved by providing better diagnostic information if the
     // types are different than what's expected.
     auto& config = configRoot->as_object(); // Throws if not an object
 
@@ -23,15 +60,44 @@ if (auto configRoot = ::ShimQueryCurrentDllConfig())
 
     if (auto logPathValue = config.try_get("logPath"))
     {
-        g_logPath = enabledValue->as_string().wstring(); // Throws if not a string
+        g_logPath = logPathValue->as_string().wstring(); // Throws if not a string
     }
 }
 ```
 
-## Shim Reentrancy: A Cautionary Tale
-When detouring function calls in another dll, we must be careful to avoid situations where a shimmed function ends up calling function(s) other than the one being shimmed, as these other function(s) may in turn end up calling back into the shim dll. As a concrete example, the shim for `CreateFile` in the [File Redirection Shim](FileRedirectionShim/readme.md) may end up calling `CopyFile`, whose implementation just so happens to consume `CreateFile`. In order to avoid an infinite cycle, the File Redirection Shim keeps track of a global, thread local boolean (via the helper [reentrancy_guard](include/reentrancy_guard.h) type) that it uses to detect reentrancy. If reentrancy is detected, then the function doesn't perform any of its shimming logic and instead forwards the call onto the underlying implementation.
+And a shim declaration to go along with this might look like:
 
-While not a tremendously great or elegant solution, it is arguably the safest. Even if you can determine that the current implementation of a function doesn't invoke a shimmed function, there's no guarantee that this will hold for future updates to the OS. Note however, that there is a slight risk if COM reentrancy is a possible concern since a reentrant call may come from an unrelated call.
+```json
+{
+    "dll": "MyShim.dll",
+    "config": {
+        "enabled": true,
+        "logPath": "logs/"
+    }
+}
+```
+
+## A Note on Shim Reentrancy
+Whenever a shim invokes any external function other than the one being shimmed, there is the possibility for reentrancy back into the shim function. If we aren't careful and the shim does not identify/handle this scenario, this recursion may continue indefinitely until the application crashes due to a stack overflow. As a concrete example, the shim for `CreateFile` in the File Redirection Shim may end up calling `CopyFile`, whose implementation just so happens to call `CreateFile`. If the `CreateFile` shim were to have no mitigation in place, it may again attempt to call `CopyFile`, which would call `CreateFile`, and so on.
+
+The [reentrancy_guard](include/reentrancy_guard.h) type exists as one available option to identify these scenarios. Example usage might look like:
+
+```C++
+void FooShim()
+{
+    thread_local shims::reentrancy_guard reentrancyGuard;
+    auto guard = reentrancyGuard.enter();
+    if (guard) { /*shim code here*/ }
+    return FooImpl();
+}
+```
+
+A few considerations you may wish to take:
+
+> * Reentrancy may be expected, and even okay at times. For example, if `CopyFile` were to call `CreateFile` with dramatically different function arguments, it may be the case that we still want to shim that call as well
+> * If COM reentrancy is a possible concern, this approach may not work since reentrant calls may be legitimate
+> * While local testing may give some degree of confidence as to whether or not reentrancy may be a concern, future updates to the operating system may invalidate such assumptions
+> * Interaction between two or more functions may need to be taken into account. E.g. the shim for `CopyFile` may not want the shim for `CreateFile` to have any effect when invoking the underlying implementation of `CopyFile`. In this case, a globally-scoped `reentrancy_guard` that's shared between the two functions may be more appropriate
 
 ## A Note on "Wide" vs "ANSI" Functions
 Many functions in the Windows API surface that accept string arguments have "wide" (`wchar_t*`) and "narrow" (`char*`) variants. In general, the "narrow" versions of these functions are implemented in terms of their "wide" variant. E.g. they are implemented as-if by the following:
@@ -62,13 +128,13 @@ BOOL DeleteFileW(LPCWSTR fileName)
 }
 ```
 
-In this case, the compiler will almost certainly inline the implementation of `CreateFileW` into `CreateFileA`. Thus, in this scenario, if you were to only detour `CreateFileW`, the application may stop working on future versions of the OS because your assumption is no longer true.
+In this case, the compiler will almost certainly inline the implementation of `CreateFileW` in `CreateFileA`. Similarly, the implementation of `CreateFileA` may get updated to call `DeleteFile2` directly, or improvements in the compiler's inlining logic may yield the same results. In any case, if you were to only detour `CreateFileW`, the application may stop working on future versions of the OS because your assumption is no longer true.
 
 ## A Note on Detouring `ntdll.dll`
-It may be tempting to detour functions from `ntdll.dll` as a "catch all" solution. E.g. instead of detouring `CreateFileA`, `CreateFileW`, `CreateFile2`, `CopyFileA`, `CopyFileW`, and `CopyFile2` (and likely others), it's a very appealing solution to only detour `NtCreateFile`, which is not only less work, but it will also cover functions that you either forgot to detour, didn't want to spend the time to detour, or didn't know about. While not a terrible idea as a fallback (so long as you take measures to avoid/detect reentrancy), completely going this route is again relying on an implementation detail of the OS, which can change in future versions. Here be dragons.
+It may be tempting to detour functions from `ntdll.dll` as a "catch all" solution. E.g. instead of detouring `CreateFileA`, `CreateFileW`, `CreateFile2`, `CopyFileA`, `CopyFileW`, and `CopyFile2` (and likely others), it's a very appealing solution to only detour `NtCreateFile`, which is not only less work, but it will also cover functions that you either forgot to detour, didn't want to spend the time to detour, didn't know about, or are added in the future. While not a terrible idea as a fallback (so long as you take measures to avoid/detect reentrancy/duplicate shimming), completely going this route is again relying on an implementation detail of the OS, which can change in future versions. Here be dragons.
 
 ## A Note on Exceptions
 You will quickly notice that the different pieces of the PSF as well as multiple headers in the `include` directory use exceptions. Feel free to do so as well, but keep the following in mind:
 
-* Don't let exceptions leak out of your dll. That is, either catch exceptions at the end of your shim functions, or declare them `noexcept` so that the process will terminate if an exception that would otherwise go unhandled gets thrown.
-* Applications can call `AddVectoredExceptionHandler` and add a vectored exception handler that does unpredictable things (e.g. such as terminate the application). Therefore, you should have the mindset that any exception thrown might crash the application _even if you handle it gracefully_.
+> * Don't let exceptions leak out of your dll. That is, either catch exceptions at the end of your shim functions, or declare them `noexcept` so that the process will terminate if an exception that would otherwise go unhandled gets thrown.
+> * Applications can call `AddVectoredExceptionHandler` and add a vectored exception handler that does unpredictable things (e.g. such as terminate the application). Therefore, you should have the mindset that any exception thrown might crash the application _even if you handle it gracefully_.
