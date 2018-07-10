@@ -2,7 +2,7 @@
 This project provides tools, libraries, documentation and samples for creating app-compat fixups to enable classic Win32 applications to be distributed and executed as packaged apps.
 
 ## Documentation
-For more information on creating and applying fixups, please see the complete [Microsoft Desktop UWP Fixup](https://docs.microsoft.com/windows/uwp/porting/desktop-to-uwp-fix) documentation.
+For more information on creating and applying fixups, please see the complete [Microsoft Desktop UWP Fixup](https://docs.microsoft.com/windows/uwp/porting/package-support-framework) documentation.
 
 See also:
 * [Package Support Framework package layout](layout.md)

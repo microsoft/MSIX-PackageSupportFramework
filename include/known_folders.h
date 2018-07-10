@@ -3,8 +3,9 @@
 #include <filesystem>
 
 #include <windows.h>
+#include <combaseapi.h>
+#include <Shlobj.h>
 #include <KnownFolders.h>
-#include <ShlObj_core.h>
 
 #include "dos_paths.h"
 

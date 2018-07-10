@@ -22,8 +22,11 @@
     <PSFBinDir>$(MSBuildThisFileDirectory)..\..\bin\</PSFBinDir>
     <PSFRedistributables>
       $(PSFRedistributables);
-      $(PSFBinDir)\Shim*.exe;
-      $(PSFBinDir)\Shim*.dll;
+      $(PSFBinDir)\Shim*32.*;
+    </PSFRedistributables>
+    <PSFRedistributables Condition="'$(Platform)'=='x64'">
+      $(PSFRedistributables);
+      $(PSFBinDir)\Shim*64.*;
     </PSFRedistributables>
     <BuildDependsOn>
       $(BuildDependsOn);

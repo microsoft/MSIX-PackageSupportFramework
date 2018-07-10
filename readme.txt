@@ -23,7 +23,7 @@ To create a PSF solution from within Visual Studio:
 5. Add a Visual C++ | Windows Universal | Windows Application Packaging project
    a. Add application references to both your target app (2) and the PSF redist (4)
    b. Right-click the PSF redist project and set it as the app entry point
-   c. Add a config.json file to provide app fixup configuration
+   c. Add a config.json file to provide app fixup configuration, and set its Package Action property to Content.
    d. Ensure that the appid in the config.json matches that in the package appx manifest
    e. Right-click the project node, select Edit, and add this to the bottom of the project:
 	  <Target Name="PSFRemoveSourceProject" AfterTargets="ExpandProjectReferences" BeforeTargets="_ConvertItems">

@@ -15,6 +15,33 @@
 
 #include "Config.h"
 
+// Conditionally define flags introduced after RS1 (14393) SDK
+#ifndef FILE_ATTRIBUTE_PINNED
+#define FILE_ATTRIBUTE_PINNED               0x00080000  
+#endif
+#ifndef FILE_ATTRIBUTE_UNPINNED
+#define FILE_ATTRIBUTE_UNPINNED             0x00100000  
+#endif
+#ifndef FILE_ATTRIBUTE_RECALL_ON_OPEN
+#define FILE_ATTRIBUTE_RECALL_ON_OPEN       0x00040000  
+#endif
+#ifndef FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS
+#define FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS 0x00400000 
+#endif
+#ifndef FILE_ATTRIBUTE_STRICTLY_SEQUENTIAL
+#define FILE_ATTRIBUTE_STRICTLY_SEQUENTIAL  0x20000000  
+#endif
+#ifndef SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE
+#define SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE    0x2
+#endif
+#ifndef REG_OPTION_DONT_VIRTUALIZE
+#define REG_OPTION_DONT_VIRTUALIZE  0x00000010L
+#endif
+#ifndef LOAD_LIBRARY_OS_INTEGRITY_CONTINUITY
+#define LOAD_LIBRARY_OS_INTEGRITY_CONTINUITY   0x00008000
+#endif
+
+
 // Since consumers typically call 'Log' multiple times, make sure that we synchronize that output
 inline std::recursive_mutex g_outputMutex;
 
@@ -638,9 +665,7 @@ inline void LogFileAttributes(DWORD attributes, const char* msg = "Attributes")
         LogIfFlagSet(attributes, FILE_ATTRIBUTE_UNPINNED);
         LogIfFlagSet(attributes, FILE_ATTRIBUTE_RECALL_ON_OPEN);
         LogIfFlagSet(attributes, FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS);
-#ifdef FILE_ATTRIBUTE_STRICTLY_SEQUENTIAL
         LogIfFlagSet(attributes, FILE_ATTRIBUTE_STRICTLY_SEQUENTIAL);
-#endif
         Log(")");
     }
 

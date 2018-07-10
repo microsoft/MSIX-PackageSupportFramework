@@ -44,13 +44,13 @@ static int EnumerateFilesTest(const vfs_mapping& mapping)
         int result = ERROR_SUCCESS;
         clean_redirection_path();
 
-        // We should find the same files when enumerating the package and the mapped directory
+        // The files found in the package path should also be found in the mapped directory
         auto files = doEnumerate(path, result);
         if (result) return result;
         auto packageFiles = doEnumerate(packagePath, result);
         if (result) return result;
 
-        if (files != packageFiles)
+        if (!std::includes(files.begin(), files.end(), packageFiles.begin(), packageFiles.end()))
         {
             trace_message(L"ERROR: Found files did not match!\n", error_color);
             return ERROR_ASSERTION_FAILURE;
@@ -94,7 +94,7 @@ static int EnumerateFilesTest(const vfs_mapping& mapping)
             return ERROR_ASSERTION_FAILURE;
         }
 
-        if (newFiles != newPackageFiles)
+        if (!std::includes(newFiles.begin(), newFiles.end(), newPackageFiles.begin(), newPackageFiles.end()))
         {
             trace_message(L"ERROR: Found files did not match!\n", error_color);
             return ERROR_ASSERTION_FAILURE;
