@@ -1,3 +1,8 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+//
 // NOTE: For the functions here, the declaration/documentation was taken from the MSDN page for the Zw*** equivalent
 //       functions. E.g. NtCreateDirectoryObject from ZwCreateDirectoryObject, etc. The intention of these shims is to
 //       serve as a kind of "catch all" to try and identify failures that occur from calling a not-otherwise-shimmed

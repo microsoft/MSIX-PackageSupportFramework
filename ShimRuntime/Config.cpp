@@ -1,3 +1,7 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
 
 #include <cctype>
 #include <fstream>
@@ -428,7 +432,7 @@ catch (...)
     return nullptr;
 }
 
-SHIMAPI void __stdcall ShimReportError(const wchar_t* error) noexcept 
+SHIMAPI void __stdcall ShimReportError(const wchar_t* error) noexcept
 {
     if (!g_JsonHandler.enableReportError)
     {

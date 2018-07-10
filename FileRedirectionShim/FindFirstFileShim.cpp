@@ -1,3 +1,8 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+//
 // The general design is roughly as follows. Redirection is set up as a base path and some pattern to match file name/
 // sub path. It would be fairly tricky to try and merge that pattern with the patterns that FindFirstFile supports, so
 // we instead: (1) enumerate files in the redirected directory, if the directory exists, then (2) enumerate the files in

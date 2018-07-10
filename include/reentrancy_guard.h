@@ -1,3 +1,8 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+//
 // Type that's useful to detect reentrancy. This can be useful at either global for function-static scope. Note however,
 // that either should be declared 'thread_local'. E.g. Use might look like:
 //      void FooShim()

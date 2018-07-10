@@ -1,3 +1,7 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
 #pragma once
 
 #include <algorithm>
@@ -127,7 +131,7 @@ namespace shims
             using char_type = std::conditional_t<is_ansi_call, char, wchar_t>;
             return invoke<char_type>(std::forward<Args>(args)...);
         }
-        
+
         template <
             typename CharT,
             typename... Args,

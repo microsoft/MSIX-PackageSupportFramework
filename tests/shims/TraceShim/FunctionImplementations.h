@@ -1,3 +1,8 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+//
 // Function pointers that always point to the underlying function implementation (at least so far as TraceShim is
 // concerned) e.g. to avoid calling a shimmed function during the implementation of another shim function.
 #pragma once

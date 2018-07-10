@@ -1,3 +1,7 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
 //
 // The ShimRuntime intercepts all CreateProcess[AW] calls so that shims can be propagated to child processes. The
 // general call graph looks something like the following:

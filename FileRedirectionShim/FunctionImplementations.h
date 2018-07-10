@@ -1,3 +1,8 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+//
 // Collection of function pointers that will always point to (what we think are) the actual function implementations.
 // That is, impl::CreateFile will (presumably) call kernelbase!CreateFileA/W, even though we detour that call. Useful to
 // reduce the risk of us shimming ourselves, which can easily lead to infinite recursion. Note that this isn't perfect.

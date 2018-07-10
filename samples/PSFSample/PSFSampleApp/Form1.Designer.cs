@@ -1,4 +1,9 @@
-﻿namespace GameWithCommonIssues
+﻿//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+namespace GameWithCommonIssues
 {
     partial class PSFSample
     {
@@ -39,9 +44,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.SuspendLayout();
-            // 
+            //
             // label1
-            // 
+            //
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(31, 101);
@@ -49,9 +54,9 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(0, 20);
             this.label1.TabIndex = 0;
-            // 
+            //
             // label2
-            // 
+            //
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.Location = new System.Drawing.Point(31, 37);
@@ -59,9 +64,9 @@
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(0, 20);
             this.label2.TabIndex = 1;
-            // 
+            //
             // buttonReadConfig
-            // 
+            //
             this.buttonReadConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonReadConfig.Location = new System.Drawing.Point(69, 313);
             this.buttonReadConfig.Margin = new System.Windows.Forms.Padding(2);
@@ -71,9 +76,9 @@
             this.buttonReadConfig.Text = "Read config from CWD";
             this.buttonReadConfig.UseVisualStyleBackColor = true;
             this.buttonReadConfig.Click += new System.EventHandler(this.buttonReadConfig_Click);
-            // 
+            //
             // buttonWriteLog
-            // 
+            //
             this.buttonWriteLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.buttonWriteLog.Location = new System.Drawing.Point(367, 313);
             this.buttonWriteLog.Margin = new System.Windows.Forms.Padding(2);
@@ -83,9 +88,9 @@
             this.buttonWriteLog.Text = "Write log to EXE location";
             this.buttonWriteLog.UseVisualStyleBackColor = true;
             this.buttonWriteLog.Click += new System.EventHandler(this.buttonWriteLog_Click);
-            // 
+            //
             // pictureBox1
-            // 
+            //
             this.pictureBox1.BackgroundImage = global::PSFSample.Properties.Resources.Read;
             this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -94,9 +99,9 @@
             this.pictureBox1.Size = new System.Drawing.Size(250, 137);
             this.pictureBox1.TabIndex = 6;
             this.pictureBox1.TabStop = false;
-            // 
+            //
             // pictureBox2
-            // 
+            //
             this.pictureBox2.BackgroundImage = global::PSFSample.Properties.Resources.Write;
             this.pictureBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pictureBox2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -105,9 +110,9 @@
             this.pictureBox2.Size = new System.Drawing.Size(250, 137);
             this.pictureBox2.TabIndex = 7;
             this.pictureBox2.TabStop = false;
-            // 
+            //
             // label3
-            // 
+            //
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.Location = new System.Drawing.Point(11, 13);
@@ -116,9 +121,9 @@
             this.label3.Size = new System.Drawing.Size(236, 24);
             this.label3.TabIndex = 8;
             this.label3.Text = "Current Working Directory: ";
-            // 
+            //
             // label4
-            // 
+            //
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.Location = new System.Drawing.Point(11, 77);
@@ -127,9 +132,9 @@
             this.label4.Size = new System.Drawing.Size(136, 24);
             this.label4.TabIndex = 9;
             this.label4.Text = "EXE Location: ";
-            // 
+            //
             // PSFSample
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(681, 384);
