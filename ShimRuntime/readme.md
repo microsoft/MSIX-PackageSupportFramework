@@ -40,7 +40,7 @@ The Shim Runtime then calls `ShimInitialize` within a Detours transaction, faili
 
 > **IMPORTANT: The exported names must _exactly_ match `ShimInitialize` and `ShimUninitialize`. This isn't automatic when using `__declspec(dllexport)` due to the "mangling" performed for 32-bit binaries**
 
-> TIP: In most cases you can leverage the `SHIM_DEFINE_EXPORTS` macro to define/export these functions for you with the correct names. See [here](../Authoring.md#Shim-Loading) for more information
+> TIP: In most cases you can leverage the `SHIM_DEFINE_EXPORTS` macro to define/export these functions for you with the correct names. See [here](../Authoring.md#shim-loading) for more information
 
 ## Runtime Requirements
 As a part of its initialization, the Shim Runtime queries information about its environment that it then caches for later use. A few examples include parsing the `config.json`, caching the path to the package root, and caching the package name, among a couple other things. If any of these steps fail, e.g. because something is not present/cannot be found or any other failure, then the Shim Runtime dll will fail to load, which likely means that the process fails to start. Note that this implies the requirement that the application be running with package identity. There have been past conversations on adding support for a "debug" mode that works around this restriction (e.g. by using a fake package name, executable directory as the package root, etc.), but its benefit is questionable and has not yet been implemented.

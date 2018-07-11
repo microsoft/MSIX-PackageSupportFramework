@@ -2,7 +2,7 @@
 The only two requirements are the two required dll exports: `ShimInitialize` and `ShimUninitialize`. Other than that, the shim is relatively free to do whatever it wants.
 
 ## Shim Loading
-The shim loading process is described in more detail [here](ShimRuntime/readme.md#Shim-Loading), but in short, when the process starts up, the Shim Runtime will enumerate the set of dlls configured for the current process, loading them before calling `ShimInitialize` within a Detours transaction. Typical shim behavior is to call `ShimRegister` for each function it wishes to detour at this time. This process can be somewhat automated by using the `DECLARE_SHIM` and `DECLARE_STRING_SHIM` macros. For example, consider the declarations for the `GetFileAttributes` functions:
+The shim loading process is described in more detail [here](ShimRuntime/readme.md#shim-loading), but in short, when the process starts up, the Shim Runtime will enumerate the set of dlls configured for the current process, loading them before calling `ShimInitialize` within a Detours transaction. Typical shim behavior is to call `ShimRegister` for each function it wishes to detour at this time. This process can be somewhat automated by using the `DECLARE_SHIM` and `DECLARE_STRING_SHIM` macros. For example, consider the declarations for the `GetFileAttributes` functions:
 
 ```c++
 DWORD WINAPI GetFileAttributesA(LPCSTR fileName);
