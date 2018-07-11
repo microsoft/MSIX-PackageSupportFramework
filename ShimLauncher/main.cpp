@@ -48,9 +48,14 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         &startupInfo,
         &processInfo))
     {
-        auto error = std::wstring{ L"ERROR: Failed to create detoured process\nERROR: Path: \"" } + exeName + L"\"";
-        ShimReportError(error.c_str());
-        return ::GetLastError();
+        std::wostringstream ss;
+        auto err{ ::GetLastError() };
+        // Remove the ".\r\n" that gets added to all messages
+        auto msg = widen(std::system_category().message(err));
+        msg.resize(msg.length() - 3);
+        ss << L"ERROR: Failed to create detoured process\n  Path: \"" << exeName << "\"\n  Error: " << msg << " (" << err << ")";
+        ::ShimReportError(ss.str().c_str());
+        return err;
     }
 
     // Propagate exit code to caller, in case they care
