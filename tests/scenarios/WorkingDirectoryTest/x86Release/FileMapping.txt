@@ -1,0 +1,12 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\Win32\Release\WorkingDirectoryTest.exe" "WorkingDirectoryTest.exe"
+"..\..\..\Win32\Release\ShimLauncher32.exe" "ShimLauncher.exe"
+"..\..\..\Win32\Release\ShimRuntime32.dll" "ShimRuntime32.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"foo.txt" "VFS\ProgramFilesX64\WorkingDirectoryTest\foo.txt"

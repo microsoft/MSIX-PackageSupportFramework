@@ -1,0 +1,16 @@
+TODO: This is a running collection of OSS used within, to be used later when creating the third party license file
+
+[1] name:       Microsoft/Detours
+    original:   https://github.com/microsoft/detours
+    version:    v4.0.1 (Commit: e4bfd6b)
+    paths:      /Detours/*
+                /include/detours.h
+                /include/detver.h
+
+
+
+[2] name:       Tencent/rapidjson
+    original:   https://github.com/Tencent/rapidjson
+    ossmsft:    https://ossmsft.visualstudio.com/DefaultCollection/Project1/_git/GitHub_Tencent_rapidjson?version=GBMicrosoft%2Fmaster_8022a5
+    version:    Commit: 8022a5
+    paths:      /include/rapidjson/*

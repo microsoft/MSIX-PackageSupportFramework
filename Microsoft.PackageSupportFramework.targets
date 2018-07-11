@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--PSF SDK properties for building a fixup DLL-->
+  <PropertyGroup Condition="'$(ConfigurationType)'=='DynamicLibrary'">
+    <PSFIncDir>$(MSBuildThisFileDirectory)..\..\include</PSFIncDir>
+    <PSFLibDir>$(MSBuildThisFileDirectory)..\..\lib\</PSFLibDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(ConfigurationType)'=='DynamicLibrary'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PSFIncDir)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies Condition="'$(Platform)'=='Win32'">%(AdditionalDependencies);$(PSFLibDir)ShimRuntime32.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='x64'">%(AdditionalDependencies);$(PSFLibDir)ShimRuntime64.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!--PSF redistributable properties for building WAP entry point project-->
+  <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
+    <PSFConfiguration Condition="'$(PSFConfiguration)'==''">release</PSFConfiguration>
+    <PSFBinDir>$(MSBuildThisFileDirectory)..\..\bin\</PSFBinDir>
+    <PSFRedistributables>
+      $(PSFRedistributables);
+      $(PSFBinDir)\Shim*32.*;
+    </PSFRedistributables>
+    <PSFRedistributables Condition="'$(Platform)'=='x64'">
+      $(PSFRedistributables);
+      $(PSFBinDir)\Shim*64.*;
+    </PSFRedistributables>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      PSFValidateProject
+    </BuildDependsOn>
+    <DesktopBridgeCopyLocalOutputGroupDependsOn>
+      $(DesktopBridgeCopyLocalOutputGroupDependsOn);
+      PSFAddFixupProjectReferenceOutput
+    </DesktopBridgeCopyLocalOutputGroupDependsOn>
+  </PropertyGroup>
+
+  <!--Evaluate all output groups consumed by DesktopBridge for referenced fixup projects,
+  and add these, as well as the PSF redistributables, as DesktopBridge package content.-->
+  <Target Name="PSFAddFixupProjectReferenceOutput" DependsOnTargets="ResolveProjectReferences">
+    <PropertyGroup>
+      <PSFFixupProjectReferenceOutputGroups>
+        BuiltProjectOutputGroup;
+        GetCopyToOutputDirectoryItems;
+        SatelliteDllsProjectOutputGroup;
+        SatelliteDllsProjectOutputGroupDependencies;
+        DebugSymbolsProjectOutputGroup;
+        DebugSymbolsProjectOutputGroupDependencies;
+        ContentFilesProjectOutputGroup;
+        SGenFilesOutputGroup;
+      </PSFFixupProjectReferenceOutputGroups>
+    </PropertyGroup>
+    <MSBuild Targets="$(PSFFixupProjectReferenceOutputGroups)" Projects="@(_MSBuildProjectReferenceExistent)" Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)">
+      <Output TaskParameter="TargetOutputs" ItemName="PSFFixupProjectReferencesOutput" />
+    </MSBuild>
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Include="$(PSFRedistributables);@(PSFFixupProjectReferencesOutput)"/>
+    </ItemGroup>
+  </Target>
+    
+  <!--Ideally, TargetName would be set automatically, but it relies on ConfigurationType, 
+  which is set after importing psf.props and before importing all other targets.-->
+  <Target Name="PSFValidateProject">
+    <PropertyGroup>
+      <PSFTargetName Condition="'$(Platform)'=='Win32'">ShimLauncher32</PSFTargetName>
+      <PSFTargetName Condition="'$(Platform)'=='x64'">ShimLauncher64</PSFTargetName>
+    </PropertyGroup>
+    <Error Condition="'$(TargetName)'!='$(PSFTargetName)'"
+        Text="Please set the PSF TargetName to ShimLauncher32 (Win32), ShimLauncher64 (x64)."/>
+  </Target>
+
+</Project>

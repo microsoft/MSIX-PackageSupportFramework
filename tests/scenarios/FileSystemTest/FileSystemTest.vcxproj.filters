@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{eb99075b-cfb3-4ddf-bacc-4e571f8ae4c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pkg">
+      <UniqueIdentifier>{203525a1-992e-49e4-918d-f089d01e7888}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{e52f01ab-69d9-4034-a22c-a7872367cf60}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ModifyFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumerateFilesTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateNewFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="DeleteFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateHardLinkTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateSymbolicLinkTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="FileAttributesTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ReplaceFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateDirectoryTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="RemoveDirectoryTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="EnumerateDirectoriesTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" />
+    <None Include="config.json">
+      <Filter>pkg</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="AppxManifest.xml">
+      <Filter>pkg</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="FileMapping.txt">
+      <Filter>pkg</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common_paths.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="attributes.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

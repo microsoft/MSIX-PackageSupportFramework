@@ -1,0 +1,9 @@
+{
+    "applications": [
+        {
+            "id": "Shimmed",
+            "executable": "WorkingDirectoryTest.exe",
+            "workingDirectory": "VFS\\ProgramFilesX64\\WorkingDirectoryTest\\"
+        }
+    ]
+}

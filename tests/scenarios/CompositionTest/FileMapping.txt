@@ -1,0 +1,12 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\${Architecture}${Configuration}\CompositionTest.exe" "CompositionTest.exe"
+"..\..\..\${Architecture}${Configuration}\ShimLauncher${Bitness}.exe" "ShimLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\ShimRuntime${Bitness}.dll" "ShimRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\CompositionTestShim${Bitness}.dll" "CompositionTestShim${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\MultiByteToWideCharTestShim${Bitness}.dll" "MultiByteToWideCharTestShim${Bitness}.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

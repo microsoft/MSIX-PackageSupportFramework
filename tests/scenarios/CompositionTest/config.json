@@ -1,0 +1,24 @@
+{
+    "applications": [
+        {
+            "id": "Shimmed",
+            "executable": "CompositionTest.exe"
+        }
+    ],
+    "processes": [
+        {
+            "executable": "ShimLauncher.*"
+        },
+        {
+            "executable": ".*",
+            "shims": [
+                {
+                    "dll": "MultiByteToWideCharTestShim.dll"
+                },
+                {
+                    "dll": "CompositionTestShim.dll"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,6 @@
+# ShimRunDll
+The Detours library leverages the system executable `rundll32.exe` when performing cross architecture launches. That is, if a 64-bit application attempts to launch a 32-bit application (or vice-versa), then Detours will invoke the 32-bit version of `rundll32` to perform the patch up work inside of the target process that it would have otherwise performed itself. It does so because the size of some of the structures that it is modifying in the target process is architecture dependent.
+
+This poses an issue for us, however. The Desktop Bridge has a notion of "break away" where processes whose executables located outside of the pacakge will run _without_ the package identity or any restrictions/redirections that would otherwise exist for Desktop Bridge applications. This is problematic since part of this process requires that `rundll32` load `ShimRuntimeXX.dll` to perform this patch-up work, but `rundll32` won't have execute permissions on the dll since it would be running outside of the context of the package.
+
+To work around this, `ShimRunDllXX.exe` is provided to act as a minimal replacement for the system provided `rundll32` executable. The shim for `CreateProcess` will redirect attempts to launch `rundll32` by Detours to instead launch `ShimRunDllXX.exe`.

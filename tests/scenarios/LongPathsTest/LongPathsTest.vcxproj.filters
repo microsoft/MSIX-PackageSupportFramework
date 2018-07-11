@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{17279b96-175b-407f-9d78-fe117f6f298f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pkg">
+      <UniqueIdentifier>{ce2322b4-ed28-4ac7-a0c7-1d2c8eb75b8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{47f50d2c-d436-4eb4-964e-dfe7369b3c87}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateDeleteFileTests.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="FileEnumerationTests.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateRemoveDirectoryTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="FileMapping.txt">
+      <Filter>pkg</Filter>
+    </Text>
+    <Text Include="config.json">
+      <Filter>pkg</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="AppxManifest.xml">
+      <Filter>pkg</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="paths.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

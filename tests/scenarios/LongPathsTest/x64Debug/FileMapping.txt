@@ -1,0 +1,14 @@
+[Files]
+"AppxManifest64.xml" "AppxManifest.xml"
+"config64.json" "config.json"
+
+"..\..\x64\Debug\LongPathsTest.exe" "LongPathsTest.exe"
+
+"..\..\..\x64\Debug\ShimLauncher64.exe" "ShimLauncher.exe"
+"..\..\..\x64\Debug\ShimRuntime64.dll" "ShimRuntime64.dll"
+"..\..\..\x64\Debug\FileRedirectionShim64.dll" "FileRedirectionShim64.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"file.txt" "VFS\ProgramFilesX64\this\is\a\moderately\long\path\and\will\turn\into\an\even\longer\path\when\we\take\into\account\the\fact\that\it\will\have\the\package\path\appended\to\it\when\the\app\is\installed\to\the\WindowsApps\directory\file.txt"
