@@ -325,7 +325,8 @@ SHIMAPI const shims::json_object* __stdcall ShimQueryAppLaunchConfig(_In_ const 
     for (auto& app : g_JsonHandler.root->as_object().get("applications").as_array())
     {
         auto& appObj = app.as_object();
-        if (appObj.get("id").as_string().wstring() == applicationId)
+        auto appId = appObj.get("id").as_string().wstring();
+        if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {
             return &appObj;
         }
