@@ -4,13 +4,13 @@
     <id>Microsoft.PackageSupportFramework</id>
     <version>0.0.0-SpecifyVersionOnCommandline</version>
     <title>Microsoft Package Support Framework</title>
-    <authors>PSF Team</authors>
-    <owners>PSF Team</owners>
+    <authors>Microsoft</authors>
+    <owners>Microsoft, PSF Team</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Tools to build compatibility fixes for packaged desktop apps</description>
     <releaseNotes></releaseNotes>
     <tags>native, PSF, shim, fixup, Centennial, Bridge</tags>
-    <copyright>Copyright 2018</copyright>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
   </metadata>
   <files>
     <file src="Microsoft.PackageSupportFramework.targets" target="build\native"/>
