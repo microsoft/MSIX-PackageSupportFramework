@@ -25,9 +25,10 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         trace_messages(L"Opening File: ", info_color, filePath.native(), new_line);
 
         // First, validate that opening with CREATE_NEW fails
-        if (createFunc(filePath.c_str(), CREATE_NEW) != INVALID_HANDLE_VALUE)
+        if (auto file = createFunc(filePath.c_str(), CREATE_NEW); file != INVALID_HANDLE_VALUE)
         {
             trace_message(L"ERROR: Attempting to open the file with 'CREATE_NEW' should fail as the file should already exist\n", error_color);
+            ::CloseHandle(file);
             return ERROR_ASSERTION_FAILURE;
         }
         else if (::GetLastError() != ERROR_FILE_EXISTS)
@@ -43,11 +44,13 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         else if ((creationDisposition == CREATE_ALWAYS) && (::GetLastError() != ERROR_ALREADY_EXISTS))
         {
             trace_message(L"ERROR: Last error should be ERROR_ALREADY_EXISTS when opening with CREATE_ALWAYS\n", error_color);
+            ::CloseHandle(file);
             return ERROR_ASSERTION_FAILURE;
         }
         else if ((creationDisposition == OPEN_ALWAYS) && (::GetLastError() != ERROR_ALREADY_EXISTS))
         {
             trace_message(L"ERROR: Last error should be ERROR_ALREADY_EXISTS when opening with OPEN_ALWAYS\n", error_color);
+            ::CloseHandle(file);
             return ERROR_ASSERTION_FAILURE;
         }
 

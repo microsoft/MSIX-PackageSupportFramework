@@ -9,12 +9,14 @@
 #include <map>
 #include <memory>
 #include <regex>
+#include <sstream>
 #include <string_view>
 #include <vector>
 
 #include <windows.h>
 #include <detours.h>
 #include <rapidjson/reader.h>
+#include <rapidjson/error/en.h>
 #include <rapidjson/filereadstream.h>
 #include <shim_constants.h>
 #include <shim_runtime.h>
@@ -204,14 +206,19 @@ void load_json()
 
     char buffer[2048];
     rapidjson::FileReadStream stream(file, buffer, std::size(buffer));
+    rapidjson::AutoUTFInputStream<char32_t, rapidjson::FileReadStream> autoStream(stream);
 
-    rapidjson::Reader reader;
-    auto result = reader.Parse(stream, g_JsonHandler);
+    rapidjson::GenericReader<rapidjson::AutoUTF<char32_t>, rapidjson::UTF8<>> reader;
+    auto result = reader.Parse(autoStream, g_JsonHandler);
     fclose(file);
 
     if (result.IsError())
     {
-        throw std::runtime_error("Error occurred when parsing config.json");
+        std::stringstream msgStream;
+        msgStream << "Error occurred when parsing config.json\n";
+        msgStream << "Error: " << rapidjson::GetParseError_En(result.Code()) << "\n";
+        msgStream << "File Offest: " << result.Offset();
+        throw std::runtime_error(msgStream.str());
     }
     else if (!g_JsonHandler.root)
     {

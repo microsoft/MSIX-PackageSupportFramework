@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cassert>
+#include <sstream>
 #include <system_error>
 #include <windows.h>
 
@@ -46,23 +47,6 @@ inline int win32_from_error_code(const std::error_code& err)
 
     // Currently unnecessary to try and map other values
     return ERROR_UNHANDLED_EXCEPTION;
-}
-
-inline std::string message_from_caught_exception()
-{
-    try
-    {
-        throw;
-    }
-    catch (std::exception & e)
-    {
-        return e.what();
-    }
-    catch (...)
-    {
-        // fall through to unknown error message
-    }
-    return "Unknown Error";
 }
 
 inline int win32_from_caught_exception()
@@ -109,4 +93,27 @@ inline int win32_from_caught_exception()
     }
 
     return ERROR_UNHANDLED_EXCEPTION;
+}
+
+inline std::string message_from_caught_exception()
+{
+    try
+    {
+        throw;
+    }
+    catch (std::system_error& e)
+    {
+        std::stringstream ss;
+        ss << e.what() << " (" << win32_from_error_code(e.code()) << ")";
+        return ss.str();
+    }
+    catch (std::exception& e)
+    {
+        return e.what();
+    }
+    catch (...)
+    {
+        // fall through to unknown error message
+    }
+    return "Unknown Error";
 }
