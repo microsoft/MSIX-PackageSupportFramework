@@ -4,11 +4,12 @@
 //-------------------------------------------------------------------------------------------------------
  #pragma once
 
- #include <filesystem>
- #include <string>
+#include <cwctype>
+#include <filesystem>
+#include <string>
 
- #include <windows.h>
- #include <appmodel.h>
+#include <windows.h>
+#include <appmodel.h>
 
 #include "win32_error.h"
 
@@ -94,7 +95,10 @@ namespace shims
 
     inline std::filesystem::path current_package_path()
     {
-        return details::appmodel_string(&::GetCurrentPackagePath);
+        auto result = details::appmodel_string(&::GetCurrentPackagePath);
+        result[0] = std::towupper(result[0]);
+
+        return result;
     }
 
     inline std::wstring current_application_user_model_id()

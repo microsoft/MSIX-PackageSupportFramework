@@ -197,11 +197,7 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
 }
 catch (...)
 {
-    std::wostringstream ss;
-    auto error_message{ widen(message_from_caught_exception()) };
-    auto error_code{ win32_from_caught_exception() };
-    ss << error_message << " (" << std::hex << error_code << ")";
-    ::ShimReportError(ss.str().c_str());
-    ::SetLastError(error_code);
-    return FALSE;
+    ::ShimReportError(widen(message_from_caught_exception()).c_str());
+    ::SetLastError(win32_from_caught_exception());
+    return false;
 }

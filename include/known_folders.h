@@ -4,6 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 #pragma once
 
+#include <cwctype>
 #include <filesystem>
 
 #include <windows.h>
@@ -42,6 +43,7 @@ namespace shims
             throw std::runtime_error("Failed to get known folder path");
         }
         unique_cotaskmem_string uniquePath(path);
+        path[0] = std::towupper(path[0]);
 
         // For consistency, and therefore simplicity, ensure that all paths are drive-absolute
         if (auto pathType = path_type(path);
