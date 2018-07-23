@@ -6,9 +6,8 @@ Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/
 
 See also:
 * [Package Support Framework package layout](layout.md)
-* [Package Support Framework Nuget package install](todo)
-* [Instructions for authoring your own shim dll](Authoring.md).
-* [Testing and Debugging procedures](todo)
+* [Package Support Framework Nuget package install](https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
+* [Instructions for authoring your own shim dll](Authoring.md)
 
 ## [License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE)
 Code licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE).
