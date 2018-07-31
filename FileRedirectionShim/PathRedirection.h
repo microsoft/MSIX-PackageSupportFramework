@@ -68,9 +68,30 @@ struct wide_argument_string
     }
 };
 
-inline std::wstring widen_argument(const char* str)
+struct wide_argument_string_with_buffer : wide_argument_string
 {
-    return widen(str);
+    std::wstring buffer;
+
+    wide_argument_string_with_buffer() = default;
+    wide_argument_string_with_buffer(std::wstring str) :
+        buffer(std::move(str))
+    {
+        value = buffer.c_str();
+    }
+};
+
+inline wide_argument_string_with_buffer widen_argument(const char* str)
+{
+    if (str)
+    {
+        return wide_argument_string_with_buffer{ widen(str) };
+    }
+    else
+    {
+        // Calling widen with a null pointer will crash. Default constructed wide_argument_string_with_buffer will
+        // preserve the null argument
+        return wide_argument_string_with_buffer{};
+    }
 }
 
 inline wide_argument_string widen_argument(const wchar_t* str) noexcept
