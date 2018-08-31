@@ -47,8 +47,16 @@ static struct
             switch (current_value.index())
             {
             case 0:
-                std::get<0>(current_value)->values.emplace(std::move(object_key), std::move(value));
-                break;
+            {
+                auto& map = std::get<0>(current_value)->values;
+                if (map.find(object_key) != map.end())
+                {
+                    error_message = "'" + object_key + "' already exists in map";
+                    return false;
+                }
+
+                return std::get<0>(current_value)->values.emplace(std::move(object_key), std::move(value)).second;
+            }   break;
 
             case 1:
                 std::get<1>(current_value)->values.emplace_back(std::move(value));
@@ -61,7 +69,7 @@ static struct
         }
         else
         {
-            // Can't have more than one root; return error
+            error_message = "Can't have more than one root";
             return false;
         }
 
@@ -125,7 +133,11 @@ static struct
         auto obj = std::make_unique<json_object_impl>();
         auto objPtr = obj.get();
         auto result = on_value(std::move(obj));
-        state_stack.emplace_back(objPtr);
+        if (result)
+        {
+            state_stack.emplace_back(objPtr);
+        }
+
         return result;
     }
 
@@ -161,7 +173,11 @@ static struct
         auto arr = std::make_unique<json_array_impl>();
         auto arrPtr = arr.get();
         auto result = on_value(std::move(arr));
-        state_stack.emplace_back(arrPtr);
+        if (result)
+        {
+            state_stack.emplace_back(arrPtr);
+        }
+
         return result;
     }
 
@@ -190,6 +206,9 @@ static struct
     std::vector<std::variant<json_object_impl*, json_array_impl*>> state_stack;
     std::string object_key;
 
+    // When non-empty, provides a more useful error message displayed to the user for invalid config.json files
+    std::string error_message;
+
     bool enableReportError{ true };
 } g_JsonHandler;
 
@@ -216,7 +235,14 @@ void load_json()
     {
         std::stringstream msgStream;
         msgStream << "Error occurred when parsing config.json\n";
-        msgStream << "Error: " << rapidjson::GetParseError_En(result.Code()) << "\n";
+        if (g_JsonHandler.error_message.empty())
+        {
+            msgStream << "Error: " << rapidjson::GetParseError_En(result.Code()) << "\n";
+        }
+        else
+        {
+            msgStream << "Error: " << g_JsonHandler.error_message << "\n";
+        }
         msgStream << "File Offest: " << result.Offset();
         throw std::runtime_error(msgStream.str());
     }

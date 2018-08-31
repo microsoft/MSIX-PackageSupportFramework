@@ -239,7 +239,11 @@ BOOL __stdcall FindNextFileShim(_In_ HANDLE findFile, _Out_ win32_find_data_t<Ch
         }
 
         auto revertSize = data->redirect_path.length();
-        if constexpr (shims::is_ansi<std::decay_t<decltype(*filename)>>)
+
+        // NOTE: 'is_ansi' evaluation not inline due to the bug:
+        //       https://developercommunity.visualstudio.com/content/problem/324366/illegal-indirection-error-when-the-evaluation-of-i.html
+        constexpr bool is_ansi = shims::is_ansi<std::decay_t<decltype(*filename)>>;
+        if constexpr (is_ansi)
         {
             data->redirect_path += widen(filename);
         }

@@ -34,7 +34,7 @@
     <ClCompile Include="ReplaceFileShim.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ShimRuntime\ShimRuntime.vcxproj">
+    <ProjectReference Include="..\..\ShimRuntime\ShimRuntime.vcxproj">
       <Project>{87cce0ac-a7fb-4a31-89d3-c0acdb315ee0}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -54,12 +54,12 @@
     <SubSystem>Windows</SubSystem>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <Import Project="$(MSBuildThisFileDirectory)\..\Shims.props" />
+  <Import Project="$(MSBuildThisFileDirectory)\..\..\Shims.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <Import Project="$(MSBuildThisFileDirectory)\..\Common.Build.props" />
+  <Import Project="$(MSBuildThisFileDirectory)\..\..\Common.Build.props" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile />
     <ClCompile />

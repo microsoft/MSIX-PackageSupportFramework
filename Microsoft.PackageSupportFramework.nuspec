@@ -11,6 +11,8 @@
     <releaseNotes></releaseNotes>
     <tags>native, PSF, shim, fixup, Centennial, Bridge</tags>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+    <licenseUrl>https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/Microsoft/MSIX-PackageSupportFramework</projectUrl>
   </metadata>
   <files>
     <file src="Microsoft.PackageSupportFramework.targets" target="build\native"/>
