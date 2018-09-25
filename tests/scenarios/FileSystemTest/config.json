@@ -1,20 +1,20 @@
 {
     "applications": [
         {
-            "id": "Shimmed",
+            "id": "Fixed",
             "executable": "FileSystemTest.exe",
             "workingDirectory": ""
         }
     ],
     "processes": [
         {
-            "executable": "ShimLauncher.*"
+            "executable": "PsfLauncher.*"
         },
         {
             "executable": ".*",
-            "shims": [
+            "fixups": [
                 {
-                    "dll": "FileRedirectionShim.dll",
+                    "dll": "FileRedirectionFixup.dll",
                     "config": {
                         "redirectedPaths": {
                             "packageRelative": [

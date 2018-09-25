@@ -32,18 +32,26 @@
     <Text Include="FileMapping.txt">
       <Filter>pkg</Filter>
     </Text>
-    <Text Include="config.json">
-      <Filter>pkg</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="AppxManifest.xml">
-      <Filter>pkg</Filter>
-    </Xml>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="paths.h">
       <Filter>inc</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="AppxManifest32.xml">
+      <Filter>pkg</Filter>
+    </Xml>
+    <Xml Include="AppxManifest64.xml">
+      <Filter>pkg</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config32.json">
+      <Filter>pkg</Filter>
+    </None>
+    <None Include="config64.json">
+      <Filter>pkg</Filter>
+    </None>
   </ItemGroup>
 </Project>

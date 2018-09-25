@@ -4,9 +4,9 @@
 
 "..\..\${Architecture}${Configuration}\LongPathsTest.exe" "LongPathsTest.exe"
 
-"..\..\..\${Architecture}${Configuration}\ShimLauncher${Bitness}.exe" "ShimLauncher.exe"
-"..\..\..\${Architecture}${Configuration}\ShimRuntime${Bitness}.dll" "ShimRuntime${Bitness}.dll"
-"..\..\..\${Architecture}${Configuration}\FileRedirectionShim${Bitness}.dll" "FileRedirectionShim${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\PsfLauncher${Bitness}.exe" "PsfLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\PsfRuntime${Bitness}.dll" "PsfRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\FileRedirectionFixup${Bitness}.dll" "FileRedirectionFixup${Bitness}.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

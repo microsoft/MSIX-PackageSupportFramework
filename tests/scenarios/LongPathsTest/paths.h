@@ -10,7 +10,7 @@
 
 constexpr wchar_t g_programFilesRelativeTestPath[] = LR"(this\is\a\moderately\long\path\and\will\turn\into\an\even\longer\path\when\we\take\into\account\the\fact\that\it\will\have\the\package\path\appended\to\it\when\the\app\is\installed\to\the\WindowsApps\directory)";
 
-inline const auto g_programFilesPath = shims::known_folder(FOLDERID_ProgramFiles);
+inline const auto g_programFilesPath = psf::known_folder(FOLDERID_ProgramFiles);
 inline const auto g_testPath = g_programFilesPath / g_programFilesRelativeTestPath;
 inline const auto g_testFilePath = g_testPath / L"file.txt";
 

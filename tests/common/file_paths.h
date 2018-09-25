@@ -13,12 +13,12 @@
 inline void clean_redirection_path()
 {
     // NOTE: This makes an assumption about the location of redirected files! If this path ever changes, then the logic
-    //       here will need to get updated. At that time, it may just be better to add an export to ShimRuntime for
+    //       here will need to get updated. At that time, it may just be better to add an export to PsfRuntime for
     //       identifying what the location is.
     // NOTE: In the future, if we ever do handle deletes of files in the package path, we should also handle that here,
-    //       e.g. by deleting the file that's tracking the deletions, or by calling into an export in ShimRuntime to do
+    //       e.g. by deleting the file that's tracking the deletions, or by calling into an export in PsfRuntime to do
     //       so for us.
-    static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + shims::known_folder(FOLDERID_LocalAppData).native()) / L"VFS";
+    static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"VFS";
 
     std::error_code ec;
     std::filesystem::remove_all(redirectRoot, ec);
@@ -29,7 +29,7 @@ inline void clean_redirection_path()
     }
     else
     {
-        // The file redirection shim makes an assumption about the existence of the VFS directory, but we just deleted
+        // The file redirection fixup makes an assumption about the existence of the VFS directory, but we just deleted
         // it above, so re-create it to avoid future issues
         if (!::CreateDirectoryW(redirectRoot.c_str(), nullptr))
         {

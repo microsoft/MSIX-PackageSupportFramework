@@ -25,12 +25,12 @@ using namespace std::literals;
 // missing applications as too serious
 static constexpr const wchar_t* g_applications[] =
 {
-    L"ArchitectureTest_8wekyb3d8bbwe!Shimmed32",
-    L"ArchitectureTest_8wekyb3d8bbwe!Shimmed64",
-    L"CompositionTest_8wekyb3d8bbwe!Shimmed",
-    L"FileSystemTest_8wekyb3d8bbwe!Shimmed",
-    L"LongPathsTest_8wekyb3d8bbwe!Shimmed",
-    L"WorkingDirectoryTest_8wekyb3d8bbwe!Shimmed"
+    L"ArchitectureTest_8wekyb3d8bbwe!Fixed32",
+    L"ArchitectureTest_8wekyb3d8bbwe!Fixed64",
+    L"CompositionTest_8wekyb3d8bbwe!Fixed",
+    L"FileSystemTest_8wekyb3d8bbwe!Fixed",
+    L"LongPathsTest_8wekyb3d8bbwe!Fixed",
+    L"WorkingDirectoryTest_8wekyb3d8bbwe!Fixed"
 };
 
 bool g_onlyPrintSummary = false;

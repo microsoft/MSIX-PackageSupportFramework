@@ -5,7 +5,7 @@
 
 .PARAMETER FriendlyName
     The friendly name given to the certificate and used to lookup a pre-existing cert. By default, this value is
-    "CentennialShims Test Signing Certificate"
+    "CentennialFixups Test Signing Certificate"
 
 .PARAMETER Subject
     Subject used when creating the certificate. The default is "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US".
@@ -16,7 +16,7 @@
     Target store to hold the created certificate. The default is "Cert:\LocalMachine\My"
 
 .PARAMETER FileName
-    The output ".pfx" file name. The default is "CentennialShimsTestSigningCertificate.pfx". Note that other scripts may
+    The output ".pfx" file name. The default is "CentennialFixupsTestSigningCertificate.pfx". Note that other scripts may
     try and reference this hardcoded name, so using the default is recommended.
 
 .PARAMETER Force
@@ -40,7 +40,7 @@ Param (
     [Parameter(ParameterSetName='CertCreation')]
     [Parameter(ParameterSetName='CertUninstallation')]
     [Parameter(ParameterSetName='Clean')]
-    [string]$FriendlyName="CentennialShims Test Signing Certificate",
+    [string]$FriendlyName="CentennialFixups Test Signing Certificate",
 
     [Parameter(ParameterSetName='CertCreation')]
     [string]$Subject="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
@@ -49,7 +49,7 @@ Param (
     [string]$CertStoreLocation="Cert:\LocalMachine\My",
 
     [Parameter(ParameterSetName='CertCreation')]
-    [string]$FileName="CentennialShimsTestSigningCertificate.pfx",
+    [string]$FileName="CentennialFixupsTestSigningCertificate.pfx",
 
     [Parameter(ParameterSetName='CertCreation')]
     [switch]$Force,

@@ -62,7 +62,7 @@ function CreateSingle($name)
         # Ensure that a signing certificate has been created
         Write-Host "Signing the appx..."
         . "$PSScriptRoot\signing\CreateCert.ps1" -Install
-        . signtool.exe sign /a /v /fd sha256 /f "$PSScriptRoot\signing\CentennialShimsTestSigningCertificate.pfx" "$appxPath"
+        . signtool.exe sign /a /v /fd sha256 /f "$PSScriptRoot\signing\CentennialFixupsTestSigningCertificate.pfx" "$appxPath"
     }
     finally
     {

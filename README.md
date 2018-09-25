@@ -7,7 +7,7 @@ Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/
 See also:
 * [Package Support Framework package layout](layout.md)
 * [Package Support Framework Nuget package install](https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
-* [Instructions for authoring your own shim dll](Authoring.md)
+* [Instructions for authoring your own fixup dll](Authoring.md)
 
 ## [License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE)
 Code licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE).
@@ -19,7 +19,7 @@ When you submit a pull request, a CLA-bot will automatically determine whether y
 
 Here is how you can contribute to the Package Support Framework:
 
-* [Submit bugs](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) and help us verify fixes
-* [Submit pull requests](https://github.com/Microsoft/MSIX-PackageSupportFramework/pulls) for bug fixes and features and discuss existing proposals
+* [Submit bugs](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) and help us verify fixups
+* [Submit pull requests](https://github.com/Microsoft/MSIX-PackageSupportFramework/pulls) for bug fixups and features and discuss existing proposals
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

@@ -9,7 +9,7 @@
   "processes": [
     {
       "executable": ".*PSFSample.*",
-      "shims": [ { "dll": "PSFSampleFixups.dll" } ]
+      "fixups": [ { "dll": "PSFSampleFixups.dll" } ]
     }
   ]
 }

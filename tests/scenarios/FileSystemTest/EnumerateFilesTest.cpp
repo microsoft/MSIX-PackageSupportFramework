@@ -86,8 +86,8 @@ static int EnumerateFilesTest(const vfs_mapping& mapping)
         auto newPackageFiles = doEnumerate(packagePath, result);
         if (result) return result;
 
-        // NOTE: The non-shimmed version of this function has access to some of the folders (e.g. Common AppData), so
-        //       we may hit spurious failures if we try and run the shimmed test after the non-shimmed test, so try and
+        // NOTE: The non-fixed version of this function has access to some of the folders (e.g. Common AppData), so
+        //       we may hit spurious failures if we try and run the fixed test after the non-fixed test, so try and
         //       delete the files. This is best effort
         ::DeleteFileW((path / L"á.txt"sv).c_str());
         ::DeleteFileW((packagePath / L"β.txt"sv).c_str());

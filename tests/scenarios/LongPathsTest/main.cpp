@@ -7,7 +7,7 @@
 
 #include <windows.h>
 
-#include <shim_utils.h>
+#include <psf_utils.h>
 #include <test_config.h>
 
 #include "paths.h"
@@ -62,7 +62,7 @@ int wmain(int argc, const wchar_t** argv)
             std::wcout << error_text() << L"ERROR: Full path is: " << error_info_text() << g_testFilePath.native() << L"\n";
             return ERROR_ASSERTION_FAILURE;
         }
-        else if (auto pkgPath = shims::current_package_path() / LR"(VFS\ProgramFilesX??)" / g_programFilesRelativeTestPath / L"file.txt";
+        else if (auto pkgPath = psf::current_package_path() / LR"(VFS\ProgramFilesX??)" / g_programFilesRelativeTestPath / L"file.txt";
             pkgPath.native().length() <= MAX_PATH)
         {
             std::wcout << error_text() << L"ERROR: Package-relative test file path is not longer than MAX_PATH\n";

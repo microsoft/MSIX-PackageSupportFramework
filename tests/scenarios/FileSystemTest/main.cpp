@@ -8,7 +8,7 @@
 #include <io.h>
 
 #include <known_folders.h>
-#include <shim_runtime.h>
+#include <psf_runtime.h>
 
 #include <test_config.h>
 
@@ -16,13 +16,13 @@
 
 void InitializeFolderMappings()
 {
-    g_packageRootPath = shims::current_package_path();
+    g_packageRootPath = psf::current_package_path();
     std::wcout << "Package Root: " << info_text() << g_packageRootPath.native() << "\n";
 
     auto initMapping = [](vfs_mapping& mapping, const KNOWNFOLDERID& knownFolder, const wchar_t* vfsRelativePath, const wchar_t* knownFolderRelativePath = nullptr)
     {
         mapping.package_path = g_packageRootPath / vfsRelativePath;
-        mapping.path = shims::known_folder(knownFolder);
+        mapping.path = psf::known_folder(knownFolder);
         if (knownFolderRelativePath)
         {
             mapping.path /= knownFolderRelativePath;

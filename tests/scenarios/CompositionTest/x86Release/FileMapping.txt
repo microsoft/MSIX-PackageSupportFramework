@@ -3,10 +3,10 @@
 "config.json" "config.json"
 
 "..\..\Win32\Release\CompositionTest.exe" "CompositionTest.exe"
-"..\..\..\Win32\Release\ShimLauncher32.exe" "ShimLauncher.exe"
-"..\..\..\Win32\Release\ShimRuntime32.dll" "ShimRuntime32.dll"
-"..\..\..\Win32\Release\CompositionTestShim32.dll" "CompositionTestShim32.dll"
-"..\..\..\Win32\Release\MultiByteToWideCharTestShim32.dll" "MultiByteToWideCharTestShim32.dll"
+"..\..\..\Win32\Release\PSFLauncher32.exe" "PSFLauncher.exe"
+"..\..\..\Win32\Release\PSFRuntime32.dll" "PSFRuntime32.dll"
+"..\..\..\Win32\Release\CompositionTestFixup32.dll" "CompositionTestFixup32.dll"
+"..\..\..\Win32\Release\MultiByteToWideCharTestFixup32.dll" "MultiByteToWideCharTestFixup32.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

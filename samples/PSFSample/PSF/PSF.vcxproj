@@ -44,8 +44,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <TargetName Condition="'$(Platform)'=='Win32'">ShimLauncher32</TargetName>
-    <TargetName Condition="'$(Platform)'=='x64'">ShimLauncher64</TargetName>
+    <TargetName Condition="'$(Platform)'=='Win32'">PsfLauncher32</TargetName>
+    <TargetName Condition="'$(Platform)'=='x64'">PsfLauncher64</TargetName>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\PSFSampleFixups\PSFSampleFixups.vcxproj">

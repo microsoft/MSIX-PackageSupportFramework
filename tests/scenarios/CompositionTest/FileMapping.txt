@@ -3,10 +3,10 @@
 "config.json" "config.json"
 
 "..\..\${Architecture}${Configuration}\CompositionTest.exe" "CompositionTest.exe"
-"..\..\..\${Architecture}${Configuration}\ShimLauncher${Bitness}.exe" "ShimLauncher.exe"
-"..\..\..\${Architecture}${Configuration}\ShimRuntime${Bitness}.dll" "ShimRuntime${Bitness}.dll"
-"..\..\..\${Architecture}${Configuration}\CompositionTestShim${Bitness}.dll" "CompositionTestShim${Bitness}.dll"
-"..\..\..\${Architecture}${Configuration}\MultiByteToWideCharTestShim${Bitness}.dll" "MultiByteToWideCharTestShim${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\PsfLauncher${Bitness}.exe" "PsfLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\PsfRuntime${Bitness}.dll" "PsfRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\CompositionTestFixup${Bitness}.dll" "CompositionTestFixup${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\MultiByteToWideCharTestFixup${Bitness}.dll" "MultiByteToWideCharTestFixup${Bitness}.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

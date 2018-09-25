@@ -10,7 +10,7 @@
 
 #include <windows.h>
 
-namespace shims
+namespace psf
 {
     template <typename CharT>
     inline constexpr bool is_path_separator(CharT ch)
@@ -96,7 +96,7 @@ namespace shims
     // Wrapper around GetFullPathName
     // NOTE: We prefer this over std::filesystem::absolute since it saves one allocation/copy in the best case and is
     //       equivalent in the worst case since there's no generic null-terminated-string overload. It also gives us
-    //       future flexibility to shim GetFullPathName, which is something that we can't control in the implementation
+    //       future flexibility to fixup GetFullPathName, which is something that we can't control in the implementation
     //       of the <filesystem> header
     template <typename CharT>
     inline std::basic_string<CharT> full_path(const CharT* path)

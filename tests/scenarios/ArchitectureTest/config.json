@@ -1,23 +1,23 @@
 {
     "applications": [
         {
-            "id": "Shimmed32",
+            "id": "Fixed32",
             "executable": "ArchitectureTest32.exe"
         },
         {
-            "id": "Shimmed64",
+            "id": "Fixed64",
             "executable": "ArchitectureTest64.exe"
         }
     ],
     "processes": [
         {
-            "executable": "ShimLauncher.*"
+            "executable": "PsfLauncher.*"
         },
         {
             "executable": ".*",
-            "shims": [
+            "fixups": [
                 {
-                    "dll": "MultiByteToWideCharTestShim.dll"
+                    "dll": "MultiByteToWideCharTestFixup.dll"
                 }
             ]
         }

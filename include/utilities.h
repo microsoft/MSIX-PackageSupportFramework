@@ -182,3 +182,44 @@ inline std::string narrow(std::string str, UINT = CP_UTF8)
 {
     return str;
 }
+
+// A convenience type to avoid a copy for already-wide function argument strings
+struct wide_argument_string
+{
+    const wchar_t* value = nullptr;
+    const wchar_t* c_str() const noexcept
+    {
+        return value;
+    }
+};
+
+struct wide_argument_string_with_buffer : wide_argument_string
+{
+    std::wstring buffer;
+
+    wide_argument_string_with_buffer() = default;
+    wide_argument_string_with_buffer(std::wstring str) :
+        buffer(std::move(str))
+    {
+        value = buffer.c_str();
+    }
+};
+
+inline wide_argument_string_with_buffer widen_argument(const char* str)
+{
+    if (str)
+    {
+        return wide_argument_string_with_buffer{ widen(str) };
+    }
+    else
+    {
+        // Calling widen with a null pointer will crash. Default constructed wide_argument_string_with_buffer will
+        // preserve the null argument
+        return wide_argument_string_with_buffer{};
+    }
+}
+
+inline wide_argument_string widen_argument(const wchar_t* str) noexcept
+{
+    return wide_argument_string{ str };
+}

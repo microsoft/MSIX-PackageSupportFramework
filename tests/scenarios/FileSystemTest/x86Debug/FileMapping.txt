@@ -3,9 +3,9 @@
 "config.json" "config.json"
 
 "..\..\Win32\Debug\FileSystemTest.exe" "FileSystemTest.exe"
-"..\..\..\Win32\Debug\ShimLauncher32.exe" "ShimLauncher.exe"
-"..\..\..\Win32\Debug\ShimRuntime32.dll" "ShimRuntime32.dll"
-"..\..\..\Win32\Debug\FileRedirectionShim32.dll" "FileRedirectionShim32.dll"
+"..\..\..\Win32\Debug\PSFLauncher32.exe" "PSFLauncher.exe"
+"..\..\..\Win32\Debug\PSFRuntime32.dll" "PSFRuntime32.dll"
+"..\..\..\Win32\Debug\FileRedirectionFixup32.dll" "FileRedirectionFixup32.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
