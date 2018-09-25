@@ -3,8 +3,8 @@
 "config.json" "config.json"
 
 "..\..\x64\Release\WorkingDirectoryTest.exe" "WorkingDirectoryTest.exe"
-"..\..\..\x64\Release\ShimLauncher64.exe" "ShimLauncher.exe"
-"..\..\..\x64\Release\ShimRuntime64.dll" "ShimRuntime64.dll"
+"..\..\..\x64\Release\PSFLauncher64.exe" "PSFLauncher.exe"
+"..\..\..\x64\Release\PSFRuntime64.dll" "PSFRuntime64.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

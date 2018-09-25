@@ -14,7 +14,7 @@
 
 #include "dos_paths.h"
 
-namespace shims
+namespace psf
 {
     struct cotaskmemfree_deleter
     {

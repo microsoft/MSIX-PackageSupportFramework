@@ -25,30 +25,30 @@
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
   <Applications>
-    <Application Id="UnShimmed64" Executable="ArchitectureTest64.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="UnFixed64" Executable="ArchitectureTest64.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements BackgroundColor="transparent"
-                          DisplayName="Architecture Test (Un-Shimmed x64)"
+                          DisplayName="Architecture Test (Un-Fixed x64)"
                           Square150x150Logo="Assets\Logo150x150.png"
                           Square44x44Logo="Assets\Logo44x44.png"
                           Description="No description entered" />
     </Application>
-    <Application Id="UnShimmed32" Executable="ArchitectureTest32.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="UnFixed32" Executable="ArchitectureTest32.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements BackgroundColor="transparent"
-                          DisplayName="Architecture Test (Un-Shimmed x86)"
+                          DisplayName="Architecture Test (Un-Fixed x86)"
                           Square150x150Logo="Assets\Logo150x150.png"
                           Square44x44Logo="Assets\Logo44x44.png"
                           Description="No description entered" />
     </Application>
-    <Application Id="Shimmed64" Executable="ShimLauncher32.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Fixed64" Executable="PsfLauncher32.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements BackgroundColor="transparent"
-                          DisplayName="Architecture Test (Shimmed x64)"
+                          DisplayName="Architecture Test (Fixed x64)"
                           Square150x150Logo="Assets\Logo150x150.png"
                           Square44x44Logo="Assets\Logo44x44.png"
                           Description="No description entered" />
     </Application>
-    <Application Id="Shimmed32" Executable="ShimLauncher64.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Fixed32" Executable="PsfLauncher64.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements BackgroundColor="transparent"
-                          DisplayName="Architecture Test (Shimmed x86)"
+                          DisplayName="Architecture Test (Fixed x86)"
                           Square150x150Logo="Assets\Logo150x150.png"
                           Square44x44Logo="Assets\Logo44x44.png"
                           Description="No description entered" />

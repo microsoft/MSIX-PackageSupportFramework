@@ -14,9 +14,9 @@
 #include "console_output.h"
 #include "offset_ptr.h"
 
-static constexpr wchar_t test_runner_pipe_name[] = LR"(\\.\pipe\CentennialShimsTests)";
+static constexpr wchar_t test_runner_pipe_name[] = LR"(\\.\pipe\CentennialFixupsTests)";
 
-using unique_handle = std::unique_ptr<void, shims::handle_deleter<::CloseHandle>>;
+using unique_handle = std::unique_ptr<void, psf::handle_deleter<::CloseHandle>>;
 
 inline unique_handle test_client_connect()
 {

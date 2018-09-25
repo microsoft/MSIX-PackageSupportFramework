@@ -1,7 +1,7 @@
 
 <#
 .DESCRIPTION
-    Replaces shim binaries in a package with the same binaries built locally. Note that this attempts to do so for both
+    Replaces fixup binaries in a package with the same binaries built locally. Note that this attempts to do so for both
     x86 and x64, so if files with the same name exist in both output paths, one will win, and it may not be the
     architecture that you desired. Also note that you must have permission to replace these files. You can run
     TakePackageOwnership.ps1 to give admin ownership. Both of these scripts must be run from an admin Powershell command

@@ -1,7 +1,7 @@
 
 $global:failedTests = 0
 
-$pfxPath = "$PSScriptRoot\scenarios\signing\CentennialShimsTestSigningCertificate.pfx"
+$pfxPath = "$PSScriptRoot\scenarios\signing\CentennialFixupsTestSigningCertificate.pfx"
 
 function RunTest($Arch, $Config)
 {

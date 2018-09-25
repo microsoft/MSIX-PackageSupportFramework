@@ -16,7 +16,7 @@ issues:
 	current working directory.  Instead, the system path is supplied, 
 	and this may cause errors for an app executable expecting to find 
 	files relative to its own location, via the current working directory.
-	The fix for this is simply to configure the config.json entry for
+	The fixup for this is simply to configure the config.json entry for
 	working_directory.
 2. Attempting to write to files in the package path, which is protected.
 	This issue may arise for apps which installed into a custom folder,
@@ -26,12 +26,12 @@ issues:
 	such writes to a suitable location such as the app's local cached 
 	data folder.
 
-This sample contains a single fixup DLL which shims two Win32 functions:
-1. MessageBoxWShim replaces the MessageBoxW caption with "Fixup Message".
+This sample contains a single fixup DLL which fixes two Win32 functions:
+1. MessageBoxWFixup replaces the MessageBoxW caption with "Fixup Message".
     This is demonstrated indirectly when the app calls MessageBox.Show,
     with the caption "App Message".
-2. CreateFileWShim monitors calls to CreateFileW that attempt to create
+2. CreateFileWFixup monitors calls to CreateFileW that attempt to create
     a file with extension "log".  When such an attempt is detected, the
-    shim redirects the path to the app's ApplicationData LocalCacheFolder.
+    fixup redirects the path to the app's ApplicationData LocalCacheFolder.
     Again, the app initiates this behavior indirectly with a call to 
     System.IO.File.CreateText.  

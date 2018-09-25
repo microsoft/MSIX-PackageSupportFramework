@@ -11,8 +11,8 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(PSFIncDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(Platform)'=='Win32'">%(AdditionalDependencies);$(PSFLibDir)ShimRuntime32.lib</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Platform)'=='x64'">%(AdditionalDependencies);$(PSFLibDir)ShimRuntime64.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='Win32'">%(AdditionalDependencies);$(PSFLibDir)PsfRuntime32.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Platform)'=='x64'">%(AdditionalDependencies);$(PSFLibDir)PsfRuntime64.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
@@ -22,11 +22,11 @@
     <PSFBinDir>$(MSBuildThisFileDirectory)..\..\bin\</PSFBinDir>
     <PSFRedistributables>
       $(PSFRedistributables);
-      $(PSFBinDir)\Shim*32.*;
+      $(PSFBinDir)\Fixup*32.*;
     </PSFRedistributables>
     <PSFRedistributables Condition="'$(Platform)'=='x64'">
       $(PSFRedistributables);
-      $(PSFBinDir)\Shim*64.*;
+      $(PSFBinDir)\Fixup*64.*;
     </PSFRedistributables>
     <BuildDependsOn>
       $(BuildDependsOn);
@@ -65,11 +65,11 @@
   which is set after importing psf.props and before importing all other targets.-->
   <Target Name="PSFValidateProject">
     <PropertyGroup>
-      <PSFTargetName Condition="'$(Platform)'=='Win32'">ShimLauncher32</PSFTargetName>
-      <PSFTargetName Condition="'$(Platform)'=='x64'">ShimLauncher64</PSFTargetName>
+      <PSFTargetName Condition="'$(Platform)'=='Win32'">PsfLauncher32</PSFTargetName>
+      <PSFTargetName Condition="'$(Platform)'=='x64'">PsfLauncher64</PSFTargetName>
     </PropertyGroup>
     <Error Condition="'$(TargetName)'!='$(PSFTargetName)'"
-        Text="Please set the PSF TargetName to ShimLauncher32 (Win32), ShimLauncher64 (x64)."/>
+        Text="Please set the PSF TargetName to PsfLauncher32 (Win32), PsfLauncher64 (x64)."/>
   </Target>
 
 </Project>

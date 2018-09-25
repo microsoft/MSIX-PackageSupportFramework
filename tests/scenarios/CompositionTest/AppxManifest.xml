@@ -25,16 +25,16 @@
         <rescap:Capability Name="runFullTrust" />
     </Capabilities>
     <Applications>
-        <Application Id="UnShimmed" Executable="CompositionTest.exe" EntryPoint="Windows.FullTrustApplication">
+        <Application Id="UnFixed" Executable="CompositionTest.exe" EntryPoint="Windows.FullTrustApplication">
             <uap:VisualElements BackgroundColor="transparent"
-                                DisplayName="Composition Test (Un-Shimmed)"
+                                DisplayName="Composition Test (Un-Fixed)"
                                 Square150x150Logo="Assets\Logo150x150.png"
                                 Square44x44Logo="Assets\Logo44x44.png"
                                 Description="No description entered" />
         </Application>
-        <Application Id="Shimmed" Executable="ShimLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+        <Application Id="Fixed" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
             <uap:VisualElements BackgroundColor="transparent"
-                                DisplayName="Composition Test (Shimmed)"
+                                DisplayName="Composition Test (Fixed)"
                                 Square150x150Logo="Assets\Logo150x150.png"
                                 Square44x44Logo="Assets\Logo44x44.png"
                                 Description="No description entered" />

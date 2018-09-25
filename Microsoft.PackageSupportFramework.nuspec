@@ -7,28 +7,28 @@
     <authors>Microsoft</authors>
     <owners>Microsoft, PSF Team</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Tools to build compatibility fixes for packaged desktop apps</description>
+    <description>Tools to build compatibility fixups for packaged desktop apps</description>
     <releaseNotes></releaseNotes>
-    <tags>native, PSF, shim, fixup, Centennial, Bridge</tags>
+    <tags>native, PSF, fixup, Centennial, Bridge</tags>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <licenseUrl>https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/Microsoft/MSIX-PackageSupportFramework</projectUrl>
   </metadata>
   <files>
     <file src="Microsoft.PackageSupportFramework.targets" target="build\native"/>
-    <file src="include\shim_config.h" target="include"/>
-    <file src="include\shim_framework.h" target="include"/>
-    <file src="include\shim_runtime.h" target="include"/>
-    <file src="include\shim_utils.h" target="include"/>
+    <file src="include\psf_config.h" target="include"/>
+    <file src="include\psf_framework.h" target="include"/>
+    <file src="include\psf_runtime.h" target="include"/>
+    <file src="include\psf_utils.h" target="include"/>
     <file src="include\utilities.h" target="include"/>
     <file src="include\win32_error.h" target="include"/>
-    <file src="*\Release\ShimRuntime*.lib" target="lib"/>
-    <file src="*\Release\ShimLauncher*.exe" target="bin"/>
-    <file src="*\Release\ShimRunDll*.exe" target="bin"/>
-    <file src="*\Release\ShimRuntime*.dll" target="bin"/>
-    <file src="*\Release\FileRedirectionShim*.dll" target="bin"/>
-    <file src="*\Release\TraceShim*.dll" target="bin"/>
-    <file src="*\Release\WaitForDebuggerShim*.dll" target="bin"/>
+    <file src="*\Release\PsfRuntime*.lib" target="lib"/>
+    <file src="*\Release\PsfLauncher*.exe" target="bin"/>
+    <file src="*\Release\PsfRunDll*.exe" target="bin"/>
+    <file src="*\Release\PsfRuntime*.dll" target="bin"/>
+    <file src="*\Release\FileRedirectionFixup*.dll" target="bin"/>
+    <file src="*\Release\TraceFixup*.dll" target="bin"/>
+    <file src="*\Release\WaitForDebuggerFixup*.dll" target="bin"/>
     <file src="readme.txt" target="" />
   </files>
 </package>

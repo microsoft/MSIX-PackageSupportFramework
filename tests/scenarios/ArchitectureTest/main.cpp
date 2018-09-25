@@ -37,10 +37,10 @@ int wmain(int argc, const wchar_t** argv)
         test_begin(name);
 
         // NOTE: trace_message will call MultiByteToWideChar if we give it a non-wide string, hence the duplication
-        //       below. Otherwise, we'll shim the message we're trying to print out!
+        //       below. Otherwise, we'll fix the message we're trying to print out!
         wchar_t buffer[256];
-        constexpr char inputMessage[] = "This message should have been shimmed";
-        trace_messages(L"Initial text: ", info_color, L"This message should have been shimmed", new_line);
+        constexpr char inputMessage[] = "This message should have been fixed";
+        trace_messages(L"Initial text: ", info_color, L"This message should have been fixed", new_line);
 
         auto size = ::MultiByteToWideChar(
             CP_ACP,
@@ -56,7 +56,7 @@ int wmain(int argc, const wchar_t** argv)
             buffer[size] = '\0';
             trace_messages(L"Result text: ", info_color, buffer, new_line);
 
-            constexpr wchar_t expectedOutputMessage[] = L"You've been shimmed!";
+            constexpr wchar_t expectedOutputMessage[] = L"You've been fixed!";
             if (std::wcsncmp(buffer, expectedOutputMessage, std::size(expectedOutputMessage) - 1) != 0)
             {
                 result = ERROR_ASSERTION_FAILURE;

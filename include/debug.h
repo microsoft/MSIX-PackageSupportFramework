@@ -7,7 +7,7 @@
 #include <thread>
 #include <windows.h>
 
-namespace shims
+namespace psf
 {
     inline void wait_for_debugger()
     {

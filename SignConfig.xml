@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <SignConfigXML>
   <job configuration="Release" dest="__OUTPATHROOT__" jobname="PSF" approvers="">
-    <file src="__INPATHROOT__\Win32\Release\ShimLauncher32.exe" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\ShimLauncher32.exe" />
-    <file src="__INPATHROOT__\Win32\Release\ShimRunDll32.exe" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\ShimRunDll32.exe" />
-    <file src="__INPATHROOT__\Win32\Release\ShimRuntime32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\ShimRuntime32.dll" />
-    <file src="__INPATHROOT__\Win32\Release\FileRedirectionShim32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\FileRedirectionShim32.dll" />
-    <file src="__INPATHROOT__\Win32\Release\TraceShim32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\TraceShim32.dll" />
-    <file src="__INPATHROOT__\Win32\Release\WaitForDebuggerShim32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\WaitForDebuggerShim32.dll" />
-    <file src="__INPATHROOT__\x64\Release\ShimLauncher64.exe" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\ShimLauncher64.exe" />
-    <file src="__INPATHROOT__\x64\Release\ShimRunDll64.exe" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\ShimRunDll64.exe" />
-    <file src="__INPATHROOT__\x64\Release\ShimRuntime64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\ShimRuntime64.dll" />
-    <file src="__INPATHROOT__\x64\Release\FileRedirectionShim64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\FileRedirectionShim64.dll" />
-    <file src="__INPATHROOT__\x64\Release\TraceShim64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\TraceShim64.dll" />
-    <file src="__INPATHROOT__\x64\Release\WaitForDebuggerShim64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\WaitForDebuggerShim64.dll" />
+    <file src="__INPATHROOT__\Win32\Release\PsfLauncher32.exe" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\PsfLauncher32.exe" />
+    <file src="__INPATHROOT__\Win32\Release\PsfRunDll32.exe" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\PsfRunDll32.exe" />
+    <file src="__INPATHROOT__\Win32\Release\PsfRuntime32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\PsfRuntime32.dll" />
+    <file src="__INPATHROOT__\Win32\Release\FileRedirectionFixup32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\FileRedirectionFixup32.dll" />
+    <file src="__INPATHROOT__\Win32\Release\TraceFixup32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\TraceFixup32.dll" />
+    <file src="__INPATHROOT__\Win32\Release\WaitForDebuggerFixup32.dll" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\WaitForDebuggerFixup32.dll" />
+    <file src="__INPATHROOT__\x64\Release\PsfLauncher64.exe" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\PsfLauncher64.exe" />
+    <file src="__INPATHROOT__\x64\Release\PsfRunDll64.exe" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\PsfRunDll64.exe" />
+    <file src="__INPATHROOT__\x64\Release\PsfRuntime64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\PsfRuntime64.dll" />
+    <file src="__INPATHROOT__\x64\Release\FileRedirectionFixup64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\FileRedirectionFixup64.dll" />
+    <file src="__INPATHROOT__\x64\Release\TraceFixup64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\TraceFixup64.dll" />
+    <file src="__INPATHROOT__\x64\Release\WaitForDebuggerFixup64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\WaitForDebuggerFixup64.dll" />
   </job>
 </SignConfigXML>

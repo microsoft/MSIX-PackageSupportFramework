@@ -12,14 +12,14 @@ To create a PSF solution from within Visual Studio:
 2. Add a project containing your classic Win32 target app requiring app-compat fixups
 3. Add a Visual C++ | Windows Desktop | DLL project for your fixup logic
    a. Add a reference to the PSF nuget package, to enable building with the PSF SDK 
-   b. Implement your fixup shim logic
+   b. Implement your fixup logic
 4. Add a Visual C++ | General | Empty project for your application entry point
    a. Add a PSF nuget package reference, to supply PSF redistributables 
    b. Add a project reference to your fixup DLL project(s), to include in the package
    c. Right-click the fixup DLL project reference node and open the property page
    d. Set the Copy Local property to True, and both Library Dependency properties to False
    e. Right-click the project node and open the property page
-   f. Under General, set the Target Name to ShimLauncher32 (Win32) and ShimLauncher64 (x64)
+   f. Under General, set the Target Name to PsfLauncher32 (Win32) and PsfLauncher64 (x64)
 5. Add a Visual C++ | Windows Universal | Windows Application Packaging project
    a. Add application references to both your target app (2) and the PSF redist (4)
    b. Right-click the PSF redist project and set it as the app entry point

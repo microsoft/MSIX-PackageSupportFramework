@@ -5,18 +5,18 @@
 //
 // Type that's useful to detect reentrancy. This can be useful at either global for function-static scope. Note however,
 // that either should be declared 'thread_local'. E.g. Use might look like:
-//      void FooShim()
+//      void FooFixup()
 //      {
-//          thread_local shims::reentrancy_guard reentrancyGuard;
+//          thread_local psf::reentrancy_guard reentrancyGuard;
 //          auto guard = reentrancyGuard.enter();
-//          if (guard) { /*shim code here*/ }
+//          if (guard) { /*fixup code here*/ }
 //          return FooImpl();
 //      }
 #pragma once
 
 #include <utility>
 
-namespace shims
+namespace psf
 {
     namespace details
     {

@@ -6,7 +6,7 @@
 
 #include <windows.h>
 
-namespace shims
+namespace psf
 {
     struct fancy_handle
     {

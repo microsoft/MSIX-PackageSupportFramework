@@ -61,8 +61,8 @@ int CreateFileTest(const vfs_mapping& mapping)
             return trace_last_error(L"Failed to open file");
         }
 
-        // NOTE: The non-shimmed version of this function has access to some of the folders (e.g. Common AppData), so
-        //       we may hit spurious failures if we try and run the shimmed test after the non-shimmed test, so try and
+        // NOTE: The non-fixed version of this function has access to some of the folders (e.g. Common AppData), so
+        //       we may hit spurious failures if we try and run the fixed test after the non-fixed test, so try and
         //       delete the file by its path. This is best effort
         ::CloseHandle(file);
         ::DeleteFileW(path.c_str());

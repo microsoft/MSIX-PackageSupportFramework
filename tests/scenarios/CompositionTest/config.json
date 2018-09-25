@@ -1,22 +1,22 @@
 {
     "applications": [
         {
-            "id": "Shimmed",
+            "id": "Fixed",
             "executable": "CompositionTest.exe"
         }
     ],
     "processes": [
         {
-            "executable": "ShimLauncher.*"
+            "executable": "PsfLauncher.*"
         },
         {
             "executable": ".*",
-            "shims": [
+            "fixups": [
                 {
-                    "dll": "MultiByteToWideCharTestShim.dll"
+                    "dll": "MultiByteToWideCharTestFixup.dll"
                 },
                 {
-                    "dll": "CompositionTestShim.dll"
+                    "dll": "CompositionTestFixup.dll"
                 }
             ]
         }

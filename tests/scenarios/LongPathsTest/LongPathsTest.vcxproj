@@ -26,14 +26,18 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="AppxManifest.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="config.json" />
     <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="paths.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="AppxManifest32.xml" />
+    <Xml Include="AppxManifest64.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config32.json" />
+    <None Include="config64.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
