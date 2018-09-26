@@ -22,11 +22,11 @@
     <PSFBinDir>$(MSBuildThisFileDirectory)..\..\bin\</PSFBinDir>
     <PSFRedistributables>
       $(PSFRedistributables);
-      $(PSFBinDir)\Fixup*32.*;
+      $(PSFBinDir)\PSF*32.*;
     </PSFRedistributables>
     <PSFRedistributables Condition="'$(Platform)'=='x64'">
       $(PSFRedistributables);
-      $(PSFBinDir)\Fixup*64.*;
+      $(PSFBinDir)\PSF*64.*;
     </PSFRedistributables>
     <BuildDependsOn>
       $(BuildDependsOn);

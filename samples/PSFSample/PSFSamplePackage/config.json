@@ -8,7 +8,7 @@
   ],
   "processes": [
     {
-      "executable": ".*PSFSample.*",
+      "executable": ".*",
       "fixups": [ { "dll": "PSFSampleFixups.dll" } ]
     }
   ]
