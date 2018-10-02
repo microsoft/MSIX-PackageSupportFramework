@@ -18,9 +18,7 @@ This project welcomes contributions and suggestions.  Most contributions require
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
 2. Make your changes in your private branch
-3. Create a Pull Request
-4. Target the main repo
-5. Submit your pull request
+3. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:master'
 
 When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
 
