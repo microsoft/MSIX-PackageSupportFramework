@@ -31,6 +31,8 @@ namespace TraceShimMonitor
         Dictionary<UInt64, string> _TKCBs = new Dictionary<UInt64, string>();
         public Object _TKCBsListLock = new object();
 
+        private int MAX_KCBS = 100000;
+
         private void KernelTraceInBackground_Start()
         {
             if (kerneleventbgw == null)
@@ -83,7 +85,7 @@ namespace TraceShimMonitor
                             {
                                 try
                                 {
-                                    if (_KCBs.Count < 10000)  // temp
+                                    if (_KCBs.Count < MAX_KCBS)  // temp
                                     {
                                         string olds = null;
                                         _KCBs.TryGetValue(k, out olds);
