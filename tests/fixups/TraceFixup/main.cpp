@@ -2,6 +2,8 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
+#pragma once
+#include <Windows.h>
 
 #include <debug.h>
 
@@ -10,6 +12,14 @@
 
 #include "Config.h"
 
+//////// Need to undefine Preprocessor definition for NONAMELESSUNION on this .cpp file only for this to work
+#define USETRACELOGGING
+#ifdef USETRACELOGGING
+#include <TraceLoggingProvider.h>
+#else
+#include <evntprov.h>
+#endif
+#include "Logging.h"
 using namespace std::literals;
 
 trace_method output_method = trace_method::output_debug_string;
@@ -24,6 +34,19 @@ static trace_level g_defaultTraceLevel = trace_level::unexpected_failures;
 static const psf::json_object* g_breakLevels = nullptr;
 static trace_level g_defaultBreakLevel = trace_level::ignore;
 
+
+
+// This handles event logging via ETW
+#ifdef USETRACELOGGING
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+	g_Log_ETW_ComponentProvider,
+	"Microsoft-Windows-PSFTrace",
+	(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
+#else
+REGHANDLE g_ETW_RegistrationHandle = NULL;
+static GUID g_ETW_ProviderGuid = { 0x61F777A1, 0x1E59, 0x4BFC, {0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0} };
+#endif
 static trace_level trace_level_from_configuration(std::string_view str, trace_level defaultLevel)
 {
     if (str == "always"sv)
@@ -130,6 +153,48 @@ result_configuration configured_result(function_type type, function_result resul
     return { impl(configured_trace_level(type)), impl(configured_break_level(type)) };
 }
 
+
+// Set up the ETW Provider
+void Log_ETW_Register()
+{
+	TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+}
+
+void Log_ETW_PostMsgA(const char * s)
+{
+	TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+		"TraceEvent",              // Event Name that should uniquely identify your event.
+		TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).
+}
+
+void Log_ETW_PostMsgOperationA(const char *operation, const char *inputs, const char *result, const char *outputs, const char *callingmodule, LARGE_INTEGER TickStart, LARGE_INTEGER TickEnd)
+{
+	TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+		"TraceEvent",              // Event Name that should uniquely identify your event.
+		TraceLoggingValue(operation, "Operation"),
+		TraceLoggingValue(inputs, "Inputs"),
+		TraceLoggingValue(result, "Result"),
+		TraceLoggingValue(outputs, "Outputs"),
+		TraceLoggingValue(callingmodule, "Caller"), 
+		TraceLoggingInt64(TickStart.QuadPart, "Start"),
+		TraceLoggingInt64(TickEnd.QuadPart, "End")
+	); // Field for your event in the form of (value, field name).
+}
+
+void Log_ETW_PostMsgW(const wchar_t * s)
+{
+	TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+		"TraceEvent",              // Event Name that should uniquely identify your event.
+		TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).
+
+}
+
+// Tear down the ETW Provider
+void Log_ETW_UnRegister()
+{
+	TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+}
+
 BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
     if (reason == DLL_PROCESS_ATTACH)
@@ -144,10 +209,17 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 if (methodStr == "printf"sv)
                 {
                     output_method = trace_method::printf;
+					Log("config traceMethod is printf");
                 }
-                else
-                {
+				else if (methodStr == "eventlog"sv)
+				{
+					output_method = trace_method::eventlog;
+					Log_ETW_Register();
+					Log("config traceMethod is eventlog");
+				}
+				else {
                     // Otherwise, use the default (OutputDebugString)
+					Log("config traceMethod is default");
                 }
             }
 

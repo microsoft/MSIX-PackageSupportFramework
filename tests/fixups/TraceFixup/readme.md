@@ -19,7 +19,7 @@ Since most of this fixup's usefulness comes from identifying what the _applicati
 {
     "dll": "TraceFixup.dll",
     "config": {
-        "traceMethod": "printf",
+        "traceMethod": "eventlog",
         "traceLevels": {
             "default": "allFailures"
         },
@@ -35,7 +35,7 @@ The fixup can be configured to trace calls in a variety of ways and in a variety
 
 | Property | Description |
 | -------- | ----------- |
-| `traceMethod` | Defines the method of tracing. This is expected to be a value of type `string`. Allowed values are:<br>`printf` - Uses `printf` (i.e. console output) for tracing.<br>`outputDebugString` - Uses `OutputDebugString` for tracing. This is the default. |
+| `traceMethod` | Defines the method of tracing. This is expected to be a value of type `string`. Allowed values are:<br>`printf` - Uses `printf` (i.e. console output) for tracing.<br>`eventlog` - Uses Event Trace for Windows to output events that may be consumed using PSFShimMonitor.<br>`outputDebugString` - Uses `OutputDebugString` for tracing. This is the default. |
 | `waitForDebugger` | Specifies whether or not to hold the process until a debugger is attached in the `DLL_PROCESS_ATTACH` callback. This is expected to be a value of type `boolean`. The default value is `false`. This option is most useful when `traceMethod` is set to `outputDebugString`. |
 | `traceFunctionEntry` | Specifies whether or not to trace function entry. This is useful when trying to reason about function call order and composition since functions are logged in the reverse order (see [Log Ordering](#log-ordering) for more information). This is expected to be a value of type `boolean`. The default value is `false`. Note that this logging is done independent of function success/failure and the `traceLevels` configuration since success/failure is not known at function entry. |
 | `traceCallingModule` | Defines whether or not to include the calling module in the output. This is expected to be a value of type `boolean`. The default value is `true`. This is potentially useful for identifying possible risks of recursion (one API implemented using another). There's no real harm with leaving this option always enabled, but can help reduce output noise when turned off. |
