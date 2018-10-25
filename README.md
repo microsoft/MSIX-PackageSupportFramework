@@ -18,9 +18,9 @@ This project welcomes contributions and suggestions.  Most contributions require
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
 2. Make your changes in your private branch
-3. Make sure to add the following Copyright statement for any new or edited file.\
+3. For new files that you are adding include the following Copyright statement.\
 //-------------------------------------------------------------------------------------------------------\
-// Copyright (C) Microsoft Corporation and contributors. All rights reserved.\
+// Copyright (c) #YOUR NAME#. All rights reserved.\
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.\
 //-------------------------------------------------------------------------------------------------------
 4. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:master'
