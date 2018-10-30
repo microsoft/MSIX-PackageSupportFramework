@@ -102,14 +102,15 @@ function CreateCert()
         $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
     }
 
+    $Password = ConvertTo-SecureString "CentennialFixupsTestSigning" -AsPlainText -Force
     if (-not (Test-Path "$certFile"))
     {
-        Export-PfxCertificate -Cert $cert -FilePath $certFile -ProtectTo "$env:UserName" | Out-Null
+        Export-PfxCertificate -Cert $cert -FilePath $certFile -Password $Password | Out-Null
     }
 
     if ($Install)
     {
-        Import-PfxCertificate -FilePath "$certFile" -CertStoreLocation "Cert:\LocalMachine\Root"
+        Import-PfxCertificate -FilePath "$certFile" -CertStoreLocation "Cert:\LocalMachine\Root" -Password $Password
     }
 }
 
