@@ -70,20 +70,28 @@ A possible `config.json` example would be:
 In this example, the configuration is directing the PsfLauncher to start PsfMonitor and then the referenced Primary App. PsfMonitor to be run using RunAs, followed by PrimaryApp once the monitoring app is stable. The root folder of the package is for the CurrentDirectory.  In the processes section of the example, the json further configures Trace Fixup to be injected into the Primary app, and that is to capture all levels of trace to the event log.
 
 
-| Array | key | Value |
+| Array | Key | Value |
 |-------|-----------|-------|
 | applications | id |  Use the value of the `Id` attribute of the `Application` element in the package manifest. |
 | applications | executable | The package-relative path to the executable that you want to start. In most cases, you can get this value from your package manifest file before you modify it. It's the value of the `Executable` attribute of the `Application` element. |
 | applications | workingDirectory | (Optional) A package-relative path to use as the working directory of the application that starts. If you don't set this value, the operating system uses the `System32` directory as the application's working directory. If you supply a value in the form of an empty string, it will use the directory of the referenced executable. |
-| applications | monitor | (Optional) If present, the monitor identifies a secondary program that is to be launched prior to starting the primary application.  A good example might be `PsfMonitor.exe`.  The monitor configuration consists of the following items:
-	`'executable'` - This is the name of the executable relative to the root of the package.
-	`'arguments'`  - This is a string containing any command line arguments that the monitor executable requires.
-	`'asadmin'` - This is a boolean (0 or 1) indicating if the executable needs to be launched as an admin.  To use this option you must mark the package with the RunAsAdministrator capability.  If the monitor executable has a manifest (internal or external) it is ignored.  If not expressed, this defaults to a 0.
-	`'wait'` - This is a boolean (0 or 1) indicating if the launcher should wait for the monitor program to exit prior to starting the primary application.  When not set, the launcher will WaitForInputIdle on the monitor before launching the primary application. This option is not normally used and defaults to 0. |
+| applications | monitor | (Optional) If present, the monitor identifies a secondary program that is to be launched prior to starting the primary application.  A good example might be `PsfMonitor.exe`.  The monitor configuration is further explained below.  |
 | processes | executable | In most cases, this will be the name of the `executable` configured above with the path and file extension removed. |
 | fixups | dll | Package-relative path to the fixup, .msix/.appx  to load. |
-| fixups | config | (Optional) Controls how the fixup dl behaves. The exact format of this value varies on a fixup-by-fixup basis as each fixup can interpret this "blob" as it wants. |
+| fixups | config | (Optional) Controls how the fixup dl behaves. The exact format of this value varies on a fixup-by-fixup basis as each fixup can interpret this "blob" as it wants.|
 
 The `applications`, `processes`, and `fixups` keys are arrays. That means that you can use the config.json file to specify more than one application, process, and fixup DLL.
+
+The optional monitor item has a further configuration consists of the following items:
+
+
+| Key | Value |
+|----------|-----|
+|`'executable'`|The name of the executable relative to the root of the package.|
+|`'arguments'`|A string containing any command line arguments that the monitor executable requires.|
+|`'asadmin'`|A boolean (0 or 1) indicating if the executable needs to be launched as an admin.  To use this option you must mark the package with the RunAsAdministrator capability.  If the monitor executable has a manifest (internal or external) it is ignored.  If not expressed, this defaults to a 0.|
+|`'wait'`|A boolean (0 or 1) indicating if the launcher should wait for the monitor program to exit prior to starting the primary application.  When not set, the launcher will WaitForInputIdle on the monitor before launching the primary application. This option is not normally used and defaults to 0.|
+
+
 
 
