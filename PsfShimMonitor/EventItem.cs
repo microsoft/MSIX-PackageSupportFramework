@@ -1,17 +1,13 @@
 ﻿//-------------------------------------------------------------------------------------------------------
-// Copyright (C) TMurgent Technologies. All rights reserved.path
+// Copyright (C) TMurgent Technologies. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 //
 // NOTE: Class to hold an event item sent from the PSF TraceShim vie ETW. This class is used for displaying data as part of a DataGrid.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace TraceShimMonitor
+namespace PsfMonitor
 {
     public class EventItem
     {
@@ -80,6 +76,37 @@ namespace TraceShimMonitor
 
         public string EventIsResultClass { get { return _EventIsResultClass; } set { _EventIsResultClass = value; } }
 
+        public EventItem(Microsoft.Diagnostics.Tracing.TraceEvent data, string inputs, string result, string outputs, string caller)
+        {
+            // CTOR Used for received kernel events
+            _Index = (int)data.EventIndex;
+            _Start = (int)data.TimeStampRelativeMSec;
+            _End = (int)data.TimeStampRelativeMSec;
+
+            if (data.TimeStamp != null)
+                _Timestamp = data.TimeStamp;
+            else
+                _Timestamp = DateTime.Now;
+            if (data.ProcessName != null && data.ProcessName.Length > 0)
+                _ProcessName = data.ProcessName;
+            else
+                _ProcessName = "unknown(" + data.ProcessID.ToString() + ")";
+            _ProcessID = data.ProcessID;
+            _ThreadID = data.ThreadID;
+            if (data.ProviderName != null)
+                _EventSource = data.ProviderName;
+            if (data.EventName != null)
+                _Event = data.EventName;
+            if (inputs != null)
+                _Inputs = inputs;
+            if (result != null)
+                _Result = result;
+            if (outputs != null)
+                _Outputs = outputs;
+            if (caller != null)
+                _Caller = caller;
+
+        }
         public EventItem(int index, Int64 start, Int64 end, DateTime timestamp, string processname, int processid, int threadid, string eventsource, string sevent, string inputs, string result, string outputs, string caller)
         {
             _Index = index;

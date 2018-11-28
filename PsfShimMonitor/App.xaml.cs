@@ -1,19 +1,13 @@
 ﻿//-------------------------------------------------------------------------------------------------------
-// Copyright (C) TMurgent Technologies. All rights reserved.path
+// Copyright (C) TMurgent Technologies. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 //
-// NOTE: TraceShimMonitor is a "procmon"-like display of events captured via the PSF TraceShim.
+// NOTE: PsfMonitor is a "procmon"-like display of events captured via the PSF TraceShim.
 
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
-namespace TraceShimMonitor
+namespace PsfMonitor
 {
     /// <summary>
     /// Interaction logic for App.xaml

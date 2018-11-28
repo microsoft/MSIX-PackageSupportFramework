@@ -1,37 +1,15 @@
 ﻿//-------------------------------------------------------------------------------------------------------
-// Copyright (C) TMurgent Technologies. All rights reserved.path
+// Copyright (C) TMurgent Technologies. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 //
-// NOTE: TraceShimMonitor is a "procmon"-like display of events captured via the PSF TraceShim.
+// NOTE: PsfMonitor is a "procmon"-like display of events captured via the PSF TraceShim.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-
-using Microsoft.Diagnostics.Tracing;  // consumer
-using Microsoft.Diagnostics.Tracing.Session; // controller
-using Microsoft.Diagnostics.Tracing.Parsers;
-using System.ComponentModel;  // backgroundworker
-using System.Threading;
-using System.Collections.ObjectModel;  // ObservableCollection
-
-//using System.Security.Principal;  // checkifadmin
-using System.Diagnostics;   //debugPrivs
 using System.Runtime.InteropServices;  // debugprivs
 
-namespace TraceShimMonitor
+namespace PsfMonitor
 {
 
     public partial class MainWindow : Window
@@ -50,16 +28,12 @@ namespace TraceShimMonitor
             public int PrivilegeCount;
         }
 
-        //[DllImport("advapi32.dll", SetLastError = true)]
-        //private static extern bool LogonUser(string username, string domainname, string password, int logontype, int logonprovider, ref IntPtr token);
-
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern int OpenProcessToken(
                                         System.IntPtr ProcessHandle, // handle to process
                                         int DesiredAccess, // desired access to process
                                         ref IntPtr TokenHandle // handle to open access token
                                         );
-
 
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public extern static int LookupPrivilegeValue(string lpsystemname, string lpname, [MarshalAs(UnmanagedType.Struct)] ref LUID lpLuid);
@@ -107,8 +81,8 @@ namespace TraceShimMonitor
                 CloseHandle(hToken);
             }
             else
-                MessageBox.Show("no curr proc", "Debug")
-;        } // RaiseDebug
+                MessageBox.Show("no curr proc", "Debug");
+        } // RaiseDebug
 
     }
 

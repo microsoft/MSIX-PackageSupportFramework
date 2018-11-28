@@ -1,11 +1,11 @@
-﻿<Window x:Class="TraceShimMonitor.MainWindow"
+﻿<Window x:Class="PsfMonitor.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TraceShimMonitor"
+        xmlns:local="clr-namespace:PsfMonitor"
         mc:Ignorable="d"
-        Title="PSF TraceShimMonitor" Height="450" Width="1200">
+        Title="PSF Monitor" Height="450" Width="1200">
     
     <Window.Resources>
         <ResourceDictionary>
@@ -162,32 +162,6 @@
                     </ContextMenu>
                 </Button.ContextMenu>
             </Button>
-            <!--            <Grid Grid.Column="4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="70"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Label  Grid.Column="0" Content="Show " Foreground="{StaticResource ChromeText}" Margin="5,-2,1,4" FontSize="10" FontWeight="Bold" HorizontalContentAlignment="Right"/>
-                <Label  Grid.Column="0" Content="Events:" Foreground="{StaticResource ChromeText}" Margin="5,8,1,1" FontSize="10" FontWeight="Bold" HorizontalContentAlignment="Right"/>
-                <CheckBox Grid.Column="1" Name="cbCatFile" Content="Files"  Foreground="{StaticResource ChromeText}" Margin="5,7,5 4" IsThreeState="False"
-                      Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
-                <CheckBox Grid.Column="2" Name="cbCatReg" Content="Registry" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
-                <CheckBox Grid.Column="3" Name="cbCatProcess" Content="Process" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
-                <CheckBox Grid.Column="4" Name="cbCatDll" Content="Dlls" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
-                <CheckBox Grid.Column="5" Name="cbCatWinternl" Content="NTxxx" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
-                <CheckBox Grid.Column="6" Name="cbCatOther" Content="Other" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
-            </Grid>
--->
 
             <Button Grid.Column="5" Name="bResults" Content="Results"  Click="bResults_Click" Style="{StaticResource ButtonMenu}"  >
                 <Button.ContextMenu>
@@ -221,32 +195,7 @@
                     </ContextMenu>
                 </Button.ContextMenu>
             </Button>
-            <!--
-            <Grid Grid.Column="5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="70"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Label  Grid.Column="0" Content="Show " Foreground="{StaticResource ChromeText}" Margin="5,-2,1,4" FontSize="10" FontWeight="Bold" HorizontalContentAlignment="Right"/>
-                <Label  Grid.Column="0" Content="Results:" Foreground="{StaticResource ChromeText}" Margin="5,8,1,1" FontSize="10" FontWeight="Bold" HorizontalContentAlignment="Right"/>
-                <CheckBox Grid.Column="1" Name="cbSuccesss" Content="Success"  Foreground="{StaticResource ChromeText}" Margin="5,7,5 4" IsThreeState="False"
-                      Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True"/>
-                <CheckBox Grid.Column="2" Name="cbIntermediate" Content="Intermediate" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True"/>
-                <CheckBox Grid.Column="3" Name="cbExpectedFailure" Content="Expected Failure" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True"/>
-                <CheckBox Grid.Column="4" Name="cbFailure" Content="Failure" Foreground="{StaticResource ChromeText}" Margin="5,7,5,4" IsThreeState="False"
-                      Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True"/>
-            </Grid>
-                -->
         </Grid>
-        <!--
-        <ScrollContentPresenter Grid.Row="1" CanContentScroll="True" >
-            <ScrollContentPresenter.Content>
-        -->
         <DataGrid Name="EventsGrid" ItemsSource="{Binding}" 
                   Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                    AlternatingRowBackground="#E0E8E0" AlternationCount="2"
@@ -384,10 +333,6 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <!--
-            </ScrollContentPresenter.Content>
-        </ScrollContentPresenter>
-        -->
 
         <Grid  Grid.Row="2" Background="{StaticResource ChromeBackground}">
             <Grid.ColumnDefinitions>

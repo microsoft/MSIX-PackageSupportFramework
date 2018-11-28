@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TraceShimMonitor.Properties
+namespace PsfMonitor.Properties
 {
 
 

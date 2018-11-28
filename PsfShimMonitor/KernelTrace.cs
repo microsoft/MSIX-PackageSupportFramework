@@ -1,9 +1,9 @@
 ﻿//-------------------------------------------------------------------------------------------------------
-// Copyright (C) TMurgent Technologies. All rights reserved.path
+// Copyright (C) TMurgent Technologies. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 //
-// NOTE: TraceShimMonitor is a "procmon"-like display of events captured via the PSF TraceShim.
+// NOTE: PsfMonitor is a "procmon"-like display of events captured via the PSF TraceShim.
 
 using Microsoft.Diagnostics.Tracing;  // consumer
 using Microsoft.Diagnostics.Tracing.Parsers;
@@ -15,7 +15,7 @@ using System.Windows;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;  // ObservableCollection
 
-namespace TraceShimMonitor
+namespace PsfMonitor
 {
     public partial class MainWindow : Window
     {
@@ -42,14 +42,7 @@ namespace TraceShimMonitor
             else
                 kerneleventbgw = new BackgroundWorker();
 
-            try
-            {
-                /////RaiseDebug();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Exception Debug - TraceShimMonitor");
-            }
+
 
             // Do processing in the background
             kerneleventbgw.WorkerSupportsCancellation = true;
@@ -200,6 +193,7 @@ namespace TraceShimMonitor
                 }
                 catch (Exception ex)
                 {
+                    ;
                 }
                 if (!restarted)
                 {
@@ -242,19 +236,7 @@ namespace TraceShimMonitor
                                                  string outputs = "ProcessID=\t" + data.PayloadStringByName("ProcessID");
                                                  outputs += "\nUniqueProcessKey=\t" + data.PayloadStringByName("UniqueProcessKey");
 
-                                                 EventItem ei = new EventItem((int)data.EventIndex,
-                                                                              (int)data.TimeStampRelativeMSec,
-                                                                              (int)data.TimeStampRelativeMSec,
-                                                                              data.TimeStamp,
-                                                                              data.ProcessName, data.ProcessID,
-                                                                              data.ThreadID,
-                                                                              data.ProviderName,
-                                                                              data.EventName,
-                                                                              inputs,
-                                                                              "",   // No result codes on kernel events
-                                                                              outputs,
-                                                                              ""
-                                                               );
+                                                 EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                  lock (_TKernelEventListsLock)
                                                  {
                                                      _TKernelEventListItems.Add(ei);
@@ -276,20 +258,7 @@ namespace TraceShimMonitor
 
                                                  string outputs = "ExitStatus=\t" + data.PayloadStringByName("ExitStatus");
 
-                                                 EventItem ei = new EventItem((int)data.EventIndex,
-                                                                              (int)data.TimeStampRelativeMSec,
-                                                                              (int)data.TimeStampRelativeMSec,
-                                                                              data.TimeStamp,
-                                                                              data.ProcessName,
-                                                                              data.ProcessID,
-                                                                              data.ThreadID,
-                                                                              data.ProviderName,
-                                                                              data.EventName,
-                                                                              inputs,
-                                                                              "",   // No result codes on kernel events
-                                                                              outputs,
-                                                                              ""
-                                                               );
+                                                 EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                  lock (_TKernelEventListsLock)
                                                  {
                                                      _TKernelEventListItems.Add(ei);
@@ -309,20 +278,7 @@ namespace TraceShimMonitor
                                                  string inputs = "FileName=  \t" + data.PayloadStringByName("FileName");
                                                  string outputs = "";
 
-                                                 EventItem ei = new EventItem((int)data.EventIndex,
-                                                                              (int)data.TimeStampRelativeMSec,
-                                                                              (int)data.TimeStampRelativeMSec,
-                                                                              data.TimeStamp,
-                                                                              data.ProcessName,
-                                                                              data.ProcessID,
-                                                                              data.ThreadID,
-                                                                              data.ProviderName,
-                                                                              data.EventName,
-                                                                              inputs,
-                                                                              "",   // No result codes on kernel events
-                                                                              outputs,
-                                                                              ""
-                                                               );
+                                                 EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                  lock (_TKernelEventListsLock)
                                                  {
                                                      _TKernelEventListItems.Add(ei);
@@ -364,20 +320,7 @@ namespace TraceShimMonitor
                                                          string outputs = "FileObject=\t0x" + ((ulong)data.PayloadByName("FileObject")).ToString("x");
                                                          outputs += "\nIrpPtr=    \t0x" + ((ulong)data.PayloadByName("IrpPtr")).ToString("x");
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",  // No result codes on kernel events
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -415,20 +358,8 @@ namespace TraceShimMonitor
 
                                                          string outputs = "FileObject=\t0x" + ((ulong)data.PayloadByName("FileObject")).ToString("x");
                                                          outputs += "\nIrpPtr=    \t0x" + ((ulong)data.PayloadByName("IrpPtr")).ToString("x");
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "" );
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -455,20 +386,7 @@ namespace TraceShimMonitor
                                                          string inputs = "FileName=   \t" + data.PayloadStringByName("FileName");
                                                          string outputs = "FileKey=   \t0x" + ((ulong)data.PayloadByName("FileKey")).ToString("x");
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",  // TODO: where is the result code?
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -501,20 +419,7 @@ namespace TraceShimMonitor
                                                          string outputs = "FileObject=  \t0x" + ((ulong)data.PayloadByName("FileObject")).ToString("x");
 
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",  // TODO: where is the result code?
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -547,20 +452,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nIoSize=     \t0x" + ((int)data.PayloadByName("IoSize")).ToString("x");
                                                          string outputs = "";
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",  // TODO: where is the result code?
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -590,20 +482,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nFileKey=    \t0x" + ((ulong)data.PayloadByName("FileKey")).ToString("x");
                                                          string outputs = "";
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",  // TODO: where is the result code?
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -633,20 +512,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nFileKey=   \t0x" + ((ulong)data.PayloadByName("FileKey")).ToString("x");
 
                                                          string outputs = "";
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -675,20 +541,7 @@ namespace TraceShimMonitor
 
                                                          string outputs = "NtStatus= \t0x" + ((int)data.PayloadByName("NtStatus")).ToString("x");
                                                          outputs += "\nExtraInfo=    \t0x" + ((ulong)data.PayloadByName("ExtraInfo")).ToString("x");
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -722,20 +575,8 @@ namespace TraceShimMonitor
                                                          outputs += "\nFileIndex= \t0x" + ((int)data.PayloadByName("FileIndex")).ToString("x");
                                                          outputs += "\nLength=    \t0x" + ((int)data.PayloadByName("Length")).ToString("x");
                                                          outputs += "\nInfoClass= \t0x" + ((int)data.PayloadByName("InfoClass")).ToString("x");
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -768,20 +609,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nFileName=   \t" + data.PayloadStringByName("FileName");
 
                                                          string outputs = "";
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -813,20 +641,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nFileName=   \t" + data.PayloadStringByName("FileName");
 
                                                          string outputs = ""; 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -855,20 +670,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nFileName=   \t" + data.PayloadStringByName("FileName");
 
                                                          string outputs = "";
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -897,20 +699,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nFileName=   \t" + data.PayloadStringByName("FileName");
 
                                                          string outputs = "";
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -941,20 +730,7 @@ namespace TraceShimMonitor
                                                          inputs += "\nFileName= \t" + data.PayloadStringByName("FileName");
 
                                                          string outputs = "";
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          (int)data.TimeStampRelativeMSec,
-                                                                                          data.TimeStamp,
-                                                                                          data.ProcessName,
-                                                                                          data.ProcessID,
-                                                                                          data.ThreadID,
-                                                                                          data.ProviderName,
-                                                                                          data.EventName,
-                                                                                          inputs,
-                                                                                          "",   // No result codes on kernel events
-                                                                                          outputs,
-                                                                                          ""
-                                                                );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -1034,20 +810,7 @@ namespace TraceShimMonitor
                                                          outputs += "\nValueName=\t" + data.PayloadStringByName("ValueName");
                                                          outputs += "\nElapsedTimeMS=\t" + ((double)data.PayloadByName("ElapsedTimeMSec")).ToString();
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",   // No result codes on kernel events
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -1073,20 +836,7 @@ namespace TraceShimMonitor
                                                                    "\nValueName=\t" + data.PayloadStringByName("ValueName");
                                                      string outputs = "Status=" + data.PayloadStringByName("Status");
 
-                                                     EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                     (int)data.TimeStampRelativeMSec,
-                                                                                     (int)data.TimeStampRelativeMSec,
-                                                                                     data.TimeStamp,
-                                                                                     data.ProcessName,
-                                                                                     data.ProcessID,
-                                                                                     data.ThreadID,
-                                                                                     data.ProviderName,
-                                                                                     data.EventName,
-                                                                                     inputs,
-                                                                                     "",   // No result codes on kernel events
-                                                                                     outputs,
-                                                                                     ""
-                                                           );
+                                                     EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                      lock (_TKernelEventListsLock)
                                                      {
                                                          _TKernelEventListItems.Add(ei);
@@ -1098,7 +848,6 @@ namespace TraceShimMonitor
 
                                          else if (data.EventName.StartsWith("EventTrace"))
                                          {
-                                             //MainWindow.DumpToTextLog(29, "ETWTraceInBackground_DoWork_ProcsKernel: newtype=" + data.EventName);
                                              // EventTrace/Extension
                                              // EventTrace/EndExtension
                                              // EventTrace/RundownComplete  // end of a previously running process
@@ -1139,20 +888,7 @@ namespace TraceShimMonitor
                                                          outputs += "\nDiskServiceTimeMS=\t" + data.PayloadStringByName("DiskServiceTimeMSec");
 
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",  // TODO: where is the result code?
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -1193,20 +929,7 @@ namespace TraceShimMonitor
                                                          outputs += "\nDiskServiceTimeMS=\t" + data.PayloadStringByName("DiskServiceTimeMSec");
 
 
-                                                         EventItem ei = new EventItem((int)data.EventIndex,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         (int)data.TimeStampRelativeMSec,
-                                                                                         data.TimeStamp,
-                                                                                         data.ProcessName,
-                                                                                         data.ProcessID,
-                                                                                         data.ThreadID,
-                                                                                         data.ProviderName,
-                                                                                         data.EventName,
-                                                                                         inputs,
-                                                                                         "",  // TODO: where is the result code?
-                                                                                         outputs,
-                                                                                         ""
-                                                               );
+                                                         EventItem ei = new EventItem(data, inputs, "", outputs, "");
                                                          lock (_TKernelEventListsLock)
                                                          {
                                                              _TKernelEventListItems.Add(ei);
@@ -1254,7 +977,6 @@ namespace TraceShimMonitor
                                      }
                                      else
                                      {
-                                         //MainWindow.DumpToTextLog(29, "ETWTraceInBackground_DoWork_ProcsKernel: Newtype=" + data.EventName);
                                          //[Process,Thread,Image]/DCStart  : THese are associated with previously running processes.
                                          if (data.EventName.StartsWith("Image/DC"))
                                          {
