@@ -9,6 +9,14 @@ See the readme.md for PsfLauncher for documentation on how to use PsfLauncher in
 The PsfLauncher documentation shows how to integrate the monitor inside your package and have it automatically run when you start the application to be traced.
 You may, however, run PSF Monitor externally from your package as long as the package is configured with the TraceFixup shim.
 
+Psf Monitor has no command line arguments at this time.
+
+Psf Monitor will capture ETW Events from two sources:
+1. Executables shimmed with TraceFixup will emit events for many of the Windows APIs used for process, file, and registry access.  These events are mostly focused on APIs where modification, likely using FileRedirectionFixup, would be performed.  These events generally can come from two levels, Kernel32 function (like CreateFile) and Ntdll (like NTCreateFile). Generally Win32Apps call Kernel32 functions, which in turn call the Ntdll couterpart, but .Net based apps generally (but not always) bypass the Kernel32 functions.
+2. All Registry and File access from inbox debug events generated within the OS kernel.  All of the kernel level events are captured until the tool sees a TraceFixup based event; after that the kernel events are excluded except for those with the same process id seen in the TraceFixup event.
+
+Display filters are controlled via the GUI interface of the tool. These filters affect the display and not the capture.  Rudimentary search capability is also provided; the search looks at strings in all fields from the events.
+
 
 ## [License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE)
 Code licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE).
