@@ -38,15 +38,14 @@ A possible `config.json` example would be:
 	"applications": [
 	{
 		"id": "PSFLAUNCHERSixFour",
-      		"executable": "PrimaryApp.exe",
-      		"workingDirectory": "",
-      		"monitor": {
-			"executable": "PsfMonitor.exe",
-			"arguments": "",
-			"asadmin": true,
-        		"wait": false
-      		}
-    	}
+      	"executable": "PrimaryApp.exe",
+      	"workingDirectory": "",
+      	"monitor": {
+		"executable": "PsfMonitor.exe",
+		"arguments": "",
+		"asadmin": true,
+        "wait": false
+   	}
   	],
 	"processes": [
 	{
@@ -86,4 +85,14 @@ In this example, the configuration is directing the PsfLauncher to start PsfMoni
 
 The `applications`, `processes`, and `fixups` keys are arrays. That means that you can use the config.json file to specify more than one application, process, and fixup DLL.
 
+=======
+Submit your own fixup(s) to the community:
+1. Create a private fork for yourself
+2. Make your changes in your private branch
+3. For new files that you are adding include the following Copyright statement.\
+//-------------------------------------------------------------------------------------------------------\
+// Copyright (c) #YOUR NAME#. All rights reserved.\
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.\
+//-------------------------------------------------------------------------------------------------------
+4. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:master'
 
