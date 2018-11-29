@@ -38,15 +38,14 @@ A possible `config.json` example would be:
 	"applications": [
 	{
 		"id": "PSFLAUNCHERSixFour",
-      		"executable": "PrimaryApp.exe",
-      		"workingDirectory": "",
-      		"monitor": {
-			"executable": "PsfMonitor.exe",
-			"arguments": "",
-			"asadmin": true,
-        		"wait": false
-      		}
-    	}
+      	"executable": "PrimaryApp.exe",
+      	"workingDirectory": "",
+      	"monitor": {
+		"executable": "PsfMonitor.exe",
+		"arguments": "",
+		"asadmin": true,
+        "wait": false
+   	}
   	],
 	"processes": [
 	{
