@@ -1,5 +1,5 @@
 # PSF Monitor
-This sub-project provides for a Graphical User Interface tool, in the style of ProcessMonitor, that integrates events output by TraceFixup with those of kerenel level tracing.
+This sub-project provides for a Graphical User Interface tool, in the style of ProcessMonitor, that integrates events output by TraceFixup with those of kernel level tracing.
 
 Used in conjuction with an application launched by PsfLauncher and the TraceFixup dll configured to output events, this makes it easier to trace the application calls that may ultimately require fixups.
 
