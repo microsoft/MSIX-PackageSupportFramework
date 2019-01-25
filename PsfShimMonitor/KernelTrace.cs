@@ -19,7 +19,7 @@ namespace PsfMonitor
 {
     public partial class MainWindow : Window
     {
-        public TraceEventSession myTraceEventSession_ProcsKernel = null;
+        public TraceEventSession TraceEventSession_ProcsKernel = null;
         public bool rememberToDisableSession_ProcsKernel = false;
         public bool PleaseStopCollecting = false;
         public int FilterOnProcessId = -1;
@@ -171,13 +171,13 @@ namespace PsfMonitor
         void EnableKernelTrace(BackgroundWorker worker)
         {
             TSM_ProcID = System.Diagnostics.Process.GetCurrentProcess().Id;
-            using (myTraceEventSession_ProcsKernel = new TraceEventSession(KernelTraceEventParser.KernelSessionName))
+            using (TraceEventSession_ProcsKernel = new TraceEventSession(KernelTraceEventParser.KernelSessionName))
             {
                 bool restarted = false;
-                myTraceEventSession_ProcsKernel.StopOnDispose = true;
+                TraceEventSession_ProcsKernel.StopOnDispose = true;
                 try
                 {
-                    restarted = myTraceEventSession_ProcsKernel.EnableKernelProvider(   KernelTraceEventParser.Keywords.FileIOInit
+                    restarted = TraceEventSession_ProcsKernel.EnableKernelProvider(   KernelTraceEventParser.Keywords.FileIOInit
                                                                                       | KernelTraceEventParser.Keywords.FileIO
                                                                                       | KernelTraceEventParser.Keywords.Registry
                                                                                       | KernelTraceEventParser.Keywords.ImageLoad
@@ -201,7 +201,7 @@ namespace PsfMonitor
                 }
                 try
                 {
-                    myTraceEventSession_ProcsKernel.Source.Kernel.All +=
+                    TraceEventSession_ProcsKernel.Source.Kernel.All +=
                          delegate (TraceEvent data)
                          {
                              if (!PleaseStopCollecting &&
@@ -995,7 +995,7 @@ namespace PsfMonitor
                 {
                     ;
                 }
-                myTraceEventSession_ProcsKernel.Source.Process();   // note: this call is sychronous
+                TraceEventSession_ProcsKernel.Source.Process();   // note: this call is sychronous
             }
         }
 
@@ -1012,11 +1012,11 @@ namespace PsfMonitor
             catch { }
             try
             {
-                if (myTraceEventSession_ProcsKernel != null)
+                if (TraceEventSession_ProcsKernel != null)
                 {
-                    myTraceEventSession_ProcsKernel.Source.StopProcessing();
-                    myTraceEventSession_ProcsKernel.Source.Dispose();
-                    myTraceEventSession_ProcsKernel = null;
+                    TraceEventSession_ProcsKernel.Source.StopProcessing();
+                    TraceEventSession_ProcsKernel.Source.Dispose();
+                    TraceEventSession_ProcsKernel = null;
                 }
             }
             catch { }
