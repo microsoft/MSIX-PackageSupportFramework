@@ -540,7 +540,7 @@ PSFAPI void __stdcall PSFReportError(const wchar_t* error) noexcept
         OutputDebugStringW(L"\n");
         DebugBreak();
     }
-    else
+    else 
     {
         MessageBoxW(NULL, error, L"Package Support Framework", MB_OK);
     }
