@@ -78,7 +78,7 @@ namespace PsfMonitor
                             {
                                 try
                                 {
-                                    if (_KernelControlBlocks.Count < MAX_KernelControlBlocks)  // temp
+                                    if (_KernelControlBlocks.Count < MAX_KernelControlBlocks)  
                                     {
                                         string olds = null;
                                         _KernelControlBlocks.TryGetValue(k, out olds);
@@ -1319,7 +1319,7 @@ namespace PsfMonitor
                     s = "Expected Failure ()";
                     break;
                 case 3:   // ERROR_PATH_NOT_FOUND:
-                    s = "Expected Failure (ERROR_FILE_NOT_FOUND)";
+                    s = "Expected Failure (ERROR_PATH_NOT_FOUND)";
                     break;
                 case 123: // ERROR_INVALID_NAME:
                     s = "Expected Failure (ERROR_INVALID_NAME)";
