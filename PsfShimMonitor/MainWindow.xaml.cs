@@ -50,6 +50,8 @@ namespace PsfMonitor
         public string LastSearchString = "";
         public List<int> ProcIDsOfTarget = new List<int>();
 
+        public const string ProgramTitle = "PSFMonitor";
+        public const string UnexpectedErrorPrompt = "An unexpected error had occurred. Click Cancel to close program";
 
         public MainWindow()
         {
@@ -76,7 +78,11 @@ namespace PsfMonitor
                     eventbgw = null;
                 }
             }
-            catch { }
+            catch
+            {
+                // this is code attempting to clean up.  It should be allowed to continue to do so or a second launch
+                // may have issues.
+            }
             try
             {
                 if (myTraceEventSession != null)
@@ -87,8 +93,11 @@ namespace PsfMonitor
                     myTraceEventSession = null;
                 }
             }
-            catch { }
-
+            catch
+            {
+                // this is code attempting to clean up.  It should be allowed to continue to do so or a second launch
+                // may have issues.
+            }
             DisableKernelTrace();
         }
 
@@ -142,45 +151,69 @@ namespace PsfMonitor
                     {
                         operation = (string)data.PayloadByName("Operation");
                     }
-                    catch { }
+                    catch
+                    {
+                        // expected possible condition
+                    }
                     try
                     {
                         inputs = (string)data.PayloadByName("Inputs");
                     }
-                    catch { }
+                    catch
+                    {
+                        // expected possible condition
+                    }
                     try
                     {
                         result = (string)data.PayloadByName("Result");
                     }
-                    catch { }
+                    catch
+                    {
+                        // expected possible condition
+                    }
                     try
                     {
                         outputs = (string)data.PayloadByName("Outputs");
                     }
-                    catch { }
+                    catch
+                    {
+                        // expected possible condition
+                    }
                     try
                     {
                         caller = (string)data.PayloadByName("Caller");
                     }
-                    catch { }
+                    catch
+                    {
+                        // expected possible condition
+                    }
                     if (inputs == null && result == null && outputs == null)
                     {
                         try
                         {
                             outputs = (string)data.PayloadByName("Message");
                         }
-                        catch { }
+                        catch
+                        {
+                            // expected possible condition
+                        }
                     }
                     try
                     {
                         start = (Int64)data.PayloadByName("Start");
                     }
-                    catch { }
+                    catch
+                    {
+                        // expected possible condition
+                    }
                     try
                     {
                         end = (Int64)data.PayloadByName("End");
                     }
-                    catch { }
+                    catch
+                    {
+                        // expected possible condition
+                    }
                     EventItem ei = new EventItem((int)data.EventIndex,
                                                     start,
                                                     end,
@@ -611,9 +644,12 @@ namespace PsfMonitor
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                ;
+                if (MessageBox.Show(UnexpectedErrorPrompt, ProgramTitle, MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
         private void Cb_Event_Checked_or_Unchecked(object sender, RoutedEventArgs e)
@@ -636,9 +672,12 @@ namespace PsfMonitor
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                ;
+                if (MessageBox.Show(UnexpectedErrorPrompt, ProgramTitle, MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
 
@@ -657,9 +696,12 @@ namespace PsfMonitor
                 LastSearchIndex = -1;
                 LastSearchString = "";
             }
-            catch
+            catch (Exception ex)
             {
-                ;
+                if (MessageBox.Show(UnexpectedErrorPrompt, ProgramTitle, MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
 
@@ -761,9 +803,12 @@ namespace PsfMonitor
                 LastSearchIndex = nextfound;
                 LastSearchString = search;
             }
-            catch
+            catch (Exception ex)
             {
-                ;
+                if (MessageBox.Show(UnexpectedErrorPrompt, ProgramTitle, MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
 
@@ -777,9 +822,12 @@ namespace PsfMonitor
                 ColumnSelector popup = new ColumnSelector(EventsGrid);
                 popup.ShowDialog();
             }
-            catch
+            catch (Exception ex)
             {
-                ;
+                if (MessageBox.Show(UnexpectedErrorPrompt, ProgramTitle, MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
 
@@ -839,9 +887,12 @@ namespace PsfMonitor
                     IsPaused = true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                ;
+                if (MessageBox.Show(UnexpectedErrorPrompt, ProgramTitle, MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
         #endregion

@@ -69,27 +69,22 @@ namespace PsfMonitor
                 {
                     if (_TempKernelControlBlocks.Count > 0)
                     {
-                        foreach (UInt64 k in _TempKernelControlBlocks.Keys)
+                        foreach (UInt64 key in _TempKernelControlBlocks.Keys)
                         {
-                            // avoid catches
                             string KernelControlBlockString = null;
-                            _TempKernelControlBlocks.TryGetValue(k, out KernelControlBlockString);
+                            _TempKernelControlBlocks.TryGetValue(key, out KernelControlBlockString);
                             if (KernelControlBlockString != null)
                             {
-                                try
+                                if (_KernelControlBlocks.Count < MAX_KernelControlBlocks)  
                                 {
-                                    if (_KernelControlBlocks.Count < MAX_KernelControlBlocks)  
+                                    string oldKernelControlBlockString = null;
+                                    _KernelControlBlocks.TryGetValue(key, out oldKernelControlBlockString);
+                                    if (oldKernelControlBlockString == null)
                                     {
-                                        string oldKernelControlBlockString = null;
-                                        _KernelControlBlocks.TryGetValue(k, out oldKernelControlBlockString);
-                                        if (oldKernelControlBlockString == null)
-                                        {
-                                            _KernelControlBlocks.Add(k, KernelControlBlockString);
-                                            ApplyKernelControlBlockstoPastRegistryEvents(k, KernelControlBlockString);
-                                        }
+                                        _KernelControlBlocks.Add(key, KernelControlBlockString);
+                                        ApplyKernelControlBlockstoPastRegistryEvents(key, KernelControlBlockString);
                                     }
                                 }
-                                catch {  /* event thrown if key exists, which should not happen here */ }
                             }
                         }
                         _TempKernelControlBlocks.Clear();
@@ -115,9 +110,12 @@ namespace PsfMonitor
                         EventsGrid.Items.Refresh();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                ;
+                if (MessageBox.Show(UnexpectedErrorPrompt, ProgramTitle, MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
 
@@ -130,9 +128,11 @@ namespace PsfMonitor
         {
             foreach (EventItem ei in _ModelEventItems)
             {
-                if (ei.EventSource.StartsWith("Registry/"))
+                if (ei.EventSource != null &&
+                    ei.EventSource.StartsWith("Registry/"))
                 {
-                    if (ei.Inputs.Contains("KeyName=\n") &&
+                    if (ei.Inputs != null &&
+                        ei.Inputs.Contains("KeyName=\n") &&
                         !ei.Inputs.Contains(")\nKeyName="))
                     {
                         if (ei.Inputs.Contains("Key=      \t" + keyName.ToString() + "\n"))
@@ -145,9 +145,11 @@ namespace PsfMonitor
         }
         private void ApplyPastKernelControlBlocksToRegistryEvent(EventItem ei)
         {
-            if (ei.Event.StartsWith("Registry/"))
+            if (ei.Event != null &&
+                ei.Event.StartsWith("Registry/"))
             {
-                if (ei.Inputs.Contains("KeyName=\n") &&
+                if (ei.Inputs != null &&
+                    ei.Inputs.Contains("KeyName=\n") &&
                     !ei.Inputs.Contains(")\nKeyName="))
                 {
                     string matchh = ei.Inputs.Substring(10, ei.Inputs.IndexOf('\n') - 8);
@@ -155,11 +157,7 @@ namespace PsfMonitor
                     {
                         if (key.ToString().Equals(matchh))
                         {
-                            try
-                            {
-                                ei.Inputs.Replace("\nKeyName=", " (" + _KernelControlBlocks[key] + ")\nKeyName=");
-                            }
-                            catch { }
+                            ei.Inputs.Replace("\nKeyName=", " (" + _KernelControlBlocks[key] + ")\nKeyName=");                            
                             break;
                         }
                     }
@@ -191,9 +189,9 @@ namespace PsfMonitor
                                                                                       // | KernelTraceEventParser.Keywords.Driver
                                                                                         );
                 }
-                catch (Exception ex)
+                catch
                 {
-                    ;
+                    ;  // We should continue without the kernel provider. This is normal behavior in some situations, such as when elevation was not granted
                 }
                 if (!restarted)
                 {
@@ -243,7 +241,13 @@ namespace PsfMonitor
                                                  }
                                                  worker.ReportProgress((int)data.EventIndex);
                                              }
-                                             catch { }
+                                             catch (Exception ex)
+                                             {
+                                                 // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                 // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                 // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                 throw ex;
+                                             }
                                          }
                                          else if (data.EventName.StartsWith("Process/Stop"))
                                          {
@@ -267,7 +271,10 @@ namespace PsfMonitor
                                              }
                                              catch (Exception ex)
                                              {
-                                                 ;
+                                                 // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                 // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                 // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                 throw ex;
                                              }
                                          }
                                          else if (data.EventName.StartsWith("Image/Load"))
@@ -287,9 +294,12 @@ namespace PsfMonitor
 
 
                                              }
-                                             catch
+                                             catch (Exception ex)
                                              {
-                                                 ;
+                                                 // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                 // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                 // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                 throw ex;
                                              }
                                          }
                                          else if (data.EventName.StartsWith("Image/Unload"))
@@ -329,7 +339,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -368,7 +381,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -395,7 +411,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -428,7 +447,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -461,7 +483,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -491,7 +516,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -521,7 +549,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -550,7 +581,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -585,7 +619,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -618,7 +655,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -650,7 +690,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -679,7 +722,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -708,7 +754,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -739,7 +788,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -782,7 +834,10 @@ namespace PsfMonitor
                                                              added = true;
                                                          }
                                                      }
-                                                     catch {  /* exception if key exists */ }
+                                                     catch
+                                                     {
+                                                         /* expected exception when key exists */
+                                                     }
                                                  }
                                                  if (added)
                                                      worker.ReportProgress((int)0);
@@ -817,9 +872,12 @@ namespace PsfMonitor
                                                          }
                                                          worker.ReportProgress((int)data.EventIndex);
                                                      }
-                                                     catch
+                                                     catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -897,7 +955,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -938,7 +999,10 @@ namespace PsfMonitor
                                                      }
                                                      catch (Exception ex)
                                                      {
-                                                         ;
+                                                         // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                                                         // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                                                         // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                                                         throw ex;
                                                      }
                                                  }
                                              }
@@ -991,9 +1055,12 @@ namespace PsfMonitor
                              };
                          };
                 }
-                catch
+                catch (Exception ex)
                 {
-                    ;
+                    // While the author feels compelled allow the application to continue the processing in this case, as it is warranted in a debugging tool not used in production code,
+                    // and further that applications should never just crash, it seems that it is important to code reviewers that blank catches not be used.  
+                    // But at this low level we can't reasonably alert the user so we'll just let it crash. Don't blame me.
+                    throw ex;  
                 }
                 TraceEventSession_ProcsKernel.Source.Process();   // note: this call is sychronous
             }
@@ -1009,7 +1076,11 @@ namespace PsfMonitor
                     kerneleventbgw = null;
                 }
             }
-            catch { }
+            catch
+            {
+                // this is code attempting to clean up.  It should be allowed to continue to do so or a second launch
+                // may have issues.
+            }
             try
             {
                 if (TraceEventSession_ProcsKernel != null)
@@ -1019,10 +1090,12 @@ namespace PsfMonitor
                     TraceEventSession_ProcsKernel = null;
                 }
             }
-            catch { }
-
+            catch
+            {
+                // this is code attempting to clean up.  It should be allowed to continue to do so or a second launch
+                // may have issues.
+            }
         }
-
         private string Interpret_KernelProcessFlags(Microsoft.Diagnostics.Tracing.Parsers.Kernel.ProcessFlags flags)
         {
             if ((flags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.ProcessFlags.None) != 0)

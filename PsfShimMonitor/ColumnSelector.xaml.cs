@@ -55,9 +55,12 @@ namespace PsfMonitor
                     }
                 }
             }
-            catch
+            catch (System.Exception  ex)
             {
-                ;
+                if (MessageBox.Show("An unexpected error had occurred. Click Cancel to close program","PSFMonitor",MessageBoxButton.OKCancel,MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
         private void Cb_Event_UnChecked(object sender, RoutedEventArgs e)
@@ -73,9 +76,12 @@ namespace PsfMonitor
                     }
                 }
             }
-            catch
+            catch (System.Exception ex)
             {
-                ;
+                if (MessageBox.Show("An unexpected error had occurred. Click Cancel to close program", "PSFMonitor", MessageBoxButton.OKCancel, MessageBoxImage.Error) == MessageBoxResult.Cancel)
+                {
+                    throw ex;
+                }
             }
         }
     }
