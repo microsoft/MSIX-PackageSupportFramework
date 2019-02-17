@@ -45,7 +45,7 @@ namespace PsfMonitor
         public TraceEventSession myTraceEventSession = null;
         public Provider etwprovider = new Provider("Microsoft-Windows-PSFTrace",  new Guid(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
         public int EventCounter = 1;
-        public bool res1, res2;
+        public bool EventTraceProviderEnablementResultCode, EventTraceProviderSourceResultCode;
         public int LastSearchIndex = -1;
         public string LastSearchString = "";
         public List<int> ProcIDsOfTarget = new List<int>();
@@ -95,11 +95,18 @@ namespace PsfMonitor
         private void ETWTraceInBackground_Start(Provider etwp)
         {
             if (eventbgw == null)
+            {
                 eventbgw = new BackgroundWorker();
+            }
             else if (eventbgw.IsBusy)
+            {
                 return;
+            }
             else
+            {
                 eventbgw = new BackgroundWorker();
+            }
+            
             // Do processing in the background
             eventbgw.WorkerSupportsCancellation = true;
             eventbgw.WorkerReportsProgress = true;
@@ -156,7 +163,7 @@ namespace PsfMonitor
                         caller = (string)data.PayloadByName("Caller");
                     }
                     catch { }
-                    if (inputs == null & result == null && outputs == null)
+                    if (inputs == null && result == null && outputs == null)
                     {
                         try
                         {
@@ -197,21 +204,24 @@ namespace PsfMonitor
                     worker.ReportProgress((int)data.EventIndex);
                 };
 
-                res1 = myTraceEventSession.EnableProvider(etwp.guid);    
-                if (!res1)
+                EventTraceProviderEnablementResultCode = myTraceEventSession.EnableProvider(etwp.guid);    
+                if (!EventTraceProviderEnablementResultCode)
                 {
                     // Attempt resetting for second run...
                     myTraceEventSession.DisableProvider(etwp.guid);
-                    res1 = myTraceEventSession.EnableProvider(etwp.guid);
+                    EventTraceProviderEnablementResultCode = myTraceEventSession.EnableProvider(etwp.guid);
                 }
-                res2 = myTraceEventSession.Source.Process();
+                EventTraceProviderSourceResultCode = myTraceEventSession.Source.Process();
             }
         } // Eventbgw_DoWork()
         private void AddToProcIDsList(int pid)
         {
             foreach (int match in ProcIDsOfTarget)
             {
-                if (match == pid) return;
+                if (match == pid)
+                {
+                    return;
+                }
             }
             ProcIDsOfTarget.Add(pid);
         }
@@ -219,7 +229,10 @@ namespace PsfMonitor
         {
             foreach (int match in ProcIDsOfTarget)
             {
-                if (match == pid) return true;
+                if (match == pid)
+                {
+                    return true;
+                }
             }
             return false;
         }
@@ -234,10 +247,14 @@ namespace PsfMonitor
                         foreach (EventItem ei in _TEventListItems)
                         {
                             if (FilterOnProcessId < 0)
+                            {
                                 FilterOnProcessId = ei.ProcessID;
+                            }
                             AppplyFilterToEventItem(ei);
                             if (IsPaused)
+                            {
                                 ei.IsPauseHidden = true;
+                            }
                             _ModelEventItems.Add(ei);
                         }
                         _TEventListItems.Clear();
@@ -255,7 +272,7 @@ namespace PsfMonitor
         private void Eventbgw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             Status.Text = "NoTrace";
-            Other.Text = res1.ToString() + "  " + res2.ToString();
+            Other.Text = EventTraceProviderEnablementResultCode.ToString() + "  " + EventTraceProviderSourceResultCode.ToString();
         } // Eventbgw_RunWorkerCompleted()
 
         #region UIFilter
@@ -271,43 +288,65 @@ namespace PsfMonitor
             if (ei.Result.StartsWith("Success"))
             {
                 if ((bool)cbSuccesss.IsChecked)
+                {
                     ei.IsResultHidden = false;
+                }
                 else
+                {
                     ei.IsResultHidden = true;
+                }
                 ei.EventIsResultClass = "Normal";
             }
             else if (ei.Result.StartsWith("Unknown") ||
                 ei.Result.StartsWith("Indeterminate"))
             {
                 if ((bool)cbIntermediate.IsChecked)
+                {
                     ei.IsResultHidden = false;
+                }
                 else
+                {
                     ei.IsResultHidden = true;
+                }
                 ei.EventIsResultClass = "Warning";
             }
             else if (ei.Result.StartsWith("Expected Failure"))
             {
                 if ((bool)cbExpectedFailure.IsChecked)
+                {
                     ei.IsResultHidden = false;
+                }
                 else
+                {
                     ei.IsResultHidden = true;
+                }
                 ei.EventIsResultClass = "Warning";
             }
             else if (ei.Result.StartsWith("Failure"))
             {
                 if ((bool)cbFailure.IsChecked)
+                {
                     ei.IsResultHidden = false;
+                }
                 else
+                {
                     ei.IsResultHidden = true;
+                }
                 ei.EventIsResultClass = "Failure";
             }
             else
+            {
                 ei.EventIsResultClass = "Normal"; // TODO: Reults starting with other stuff
+            }
 
             if (ei.IsHidden != washidden)
+            {
                 return true;
+            }
             else
+            {
                 return false;
+            }
         }  
         private bool ApplyFilterCategoryEventToEventItem(EventItem ei)
         {
@@ -317,9 +356,13 @@ namespace PsfMonitor
                 case "CreateProcess":
                 case "CreateProcessAsUser":
                     if ((bool)cbCatProcess.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 case "CreateFile":
@@ -346,9 +389,13 @@ namespace PsfMonitor
                 case "SetFileAttributes":
                 case "GetFileAttributesEx":
                     if ((bool)cbCatFile.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 case "RegCreateKey":
@@ -371,9 +418,13 @@ namespace PsfMonitor
                 case "RegEnumKeyEx":
                 case "RegEnumValue":
                     if ((bool)cbCatReg.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 // NT Level
@@ -385,9 +436,13 @@ namespace PsfMonitor
                 case "NtOpenSymbolicLinkObject":
                 case "NtQuerySymbolicLinkObject":
                     if ((bool)cbCatNTFile.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 case "NtCreateKey":
@@ -396,9 +451,13 @@ namespace PsfMonitor
                 case "NtSetValueKey":
                 case "NtQueryValueKey":
                     if ((bool)cbCatNTReg.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 case "AddDllDirectory":
@@ -410,24 +469,36 @@ namespace PsfMonitor
                 case "SetDefaultDllDirectories":
                 case "SetDllDirectory":
                     if ((bool)cbCatDll.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 // Kernel traces
                 case "Process/Start":
                 case "Process/Stop":
                     if ((bool)cbCatKernelProcess.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
                 case "Image/Load":
                     if ((bool)cbCatKernelImageLoad.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 case "FileIO/Query":
@@ -446,17 +517,25 @@ namespace PsfMonitor
                 case "FileIO/FileDelete":
                 case "FileIO/Flush":
                     if ((bool)cbCatKernelFile.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 case "DiskIO/Read":
                 case "DiskIO/Write":
                     if ((bool)cbCatKernelDisk.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 case "Registry/Open":
@@ -471,22 +550,34 @@ namespace PsfMonitor
                 case "Registry/DeleteValue":
                 case "Registry/EnumerateValueKey":
                     if ((bool)cbCatKernelRegistry.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
 
                 default:
                     if ((bool)cbCatOther.IsChecked)
+                    {
                         ei.IsEventCatHidden = false;
+                    }
                     else
+                    {
                         ei.IsEventCatHidden = true;
+                    }
                     break;
             }
             if (ei.IsHidden != washidden)
+            {
                 return true;
+            }
             else
+            {
                 return false;
+            }
         }
 
         private void ApplyFilterProcessIdToEventItem(EventItem ei)
@@ -494,7 +585,9 @@ namespace PsfMonitor
             if (FilterOnProcessId > 0)
             {
                 if (ei.ProcessID != FilterOnProcessId)
+                {
                     ei.IsProcessIDHidden = true;
+                }
             }
         }
 
@@ -508,11 +601,15 @@ namespace PsfMonitor
                     foreach (EventItem ei in _ModelEventItems)
                     {
                         if (ApplyFilterResultToEventItem(ei))
+                        {
                             anychanged = true;
+                        }
                     }
                     if (anychanged)
+                    {
                         UpdateFilteredViewList();
-               }
+                    }
+                }
             }
             catch
             {
@@ -529,10 +626,14 @@ namespace PsfMonitor
                     foreach (EventItem ei in _ModelEventItems)
                     {
                         if (ApplyFilterCategoryEventToEventItem(ei))
+                        {
                             anychanged = true;
+                        }
                     }
                     if (anychanged)
+                    {
                         UpdateFilteredViewList();
+                    }
                 }
             }
             catch
@@ -570,7 +671,9 @@ namespace PsfMonitor
         private void SearchStringTB_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
+            {
                 SearchForString();
+            }
         }
         private void SearchForString()
         { 
@@ -583,7 +686,9 @@ namespace PsfMonitor
 
                 int nextfound = -1;
                 if (!newsearch && LastSearchIndex >= 0)
+                {
                     nextfound = LastSearchIndex;
+                }
 
                 int index = 0;
                 foreach (EventItem ei in _FilteredEventItems)
@@ -591,20 +696,34 @@ namespace PsfMonitor
                     if (search.Length > 0)
                     {
                         if (ei.Event != null && ei.Event.ToUpper().Contains(search))
+                        {
                             ei.IsHighlighted = true;
+                        }
                         else if (ei.Inputs != null && ei.Inputs.ToUpper().Contains(search))
+                        {
                             ei.IsHighlighted = true;
+                        }
                         else if (ei.Result != null && ei.Result.ToUpper().Contains(search))
+                        {
                             ei.IsHighlighted = true;
+                        }
                         else if (ei.Outputs != null && ei.Outputs.ToUpper().Contains(search))
+                        {
                             ei.IsHighlighted = true;
+                        }
                         else if (ei.Caller != null && ei.Caller.ToUpper().Contains(search))
+                        {
                             ei.IsHighlighted = true;
+                        }
                         else
+                        {
                             ei.IsHighlighted = false;
+                        }
                     }
                     else
+                    {
                         ei.IsHighlighted = false;
+                    }
                     if (ei.IsHighlighted)
                     {
                         totalfound++;
@@ -635,7 +754,9 @@ namespace PsfMonitor
                     SearchFoundCount.Text = onfound.ToString() + " of " + totalfound.ToString();
                 }
                 else
+                {
                     SearchFoundCount.Text = "0 found";
+                }
 
                 LastSearchIndex = nextfound;
                 LastSearchString = search;
@@ -668,9 +789,13 @@ namespace PsfMonitor
             ContextMenu contextMenu = but.ContextMenu;
             contextMenu.PlacementTarget = but;
             if (!contextMenu.IsOpen)
+            {
                 contextMenu.IsOpen = true;
+            }
             else
+            {
                 contextMenu.IsOpen = false;
+            }
         }
         private void bResults_Click(object sender, RoutedEventArgs e)
         {
@@ -678,9 +803,13 @@ namespace PsfMonitor
             ContextMenu contextMenu = but.ContextMenu;
             contextMenu.PlacementTarget = but;
             if (!contextMenu.IsOpen)
+            {
                 contextMenu.IsOpen = true;
+            }
             else
+            {
                 contextMenu.IsOpen = false;
+            }
         }
 
 
