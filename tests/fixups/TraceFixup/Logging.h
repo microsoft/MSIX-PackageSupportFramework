@@ -1451,7 +1451,7 @@ inline std::string InterpretFileAttributes(DWORD attributes, const char* msg = "
 			sout << prefix << "FILE_ATTRIBUTE_ARCHIVE";
 			prefix = " | ";
 		}
-		LogIfFlagSet(attributes, FILE_ATTRIBUTE_ARCHIVE);
+		//LogIfFlagSet(attributes, FILE_ATTRIBUTE_ARCHIVE);
 		if (IsFlagSet(attributes, FILE_ATTRIBUTE_DEVICE))
 		{
 			sout << prefix << "FILE_ATTRIBUTE_DEVICE";
