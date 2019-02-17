@@ -24,50 +24,50 @@ HANDLE __stdcall CreateFileFixup(
     _In_ DWORD flagsAndAttributes,
     _In_opt_ HANDLE templateFile)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CreateFileImpl(fileName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     preserve_last_error preserveError;
 
     auto functionResult = from_win32_bool(result != INVALID_HANDLE_VALUE);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(fileName);
-			inputs += "\n" + InterpretGenericAccess(desiredAccess);
-			inputs += "\n" + InterpretShareMode(shareMode);
-			if (securityAttributes)
-				inputs += "\nSecurityAttributes (unparsed)";
-			inputs += "\n" + InterpretCreationDisposition(creationDisposition);
-			inputs += "\n" + InterpretFileFlagsAndAttributes(flagsAndAttributes);
-			if (templateFile)
-				inputs += "\n" + InterpretAsHex("TemplateFile Handle", templateFile);
+            inputs = "Path=" + InterpretStringA(fileName);
+            inputs += "\n" + InterpretGenericAccess(desiredAccess);
+            inputs += "\n" + InterpretShareMode(shareMode);
+            if (securityAttributes)
+                inputs += "\nSecurityAttributes (unparsed)";
+            inputs += "\n" + InterpretCreationDisposition(creationDisposition);
+            inputs += "\n" + InterpretFileFlagsAndAttributes(flagsAndAttributes);
+            if (templateFile)
+                inputs += "\n" + InterpretAsHex("TemplateFile Handle", templateFile);
 
-			results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretLastError();
-			}
-			else
-				outputs += InterpretAsHex("Handle", result);
+            results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs += InterpretLastError();
+            }
+            else
+                outputs += InterpretAsHex("Handle", result);
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CreateFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CreateFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CreateFile:\n");
         LogString("Path", fileName);
         LogGenericAccess(desiredAccess);
@@ -80,7 +80,7 @@ HANDLE __stdcall CreateFileFixup(
             LogLastError();
         }
         LogCallingModule();
-	}
+    }
     }
 
     return result;
@@ -95,53 +95,53 @@ HANDLE __stdcall CreateFile2Fixup(
     _In_ DWORD creationDisposition,
     _In_opt_ LPCREATEFILE2_EXTENDED_PARAMETERS createExParams)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CreateFile2Impl(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result != INVALID_HANDLE_VALUE);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
-			
-			inputs = "Path=" + InterpretStringA(fileName);
-			inputs += "\n" + InterpretGenericAccess(desiredAccess);
-			inputs += "\n" + InterpretShareMode(shareMode);
-			inputs += "\n" + InterpretCreationDisposition(creationDisposition);
-			if (createExParams)
-			{
-				inputs += "\n" + InterpretFileAttributes(createExParams->dwFileAttributes);
-				inputs += "\n" + InterpretFileFlags(createExParams->dwFileFlags);
-				inputs += "\n" + InterpretSQOS(createExParams->dwSecurityQosFlags);
-				if (createExParams->lpSecurityAttributes)
-					inputs += "\nSecurity (unparsed)";
-			}
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
+            
+            inputs = "Path=" + InterpretStringA(fileName);
+            inputs += "\n" + InterpretGenericAccess(desiredAccess);
+            inputs += "\n" + InterpretShareMode(shareMode);
+            inputs += "\n" + InterpretCreationDisposition(creationDisposition);
+            if (createExParams)
+            {
+                inputs += "\n" + InterpretFileAttributes(createExParams->dwFileAttributes);
+                inputs += "\n" + InterpretFileFlags(createExParams->dwFileFlags);
+                inputs += "\n" + InterpretSQOS(createExParams->dwSecurityQosFlags);
+                if (createExParams->lpSecurityAttributes)
+                    inputs += "\nSecurity (unparsed)";
+            }
 
-			results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
-			else
-				outputs += InterpretAsHex("Handle", result);
+            results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
+            else
+                outputs += InterpretAsHex("Handle", result);
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CreateFile2", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CreateFile2", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CreateFile2:\n");
         LogString("Path", fileName);
         LogGenericAccess(desiredAccess);
@@ -157,7 +157,7 @@ HANDLE __stdcall CreateFile2Fixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -167,43 +167,43 @@ auto CopyFileImpl = psf::detoured_string_function(&::CopyFileA, &::CopyFileW);
 template <typename CharT>
 BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const CharT* newFileName, _In_ BOOL failIfExists)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CopyFileImpl(existingFileName, newFileName, failIfExists);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Source=" + InterpretStringA(existingFileName);
-			inputs += "\nDestination=" + InterpretStringA(newFileName);
-			inputs += "\nFailIfExists="; 
-			inputs += bool_to_string(failIfExists);
+            inputs = "Source=" + InterpretStringA(existingFileName);
+            inputs += "\nDestination=" + InterpretStringA(newFileName);
+            inputs += "\nFailIfExists="; 
+            inputs += bool_to_string(failIfExists);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs += InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout <<  InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout <<  InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CopyFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CopyFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CopyFile:\n");
         LogString("Source", existingFileName);
         LogString("Destination", newFileName);
@@ -215,7 +215,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -227,42 +227,42 @@ HRESULT __stdcall CopyFile2Fixup(
     _In_ PCWSTR newFileName,
     _In_opt_ COPYFILE2_EXTENDED_PARAMETERS* extendedParameters)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CopyFile2Impl(existingFileName, newFileName, extendedParameters);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_hresult(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Source=" + InterpretStringA(existingFileName);
-			inputs += "\nDestination=" + InterpretStringA(newFileName);
-			if (extendedParameters)
-				inputs += InterpretCopyFlags(extendedParameters->dwCopyFlags);
+            inputs = "Source=" + InterpretStringA(existingFileName);
+            inputs += "\nDestination=" + InterpretStringA(newFileName);
+            if (extendedParameters)
+                inputs += InterpretCopyFlags(extendedParameters->dwCopyFlags);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CopyFile2", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CopyFile2", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CopyFile2:\n");
         LogString("Source", existingFileName);
         LogString("Destination", newFileName);
@@ -274,7 +274,7 @@ HRESULT __stdcall CopyFile2Fixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -290,42 +290,42 @@ BOOL __stdcall CopyFileExFixup(
     _In_opt_ LPBOOL cancel,
     _In_ DWORD copyFlags)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CopyFileExImpl(existingFileName, newFileName, progressRoutine, data, cancel, copyFlags);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Source=" + InterpretStringA(existingFileName);
-			inputs += "\nDestination=" + InterpretStringA(newFileName);
-			inputs += "\n" + InterpretCopyFlags(copyFlags);
+            inputs = "Source=" + InterpretStringA(existingFileName);
+            inputs += "\nDestination=" + InterpretStringA(newFileName);
+            inputs += "\n" + InterpretCopyFlags(copyFlags);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout <<  InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout <<  InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CopyFileEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CopyFileEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CopyFileEx:\n");
         LogString("Source", existingFileName);
         LogString("Destination", newFileName);
@@ -337,7 +337,7 @@ BOOL __stdcall CopyFileExFixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -350,41 +350,41 @@ BOOL __stdcall CreateHardLinkFixup(
     _In_ const CharT* existingFileName,
     _Reserved_ LPSECURITY_ATTRIBUTES securityAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CreateHardLinkImpl(fileName, existingFileName, securityAttributes);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(fileName);
-			inputs += "\nTarget=" + InterpretStringA(existingFileName);
-	
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            inputs = "Path=" + InterpretStringA(fileName);
+            inputs += "\nTarget=" + InterpretStringA(existingFileName);
+    
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CreateHardLink", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CreateHardLink", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CreateHardLink:\n");
         LogString("Path", fileName);
         LogString("Existing File", existingFileName);
@@ -394,7 +394,7 @@ BOOL __stdcall CreateHardLinkFixup(
             LogLastError();
         }
         LogCallingModule();
-	}
+    }
     }
 
     return result;
@@ -408,42 +408,42 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     _In_ const CharT* targetFileName,
     _In_ DWORD flags)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CreateSymbolicLinkImpl(symlinkFileName, targetFileName, flags);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Symlink=" + InterpretStringA(symlinkFileName);
-			inputs += "\nTarget=" + InterpretStringA(targetFileName);
-			inputs += "\n" + InterpretSymlinkFlags(flags);
+            inputs = "Symlink=" + InterpretStringA(symlinkFileName);
+            inputs += "\nTarget=" + InterpretStringA(targetFileName);
+            inputs += "\n" + InterpretSymlinkFlags(flags);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CreateSymbolicLink", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CreateSymbolicLink", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CreateSymbolicLink:\n");
         LogString("Symlink", symlinkFileName);
         LogString("Target", targetFileName);
@@ -454,7 +454,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             LogLastError();
         }
         LogCallingModule();
-	}
+    }
     }
 
     return result;
@@ -465,40 +465,40 @@ auto DeleteFileImpl = psf::detoured_string_function(&::DeleteFileA, &::DeleteFil
 template <typename CharT>
 BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = DeleteFileImpl(fileName);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path" + InterpretStringA(fileName);;
+            inputs = "Path" + InterpretStringA(fileName);;
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("DeleteFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("DeleteFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("DeleteFile:\n");
         LogString("Path", fileName);
         LogFunctionResult(functionResult);
@@ -508,7 +508,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName)
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -518,41 +518,41 @@ auto MoveFileImpl = psf::detoured_string_function(&::MoveFileA, &::MoveFileW);
 template <typename CharT>
 BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const CharT* newFileName)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = MoveFileImpl(existingFileName, newFileName);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "From=" + InterpretStringA(existingFileName);
-			inputs += "\nTo=" + InterpretStringA(newFileName);
+            inputs = "From=" + InterpretStringA(existingFileName);
+            inputs += "\nTo=" + InterpretStringA(newFileName);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("MoveFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("MoveFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("MoveFile:\n");
         LogString("From", existingFileName);
         LogString("To", newFileName);
@@ -563,7 +563,7 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -573,42 +573,42 @@ auto MoveFileExImpl = psf::detoured_string_function(&::MoveFileExA, &::MoveFileE
 template <typename CharT>
 BOOL __stdcall MoveFileExFixup(_In_ const CharT* existingFileName, _In_opt_ const CharT* newFileName, _In_ DWORD flags)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = MoveFileExImpl(existingFileName, newFileName, flags);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "From=" + InterpretStringA(existingFileName);
-			inputs += "\nTo=" + InterpretStringA(newFileName);
-			inputs += "\n" +  InterpretMoveFileFlags(flags);
+            inputs = "From=" + InterpretStringA(existingFileName);
+            inputs += "\nTo=" + InterpretStringA(newFileName);
+            inputs += "\n" +  InterpretMoveFileFlags(flags);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("MoveFileEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("MoveFileEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("MoveFile:\n");
         LogString("From", existingFileName);
         if (newFileName) LogString("To", newFileName);
@@ -620,7 +620,7 @@ BOOL __stdcall MoveFileExFixup(_In_ const CharT* existingFileName, _In_opt_ cons
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -636,44 +636,44 @@ BOOL __stdcall ReplaceFileFixup(
     _Reserved_ LPVOID exclude,
     _Reserved_ LPVOID reserved)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = ReplaceFileImpl(replacedFileName, replacementFileName, backupFileName, replaceFlags, exclude, reserved);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Replaced File=" + InterpretStringA(replacedFileName);
-			inputs += "\nReplacement File=" + InterpretStringA(replacementFileName);
-			if (backupFileName)
-				inputs += "\nBackup File=" + InterpretStringA(backupFileName);
-			inputs += "\n" + InterpretReplaceFileFlags(replaceFlags);
+            inputs = "Replaced File=" + InterpretStringA(replacedFileName);
+            inputs += "\nReplacement File=" + InterpretStringA(replacementFileName);
+            if (backupFileName)
+                inputs += "\nBackup File=" + InterpretStringA(backupFileName);
+            inputs += "\n" + InterpretReplaceFileFlags(replaceFlags);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("ReplaceFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("ReplaceFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("ReplaceFile:\n");
         LogString("Replaced File", replacedFileName);
         LogString("Replacement File", replacementFileName);
@@ -686,7 +686,7 @@ BOOL __stdcall ReplaceFileFixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -701,48 +701,48 @@ HANDLE __stdcall FindFirstFileFixup(
     _In_ const CharT* fileName,
     _Out_ win32_find_data_t<CharT>* findFileData)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = FindFirstFileImpl(fileName, findFileData);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result != INVALID_HANDLE_VALUE);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Search Path=" + InterpretStringA(fileName);
+            inputs = "Search Path=" + InterpretStringA(fileName);
 
-			results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
-			else
-			{
-				if (result != INVALID_HANDLE_VALUE)
-				{
-					outputs +=  InterpretAsHex("Handle", result); 
-					outputs += "\nFirst File=" + InterpretStringA(findFileData->cFileName);
-				}
-			}
+            results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
+            else
+            {
+                if (result != INVALID_HANDLE_VALUE)
+                {
+                    outputs +=  InterpretAsHex("Handle", result); 
+                    outputs += "\nFirst File=" + InterpretStringA(findFileData->cFileName);
+                }
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("FindFirstFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("FindFirstFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("FindFirstFile:\n");
         LogString("Search Path", fileName);
         LogFunctionResult(functionResult);
@@ -760,7 +760,7 @@ HANDLE __stdcall FindFirstFileFixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -776,52 +776,52 @@ HANDLE __stdcall FindFirstFileExFixup(
     _Reserved_ LPVOID searchFilter,
     _In_ DWORD additionalFlags)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = FindFirstFileExImpl(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result != INVALID_HANDLE_VALUE);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Search Path=" + InterpretStringA(fileName);
-			inputs += "\n" + InterpretInfoLevelId(infoLevelId);
-			inputs += "\n" + InterpretSearchOp(searchOp);
-			inputs += "\n" + InterpretFindFirstFileExFlags(additionalFlags);
+            inputs = "Search Path=" + InterpretStringA(fileName);
+            inputs += "\n" + InterpretInfoLevelId(infoLevelId);
+            inputs += "\n" + InterpretSearchOp(searchOp);
+            inputs += "\n" + InterpretFindFirstFileExFlags(additionalFlags);
 
-			results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
-			else
-			{
-				if (result != INVALID_HANDLE_VALUE)
-				{
-					outputs +=  InterpretAsHex("Handle", result);
-					auto findData = reinterpret_cast<win32_find_data_t<CharT>*>(findFileData);
-					outputs += "\nFirst File=" + InterpretStringA(findData->cFileName);
-				}
-			}
+            results = InterpretReturn(functionResult, result != INVALID_HANDLE_VALUE).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
+            else
+            {
+                if (result != INVALID_HANDLE_VALUE)
+                {
+                    outputs +=  InterpretAsHex("Handle", result);
+                    auto findData = reinterpret_cast<win32_find_data_t<CharT>*>(findFileData);
+                    outputs += "\nFirst File=" + InterpretStringA(findData->cFileName);
+                }
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("FindFirstFileEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("FindFirstFileEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("FindFirstFileEx:\n");
         LogString("Search Path", fileName);
         LogInfoLevelId(infoLevelId);
@@ -843,7 +843,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -853,48 +853,48 @@ auto FindNextFileImpl = psf::detoured_string_function(&::FindNextFileA, &::FindN
 template <typename CharT>
 BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<CharT>* findFileData)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = FindNextFileImpl(findFile, findFileData);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result || (::GetLastError() == ERROR_NO_MORE_FILES));
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
+        if (output_method == trace_method::eventlog)
+        {
 
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = InterpretAsHex("Handle", findFile);
+            inputs = InterpretAsHex("Handle", findFile);
 
-			results = InterpretReturn(functionResult, result || (::GetLastError() == ERROR_NO_MORE_FILES)).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
-			else
-			{
-				if (result)
-				{
-					outputs += "Next File=" + InterpretStringA(findFileData->cFileName);
-				}
-			}
+            results = InterpretReturn(functionResult, result || (::GetLastError() == ERROR_NO_MORE_FILES)).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
+            else
+            {
+                if (result)
+                {
+                    outputs += "Next File=" + InterpretStringA(findFileData->cFileName);
+                }
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout <<  InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout <<  InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("FindNextFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("FindNextFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("FindNextFile:\n");
         Log("\tHandle=%p\n", findFile);
         LogFunctionResult(functionResult);
@@ -908,7 +908,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -917,40 +917,40 @@ DECLARE_STRING_FIXUP(FindNextFileImpl, FindNextFileFixup);
 auto FindCloseImpl = &::FindClose;
 BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findFile)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = FindCloseImpl(findFile);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = InterpretAsHex("Handle", findFile);
+            inputs = InterpretAsHex("Handle", findFile);
 
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretLastError();
-			}
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs += InterpretLastError();
+            }
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("FindClose", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("FindClose", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("FindClose:\n");
         Log("\tHandle=%p\n", findFile);
         LogFunctionResult(functionResult);
@@ -960,7 +960,7 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findFile)
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -970,42 +970,42 @@ auto CreateDirectoryImpl = psf::detoured_string_function(&::CreateDirectoryA, &:
 template <typename CharT>
 BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CreateDirectoryImpl(pathName, securityAttributes);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(pathName);
-			if (securityAttributes)
-				inputs += "\nSecurityAttributes=(unparsed)";
+            inputs = "Path=" + InterpretStringA(pathName);
+            if (securityAttributes)
+                inputs += "\nSecurityAttributes=(unparsed)";
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs += InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CreateDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CreateDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CreateDirectory:\n");
         LogString("Path", pathName);
         LogFunctionResult(functionResult);
@@ -1015,7 +1015,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1028,43 +1028,43 @@ BOOL __stdcall CreateDirectoryExFixup(
     _In_ const CharT* newDirectory,
     _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = CreateDirectoryExImpl(templateDirectory, newDirectory, securityAttributes);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "TemplateDirectory=" + InterpretStringA(templateDirectory);
-			inputs += "\nNewDirectory=" + InterpretStringA(newDirectory);
-			if (securityAttributes)
-				inputs += "\nSecurityAttributes=(unparsed)";
+            inputs = "TemplateDirectory=" + InterpretStringA(templateDirectory);
+            inputs += "\nNewDirectory=" + InterpretStringA(newDirectory);
+            if (securityAttributes)
+                inputs += "\nSecurityAttributes=(unparsed)";
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs += InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("CreateDirectoryEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("CreateDirectoryEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("CreateDirectoryEx:\n");
         LogString("Template", templateDirectory);
         LogString("Path", newDirectory);
@@ -1075,7 +1075,7 @@ BOOL __stdcall CreateDirectoryExFixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1085,40 +1085,40 @@ auto RemoveDirectoryImpl = psf::detoured_string_function(&::RemoveDirectoryA, &:
 template <typename CharT>
 BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RemoveDirectoryImpl(pathName);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(pathName);
+            inputs = "Path=" + InterpretStringA(pathName);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("RemoveDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("RemoveDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("RemoveDirectory:\n");
         LogString("Path", pathName);
         LogFunctionResult(functionResult);
@@ -1128,7 +1128,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName)
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1138,40 +1138,40 @@ auto SetCurrentDirectoryImpl = psf::detoured_string_function(&::SetCurrentDirect
 template <typename CharT>
 BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = SetCurrentDirectoryImpl(pathName);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(pathName);
+            inputs = "Path=" + InterpretStringA(pathName);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs += InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("SetCurrentDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("SetCurrentDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("SetCurrentDirectory:\n");
         LogString("Path", pathName);
         LogFunctionResult(functionResult);
@@ -1181,7 +1181,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName)
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1193,42 +1193,42 @@ DWORD __stdcall GetCurrentDirectoryFixup(
     _In_ DWORD bufferLength,
     _Out_writes_to_opt_(bufferLength, return +1) CharT* buffer)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = GetCurrentDirectoryImpl(bufferLength, buffer);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result != 0);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			results = InterpretReturn(functionResult, result != 0).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretLastError();
-			}
-			else if (buffer)
-			{
-				outputs += "Path=" + InterpretStringA(buffer);
-			}
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout <<  InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            results = InterpretReturn(functionResult, result != 0).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs += InterpretLastError();
+            }
+            else if (buffer)
+            {
+                outputs += "Path=" + InterpretStringA(buffer);
+            }
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout <<  InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
 
-			Log_ETW_PostMsgOperationA("GetCurrentDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("GetCurrentDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("GetCurrentDirectory:\n");
         LogFunctionResult(functionResult);
         if (function_failed(functionResult))
@@ -1241,7 +1241,7 @@ DWORD __stdcall GetCurrentDirectoryFixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1251,44 +1251,44 @@ auto GetFileAttributesImpl = psf::detoured_string_function(&::GetFileAttributesA
 template <typename CharT>
 DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = GetFileAttributesImpl(fileName);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result != INVALID_FILE_ATTRIBUTES);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(fileName);
+            inputs = "Path=" + InterpretStringA(fileName);
 
-			results = InterpretReturn(functionResult, result != INVALID_FILE_ATTRIBUTES).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
-			else
-			{
-				outputs += InterpretFileAttributes(result);
-			}
+            results = InterpretReturn(functionResult, result != INVALID_FILE_ATTRIBUTES).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
+            else
+            {
+                outputs += InterpretFileAttributes(result);
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("GetFileAttributes", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("GetFileAttributes", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("GetFileAttributes:\n");
         LogString("Path", fileName);
         LogFunctionResult(functionResult);
@@ -1302,7 +1302,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName)
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1312,41 +1312,41 @@ auto SetFileAttributesImpl = psf::detoured_string_function(&::SetFileAttributesA
 template <typename CharT>
 BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fileAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = SetFileAttributesImpl(fileName, fileAttributes);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(fileName);
-			inputs += "\n" + InterpretFileAttributes(fileAttributes);
+            inputs = "Path=" + InterpretStringA(fileName);
+            inputs += "\n" + InterpretFileAttributes(fileAttributes);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("SetFileAttributes", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("SetFileAttributes", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("GetFileAttributes:\n");
         LogString("Path", fileName);
         LogFileAttributes(fileAttributes);
@@ -1357,7 +1357,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1370,47 +1370,47 @@ BOOL __stdcall GetFileAttributesExFixup(
     _In_ GET_FILEEX_INFO_LEVELS infoLevelId,
     _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID fileInformation)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = GetFileAttributesExImpl(fileName, infoLevelId, fileInformation);
     preserve_last_error preserveError;
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32_bool(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(fileName);
-			inputs += "\n" + InterpretInfoLevelId(infoLevelId);
+            inputs = "Path=" + InterpretStringA(fileName);
+            inputs += "\n" + InterpretInfoLevelId(infoLevelId);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLastError();
-			}
-			else
-			{
-				auto data = reinterpret_cast<WIN32_FILE_ATTRIBUTE_DATA*>(fileInformation);
-				outputs +=  InterpretFileAttributes(data->dwFileAttributes);
-				// TODO: Dump out other elements of data...
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLastError();
+            }
+            else
+            {
+                auto data = reinterpret_cast<WIN32_FILE_ATTRIBUTE_DATA*>(fileInformation);
+                outputs +=  InterpretFileAttributes(data->dwFileAttributes);
+                // TODO: Dump out other elements of data...
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("GetFileAttributesEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("GetFileAttributesEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("GetFileAttributesEx:\n");
         LogString("Path", fileName);
         LogInfoLevelId(infoLevelId);
@@ -1426,7 +1426,7 @@ BOOL __stdcall GetFileAttributesExFixup(
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1436,44 +1436,44 @@ auto LZOpenFileImpl = psf::detoured_string_function(&::LZOpenFileA, &::LZOpenFil
 template <typename CharT>
 INT __stdcall LZOpenFileFixup(_In_ CharT* fileName, _Inout_ LPOFSTRUCT reOpenBuf, _In_ WORD style)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = LZOpenFileImpl(fileName, reOpenBuf, style);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_lzerror(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = "Path=" + InterpretStringA(fileName);
-			inputs += "\n" + InterpretOpenFileStyle(style);
+            inputs = "Path=" + InterpretStringA(fileName);
+            inputs += "\n" + InterpretOpenFileStyle(style);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLZError(result);
-			}
-			else
-			{
-				outputs += InterpretAsHex("Handle", (DWORD)result);
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLZError(result);
+            }
+            else
+            {
+                outputs += InterpretAsHex("Handle", (DWORD)result);
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("LZOpenFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
+            Log_ETW_PostMsgOperationA("LZOpenFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
         Log("LZOpenFile:\n");
         LogString("Path", fileName);
         LogOpenFileStyle(style);
@@ -1484,7 +1484,7 @@ INT __stdcall LZOpenFileFixup(_In_ CharT* fileName, _Inout_ LPOFSTRUCT reOpenBuf
         }
         LogCallingModule();
     }
-	}
+    }
 
     return result;
 }
@@ -1498,51 +1498,51 @@ auto LZCopyImpl = shims::detoured_string_function(&::LZCopy, &::LZCopy);
 template <typename CharT>
 INT __stdcall LZCopyShim(_In_ INT hfSource, _In_ INT hfDest)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
-	auto entry = LogFunctionEntry();
-	auto result = LZCopyImpl(hfSource, hfDest);
-	QueryPerformanceCounter(&TickEnd);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
+    auto entry = LogFunctionEntry();
+    auto result = LZCopyImpl(hfSource, hfDest);
+    QueryPerformanceCounter(&TickEnd);
 
-	auto functionResult = from_lzerror(result);
-	if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
-	{
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+    auto functionResult = from_lzerror(result);
+    if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
+    {
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = InterpretAsHex("HfSource", hfSource);
-			inputs += "\n" + InterpretAsHex("HfDest", hfDest);
+            inputs = InterpretAsHex("HfSource", hfSource);
+            inputs += "\n" + InterpretAsHex("HfDest", hfDest);
 
-			results = InterpretReturn(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretLZError(result);
-			}
+            results = InterpretReturn(functionResult, result).c_str();
+            if (function_failed(functionResult))
+            {
+                outputs +=  InterpretLZError(result);
+            }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+            std::ostringstream sout;
+            InterpretCallingModulePart1()
+                sout << InterpretCallingModulePart2()
+                InterpretCallingModulePart3()
+                std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("LZCopy", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
-		}
-		else
-		{
-			Log("LZCopy:\n");
-			LogFunctionResult(functionResult);
-			if (function_failed(functionResult))
-			{
-				LogLZError(result);
-			}
-			LogCallingModule();
-		}
-	}
+            Log_ETW_PostMsgOperationA("LZCopy", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+        }
+        else
+        {
+            Log("LZCopy:\n");
+            LogFunctionResult(functionResult);
+            if (function_failed(functionResult))
+            {
+                LogLZError(result);
+            }
+            LogCallingModule();
+        }
+    }
 
-	return result;
+    return result;
 }
 DECLARE_STRING_SHIM(LZCopyImpl, LZCopyShim);
 #endif
