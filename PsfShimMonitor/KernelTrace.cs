@@ -72,20 +72,20 @@ namespace PsfMonitor
                         foreach (UInt64 k in _TempKernelControlBlocks.Keys)
                         {
                             // avoid catches
-                            string s = null;
-                            _TempKernelControlBlocks.TryGetValue(k, out s);
-                            if (s != null)
+                            string KernelControlBlockString = null;
+                            _TempKernelControlBlocks.TryGetValue(k, out KernelControlBlockString);
+                            if (KernelControlBlockString != null)
                             {
                                 try
                                 {
                                     if (_KernelControlBlocks.Count < MAX_KernelControlBlocks)  
                                     {
-                                        string olds = null;
-                                        _KernelControlBlocks.TryGetValue(k, out olds);
-                                        if (olds == null)
+                                        string oldKernelControlBlockString = null;
+                                        _KernelControlBlocks.TryGetValue(k, out oldKernelControlBlockString);
+                                        if (oldKernelControlBlockString == null)
                                         {
-                                            _KernelControlBlocks.Add(k, s);
-                                            ApplyKernelControlBlockstoPastRegistryEvents(k, s);
+                                            _KernelControlBlocks.Add(k, KernelControlBlockString);
+                                            ApplyKernelControlBlockstoPastRegistryEvents(k, KernelControlBlockString);
                                         }
                                     }
                                 }
@@ -126,7 +126,7 @@ namespace PsfMonitor
             Status.Text = "NonKernel";
         }
 
-        private void ApplyKernelControlBlockstoPastRegistryEvents(UInt64 k, string s)
+        private void ApplyKernelControlBlockstoPastRegistryEvents(UInt64 keyName, string sValue)
         {
             foreach (EventItem ei in _ModelEventItems)
             {
@@ -135,9 +135,9 @@ namespace PsfMonitor
                     if (ei.Inputs.Contains("KeyName=\n") &&
                         !ei.Inputs.Contains(")\nKeyName="))
                     {
-                        if (ei.Inputs.Contains("Key=      \t" + k.ToString() + "\n"))
+                        if (ei.Inputs.Contains("Key=      \t" + keyName.ToString() + "\n"))
                         {
-                            ei.Inputs.Replace("\nKeyName=", " (" + s + ")\nKeyName=");
+                            ei.Inputs.Replace("\nKeyName=", " (" + sValue + ")\nKeyName=");
                         }
                     }
                 }
@@ -1027,25 +1027,25 @@ namespace PsfMonitor
         {
             if ((flags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.ProcessFlags.None) != 0)
                 return " ( NONE )";
-            string s = "( ";
+            string sValue = "( ";
             string prefix = "";
             if ((flags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.ProcessFlags.Wow64) != 0)
             {
-                s += prefix + "WOW64";
+                sValue += prefix + "WOW64";
                 prefix = " | ";
             }
             if ((flags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.ProcessFlags.Protected) != 0)
             {
-                s += prefix + "PROTECTED";
+                sValue += prefix + "PROTECTED";
                 prefix = " | ";
             }
             if ((flags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.ProcessFlags.PackageFullName) != 0)
             {
-                s += prefix + "PACKAGEFULLNAME";
+                sValue += prefix + "PACKAGEFULLNAME";
                 prefix = " | ";
             }
-            s += " )";
-            return s;
+            sValue += " )";
+            return sValue;
         }
 
         private string Interpret_KernelFileCreateOptions(Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions option)
@@ -1054,303 +1054,303 @@ namespace PsfMonitor
             if (option == Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.NONE)
                     return "( NONE )";
 
-            string s = "0x" + ((uint)option).ToString("x") + " (";
+            string sValue = "0x" + ((uint)option).ToString("x") + " (";
             string prefix = "";
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_ARCHIVE) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_ARCHIVE";
+                sValue += prefix + "FILE_ATTRIBUTE_ARCHIVE";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_COMPRESSED) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_COMPRESSED";
+                sValue += prefix + "FILE_ATTRIBUTE_COMPRESSED";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_DEVICE) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_DEVICE";
+                sValue += prefix + "FILE_ATTRIBUTE_DEVICE";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_DIRECTORY) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_DIRECTORY";
+                sValue += prefix + "FILE_ATTRIBUTE_DIRECTORY";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_ENCRYPTED) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_ENCRYPTED";
+                sValue += prefix + "FILE_ATTRIBUTE_ENCRYPTED";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_HIDDEN) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_HIDDEN";
+                sValue += prefix + "FILE_ATTRIBUTE_HIDDEN";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_INTEGRITY_STREAM) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_INTEGRITY_STREAM";
+                sValue += prefix + "FILE_ATTRIBUTE_INTEGRITY_STREAM";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_NORMAL) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_NORMAL";
+                sValue += prefix + "FILE_ATTRIBUTE_NORMAL";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED";
+                sValue += prefix + "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_NO_SCRUB_DATA) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_NO_SCRUB_DATA";
+                sValue += prefix + "FILE_ATTRIBUTE_NO_SCRUB_DATA";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_OFFLINE) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_OFFLINE";
+                sValue += prefix + "FILE_ATTRIBUTE_OFFLINE";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_READONLY) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_READONLY";
+                sValue += prefix + "FILE_ATTRIBUTE_READONLY";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_REPARSE_POINT) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_REPARSE_POINT";
+                sValue += prefix + "FILE_ATTRIBUTE_REPARSE_POINT";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_SPARSE_FILE) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_SPARSE_FILE";
+                sValue += prefix + "FILE_ATTRIBUTE_SPARSE_FILE";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_SYSTEM) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_SYSTEM";
+                sValue += prefix + "FILE_ATTRIBUTE_SYSTEM";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_TEMPORARY) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_TEMPORARY";
+                sValue += prefix + "FILE_ATTRIBUTE_TEMPORARY";
                 prefix = " | ";
             }
             if ((option & Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateOptions.FILE_ATTRIBUTE_VIRTUAL) != 0)
             {
-                s += prefix + "FILE_ATTRIBUTE_VIRTUAL";
+                sValue += prefix + "FILE_ATTRIBUTE_VIRTUAL";
                 prefix = " | ";
             }
-            return s += " )";
+            return sValue += " )";
         }
 
         private string Interpret_KernelFileCreateDispositions(Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateDisposition dispo)
         {
-            string s = "0x" + ((uint)dispo).ToString("x") + " (";
+            string sValue = "0x" + ((uint)dispo).ToString("x") + " (";
             switch (dispo)
             { 
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateDisposition.CREATE_NEW:
-                    s +=  "CREATE_NEW";
+                    sValue +=  "CREATE_NEW";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateDisposition.CREATE_ALWAYS:
-                    s +=  "CREATE_ALWAYS";
+                    sValue +=  "CREATE_ALWAYS";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateDisposition.OPEN_ALWAYS:
-                    s +=  "OPEN_ALWAYS";
+                    sValue +=  "OPEN_ALWAYS";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateDisposition.OPEN_EXISING:
-                    s +=  "OPEN_EXISING";
+                    sValue +=  "OPEN_EXISING";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.CreateDisposition.TRUNCATE_EXISTING:
-                    s += "TRUNCATE_EXISTING";
+                    sValue += "TRUNCATE_EXISTING";
                     break;
             }
-            s += " )";
-            return s;
+            sValue += " )";
+            return sValue;
         }
     
         private string Interpret_KernelFile_IrpFlags(Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags IrpFlags)
         {
-            string s = "0x" + ((uint)IrpFlags).ToString("x") + " (";
+            string sValue = "0x" + ((uint)IrpFlags).ToString("x") + " (";
             string prefix = "";
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.AssociatedIrp) != 0)
             {
-                s += prefix + "AssociatedIrp";
+                sValue += prefix + "AssociatedIrp";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.BufferedIO) != 0)
             {
-                s += prefix + "BufferedIO";
+                sValue += prefix + "BufferedIO";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.Close) != 0)
             {
-                s += prefix + "Close";
+                sValue += prefix + "Close";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.Create) != 0)
             {
-                s += prefix + "Create";
+                sValue += prefix + "Create";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.DeallocateBuffer) != 0)
             {
-                s += prefix + "DeallocateBuffer";
+                sValue += prefix + "DeallocateBuffer";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.DeferIOCompletion) != 0)
             {
-                s += prefix + "DeferIOCompletion";
+                sValue += prefix + "DeferIOCompletion";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.HoldDeviceQueue) != 0)
             {
-                s += prefix + "HoldDeviceQueue";
+                sValue += prefix + "HoldDeviceQueue";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.InputOperation) != 0)
             {
-                s += prefix + "InputOperation";
+                sValue += prefix + "InputOperation";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.MountCompletion) != 0)
             {
-                s += prefix + "MountCompletion";
+                sValue += prefix + "MountCompletion";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.Nocache) != 0)
             {
-                s += prefix + "Nocache";
+                sValue += prefix + "Nocache";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.None) != 0)
             {
-                s += prefix + "None";
+                sValue += prefix + "None";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.ObQueryName) != 0)
             {
-                s += prefix + "ObQueryName";
+                sValue += prefix + "ObQueryName";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.PagingIo) != 0)
             {
-                s += prefix + "PagingIo";
+                sValue += prefix + "PagingIo";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.PriorityMask) != 0)
             {
-                s += prefix + "PriorityMask";
+                sValue += prefix + "PriorityMask";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.Read) != 0)
             {
-                s += prefix + "Read";
+                sValue += prefix + "Read";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.SynchronousApi) != 0)
             {
-                s += prefix + "SynchronousApi";
+                sValue += prefix + "SynchronousApi";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.SynchronousPagingIO) != 0)
             {
-                s += prefix + "SynchronousPagingIO";
+                sValue += prefix + "SynchronousPagingIO";
                 prefix = " | ";
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.Write) != 0)
             {
-                s += prefix + "Write";
+                sValue += prefix + "Write";
                 prefix = " | ";
             }
-            s += " )";
-            return s;
+            sValue += " )";
+            return sValue;
         }
         private string Interpret_KernelFile_Priority(Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority iopriority)
         {
-            string s = "0x" + ((uint)iopriority).ToString("x") + " (";
+            string sValue = "0x" + ((uint)iopriority).ToString("x") + " (";
             switch (iopriority)
             {
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Critical:
-                    s += "CRITICAL";
+                    sValue += "CRITICAL";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.High:
-                    s += "HIGH";
+                    sValue += "HIGH";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Low:
-                    s += "LOW";
+                    sValue += "LOW";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Max:
-                    s += "MAX";
+                    sValue += "MAX";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Normal:
-                    s += "NORMAL";
+                    sValue += "NORMAL";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Notset:
-                    s += "NOTSET";
+                    sValue += "NOTSET";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Reserved0:
-                    s += "RESERVED0";
+                    sValue += "RESERVED0";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Reserved1:
-                    s += "RESERVED1";
+                    sValue += "RESERVED1";
                     break;
                 case Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority.Verylow:
-                    s += "VERYLOW";
+                    sValue += "VERYLOW";
                     break;
                 default:
-                    s += "unknown";
+                    sValue += "unknown";
                     break;
             }
-            return s + ")";
+            return sValue + ")";
         }
 
 
 
         private string Interpret_return_rom_win32(ulong code)
         {
-            string s;
+            string sValue;
             switch (code)
             {
                 case 0: //ERROR_SUCCESS:
-                    s = "Success";
+                    sValue = "Success";
                     break;
                 case 2:   // ERROR_FILE_NOT_FOUND:
-                    s = "Expected Failure ()";
+                    sValue = "Expected Failure ()";
                     break;
                 case 3:   // ERROR_PATH_NOT_FOUND:
-                    s = "Expected Failure (ERROR_PATH_NOT_FOUND)";
+                    sValue = "Expected Failure (ERROR_PATH_NOT_FOUND)";
                     break;
                 case 123: // ERROR_INVALID_NAME:
-                    s = "Expected Failure (ERROR_INVALID_NAME)";
+                    sValue = "Expected Failure (ERROR_INVALID_NAME)";
                     break;
                 case 183: // ERROR_ALREADY_EXISTS:
-                    s = "Expected Failure (ERROR_ALREADY_EXISTS)";
+                    sValue = "Expected Failure (ERROR_ALREADY_EXISTS)";
                     break;
                 case 80:  // ERROR_FILE_EXISTS:
-                    s = "Expected Failure (ERROR_FILE_EXISTS)";
+                    sValue = "Expected Failure (ERROR_FILE_EXISTS)";
                     break;
                 case 122: // ERROR_INSUFFICIENT_BUFFER:
-                    s = "Expected Failure (ERROR_INSUFFICIENT_BUFFER)";
+                    sValue = "Expected Failure (ERROR_INSUFFICIENT_BUFFER)";
                     break;
                 case 234: // ERROR_MORE_DATA:
-                    s = "Expected Failure (ERROR_MORE_DATA)";
+                    sValue = "Expected Failure (ERROR_MORE_DATA)";
                     break;
                 case 259: // ERROR_NO_MORE_ITEMS:
-                    s = "Expected Failure (ERROR_NO_MORE_ITEMS)";
+                    sValue = "Expected Failure (ERROR_NO_MORE_ITEMS)";
                     break;
                 case 18:  // ERROR_NO_MORE_FILES:
-                    s = "Expected Failure (ERROR_NO_MORE_FILES)";
+                    sValue = "Expected Failure (ERROR_NO_MORE_FILES)";
                     break;
                 case 126: // ERROR_MOD_NOT_FOUND:
-                    s = "Expected Failure (ERROR_MOD_NOT_FOUND)";
+                    sValue = "Expected Failure (ERROR_MOD_NOT_FOUND)";
                     break;
                 default:
-                    s = "Failure";
+                    sValue = "Failure";
                     break;
             }
-            s += "\nStatus = 0x" + code.ToString("x");
-            return s;
+            sValue += "\nStatus = 0x" + code.ToString("x");
+            return sValue;
         }
     }
 }
