@@ -105,9 +105,19 @@ HANDLE __stdcall FindFirstFileExFixup(
     const wchar_t* pattern = nullptr;
     if (auto dirPos = path.find_last_of(LR"(\/)"); dirPos != std::wstring::npos)
     {
-        auto separator = std::exchange(path[dirPos], L'\0');
-        dir = NormalizePath(path.c_str());
-        path[dirPos] = separator;
+		// Special case for single separator at beginning of the path "/foo.txt"
+		if (dirPos == 0)
+		{
+			auto nextChar = std::exchange(path[dirPos + 1], L'\0');
+			dir = NormalizePath(path.c_str());
+			path[dirPos + 1] = nextChar;
+		}
+		else
+		{
+			auto separator = std::exchange(path[dirPos], L'\0');
+			dir = NormalizePath(path.c_str());
+			path[dirPos] = separator;
+		}
         pattern = path.c_str() + dirPos + 1;
     }
     else
