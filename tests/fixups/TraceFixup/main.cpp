@@ -13,12 +13,9 @@
 #include "Config.h"
 
 //////// Need to undefine Preprocessor definition for NONAMELESSUNION on this .cpp file only for this to work
-#define USETRACELOGGING
-#ifdef USETRACELOGGING
+
 #include <TraceLoggingProvider.h>
-#else
-#include <evntprov.h>
-#endif
+
 #include "Logging.h"
 using namespace std::literals;
 
@@ -37,16 +34,13 @@ static trace_level g_defaultBreakLevel = trace_level::ignore;
 
 
 // This handles event logging via ETW
-#ifdef USETRACELOGGING
+
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
 	g_Log_ETW_ComponentProvider,
 	"Microsoft-Windows-PSFTrace",
 	(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
-#else
-REGHANDLE g_ETW_RegistrationHandle = NULL;
-static GUID g_ETW_ProviderGuid = { 0x61F777A1, 0x1E59, 0x4BFC, {0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0} };
-#endif
+
 static trace_level trace_level_from_configuration(std::string_view str, trace_level defaultLevel)
 {
     if (str == "always"sv)
