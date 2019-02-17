@@ -299,12 +299,23 @@ void load_json()
         for (auto& processConfig : processes->as_array())
         {
             auto& obj = processConfig.as_object();
-            auto exe = obj.get("executable").as_string().wstring();
-            if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
+			auto exe = obj.get("executable").as_string().wstring();  
+            if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length()) ))
             {
                 g_CurrentExeConfig = &obj;
+				LogCountedStringW("Processes config match", exe.data(), exe.length());
                 break;
             }
+			else if (!g_CurrentExeConfig)
+			{
+				LogCountedStringW("Processes config notmatched", exe.data(), exe.length());
+				///Log("\t  native path=%ls\n", currentExe.native().c_str());
+				///Log("\t  exelen=%d\n", exe.length());
+				///if (std::regex_match(currentExe.native(), std::wregex(obj.get("executable").as_string().wide()),std::regex_constants::match_any))
+				///	Log("\t  Now matches.\n");
+				///else
+				///	Log("\t  Still doesnt\n");
+			}
         }
     }
 
