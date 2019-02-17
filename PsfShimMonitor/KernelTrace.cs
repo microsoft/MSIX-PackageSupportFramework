@@ -27,11 +27,11 @@ namespace PsfMonitor
         public List<EventItem> _TKernelEventListItems = new List<EventItem>();
         public Object _TKernelEventListsLock = new Object();
 
-        Dictionary<UInt64, string> _KCBs = new Dictionary<UInt64, string>();
-        Dictionary<UInt64, string> _TKCBs = new Dictionary<UInt64, string>();
-        public Object _TKCBsListLock = new object();
+        Dictionary<UInt64, string> _KernelControlBlocks = new Dictionary<UInt64, string>();
+        Dictionary<UInt64, string> _TempKernelControlBlocks = new Dictionary<UInt64, string>();
+        public Object _TempKernelControlBlocksListLock = new object();
 
-        private int MAX_KCBS = 100000;
+        private const int MAX_KernelControlBlocks = 100000;
 
         private void KernelTraceInBackground_Start()
         {
@@ -65,37 +65,37 @@ namespace PsfMonitor
         {
             try
             {
-                lock (_TKernelEventListsLock) //_TKCBsListLock)
+                lock (_TKernelEventListsLock) //_TempKernelControlBlocksListLock)
                 {
-                    if (_TKCBs.Count > 0)
+                    if (_TempKernelControlBlocks.Count > 0)
                     {
-                        foreach (UInt64 k in _TKCBs.Keys)
+                        foreach (UInt64 k in _TempKernelControlBlocks.Keys)
                         {
                             // avoid catches
                             string s = null;
-                            _TKCBs.TryGetValue(k, out s);
+                            _TempKernelControlBlocks.TryGetValue(k, out s);
                             if (s != null)
                             {
                                 try
                                 {
-                                    if (_KCBs.Count < MAX_KCBS)  // temp
+                                    if (_KernelControlBlocks.Count < MAX_KernelControlBlocks)  // temp
                                     {
                                         string olds = null;
-                                        _KCBs.TryGetValue(k, out olds);
+                                        _KernelControlBlocks.TryGetValue(k, out olds);
                                         if (olds == null)
                                         {
-                                            _KCBs.Add(k, s);
-                                            ApplyKCBtoPastRegistryEvents(k, s);
+                                            _KernelControlBlocks.Add(k, s);
+                                            ApplyKernelControlBlockstoPastRegistryEvents(k, s);
                                         }
                                     }
                                 }
                                 catch {  /* event thrown if key exists, which should not happen here */ }
                             }
                         }
-                        _TKCBs.Clear();
+                        _TempKernelControlBlocks.Clear();
                     }
                 }
-                lock (_TKernelEventListsLock) //_TKCBsListLock)
+                lock (_TKernelEventListsLock) 
                 {
                     if (_TKernelEventListItems.Count > 0)
                     {
@@ -104,7 +104,7 @@ namespace PsfMonitor
                             AppplyFilterToEventItem(ei);
                             if (IsPaused)
                                 ei.IsPauseHidden = true;
-                            ApplyPastKCBsToRegistryEvent(ei);
+                            ApplyPastKernelControlBlocksToRegistryEvent(ei);
                             _ModelEventItems.Add(ei);
                         }
                         _TKernelEventListItems.Clear();
@@ -126,7 +126,7 @@ namespace PsfMonitor
             Status.Text = "NonKernel";
         }
 
-        private void ApplyKCBtoPastRegistryEvents(UInt64 k, string s)
+        private void ApplyKernelControlBlockstoPastRegistryEvents(UInt64 k, string s)
         {
             foreach (EventItem ei in _ModelEventItems)
             {
@@ -143,7 +143,7 @@ namespace PsfMonitor
                 }
             }
         }
-        private void ApplyPastKCBsToRegistryEvent(EventItem ei)
+        private void ApplyPastKernelControlBlocksToRegistryEvent(EventItem ei)
         {
             if (ei.Event.StartsWith("Registry/"))
             {
@@ -151,13 +151,13 @@ namespace PsfMonitor
                     !ei.Inputs.Contains(")\nKeyName="))
                 {
                     string matchh = ei.Inputs.Substring(10, ei.Inputs.IndexOf('\n') - 8);
-                    foreach (UInt64 key in _KCBs.Keys)
+                    foreach (UInt64 key in _KernelControlBlocks.Keys)
                     {
                         if (key.ToString().Equals(matchh))
                         {
                             try
                             {
-                                ei.Inputs.Replace("\nKeyName=", " (" + _KCBs[key] + ")\nKeyName=");
+                                ei.Inputs.Replace("\nKeyName=", " (" + _KernelControlBlocks[key] + ")\nKeyName=");
                             }
                             catch { }
                             break;
@@ -770,15 +770,15 @@ namespace PsfMonitor
                                                  UInt64 k = (UInt64)data.PayloadByName("KeyHandle");
                                                  string n = data.PayloadStringByName("KeyName");
                                                  bool added = false;
-                                                 lock (_TKernelEventListsLock) //_TKCBsListLock)
+                                                 lock (_TKernelEventListsLock) 
                                                  {
                                                      try
                                                      {
                                                          string olds = null;
-                                                         _TKCBs.TryGetValue(k, out olds);
+                                                         _TempKernelControlBlocks.TryGetValue(k, out olds);
                                                          if (olds == null)
                                                          {
-                                                             _TKCBs.Add(k, n);
+                                                             _TempKernelControlBlocks.Add(k, n);
                                                              added = true;
                                                          }
                                                      }

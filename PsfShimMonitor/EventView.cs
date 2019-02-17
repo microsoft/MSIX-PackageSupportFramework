@@ -38,7 +38,7 @@ namespace PsfMonitor
         private void Update_Captured()
         {
             Captured.Text = _FilteredEventItems.Count.ToString() + " of " + _ModelEventItems.Count.ToString() + " Events";
-            Other.Text = "Kernel KCBs=" + _KCBs.Count.ToString();
+            Other.Text = "Kernel Control Blocks=" + _KernelControlBlocks.Count.ToString();
         }
 
     }
