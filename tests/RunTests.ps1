@@ -16,7 +16,7 @@ function RunTest($Arch, $Config)
             {
                 $appxPath = "..\Appx\$($dir.Name).appx"
                 . makeappx.exe pack /o /p "$appxPath" /f "$Arch$Config\FileMapping.txt" | Out-Null
-                . signtool.exe sign /a /v /fd sha256 /f "$pfxPath" "$appxPath" | Out-Null
+                . signtool.exe sign /a /v /fd sha256 /f "$pfxPath" /p "CentennialFixupsTestSigning" "$appxPath" | Out-Null
             }
             finally
             {

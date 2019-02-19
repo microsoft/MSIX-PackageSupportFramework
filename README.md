@@ -92,6 +92,16 @@ The optional monitor item has a further configuration consists of the following 
 |`'asadmin'`|A boolean (0 or 1) indicating if the executable needs to be launched as an admin.  To use this option you must mark the package with the RunAsAdministrator capability.  If the monitor executable has a manifest (internal or external) it is ignored.  If not expressed, this defaults to a 0.|
 |`'wait'`|A boolean (0 or 1) indicating if the launcher should wait for the monitor program to exit prior to starting the primary application.  When not set, the launcher will WaitForInputIdle on the monitor before launching the primary application. This option is not normally used and defaults to 0.|
 
+Submit your own fixup(s) to the community:
+1. Create a private fork for yourself
+2. Make your changes in your private branch
+3. For new files that you are adding include the following Copyright statement.\
+//-------------------------------------------------------------------------------------------------------\
+// Copyright (c) #YOUR NAME#. All rights reserved.\
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.\
+//-------------------------------------------------------------------------------------------------------
+4. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:master'
+
 
 
 
