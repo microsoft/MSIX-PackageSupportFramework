@@ -1380,50 +1380,5 @@ namespace PsfMonitor
 
 
 
-        private string Interpret_return_rom_win32(ulong code)
-        {
-            string sValue;
-            switch (code)
-            {
-                case 0: //ERROR_SUCCESS:
-                    sValue = "Success";
-                    break;
-                case 2:   // ERROR_FILE_NOT_FOUND:
-                    sValue = "Expected Failure ()";
-                    break;
-                case 3:   // ERROR_PATH_NOT_FOUND:
-                    sValue = "Expected Failure (ERROR_PATH_NOT_FOUND)";
-                    break;
-                case 123: // ERROR_INVALID_NAME:
-                    sValue = "Expected Failure (ERROR_INVALID_NAME)";
-                    break;
-                case 183: // ERROR_ALREADY_EXISTS:
-                    sValue = "Expected Failure (ERROR_ALREADY_EXISTS)";
-                    break;
-                case 80:  // ERROR_FILE_EXISTS:
-                    sValue = "Expected Failure (ERROR_FILE_EXISTS)";
-                    break;
-                case 122: // ERROR_INSUFFICIENT_BUFFER:
-                    sValue = "Expected Failure (ERROR_INSUFFICIENT_BUFFER)";
-                    break;
-                case 234: // ERROR_MORE_DATA:
-                    sValue = "Expected Failure (ERROR_MORE_DATA)";
-                    break;
-                case 259: // ERROR_NO_MORE_ITEMS:
-                    sValue = "Expected Failure (ERROR_NO_MORE_ITEMS)";
-                    break;
-                case 18:  // ERROR_NO_MORE_FILES:
-                    sValue = "Expected Failure (ERROR_NO_MORE_FILES)";
-                    break;
-                case 126: // ERROR_MOD_NOT_FOUND:
-                    sValue = "Expected Failure (ERROR_MOD_NOT_FOUND)";
-                    break;
-                default:
-                    sValue = "Failure";
-                    break;
-            }
-            sValue += "\nStatus = 0x" + code.ToString("x");
-            return sValue;
-        }
     }
 }
