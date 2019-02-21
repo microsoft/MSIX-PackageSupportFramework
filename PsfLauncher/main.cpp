@@ -20,12 +20,12 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix)
 {
-	if ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix))
-	{
-		return true;
-	}
+    if ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix))
+    {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 void Log(const char* fmt, ...)
@@ -74,20 +74,22 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto dirPtr = appConfig->try_get("workingDirectory");
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : nullptr;
 
-	auto exeArgs = appConfig->try_get("arguments");
-	auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+    auto exeArgs = appConfig->try_get("arguments");
+    auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     auto monitor = PSFQueryAppMonitorConfig();
 
-	if (!check_suffix_if(exeName, L".exe"_isv))
-	{
-		// Target is not an exe.  Will need to use FTA
-		Log("WARNING: Associated Application executable is not an EXE; this will not work currently.\n");
-	}
+    if (!check_suffix_if(exeName, L".exe"_isv))
+    {
+        // Target is not an exe.  Will need to use FTA
+        Log("WARNING: Associated Application executable is not an EXE; this will not work currently.\n");
+    }
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
     auto exePath = packageRoot / exeName;
-	std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
+
+    // Allow arguments to be specified in config.json now also.
+    std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
 
     if (monitor != nullptr )
     {
