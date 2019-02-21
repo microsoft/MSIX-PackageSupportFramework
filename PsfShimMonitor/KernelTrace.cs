@@ -1264,7 +1264,7 @@ namespace PsfMonitor
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.Create) != 0)
             {
                 sValue += prefix + "Create";
-                prefix = " | ";
+                prefix = " | "; 
             }
             if ((IrpFlags & Microsoft.Diagnostics.Tracing.Parsers.Kernel.IrpFlags.DeallocateBuffer) != 0)
             {
@@ -1339,6 +1339,7 @@ namespace PsfMonitor
             sValue += " )";
             return sValue;
         }
+        
         private string Interpret_KernelFile_Priority(Microsoft.Diagnostics.Tracing.Parsers.Kernel.IOPriority iopriority)
         {
             string sValue = "0x" + ((uint)iopriority).ToString("x") + " (";
