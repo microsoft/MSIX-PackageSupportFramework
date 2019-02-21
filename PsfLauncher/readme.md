@@ -144,6 +144,8 @@ In this example, the configuration is directing the PsfLauncher to start PsfMoni
 
 The `applications`, `processes`, and `fixups` keys are arrays. That means that you can use the config.json file to specify more than one application, process, and fixup DLL.
 
+An entry in `processes` has a value named `executable`, the value for which should be formed as a RegEx string to match the name of an executable process without path or file extension. The launcher will expect Windows SDK std:: library RegEx ECMAList syntax for the RegEx string.
+
 =======
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
