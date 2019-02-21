@@ -41,6 +41,7 @@ PSFAPI const psf::json_value* __stdcall PSFQueryConfigRoot() noexcept;
 
 PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wchar_t* applicationId) noexcept;
 PSFAPI const psf::json_object* __stdcall PSFQueryCurrentAppLaunchConfig() noexcept;
+PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept;
 
 // NOTE: Returns null when no configuration is set for the executable, or if an error occurred
 PSFAPI const psf::json_value* __stdcall PSFQueryConfig(const wchar_t* executable, const wchar_t* dll) noexcept;

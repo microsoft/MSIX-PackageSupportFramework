@@ -1,0 +1,348 @@
+﻿<Window x:Class="PsfMonitor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PsfMonitor"
+        mc:Ignorable="d"
+        Title="PSF Monitor" Height="450" Width="1200">
+    
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary>
+                    <SolidColorBrush x:Key="ChromeBackground" Color="LightSlateGray"/>
+                    <SolidColorBrush x:Key="ChromeTBBackground" Color="SlateGray"/>
+                    <SolidColorBrush x:Key="ChromeText" Color="White"/>
+                    <SolidColorBrush x:Key="FunctionResultFailureColor" Color="Maroon" />
+                    <SolidColorBrush x:Key="FunctionResultWarningColor" Color="#A08000" />
+                    <SolidColorBrush x:Key="FunctionResultNormalColor" Color="Black"/>
+
+                    <SolidColorBrush x:Key="HighlightColor" Color="Yellow"/>
+                    <SolidColorBrush x:Key="HighlightColor2" Color="#FFFF80"/>
+
+                    <Style x:Key="ButtonMenu"  TargetType="Button">
+                        <Setter Property="Margin" Value="5,5,5,5"/>
+                        <Setter Property="Width" Value="70"/>
+                        <Setter Property="Background" Value="{StaticResource ChromeTBBackground}"/>
+                        <Setter Property="Foreground" Value="{StaticResource ChromeText}"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource ChromeTBBackground}"/>
+                    </Style>
+                    <Style x:Key="NormalButton"  TargetType="Button">
+                        <Setter Property="Margin" Value="5,5,5,5"/>
+                        <Setter Property="Width" Value="60"/>
+                    </Style>
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>  <!-- for filters and highlighting... -->
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="15"/> <!-- for status... -->
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Background="{StaticResource ChromeBackground}" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="70"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="10"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Name="bClearList" Content="Clear" Click="bClearList_Click" Style="{StaticResource NormalButton}"  ToolTip="Clear out all events from the list."/>
+            <Button Grid.Column="1" Name="bPauseContinue" Content="Pause" Click="bPauseContinue_Click" Style="{StaticResource NormalButton}" ToolTip="Pause display changes, but events are still captured." />
+
+            
+            <Grid Grid.Column="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="10"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Name="SearchStringTB" Grid.Column="1" Margin="5,5,5.5,5" KeyUp="SearchStringTB_KeyUp"></TextBox>
+                <Button Name="SearchStringBut" Grid.Column="2" Content="Search" Style="{StaticResource NormalButton}" Margin="3,5,0,7" Height="18" FontSize="12" Click="SearchStringBut_Click"/>
+                <TextBlock Name="SearchFoundCount" Grid.Column="2" Margin="5,20,0,0" FontSize="9" Foreground="{StaticResource HighlightColor2}"  />
+            </Grid>
+
+            <Label  Grid.Column="3" Content="Display" Foreground="{StaticResource ChromeText}" Margin="10,-2,1,4" FontSize="10" FontWeight="Bold" />
+            <Label  Grid.Column="3" Content="Filters:" Foreground="{StaticResource ChromeText}" Margin="10,8,1,1" FontSize="10" FontWeight="Bold" />
+
+            <Button Grid.Column="4" Name="bEvents" Content="EventTypes"  Click="bEvents_Click" Style="{StaticResource ButtonMenu}">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <HeaderedContentControl Header="WinAPI EventType Filters"  Margin="-25,0,0,0" />
+                        <Separator/>
+                        <MenuItem Name="miProcess" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatProcess" Content="Process" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miDlls" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatDll" Content="Dlls" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miFiles" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatFile" Content="Files"  IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miRegistry" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatReg" Content="Registry" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+
+                        <HeaderedContentControl Header="NTxxx EventType Filters"/>
+                        <Separator/>
+                        <MenuItem Name="miNTFileWinternl"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatNTFile" Content="NtFile" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miNTReg"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatNTReg" Content="NtReg" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        
+                        <HeaderedContentControl Header="Kernel EventType Filters" Margin="-25,0,0,0" />
+                        <Separator/>
+                        <MenuItem Name="miKernelProcess"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatKernelProcess" Content="KernelProcess" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miKernelImageLoad"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatKernelImageLoad" Content="KernelImageLoad" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miKernelDisk"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatKernelDisk" Content="KernelDiske" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miKernelFile"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatKernelFile" Content="KernelFile" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miKernelRegistry"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatKernelRegistry" Content="KernelRegistry" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="False"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+
+                        <HeaderedContentControl Header="Other EventType Filters"  Margin="-25,0,0,0" />
+                        <Separator/>
+                        <MenuItem Name="miOther" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatOther" Content="Other"  IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+
+            <Button Grid.Column="5" Name="bResults" Content="Results"  Click="bResults_Click" Style="{StaticResource ButtonMenu}"  >
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <HeaderedContentControl Header="Result Filters"/>
+                        <Separator/>
+                        <MenuItem Name="miSucesss" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbSuccesss" Content="Success"  IsThreeState="False"
+                                          Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miIntermediate"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbIntermediate" Content="Intermediate" IsThreeState="False" 
+                                          Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miExpectedFailure" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbExpectedFailure" Content="Expected Failure" IsThreeState="False" 
+                                          Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miFailure" >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbFailure" Content="Failure" IsThreeState="False" 
+                                          Checked="Cb_Result_Checked_or_Unchecked" Unchecked="Cb_Result_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+        </Grid>
+        <DataGrid Name="EventsGrid" ItemsSource="{Binding}" 
+                  Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                   AlternatingRowBackground="#E0E8E0" AlternationCount="2"
+                   AutoGenerateColumns="False" 
+                   CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False" 
+                   CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+                   Margin="1, 1, 1, 1" 
+        >
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <EventSetter Event="MouseRightButtonDown" Handler="DataGridColumnHeader_MouseRightButtonDown" />
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+            <DataGrid.RowStyle>
+                <Style TargetType="{x:Type DataGridRow}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsHidden}" Value="False">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Index"    Width="40" IsReadOnly="True" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding IndexAsText}"  Height="Auto" Width="Auto" TextWrapping="NoWrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                <Setter Property="TextBlock.Background"  Value="{StaticResource HighlightColor}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsHighlighted}" Value="False">
+                                                <Setter Property="TextBlock.Background"  Value="Transparent"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Start" Width="100" IsReadOnly="True" SortMemberPath="Start">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Path=Start}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="End" Width="100" IsReadOnly="True" SortMemberPath="End" Visibility="Collapsed">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding End}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Duration" Width="100" IsReadOnly="True" SortMemberPath="Duration" Visibility="Collapsed">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Duration}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Time Stamp (Return)"      Binding="{Binding TimestampAsText}"     Width="130" IsReadOnly="True"  />
+                <DataGridTextColumn Header="ProcName"    Binding="{Binding ProcessName}"   Width="80" IsReadOnly="True"         Visibility="Collapsed"  />
+                <DataGridTemplateColumn Header="ProcID" Width="50" IsReadOnly="True" SortMemberPath="ProcessID" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ProcessID}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="ThreadID" Width="60" IsReadOnly="True" SortMemberPath="ThreadID" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ThreadID}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Event Source"    Binding="{Binding EventSource}"   Width="100" IsReadOnly="True"    Visibility="Collapsed"  />
+
+                <DataGridTextColumn Header="Event"          Binding="{Binding Event}"         Width="100" IsReadOnly="True" />
+                <DataGridTemplateColumn Header="Inputs" Width="350"  IsReadOnly="True" SortMemberPath="Inputs" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Inputs}"  Height="Auto" Width="Auto" TextWrapping="Wrap"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Result" Width="120"  IsReadOnly="True" SortMemberPath="Result" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Result}"  Height="Auto" Width="Auto" TextWrapping="NoWrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Style.Triggers>
+                                            <!-- These names sync up with those from InterperetFunctionResult() -->
+                                            <DataTrigger Binding="{Binding EventIsResultClass}" Value="Normal">
+                                                <Setter Property="TextBlock.Foreground"  Value="{StaticResource FunctionResultNormalColor}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding EventIsResultClass}" Value="Warning">
+                                                <Setter Property="TextBlock.Foreground"  Value="{StaticResource FunctionResultWarningColor}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding EventIsResultClass}" Value="Failure">
+                                                <Setter Property="TextBlock.Foreground"  Value="{StaticResource FunctionResultFailureColor}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Outputs" Width="275"  IsReadOnly="True" SortMemberPath="Outputs" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Outputs}"  Height="Auto" Width="Auto" TextWrapping="Wrap"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Caller" Width="375"  IsReadOnly="True" SortMemberPath="CallingModule" >
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Caller}"  Height="Auto" Width="Auto" TextWrapping="Wrap"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Grid  Grid.Row="2" Background="{StaticResource ChromeBackground}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Name="Status" FontSize="8" Background="{StaticResource ChromeTBBackground}" Foreground="{StaticResource ChromeText}" IsReadOnly="True" Padding="10,0,10,0" Margin="5,1,5,1"/>
+            <TextBox Grid.Column="1" Name="Captured" FontSize="8" Background="{StaticResource ChromeTBBackground}" Foreground="{StaticResource ChromeText}" IsReadOnly="True" Padding="10,0,10,0" Margin="5,1,5,1"/>
+            <TextBox Grid.Column="2" Name="Other" FontSize="8" Background="{StaticResource ChromeTBBackground}" Foreground="{StaticResource ChromeText}" IsReadOnly="True" Padding="10,0,10,0" Margin="5,1,5,1"/>
+        </Grid>
+    </Grid>
+</Window>
