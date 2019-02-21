@@ -15,8 +15,18 @@
 
 using namespace std::literals;
 
-// Forward declearation
+// Forward declaration
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
+
+static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix)
+{
+	if ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix))
+	{
+		return true;
+	}
+
+	return false;
+}
 
 void Log(const char* fmt, ...)
 {
@@ -63,12 +73,21 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto exeName = appConfig->get("executable").as_string().wide();
     auto dirPtr = appConfig->try_get("workingDirectory");
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : nullptr;
+
+	auto exeArgs = appConfig->try_get("arguments");
+	auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     auto monitor = PSFQueryAppMonitorConfig();
+
+	if (!check_suffix_if(exeName, L".exe"_isv))
+	{
+		// Target is not an exe.  Will need to use FTA
+		Log("WARNING: Associated Application executable is not an EXE; this will not work currently.\n");
+	}
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
     auto exePath = packageRoot / exeName;
-    std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + args;
+	std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
 
     if (monitor != nullptr )
     {
@@ -86,7 +105,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         LaunchMonitorInBackground(packageRoot, monitor_executable->as_string().wide(), monitor_arguments->as_string().wide(), wait, asadmin);
     }
 
-    // Fixup for no working directory
+    // Fix-up for no working directory
     // By default, we should use the directory of the executable.
     std::wstring wd;
     if (dirStr == nullptr)
