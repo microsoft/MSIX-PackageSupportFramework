@@ -38,7 +38,7 @@ A possible `config.json` example that includes fixups would be:
         ],
         "processes": [
         {
-            "executable": "PSFSample",
+            "executable": "PrimaryApp$",
             "fixups": [ 
             { 
                 "dll": "FileRedirectionFixup.dll",
@@ -96,6 +96,7 @@ A possible `config.json` example that uses the Trace Fixup along with PsfMonitor
         {
             "id": "PSFLAUNCHERSixFour",
       	    "executable": "PrimaryApp.exe",
+	    "argument": "/AddedArg"
             "workingDirectory": "",
             "monitor": {
                 "executable": "PsfMonitor.exe",
@@ -106,7 +107,7 @@ A possible `config.json` example that uses the Trace Fixup along with PsfMonitor
   	],
         "processes": [
         {
-            "executable": ".*PrimaryApp.*",
+            "executable": "PrimaryApp$",
             "fixups": [ 
             { 
                 "dll": "TraceFixup64.dll",
@@ -131,6 +132,7 @@ In this example, the configuration is directing the PsfLauncher to start PsfMoni
 |-------|-----------|-------|
 | applications | id |  Use the value of the `Id` attribute of the `Application` element in the package manifest. |
 | applications | executable | The package-relative path to the executable that you want to start. In most cases, you can get this value from your package manifest file before you modify it. It's the value of the `Executable` attribute of the `Application` element. |
+| applications | arguments | (Optional) Command line arguments for the executable.  If the PsfLauncher.exe receives any arguments, these will be appended to the command line after those from the config.json file. |
 | applications | workingDirectory | (Optional) A package-relative path to use as the working directory of the application that starts. If you don't set this value, the operating system uses the `System32` directory as the application's working directory. If you supply a value in the form of an empty string, it will use the directory of the referenced executable. |
 | applications | monitor | (Optional) If present, the monitor identifies a secondary program that is to be launched prior to starting the primary application.  A good example might be `PsfMonitor.exe`.  The monitor configuration consists of the following items: |
 | | |   `'executable'` - This is the name of the executable relative to the root of the package. |
