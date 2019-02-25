@@ -12,6 +12,7 @@
 #include <psf_constants.h>
 #include <psf_runtime.h>
 #include <shellapi.h>
+#include <combaseapi.h>
 
 using namespace std::literals;
 
@@ -63,8 +64,8 @@ void LogStringW(const char* name, const wchar_t* value)
 }
 int launcher_main(PWSTR args, int cmdShow) noexcept try
 {
-    Log("in Launcher_main()");
-    auto appConfig = PSFQueryCurrentAppLaunchConfig();
+    Log("\tIn Launcher_main()");
+    auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     if (!appConfig)
     {
         throw_win32(ERROR_NOT_FOUND, "Error: could not find matching appid in config.json and appx manifest");
@@ -78,11 +79,6 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     auto monitor = PSFQueryAppMonitorConfig();
 
-    if (!check_suffix_if(exeName, L".exe"_isv))
-    {
-        // Target is not an exe.  Will need to use FTA
-        Log("WARNING: Associated Application executable is not an EXE; this will not work currently.\n");
-    }
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
@@ -104,6 +100,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
             asadmin = monitor_asadmin->as_boolean().get();
         if (monitor_wait)
             wait = monitor_wait->as_boolean().get();
+        Log("\tCreating the monitor: %ls", monitor_executable->as_string().wide());
         LaunchMonitorInBackground(packageRoot, monitor_executable->as_string().wide(), monitor_arguments->as_string().wide(), wait, asadmin);
     }
 
@@ -125,53 +122,109 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     }
     std::wstring quotedapp = exePath.native(); // L"\"" + exePath.native() + L"\"";
 
-    STARTUPINFO startupInfo = { sizeof(startupInfo) };
-    startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-    startupInfo.wShowWindow = static_cast<WORD>(cmdShow);
-
-    // NOTE: PsfRuntime, which we dynamically link against, detours this call
-    PROCESS_INFORMATION processInfo;
-    if (!::CreateProcessW(
-        exePath.c_str(),
-        cmdLine.data(),
-        nullptr, nullptr, // Process/ThreadAttributes
-        true, // InheritHandles
-        0, // CreationFlags
-        nullptr, // Environment
-        dirStr ? (packageRoot / dirStr).c_str() : nullptr, // NOTE: extended-length path not supported
-        &startupInfo,
-        &processInfo))
+    if (check_suffix_if(exeName, L".exe"_isv))
     {
-        std::wostringstream ss;
-        auto err{ ::GetLastError() };
-        // Remove the ".\r\n" that gets added to all messages
-        auto msg = widen(std::system_category().message(err));
-        msg.resize(msg.length() - 3);
-        ss << L"ERROR: Failed to create detoured process\n  Path: \"" << exeName << "\"\n  Error: " << msg << " (" << err << ")";
-        ::PSFReportError(ss.str().c_str());
-        return err;
-    }
+        STARTUPINFO startupInfo = { sizeof(startupInfo) };
+        startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+        startupInfo.wShowWindow = static_cast<WORD>(cmdShow);
 
-    // Propagate exit code to caller, in case they care
-    switch (::WaitForSingleObject(processInfo.hProcess, INFINITE))
+        Log("\tCreating process %ls", cmdLine.data());
+        // NOTE: PsfRuntime, which we dynamically link against, detours this call
+        PROCESS_INFORMATION processInfo;
+        if (!::CreateProcessW(
+            exePath.c_str(),
+            cmdLine.data(),
+            nullptr, nullptr, // Process/ThreadAttributes
+            true, // InheritHandles
+            0, // CreationFlags
+            nullptr, // Environment
+            dirStr ? (packageRoot / dirStr).c_str() : nullptr, // NOTE: extended-length path not supported
+            &startupInfo,
+            &processInfo))
+        {
+            std::wostringstream ss;
+            auto err{ ::GetLastError() };
+            // Remove the ".\r\n" that gets added to all messages
+            auto msg = widen(std::system_category().message(err));
+            msg.resize(msg.length() - 3);
+            ss << L"ERROR: Failed to create detoured process\n  Path: \"" << exeName << "\"\n  Error: " << msg << " (" << err << ")";
+            ::PSFReportError(ss.str().c_str());
+            return err;
+        }
+
+        // Propagate exit code to caller, in case they care
+        switch (::WaitForSingleObject(processInfo.hProcess, INFINITE))
+        {
+        case WAIT_OBJECT_0:
+            break; // Success case... handle at the end of main
+
+        case WAIT_FAILED:
+            return ::GetLastError();
+
+        default:
+            return ERROR_INVALID_HANDLE;
+        }
+
+        DWORD exitCode;
+        if (!::GetExitCodeProcess(processInfo.hProcess, &exitCode))
+        {
+            return ::GetLastError();
+        }
+        return exitCode;
+    }
+    else
     {
-    case WAIT_OBJECT_0:
-        break; // Success case... handle at the end of main
+        // Non Exe case, use shell launching to pick up local FTA
+        auto nonexePath = packageRoot / exeName;
 
-    case WAIT_FAILED:
-        return ::GetLastError();
+        CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        SHELLEXECUTEINFO shex;
+        memset(&shex, 0, sizeof(SHELLEXECUTEINFO));
+        shex.cbSize = sizeof(shex);
+        shex.fMask = SEE_MASK_NOCLOSEPROCESS;
+        shex.hwnd = (HWND)NULL;
+        shex.lpVerb = NULL;  // just use the default action for the fta
+        shex.lpFile = nonexePath.c_str();
+        shex.lpParameters = exeArgString;
+        shex.lpDirectory = dirStr ? (packageRoot / dirStr).c_str() : nullptr;
+        shex.nShow = static_cast<WORD>(cmdShow);
+        //shex.hInstApp = 0; // for output
+        //shex.lpIDList = NULL;
+        //shex.lpClass = NULL;
+        //shex.hkeyClass = NULL;
+        //shex.dwHotKey = 0;
+        //shex.hProcess = 0;
 
-    default:
-        return ERROR_INVALID_HANDLE;
+        Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
+        if (!ShellExecuteEx(&shex))
+        {
+            std::wostringstream ss;
+            auto err{ ::GetLastError() };
+            // Remove the ".\r\n" that gets added to all messages
+            auto msg = widen(std::system_category().message(err));
+            msg.resize(msg.length() - 3);
+            ss << L"ERROR: Failed to create detoured shell process\n  Path: \"" << exeName << "\"\n  Error: " << msg << " (" << err << ")";
+            ::PSFReportError(ss.str().c_str());
+            return err;
+        }
+        else
+        { 
+            // Propagate exit code to caller, in case they care
+            switch (::WaitForSingleObject(shex.hProcess, INFINITE))
+            {
+            case WAIT_OBJECT_0: // SUCCESS
+                if (((unsigned long long)(shex.hInstApp)) > 32)
+                    return 0;
+                else
+                    return (int)(unsigned long long)(shex.hInstApp);
+            case WAIT_FAILED:
+                return ::GetLastError();
+
+            default:
+                return ERROR_INVALID_HANDLE;
+            }			
+        }
     }
-
-    DWORD exitCode;
-    if (!::GetExitCodeProcess(processInfo.hProcess, &exitCode))
-    {
-        return ::GetLastError();
-    }
-
-    return exitCode;
 }
 catch (...)
 {
