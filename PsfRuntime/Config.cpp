@@ -418,7 +418,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
             return &appObj;
         }
     }
-    if (verbose
+    if (verbose)
     {
         Log("\tNo Matches");
     }
