@@ -302,14 +302,14 @@ void load_json()
 			auto exe = obj.get("executable").as_string().wstring();  
             if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
             {
-                g_CurrentExeConfig = &obj;
-				LogCountedStringW("Processes config match", exe.data(), exe.length());
+                g_CurrentExeConfig = &obj; 
+		LogCountedStringW("Processes config match", exe.data(), exe.length());
                 break;
             }
-			else if (!g_CurrentExeConfig)
-			{
-				LogCountedStringW("Processes config notmatched", exe.data(), exe.length());
-			}
+            else if (!g_CurrentExeConfig)
+            {
+                LogCountedStringW("Processes config notmatched", exe.data(), exe.length());
+            }
         }
     }
 
@@ -331,11 +331,12 @@ void LoadConfig()
         g_PackageRootPath = psf::current_package_path();
         g_CurrentExecutable = psf::current_executable_path();
 
-		LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
-		LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
-		LogCountedStringW("g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
-		LogString("g_PackageRootPath", g_PackageRootPath.c_str());
-		LogString("g_CurrentExecutable", g_CurrentExecutable.c_str());    }
+        LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
+        LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
+        LogCountedStringW("g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
+        LogString("g_PackageRootPath", g_PackageRootPath.c_str());
+        LogString("g_CurrentExecutable", g_CurrentExecutable.c_str());    
+    }
     else
     {
         // FUTURE: It may be useful to enable testing outside of a packaged environment. For now, finding ourselves in
@@ -402,19 +403,25 @@ PSFAPI const psf::json_value* __stdcall PSFQueryConfigRoot() noexcept
     return g_JsonHandler.root.get();
 }
 
-PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wchar_t* applicationId) noexcept try
+PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wchar_t* applicationId, bool verbose) noexcept try
 {
     for (auto& app : g_JsonHandler.root->as_object().get("applications").as_array())
     {
         auto& appObj = app.as_object();
         auto appId = appObj.get("id").as_string().wstring();
-		LogCountedStringW("Compare against json id", appId.data(), appId.length());
-        if (iwstring_view(appId.data(), appId.length()) == applicationId)
+	if (verbose)
+	{
+            LogCountedStringW("Compare against json id", appId.data(), appId.length());
+        }
+	if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {
             return &appObj;
         }
     }
-	Log("No Matches");
+    if (verbose)
+    {
+        Log("\tNo Matches");
+    }
     return nullptr;
 }
 catch (...)
@@ -422,14 +429,14 @@ catch (...)
     return nullptr;
 }
 
-PSFAPI const psf::json_object* __stdcall PSFQueryCurrentAppLaunchConfig() noexcept
+PSFAPI const psf::json_object* __stdcall PSFQueryCurrentAppLaunchConfig(bool verbose) noexcept
 {
-    return PSFQueryAppLaunchConfig(g_ApplicationId.c_str());
+    return PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), verbose);
 }
 
 PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig_try() noexcept try
 {
-	const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str());
+	const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(),false);
 	auto& mon = application->get("monitor").as_object();
 	auto& monObj = mon.as_object();
 
