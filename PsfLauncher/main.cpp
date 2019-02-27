@@ -188,12 +188,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         shex.lpParameters = exeArgString;
         shex.lpDirectory = dirStr ? (packageRoot / dirStr).c_str() : nullptr;
         shex.nShow = static_cast<WORD>(cmdShow);
-        //shex.hInstApp = 0; // for output
-        //shex.lpIDList = NULL;
-        //shex.lpClass = NULL;
-        //shex.hkeyClass = NULL;
-        //shex.dwHotKey = 0;
-        //shex.hProcess = 0;
+        
 
         Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
         if (!ShellExecuteEx(&shex))
