@@ -1,10 +1,14 @@
 param (
 	[Parameter(Mandatory=$True)]
-	[string]$certFriendlyName
+	[string]$certFriendlyName,
+	
+	[Parameter(Mandatory=$True)]
+	[string]$CertStoreLocation
 )
 
 function TryGetCert
 {
+	write-host ("Cert friendly name is: " + $certFriendlyName)
     $results = Get-ChildItem "$CertStoreLocation" | Where-Object { $_.FriendlyName -eq "$certFriendlyName" }
     if ($results.Count -gt 0)
     {
