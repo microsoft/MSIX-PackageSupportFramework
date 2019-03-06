@@ -17,4 +17,4 @@ function TryGetCert
 $cert = TryGetCert
 
 write-host "Exporting the certificate"
-Export-Certificate -FilePath ../Appx/CentennialFixupsTestSigningCertificate.cer -Type CERT
+Export-Certificate -FilePath ../Appx/CentennialFixupsTestSigningCertificate.cer -Type CERT -Cert $cert
