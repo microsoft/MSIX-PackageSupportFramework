@@ -102,7 +102,11 @@ function CreateCert()
     $cert = TryGetCert
     if ($cert -eq $null)
     {
+		write-host "Making a new self-signed certififcate"
         $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
+		
+		write-host "Exporting the certificate"
+		Export-Certificate -FilePath ../Appx/CentennialFixupsTestSigningCertificate.cer -cert $cert -Type CERT
     }
 
     $Password = ConvertTo-SecureString $passwordAsPlainText -AsPlainText -Force

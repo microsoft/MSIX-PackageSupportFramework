@@ -21,6 +21,9 @@ Param (
 
     [Parameter(Mandatory=$True, ParameterSetName='MultipleAppx')]
     [switch]$All,
+	
+	[Parameter(Mandatory=$True)]
+	[string]$PasswordAsPlainText,
 
     [Parameter(Mandatory=$False)]
     [ValidateSet('x86','x64')]
@@ -59,7 +62,6 @@ function CreateSingle($name)
         Write-Host -NoNewline -ForegroundColor Green "$appxPath"
         Write-Host "]"
 
-		$passwordAsPlainText = "CentennialFixupsTestSigning"
         # Ensure that a signing certificate has been created
         Write-Host "Signing the appx..."
         . "$PSScriptRoot\signing\CreateCert.ps1" -Install -passwordAsPlainText $passwordAsPlainText
