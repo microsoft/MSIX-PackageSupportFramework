@@ -104,10 +104,10 @@ function CreateCert()
     {
 		write-host "Making a new self-signed certififcate"
         $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
-		
-		write-host "Exporting the certificate"
-		Export-Certificate -FilePath ../Appx/CentennialFixupsTestSigningCertificate.cer -cert $cert -Type CERT
     }
+	
+	Write-host "Exporting cert to build"
+	Write-Host "##vso[task.setvariable variable=Cert;issecret=true]$cert"
 
     $Password = ConvertTo-SecureString $passwordAsPlainText -AsPlainText -Force
     if (-not (Test-Path "$certFile"))
