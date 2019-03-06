@@ -106,8 +106,7 @@ function CreateCert()
         $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
     }
 	
-	write-host "Exporting the certificate"
-	Export-Certificate -FilePath ../Appx/CentennialFixupsTestSigningCertificate.cer -Type CERT"
+	
 	
 	Write-host "Exporting cert to build"
 

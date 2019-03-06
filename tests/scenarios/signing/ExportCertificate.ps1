@@ -1,6 +1,20 @@
-[CmdletBinding(DefaultParameterSetName="CertCreation")]
-Param (
-	[X509Certificate2]$pfxCertificate
+param (
+	[Parameter(Mandatory=$True)]
+	[string]$certFriendlyName
 )
 
-Export-Certificate -FilePath ../Appx/CentennialFixupsTestSigningCertificate.cer -cert $pfxCertificate -Type CERT
+function TryGetCert
+{
+    $results = Get-ChildItem "$CertStoreLocation" | Where-Object { $_.FriendlyName -eq "$certFriendlyName" }
+    if ($results.Count -gt 0)
+    {
+        return $results[0];
+    }
+
+    return $null
+}
+
+$cert = TryGetCert
+
+write-host "Exporting the certificate"
+Export-Certificate -FilePath ../Appx/CentennialFixupsTestSigningCertificate.cer -Type CERT
