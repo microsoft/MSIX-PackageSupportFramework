@@ -13,7 +13,7 @@
     <file src="__INPATHROOT__\x64\Release\FileRedirectionFixup64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\FileRedirectionFixup64.dll" />
     <file src="__INPATHROOT__\x64\Release\TraceFixup64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\TraceFixup64.dll" />
     <file src="__INPATHROOT__\x64\Release\WaitForDebuggerFixup64.dll" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\WaitForDebuggerFixup64.dll" />
-    <!--<file src="__INPATHROOT__\PsfTraceMonitor\x64\Release\PsfTraceMonitor.exe" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\PsfTraceMonitor.exe" />
-    <file src="__INPATHROOT__\PsfTraceMonitor\x64\Release\PsfTraceMonitor.exe" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\PsfTraceMonitor.exe" />-->
+    <file src="__INPATHROOT__\PsfTraceMonitor\x64\Release\PsfTraceMonitor.exe" signType="Authenticode" dest="__OUTPATHROOT__\Win32\Release\PsfTraceMonitor.exe" />
+    <file src="__INPATHROOT__\PsfTraceMonitor\x64\Release\PsfTraceMonitor.exe" signType="Authenticode" dest="__OUTPATHROOT__\x64\Release\PsfTraceMonitor.exe" />
   </job>
 </SignConfigXML>
