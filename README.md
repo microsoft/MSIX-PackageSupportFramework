@@ -12,15 +12,6 @@ See also:
 ## [License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE)
 Code licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE).
 
-## Branch structure
-Package Support Framework adopts a development and master branching style.
-
-### Master
-This branch is what our NuGet repository uses.  The code in this branch is the most stable.  Please do not form off this branch for development.
-
-### Develop
-This branch has the latest code, but is unstable.  Please form off this branch to make any contributions to Package Support Framework.
-
 ## Contribute
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
@@ -32,7 +23,7 @@ Submit your own fixup(s) to the community:
 // Copyright (c) #YOUR NAME#. All rights reserved.\
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.\
 //-------------------------------------------------------------------------------------------------------
-4. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:develop'
+4. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:master'
 
 When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
 
