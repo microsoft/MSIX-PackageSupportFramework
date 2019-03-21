@@ -50,6 +50,9 @@ Param (
 
     [Parameter(ParameterSetName='CertCreation')]
     [string]$FileName="CentennialFixupsTestSigningCertificate.pfx",
+	
+	[Parameter(ParameterSetName='CertCreation')]
+	[string]$passwordAsPlainText,
 
     [Parameter(ParameterSetName='CertCreation')]
     [switch]$Force,
@@ -99,10 +102,15 @@ function CreateCert()
     $cert = TryGetCert
     if ($cert -eq $null)
     {
+		write-host "Making a new self-signed certififcate"
         $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
     }
+	
+	
+	
+	Write-host "Exporting cert to build"
 
-    $Password = ConvertTo-SecureString "CentennialFixupsTestSigning" -AsPlainText -Force
+    $Password = ConvertTo-SecureString $passwordAsPlainText -AsPlainText -Force
     if (-not (Test-Path "$certFile"))
     {
         Export-PfxCertificate -Cert $cert -FilePath $certFile -Password $Password | Out-Null
