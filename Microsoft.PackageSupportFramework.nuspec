@@ -30,6 +30,6 @@
     <file src="*\Release\TraceFixup*.dll" target="bin"/>
     <file src="*\Release\WaitForDebuggerFixup*.dll" target="bin"/>
     <file src="readme.txt" target="" />
-	<file src="AnyCPU\Release\PsfMonitor.exe" target="bin"/>
+    <file src="AnyCPU\Release\PsfMonitor.exe" target="bin"/>
   </files>
 </package>
