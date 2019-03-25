@@ -19,6 +19,7 @@ using namespace std::literals;
 
 std::filesystem::path g_packageRootPath;
 std::filesystem::path g_packageVfsRootPath;
+std::filesystem::path g_packageRootPath;
 std::filesystem::path g_redirectRootPath;
 
 struct vfs_folder_mapping
@@ -304,6 +305,7 @@ normalized_path DeVirtualizePath(normalized_path path)
 
 	return path;
 }
+
 
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
