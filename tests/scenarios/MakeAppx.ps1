@@ -21,8 +21,8 @@ Param (
 
     [Parameter(Mandatory=$True, ParameterSetName='MultipleAppx')]
     [switch]$All,
-	
-	[Parameter(Mandatory=$True)]
+
+    [Parameter(Mandatory=$True)]
 	[string]$PasswordAsPlainText,
 
     [Parameter(Mandatory=$False)]
