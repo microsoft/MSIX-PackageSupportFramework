@@ -1,6 +1,18 @@
+<#
+.DESCRIPTION
+    Exports the certificate from CertStoreLocation with the specified FriendlyName.
+
+.PARAMETER FriendlyName
+    The friendly name given to the certificate and used to lookup a pre-existing cert. By default, this value is
+    "CentennialFixups Test Signing Certificate"
+
+.PARAMETER CertStoreLocation
+    Target store to hold the created certificate. The default is "Cert:\LocalMachine\My"
+#>
+
 param (
 	[Parameter(Mandatory=$True)]
-	[string]$certFriendlyName,
+	[string]$CertFriendlyName,
 	
 	[Parameter(Mandatory=$True)]
 	[string]$CertStoreLocation
@@ -8,14 +20,17 @@ param (
 
 function TryGetCert
 {
-	write-host ("Cert friendly name is: " + $certFriendlyName)
+    write-host ("Cert friendly name is: " + $CertFriendlyName)
     $results = Get-ChildItem "$CertStoreLocation" | Where-Object { $_.FriendlyName -eq "$certFriendlyName" }
-    if ($results.Count -gt 0)
+    if ($results.Count -eq 1)
     {
         return $results[0];
     }
-
-    return $null
+	else
+	{
+		write-Host ("There is more than one certificate with the friendly name of " + $CertFriendlyName + " in location " + $CertStoreLocation)
+		return $null
+	}
 }
 
 $cert = TryGetCert

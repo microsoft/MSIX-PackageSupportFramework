@@ -19,6 +19,9 @@
     The output ".pfx" file name. The default is "CentennialFixupsTestSigningCertificate.pfx". Note that other scripts may
     try and reference this hardcoded name, so using the default is recommended.
 
+.PARAMETER PasswordAsPlainText
+	The password used to sign the certificate with.  This is for the build system.
+
 .PARAMETER Force
     Forces the (re-)creation of the certificate, even if one with the same friendly name already exists. This is
     effectively the same as running with -Clean followed by a normal create call
@@ -50,7 +53,7 @@ Param (
 
     [Parameter(ParameterSetName='CertCreation')]
     [string]$FileName="CentennialFixupsTestSigningCertificate.pfx",
-	
+
 	[Parameter(ParameterSetName='CertCreation')]
 	[string]$passwordAsPlainText,
 
@@ -104,9 +107,7 @@ function CreateCert()
     {
 		write-host "Making a new self-signed certififcate"
         $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
-    }
-	
-	
+    }	
 	
 	Write-host "Exporting cert to build"
 
