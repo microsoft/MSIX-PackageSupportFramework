@@ -388,10 +388,6 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 	auto normalizedPath = NormalizePath(path);
 	std::wcout << normalizedPath.full_path << std::endl;
 
-	if (normalizedPath.full_path.find(L".txt") != std::wstring::npos)
-	{
-		MessageBoxEx(NULL, L"In here", L"In Here", 0, 0);
-	}
 	if (!normalizedPath.drive_absolute_path)
 	{
 		// FUTURE: We could do better about canonicalising paths, but the cost/benefit doesn't make it worth it right now
