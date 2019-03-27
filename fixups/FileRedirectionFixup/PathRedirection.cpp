@@ -19,8 +19,8 @@ using namespace std::literals;
 
 std::filesystem::path g_packageRootPath;
 std::filesystem::path g_packageVfsRootPath;
-std::filesystem::path g_packageRootPath;
 std::filesystem::path g_redirectRootPath;
+std::filesystem::path g_writablePackageRootPath;
 
 struct vfs_folder_mapping
 {
@@ -46,6 +46,9 @@ void InitializePaths()
 	// Ensure that the redirected root path exists
 	g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"VFS";
 	impl::CreateDirectory(g_redirectRootPath.c_str(), nullptr);
+
+	g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"Packages" / psf::current_package_family_name() / L"LocalCache\\Local\\Microsoft\\WritablePackageRoot";
+	impl::CreateDirectory(g_writablePackageRootPath.c_str(), nullptr);
 
 	// Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
 	// https://docs.microsoft.com/en-us/windows/uwp/porting/desktop-to-uwp-behind-the-scenes
@@ -307,9 +310,28 @@ normalized_path DeVirtualizePath(normalized_path path)
 }
 
 
+/// <summary>
+/// Figures out the absolute path to redirect to.
+/// </summary>
+/// <param name="deVirtualizedPath">The original path from the app</param>
+/// <param name="ensureDirectoryStructure">If true, the deVirtualizedPath will be appended to the allowed write location</param>
+/// <returns>The new absolute path.</returns>
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
-	auto result = LR"(\\?\)" + g_redirectRootPath.native();
+	/*
+		If the user wants to operate in the install root we will let them.
+		This is to prevent apps breaking on an upgrade since upgrading would
+		change the install root.
+	*/
+	std::wstring result;
+	if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
+	{
+		result = LR"(\\?\)" + g_writablePackageRootPath.native();
+	}
+	else
+	{
+		result = LR"(\\?\)" + g_redirectRootPath.native();
+	}
 
 	// NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
 	// similar to what's done for UNC paths
