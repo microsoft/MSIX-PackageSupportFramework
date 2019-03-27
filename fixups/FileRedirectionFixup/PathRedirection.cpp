@@ -319,9 +319,10 @@ normalized_path DeVirtualizePath(normalized_path path)
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
 	/*
-		If the user wants to operate in the install root we will let them.
-		This is to prevent apps breaking on an upgrade since upgrading would
-		change the install root.
+		If the user writes to the install root the path would be redirected to use the package\
+		full name.  The package full name will change on an app upgrade.
+		To prevent this from happening, we redirect to the writable package root, which contains
+		the package family name, is the original path was the package root path.
 	*/
 	std::wstring result;
 	if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
