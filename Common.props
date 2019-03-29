@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Condition="'$(VisualStudioVersion)' == '15.0'">
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(VisualStudioVersion)' == '16.0'">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+
   <!-- Build with a common platform version -->
   <PropertyGroup Label="Globals">
     <!--Use RS1 SDK for compatibility with Desktop Bridge debut and build agent-->
@@ -11,7 +20,6 @@
 
   <!-- All projects use the same configuration options by default -->
   <PropertyGroup Label="Configuration">
-    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WindowsSDKDesktopARMSupport>true</WindowsSDKDesktopARMSupport>
     <WindowsSDKDesktopARM64Support>true</WindowsSDKDesktopARM64Support>
