@@ -324,15 +324,17 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 		To prevent this from happening, we redirect to the writable package root, which contains
 		the package family name, is the original path was the package root path.
 	*/
-	std::wstring result;
-	if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
-	{
-		result = LR"(\\?\)" + g_writablePackageRootPath.native();
-	}
-	else
-	{
-		result = LR"(\\?\)" + g_redirectRootPath.native();
-	}
+	//std::wstring result;
+	//if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
+	//{
+	//	result = LR"(\\?\)" + g_writablePackageRootPath.native();
+	//}
+	//else
+	//{
+	//	result = LR"(\\?\)" + g_redirectRootPath.native();
+	//}
+
+	auto result = LR"(\\?\)" + g_redirectRootPath.native();
 
 	// NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
 	// similar to what's done for UNC paths
