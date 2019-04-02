@@ -15,6 +15,7 @@
 
 namespace psf
 {
+	typedef LONG(__stdcall *pGetCurrentPackagePath2)(unsigned int, UINT32*, PWSTR);
 	inline std::filesystem::path get_module_path(HMODULE module)
 	{
 		// The GetModuleFileName API wasn't entirely well thought out and doesn't return the expected size on
@@ -64,6 +65,28 @@ namespace psf
 
 	namespace details
 	{
+		inline std::wstring appmodel_string(LONG(__stdcall *AppModelFunc)(UINT32, UINT32*, wchar_t*))
+		{
+			UINT32 length = MAX_PATH + 1;
+			std::wstring result(length - 1, '\0');
+
+			const auto err = AppModelFunc(1, &length, result.data());
+			if ((err != ERROR_SUCCESS) && (err != ERROR_INSUFFICIENT_BUFFER))
+			{
+				throw_win32(err, "could not retrieve AppModel string");
+			}
+
+			assert(length > 0);
+			result.resize(length - 1);
+			if (err == ERROR_INSUFFICIENT_BUFFER)
+			{
+				check_win32(AppModelFunc(1, &length, result.data()));
+				result.resize(length - 1);
+			}
+
+			return result;
+		}
+
 		inline std::wstring appmodel_string(LONG(__stdcall *AppModelFunc)(UINT32*, wchar_t*))
 		{
 			// NOTE: `length` includes the null character both as input and output, hence the +1/-1 everywhere
@@ -100,7 +123,29 @@ namespace psf
 
 	inline std::filesystem::path current_package_path()
 	{
-		auto result = details::appmodel_string(&::GetCurrentPackagePath);
+		MessageBoxEx(NULL, L"Here I am", L"Here I am", 0, 0);
+		HMODULE appModelDll = LoadLibraryEx(L"kernel.appcore.dll", nullptr, 0);
+
+		if (appModelDll == nullptr)
+		{
+			MessageBoxEx(NULL, L"Not able to load appModel.h.  Exiting", L"Can't load module", 0, 0);
+			exit(0);
+		}
+
+
+		pGetCurrentPackagePath2 getCurrentPackagePath2 = NULL;
+		getCurrentPackagePath2 = (pGetCurrentPackagePath2)GetProcAddress(appModelDll, "GetCurrentPackagePath2");
+
+		std::wstring result;
+		if (!getCurrentPackagePath2)
+		{
+			//If GetCurrentPackagePath 2 does exists
+			result = details::appmodel_string(getCurrentPackagePath2);
+		}
+		else
+		{
+			result = details::appmodel_string(&::GetCurrentPackagePath);
+		}
 		result[0] = std::towupper(result[0]);
 
 		return result;
