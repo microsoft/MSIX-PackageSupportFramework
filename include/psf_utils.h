@@ -15,7 +15,7 @@
 
 namespace psf
 {
-	typedef LONG(__stdcall *pGetCurrentPackagePath2)(unsigned int, UINT32*, PWSTR);
+	using GetCurrentPackagePath2 = LONG(__stdcall *)(unsigned int, UINT32*, PWSTR);
 	inline std::filesystem::path get_module_path(HMODULE module)
 	{
 		// The GetModuleFileName API wasn't entirely well thought out and doesn't return the expected size on
@@ -65,12 +65,17 @@ namespace psf
 
 	namespace details
 	{
+		static const unsigned int PACKAGE_PATH_TYPE_EFFECTIVE = 2;
+
+		/**
+			Summary: Used to call a method in appmodel.h and formats the return string.
+		*/
 		inline std::wstring appmodel_string(LONG(__stdcall *AppModelFunc)(UINT32, UINT32*, wchar_t*))
 		{
 			UINT32 length = MAX_PATH + 1;
 			std::wstring result(length - 1, '\0');
 
-			const auto err = AppModelFunc(1, &length, result.data());
+			const auto err = AppModelFunc(PACKAGE_PATH_TYPE_EFFECTIVE, &length, result.data());
 			if ((err != ERROR_SUCCESS) && (err != ERROR_INSUFFICIENT_BUFFER))
 			{
 				throw_win32(err, "could not retrieve AppModel string");
@@ -121,23 +126,25 @@ namespace psf
 		return details::appmodel_string(&::GetCurrentPackageFamilyName);
 	}
 
+	/**
+	 Summary: Gets the current package path.  Works for Mutable and immutable packages.
+	*/
 	inline std::filesystem::path current_package_path()
 	{
-		MessageBoxEx(NULL, L"Here I am", L"Here I am", 0, 0);
-		HMODULE appModelDll = LoadLibraryEx(L"kernel.appcore.dll", nullptr, 0);
+		//Use GetCurrentPackagePath2 if avalible
+		std::wstring kernelDll = L"kernel.appcore.dll";
+		HMODULE appModelDll = LoadLibraryEx(kernelDll.c_str(), nullptr, 0);
 
 		if (appModelDll == nullptr)
 		{
-			MessageBoxEx(NULL, L"Not able to load appModel.h.  Exiting", L"Can't load module", 0, 0);
-			exit(0);
+			auto message = narrow(kernelDll.c_str());
+			throw_last_error(message.c_str());
 		}
 
-
-		pGetCurrentPackagePath2 getCurrentPackagePath2 = NULL;
-		getCurrentPackagePath2 = (pGetCurrentPackagePath2)GetProcAddress(appModelDll, "GetCurrentPackagePath2");
+		auto getCurrentPackagePath2 = reinterpret_cast<GetCurrentPackagePath2>(GetProcAddress(appModelDll, "GetCurrentPackagePath2"));
 
 		std::wstring result;
-		if (!getCurrentPackagePath2)
+		if (getCurrentPackagePath2)
 		{
 			//If GetCurrentPackagePath 2 does exists
 			result = details::appmodel_string(getCurrentPackagePath2);
