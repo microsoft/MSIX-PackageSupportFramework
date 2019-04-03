@@ -126,9 +126,6 @@ namespace psf
 		return details::appmodel_string(&::GetCurrentPackageFamilyName);
 	}
 
-	/**
-	 Summary: Gets the current package path.  Works for Mutable and immutable packages.
-	*/
 	inline std::filesystem::path current_package_path()
 	{
 		//Use GetCurrentPackagePath2 if avalible
