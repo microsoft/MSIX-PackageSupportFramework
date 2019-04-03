@@ -327,7 +327,7 @@ void LoadConfig()
     if (psf::is_packaged())
     {
         g_PackageFullName = psf::current_package_full_name();
-		g_PackageFamilyName = psf::current_package_family_name();
+        g_PackageFamilyName = psf::current_package_family_name();
         g_ApplicationUserModelId = psf::current_application_user_model_id();
         g_ApplicationId = psf::application_id_from_application_user_model_id(g_ApplicationUserModelId);
         g_PackageRootPath = psf::current_package_path();

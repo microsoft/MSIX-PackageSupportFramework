@@ -13,7 +13,6 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
-#include <iostream>
 
 using namespace std::literals;
 
@@ -47,7 +46,7 @@ void InitializePaths()
 	g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"VFS";
 	impl::CreateDirectory(g_redirectRootPath.c_str(), nullptr);
 
-	g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"Packages" / psf::current_package_family_name() / L"LocalCache\\Local\\Microsoft\\WritablePackageRoot";
+	g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
 	impl::CreateDirectory(g_writablePackageRootPath.c_str(), nullptr);
 
 	// Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
@@ -319,10 +318,8 @@ normalized_path DeVirtualizePath(normalized_path path)
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
 	/*
-		If the user writes to the install root the path would be redirected to use the package\
-		full name.  The package full name will change on an app upgrade.
-		To prevent this from happening, we redirect to the writable package root, which contains
-		the package family name, is the original path was the package root path.
+		To prevent apps breaking on an upgrade we redirect writes to the package root path to
+		a path that contains the package family name and not the package full name.
 	*/
 	std::wstring result;
 	if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
@@ -386,7 +383,6 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 	}
 
 	auto normalizedPath = NormalizePath(path);
-	std::wcout << normalizedPath.full_path << std::endl;
 
 	if (!normalizedPath.drive_absolute_path)
 	{

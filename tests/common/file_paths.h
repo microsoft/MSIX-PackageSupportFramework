@@ -42,7 +42,7 @@ inline void clean_redirection_path()
     //       e.g. by deleting the file that's tracking the deletions, or by calling into an export in PsfRuntime to do
     //       so for us.
     static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"VFS";
-	static const auto writablePackageRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / L"LocalCache\\Local\\Microsoft\\WritablePackageRoot";
+	static const auto writablePackageRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
 
 	clean_redirection_path_helper(redirectRoot);
 	clean_redirection_path_helper(writablePackageRoot);
