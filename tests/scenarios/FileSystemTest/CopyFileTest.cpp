@@ -98,6 +98,41 @@ static int DoCopyFileTest(
     return ERROR_SUCCESS;
 }
 
+inline int Test()
+{
+	auto packageFilePathNotInRoot = std::filesystem::path(L"C:\\Program Files\\YOLO.txt");
+	auto otherFileNotInRoot = std::filesystem::path(L"C:\Program Files\\CopyFile.txt");
+	test_begin("Testing path redirection logic");
+	clean_redirection_path();
+	auto file = ::CreateFileW(packageFilePathNotInRoot.native().c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+	auto bufferSize = GetFinalPathNameByHandleW(file, nullptr, 0, 0);
+
+	if (0 == bufferSize)
+	{
+		return trace_last_error(L"Error when getting the buffer size for the file path");
+	}
+
+	auto fileStringBuffer = std::make_unique<TCHAR[]>(bufferSize);
+	bufferSize = GetFinalPathNameByHandleW(file, fileStringBuffer.get(), bufferSize, 0);
+
+	if (0 == bufferSize)
+	{
+		return trace_last_error(L"Error when getting the file path");
+	}
+
+	std::wstring packageFamilyName = psf::current_package_full_name();
+	std::wstring filePath(fileStringBuffer.get());
+	if (filePath.find(packageFamilyName) == std::wstring::npos)
+	{
+		trace_message(L"ERROR: written file does not contain the package family name", error_color);
+		trace_message(L"ERROR: File written to " + filePath, error_color);
+		return ERROR_ASSERTION_FAILURE;
+	}
+
+	return ERROR_SUCCESS;
+}
+
 int CopyFileTests()
 {
     int result = ERROR_SUCCESS;
@@ -150,6 +185,20 @@ int CopyFileTests()
     testResult = DoCopyFileTest(CopyFileExFunc, "CopyFileEx", otherFilePath, packageFilePath, otherFileContents);
     result = result ? result : testResult;
     test_end(testResult);
+
+	auto packageFilePathNotInRoot = std::filesystem::path(L"C:\\Program Files\\YOLO.txt");
+	auto otherFileNotInRoot = std::filesystem::path(L"C:\Program Files\\CopyFile.txt");
+	test_begin("CopyFile To non-package root");
+	clean_redirection_path();
+	write_entire_file(otherFileNotInRoot.c_str(), otherFileContents);
+	testResult = DoCopyFileTest(CopyFileFunc, "CopyFile", otherFileNotInRoot, packageFilePathNotInRoot, otherFileContents);
+	result = result ? result : testResult;
+	test_end(testResult);
+
+
+
+	
+
 
     return result;
 }
