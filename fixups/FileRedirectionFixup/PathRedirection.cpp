@@ -308,6 +308,36 @@ normalized_path DeVirtualizePath(normalized_path path)
 	return path;
 }
 
+std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureDirectoryStructure, std::wstring result)
+{
+    if (ensureDirectoryStructure)
+    {
+        for (std::size_t pos = 0; pos < relativePath.length(); )
+        {
+            [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
+#if _DEBUG
+            auto err = ::GetLastError();
+            assert(dirResult || (err == ERROR_ALREADY_EXISTS));
+#endif
+            auto nextPos = relativePath.find_first_of(LR"(\/)", pos + 1);
+            if (nextPos == relativePath.length())
+            {
+                // Ignore trailing path separators. E.g. if the call is to CreateDirectory, we don't want it to "fail"
+                // with an "already exists" error
+                nextPos = std::wstring_view::npos;
+            }
+
+            result += relativePath.substr(pos, nextPos - pos);
+            pos = nextPos;
+        }
+    }
+    else
+    {
+        result += relativePath;
+    }
+
+    return result;
+}
 
 /// <summary>
 /// Figures out the absolute path to redirect to.
@@ -322,54 +352,46 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 		a path that contains the package family name and not the package full name.
 	*/
 	std::wstring result;
+	bool shouldredirectToPackageRoot = false;
 	if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
 	{
 		result = LR"(\\?\)" + g_writablePackageRootPath.native();
+		shouldredirectToPackageRoot = true;
 	}
 	else
 	{
+		//MessageBoxEx(NULL, L"Redirecting to VFS", L"Redirecting to VFS", 0, 0);
 		result = LR"(\\?\)" + g_redirectRootPath.native();
 	}
 
-	// NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
-	// similar to what's done for UNC paths
-	assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
-	result.push_back(L'\\');
-	result.push_back(deVirtualizedPath.drive_absolute_path[0]);
-	result.push_back('$');
-
-	auto remainingLength = deVirtualizedPath.full_path.length();
-	remainingLength -= (deVirtualizedPath.drive_absolute_path - deVirtualizedPath.full_path.c_str());
-	remainingLength -= 2;
-	std::wstring_view relativePath(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
-
-	if (ensureDirectoryStructure)
+    std::wstring_view relativePath;
+	if (shouldredirectToPackageRoot)
 	{
-		for (std::size_t pos = 0; pos < relativePath.length(); )
-		{
-			[[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
-#if _DEBUG
-			auto err = ::GetLastError();
-			assert(dirResult || (err == ERROR_ALREADY_EXISTS));
-#endif
-			auto nextPos = relativePath.find_first_of(LR"(\/)", pos + 1);
-			if (nextPos == relativePath.length())
-			{
-				// Ignore trailing path separators. E.g. if the call is to CreateDirectory, we don't want it to "fail"
-				// with an "already exists" error
-				nextPos = std::wstring_view::npos;
-			}
+        auto lengthPackageRootPath = g_packageRootPath.native().length();
+        auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
+        relativePath = std::wstring_view(stringToTurnIntoAStringView);
 
-			result += relativePath.substr(pos, nextPos - pos);
-			pos = nextPos;
-		}
-	}
-	else
-	{
-		result += relativePath;
+        return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
 	}
 
-	return result;
+
+	
+		// NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
+		// similar to what's done for UNC paths
+		assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
+		result.push_back(L'\\');
+		result.push_back(deVirtualizedPath.drive_absolute_path[0]);
+		result.push_back('$');
+
+		auto remainingLength = deVirtualizedPath.full_path.length();
+		remainingLength -= (deVirtualizedPath.drive_absolute_path - deVirtualizedPath.full_path.c_str());
+		remainingLength -= 2;
+		relativePath = std::wstring_view(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
+
+        return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
+	
+
+	
 }
 
 template <typename CharT>
