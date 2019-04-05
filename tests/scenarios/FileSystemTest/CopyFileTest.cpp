@@ -186,6 +186,8 @@ int CopyFileTests()
 	result = result ? result : testResult;
 	test_end(testResult);
 
+    //Following tests do not work at the moment.
+    //Pushing them to git so I won't lose my work.
 	auto nonPathDirectory = std::filesystem::path(L"C:\\Program Files\\WindowsApps\\" + psf::current_package_full_name() + L"\\VFS\\SystemX86");
 	std::filesystem::create_directory(nonPathDirectory);
 	
