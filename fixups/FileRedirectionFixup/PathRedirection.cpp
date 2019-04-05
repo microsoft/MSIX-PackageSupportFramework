@@ -360,6 +360,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 	}
 	else
 	{
+        //TEST
 		//MessageBoxEx(NULL, L"Redirecting to VFS", L"Redirecting to VFS", 0, 0);
 		result = LR"(\\?\)" + g_redirectRootPath.native();
 	}

@@ -117,15 +117,19 @@ inline int TestPathRedirectionLogic(std::filesystem::path fileFileSystemPath)
 		return trace_last_error(L"Error when getting the file path");
 	}
 
-	std::wstring packageFamilyName = psf::current_package_full_name();
+	std::wstring packageFamilyName = psf::current_package_family_name();
 	std::wstring filePath(fileStringBuffer.get());
 	if (filePath.find(packageFamilyName) == std::wstring::npos)
 	{
-		trace_message(L"ERROR: written file does not contain the package family name", error_color);
+		trace_message(L"ERROR: written file does not contain the package family name\n", error_color);
 		trace_message(L"ERROR: File written to " + filePath, error_color);
+        ::DeleteFileW(fileFileSystemPath.native().c_str());
 		return ERROR_ASSERTION_FAILURE;
 	}
 
+    fileStringBuffer.release();
+    ::DeleteFileW(fileFileSystemPath.native().c_str());
+    ::CloseHandle(file);
 	return ERROR_SUCCESS;
 }
 
@@ -182,17 +186,12 @@ int CopyFileTests()
 	result = result ? result : testResult;
 	test_end(testResult);
 
-	/*auto packageFilePathNotInRoot = std::filesystem::path(L"C:\\Program Files\\YOLO.txt");
-	auto otherFileNotInRoot = std::filesystem::path(L"C:\\Program Files\\CopyFile.txt");
-	test_begin("CopyFile To non-package root");
-	clean_redirection_path();
-	write_entire_file(otherFileNotInRoot.c_str(), otherFileContents);
-	testResult = DoCopyFileTest(CopyFileFunc, "CopyFile", otherFileNotInRoot, packageFilePathNotInRoot, otherFileContents);
-	result = result ? result : testResult;
-	test_end(testResult);
-
-
+	auto nonPathDirectory = std::filesystem::path(L"C:\\Program Files\\WindowsApps\\" + psf::current_package_full_name() + L"\\VFS\\SystemX86");
+	std::filesystem::create_directory(nonPathDirectory);
+	
 	auto packageFilePathInRoot = g_packageRootPath / g_packageFileName;
+    auto packageFilePathNotInRoot = nonPathDirectory / std::filesystem::path(L"InitialFile.txt");
+
 
 	test_begin("CopyFile To non-package root");
 	clean_redirection_path();
@@ -200,11 +199,12 @@ int CopyFileTests()
 	result = result ? result : inRootResult;
 	test_end(inRootResult);
 
+    
 	test_begin("CopyFile To non-package root");
 	clean_redirection_path();
 	int notInRootResult = TestPathRedirectionLogic(packageFilePathNotInRoot);
 	result = result ? result : notInRootResult;
-	test_end(notInRootResult);*/
+	test_end(notInRootResult);
 
 	return result;
 }
