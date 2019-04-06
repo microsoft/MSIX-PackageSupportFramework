@@ -9,6 +9,8 @@
 #include <test_config.h>
 
 #include "common_paths.h"
+#include <iostream>
+#include <fstream>
 
 static auto CopyFileFunc = &::CopyFileW;
 static auto CopyFile2Func = [](PCWSTR from, PCWSTR to, bool failIfExists)
@@ -100,9 +102,14 @@ static int DoCopyFileTest(
 
 inline int TestPathRedirectionLogic(std::filesystem::path fileFileSystemPath)
 {
+    std::ofstream outputFile(fileFileSystemPath.native());
+    outputFile << "I am the best" << std::endl;
+
+    outputFile.close();
+
 	auto file = ::CreateFileW(fileFileSystemPath.native().c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-	auto bufferSize = GetFinalPathNameByHandleW(file, nullptr, 0, 0);
+	auto bufferSize = GetFinalPathNameByHandleW(file, nullptr, 0, 8);
 
 	if (0 == bufferSize)
 	{
@@ -110,7 +117,7 @@ inline int TestPathRedirectionLogic(std::filesystem::path fileFileSystemPath)
 	}
 
 	auto fileStringBuffer = std::make_unique<TCHAR[]>(bufferSize);
-	bufferSize = GetFinalPathNameByHandleW(file, fileStringBuffer.get(), bufferSize, 0);
+	bufferSize = GetFinalPathNameByHandleW(file, fileStringBuffer.get(), bufferSize, 8);
 
 	if (0 == bufferSize)
 	{
@@ -193,20 +200,6 @@ int CopyFileTests()
 	
 	auto packageFilePathInRoot = g_packageRootPath / g_packageFileName;
     auto packageFilePathNotInRoot = nonPathDirectory / std::filesystem::path(L"InitialFile.txt");
-
-
-	test_begin("CopyFile To non-package root");
-	clean_redirection_path();
-	int inRootResult = TestPathRedirectionLogic(packageFilePathInRoot);
-	result = result ? result : inRootResult;
-	test_end(inRootResult);
-
-    
-	test_begin("CopyFile To non-package root");
-	clean_redirection_path();
-	int notInRootResult = TestPathRedirectionLogic(packageFilePathNotInRoot);
-	result = result ? result : notInRootResult;
-	test_end(notInRootResult);
 
 	return result;
 }
