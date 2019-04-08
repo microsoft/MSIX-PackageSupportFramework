@@ -46,9 +46,7 @@ inline void clean_redirection_path()
 
 	clean_redirection_path_helper(redirectRoot);
 	clean_redirection_path_helper(writablePackageRoot);
-   
 }
-
 
 inline std::string read_entire_file(const wchar_t* path)
 {

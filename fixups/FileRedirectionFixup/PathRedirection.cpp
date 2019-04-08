@@ -373,8 +373,6 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
         return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);    
     }    
     
-    
-    
     // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign    
     // similar to what's done for UNC paths    
     assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);    
@@ -388,10 +386,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     relativePath = std::wstring_view(deVirtualizedPath.drive_absolute_path + 2, remainingLength);    
     
     return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);    
-    
-    
-    
-}    
+}
     
 template <typename CharT>    
 static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags flags)    
