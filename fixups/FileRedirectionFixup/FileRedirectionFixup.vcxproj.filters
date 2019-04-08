@@ -59,5 +59,11 @@
     <ClCompile Include="MoveFileFixup.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="GetPrivateProfileSectionFixup.cpp" />
+    <ClCompile Include="GetPrivateProfileStringFixup.cpp" />
+    <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="FileRedirectionFixup.xml" />
   </ItemGroup>
 </Project>
