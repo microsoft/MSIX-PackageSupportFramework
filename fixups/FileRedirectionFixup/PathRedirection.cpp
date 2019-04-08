@@ -347,10 +347,8 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
 /// <returns>The new absolute path.</returns>
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
-    /*
-        To prevent apps breaking on an upgrade we redirect writes to the package root path to
-        a path that contains the package family name and not the package full name.
-    */
+    //To prevent apps breaking on an upgrade we redirect writes to the package root path to
+    //a path that contains the package family name and not the package full name.
     std::wstring result;
     bool shouldredirectToPackageRoot = false;
     if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
@@ -360,8 +358,6 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     }
     else
     {
-        //TEST
-        //MessageBoxEx(NULL, L"Redirecting to VFS", L"Redirecting to VFS", 0, 0);
         result = LR"(\\?\)" + g_redirectRootPath.native();
     }
 
@@ -374,8 +370,6 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 
         return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
     }
-
-
 
     // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
     // similar to what's done for UNC paths
@@ -390,9 +384,6 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     relativePath = std::wstring_view(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
 
     return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
-
-
-
 }
 
 template <typename CharT>
