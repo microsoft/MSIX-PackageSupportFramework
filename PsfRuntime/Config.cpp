@@ -30,6 +30,7 @@
 using namespace std::literals;
 
 static std::wstring g_PackageFullName;
+static std::wstring g_PackageFamilyName;
 static std::wstring g_ApplicationUserModelId;
 static std::wstring g_ApplicationId;
 static std::filesystem::path g_PackageRootPath;
@@ -326,6 +327,7 @@ void LoadConfig()
     if (psf::is_packaged())
     {
         g_PackageFullName = psf::current_package_full_name();
+        g_PackageFamilyName = psf::current_package_family_name();
         g_ApplicationUserModelId = psf::current_application_user_model_id();
         g_ApplicationId = psf::application_id_from_application_user_model_id(g_ApplicationUserModelId);
         g_PackageRootPath = psf::current_package_path();
@@ -350,6 +352,11 @@ void LoadConfig()
 const std::wstring& PackageFullName() noexcept
 {
     return g_PackageFullName;
+}
+
+const std::wstring& PackageFamilyName() noexcept
+{
+	return g_PackageFamilyName;
 }
 
 const std::wstring& ApplicationUserModelId() noexcept
@@ -381,6 +388,11 @@ PSFAPI DWORD __stdcall PSFUnregister(_Inout_ void** implFn, _In_ void* fixupFn) 
 PSFAPI const wchar_t* __stdcall PSFQueryPackageFullName() noexcept
 {
     return g_PackageFullName.c_str();
+}
+
+PSFAPI const wchar_t* __stdcall PSFQueryPackageFamilyName() noexcept
+{
+	return g_PackageFamilyName.c_str();
 }
 
 PSFAPI const wchar_t* __stdcall PSFQueryApplicationUserModelId() noexcept

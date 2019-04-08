@@ -7,8 +7,31 @@
 #include <string>
 
 #include <known_folders.h>
+#include <psf_utils.h>
 
 #include "test_config.h"
+
+
+inline void clean_redirection_path_helper(std::filesystem::path redirectRoot)
+{
+	std::error_code ec;
+	std::filesystem::remove_all(redirectRoot, ec);
+	if (ec)
+	{
+		trace_message(L"WARNING: Failed to clean the redirected path. Future tests may be impacted by this...\n", warning_color);
+		trace_messages(warning_color, L"WARNING: ", ec.message(), new_line);
+	}
+	else
+	{
+		// The file redirection fixup makes an assumption about the existence of the VFS directory, but we just deleted
+		// it above, so re-create it to avoid future issues
+		if (!::CreateDirectoryW(redirectRoot.c_str(), nullptr))
+		{
+			trace_message(L"WARNING: Failed to re-create the VFS directory in the redirected path. Future tests may be impacted by this...\n", warning_color);
+			trace_messages(warning_color, L"WARNING: ", error_message(::GetLastError()), new_line);
+		}
+	}
+}
 
 inline void clean_redirection_path()
 {
@@ -19,24 +42,10 @@ inline void clean_redirection_path()
     //       e.g. by deleting the file that's tracking the deletions, or by calling into an export in PsfRuntime to do
     //       so for us.
     static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"VFS";
+	static const auto writablePackageRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
 
-    std::error_code ec;
-    std::filesystem::remove_all(redirectRoot, ec);
-    if (ec)
-    {
-        trace_message(L"WARNING: Failed to clean the redirected path. Future tests may be impacted by this...\n", warning_color);
-        trace_messages(warning_color, L"WARNING: ", ec.message(), new_line);
-    }
-    else
-    {
-        // The file redirection fixup makes an assumption about the existence of the VFS directory, but we just deleted
-        // it above, so re-create it to avoid future issues
-        if (!::CreateDirectoryW(redirectRoot.c_str(), nullptr))
-        {
-            trace_message(L"WARNING: Failed to re-create the VFS directory in the redirected path. Future tests may be impacted by this...\n", warning_color);
-            trace_messages(warning_color, L"WARNING: ", error_message(::GetLastError()), new_line);
-        }
-    }
+	clean_redirection_path_helper(redirectRoot);
+	clean_redirection_path_helper(writablePackageRoot);
 }
 
 inline std::string read_entire_file(const wchar_t* path)
