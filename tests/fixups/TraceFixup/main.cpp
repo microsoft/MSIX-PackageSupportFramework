@@ -37,9 +37,9 @@ static trace_level g_defaultBreakLevel = trace_level::ignore;
     
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);    
 TRACELOGGING_DEFINE_PROVIDER(    
-	g_Log_ETW_ComponentProvider,    
-	"Microsoft-Windows-PSFTrace",    
-	(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));    
+    g_Log_ETW_ComponentProvider,    
+    "Microsoft-Windows-PSFTrace",    
+    (0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));    
     
 static trace_level trace_level_from_configuration(std::string_view str, trace_level defaultLevel)    
 {    
@@ -151,42 +151,42 @@ result_configuration configured_result(function_type type, function_result resul
 // Set up the ETW Provider    
 void Log_ETW_Register()    
 {    
-	TraceLoggingRegister(g_Log_ETW_ComponentProvider);    
+    TraceLoggingRegister(g_Log_ETW_ComponentProvider);    
 }    
     
 void Log_ETW_PostMsgA(const char * s)    
 {    
-	TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider    
-		"TraceEvent",              // Event Name that should uniquely identify your event.    
-		TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).    
+    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider    
+        "TraceEvent",              // Event Name that should uniquely identify your event.    
+        TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).    
 }    
     
 void Log_ETW_PostMsgOperationA(const char *operation, const char *inputs, const char *result, const char *outputs, const char *callingmodule, LARGE_INTEGER TickStart, LARGE_INTEGER TickEnd)    
 {    
-	TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider    
-		"TraceEvent",              // Event Name that should uniquely identify your event.    
-		TraceLoggingValue(operation, "Operation"),    
-		TraceLoggingValue(inputs, "Inputs"),    
-		TraceLoggingValue(result, "Result"),    
-		TraceLoggingValue(outputs, "Outputs"),    
-		TraceLoggingValue(callingmodule, "Caller"),     
-		TraceLoggingInt64(TickStart.QuadPart, "Start"),    
-		TraceLoggingInt64(TickEnd.QuadPart, "End")    
-	); // Field for your event in the form of (value, field name).    
+    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider    
+        "TraceEvent",              // Event Name that should uniquely identify your event.    
+        TraceLoggingValue(operation, "Operation"),    
+        TraceLoggingValue(inputs, "Inputs"),    
+        TraceLoggingValue(result, "Result"),    
+        TraceLoggingValue(outputs, "Outputs"),    
+        TraceLoggingValue(callingmodule, "Caller"),     
+        TraceLoggingInt64(TickStart.QuadPart, "Start"),    
+        TraceLoggingInt64(TickEnd.QuadPart, "End")    
+    ); // Field for your event in the form of (value, field name).    
 }    
     
 void Log_ETW_PostMsgW(const wchar_t * s)    
 {    
-	TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider    
-		"TraceEvent",              // Event Name that should uniquely identify your event.    
-		TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).    
+    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider    
+        "TraceEvent",              // Event Name that should uniquely identify your event.    
+        TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).    
     
 }    
     
 // Tear down the ETW Provider    
 void Log_ETW_UnRegister()    
 {    
-	TraceLoggingUnregister(g_Log_ETW_ComponentProvider);    
+    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);    
 }    
     
 BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try    
@@ -203,17 +203,17 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 if (methodStr == "printf"sv)    
                 {    
                     output_method = trace_method::printf;    
-					Log("config traceMethod is printf");    
+                    Log("config traceMethod is printf");    
                 }    
-				else if (methodStr == "eventlog"sv)    
-				{    
-					output_method = trace_method::eventlog;    
-					Log_ETW_Register();    
-					Log("config traceMethod is eventlog");    
-				}    
-				else {    
+                else if (methodStr == "eventlog"sv)    
+                {    
+                    output_method = trace_method::eventlog;    
+                    Log_ETW_Register();    
+                    Log("config traceMethod is eventlog");    
+                }    
+                else {    
                     // Otherwise, use the default (OutputDebugString)    
-					Log("config traceMethod is default");    
+                    Log("config traceMethod is default");    
                 }    
             }    
     

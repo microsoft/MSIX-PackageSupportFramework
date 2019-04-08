@@ -76,7 +76,7 @@ void load_fixups()
                         throw_last_error(message.c_str());    
                     }    
                 }    
-				Log("\tInject into current process: %ls\n", path.c_str());    
+                Log("\tInject into current process: %ls\n", path.c_str());    
     
                 auto initialize = reinterpret_cast<PSFInitializeProc>(::GetProcAddress(fixup.module_handle, "PSFInitialize"));    
                 if (!initialize)    

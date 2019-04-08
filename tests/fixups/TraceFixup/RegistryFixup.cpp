@@ -26,78 +26,78 @@ void LogKeyPath(HKEY key, const char* msg = "Key")
 }    
 std::string InterpretKeyPath(HKEY key, const char* msg = "Key")    
 {    
-	std::string sret = "";    
-	ULONG size;    
-	auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);    
-	if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))    
-	{    
-		auto buffer = std::make_unique<std::uint8_t[]>(size);    
-		if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))    
-		{    
-			auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());    
-			sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);    
-		}    
-		else    
-			sret = "InterpretKeyPath failure2";    
-	}    
-	else if (status == STATUS_INVALID_HANDLE)    
-	{    
-		if (key == HKEY_LOCAL_MACHINE)    
-			sret += msg + InterpretStringA(" HKEY_LOCAL_MACHINE");    
-		else if (key == HKEY_CURRENT_USER)    
-			sret = msg + InterpretStringA(" HKEY_CURRENT_USER");    
-		else if (key == HKEY_CLASSES_ROOT)    
-			sret = msg + InterpretStringA(" HKEY_CLASSES_ROOT");    
-	}    
-	else    
-		sret = "InterpretKeyPath failure1" + InterpretAsHex("status",(DWORD)status);    
-	return sret;    
+    std::string sret = "";    
+    ULONG size;    
+    auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);    
+    if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))    
+    {    
+        auto buffer = std::make_unique<std::uint8_t[]>(size);    
+        if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))    
+        {    
+            auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());    
+            sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);    
+        }    
+        else    
+            sret = "InterpretKeyPath failure2";    
+    }    
+    else if (status == STATUS_INVALID_HANDLE)    
+    {    
+        if (key == HKEY_LOCAL_MACHINE)    
+            sret += msg + InterpretStringA(" HKEY_LOCAL_MACHINE");    
+        else if (key == HKEY_CURRENT_USER)    
+            sret = msg + InterpretStringA(" HKEY_CURRENT_USER");    
+        else if (key == HKEY_CLASSES_ROOT)    
+            sret = msg + InterpretStringA(" HKEY_CLASSES_ROOT");    
+    }    
+    else    
+        sret = "InterpretKeyPath failure1" + InterpretAsHex("status",(DWORD)status);    
+    return sret;    
 }    
     
 auto RegCreateKeyImpl = psf::detoured_string_function(&::RegCreateKeyA, &::RegCreateKeyW);    
 template <typename CharT>    
 LSTATUS __stdcall RegCreateKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _Out_ PHKEY resultKey)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegCreateKeyImpl(key, subKey, resultKey);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
-			else    
-			{    
-				outputs +=  InterpretAsHex("Result Key", resultKey);    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
+            else    
+            {    
+                outputs +=  InterpretAsHex("Result Key", resultKey);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegCreateKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(),TickStart,TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegCreateKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(),TickStart,TickEnd);    
+        }    
+        else    
+        {    
         Log("RegCreateKey:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -107,7 +107,7 @@ LSTATUS __stdcall RegCreateKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey,
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -127,51 +127,51 @@ LSTATUS __stdcall RegCreateKeyExFixup(
     _Out_ PHKEY resultKey,    
     _Out_opt_ LPDWORD disposition)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			if (classType)    
-				inputs += "\n" + InterpretStringA(classType);    
-			inputs += "\n" + InterpretRegKeyFlags(options);    
-			inputs += "\n" + InterpretRegKeyAccess(samDesired);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            if (classType)    
+                inputs += "\n" + InterpretStringA(classType);    
+            inputs += "\n" + InterpretRegKeyFlags(options);    
+            inputs += "\n" + InterpretRegKeyAccess(samDesired);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
-			else    
-			{    
-				outputs +=  InterpretAsHex("Result Key", resultKey);    
-				outputs += "\n" + InterpretRegKeyDisposition(*disposition);    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
+            else    
+            {    
+                outputs +=  InterpretAsHex("Result Key", resultKey);    
+                outputs += "\n" + InterpretRegKeyDisposition(*disposition);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegCreateKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegCreateKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegCreateKeyEx:\n");    
         LogKeyPath(key);    
         LogString("Sub Key", subKey);    
@@ -188,7 +188,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
             LogRegKeyDisposition(*disposition);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -199,49 +199,49 @@ auto RegOpenKeyImpl = psf::detoured_string_function(&::RegOpenKeyA, &::RegOpenKe
 template <typename CharT>    
 LSTATUS __stdcall RegOpenKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _Out_ PHKEY resultKey)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegOpenKeyImpl(key, subKey, resultKey);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				if (::GetLastError() == 0)    
-					outputs += "Key Not Found";    
-				else    
-					outputs +=  InterpretLastError();    
-			}    
-			else    
-			{    
-				outputs +=  InterpretAsHex("Result Key", resultKey);    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                if (::GetLastError() == 0)    
+                    outputs += "Key Not Found";    
+                else    
+                    outputs +=  InterpretLastError();    
+            }    
+            else    
+            {    
+                outputs +=  InterpretAsHex("Result Key", resultKey);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
-			    
-			Log_ETW_PostMsgOperationA("RegOpenKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
+                
+            Log_ETW_PostMsgOperationA("RegOpenKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegOpenKey:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -251,7 +251,7 @@ LSTATUS __stdcall RegOpenKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -267,52 +267,52 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     _In_ REGSAM samDesired,    
     _Out_ PHKEY resultKey)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegOpenKeyExImpl(key, subKey, options, samDesired, resultKey);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";     
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";     
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);      
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			if (options)    
-				inputs += InterpretRegKeyFlags(options);    
-			inputs += "\n" + InterpretRegKeyAccess(samDesired);    
+            inputs = InterpretKeyPath(key);      
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            if (options)    
+                inputs += InterpretRegKeyFlags(options);    
+            inputs += "\n" + InterpretRegKeyAccess(samDesired);    
     
-			results = InterpretReturn(functionResult,result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				if (::GetLastError() == 0)    
-					outputs += "Key Not Found";    
-				else    
-					outputs +=  InterpretLastError();    
-			}    
-			else    
-			{    
-				outputs +=  InterpretAsHex("Result Key", resultKey);    
-			}    
+            results = InterpretReturn(functionResult,result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                if (::GetLastError() == 0)    
+                    outputs += "Key Not Found";    
+                else    
+                    outputs +=  InterpretLastError();    
+            }    
+            else    
+            {    
+                outputs +=  InterpretAsHex("Result Key", resultKey);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout <<  InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout <<  InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegOpenKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegOpenKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegOpenKeyEx:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -324,7 +324,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -342,57 +342,57 @@ LSTATUS __stdcall RegGetValueFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *data) PVOID data,    
     _Inout_opt_ LPDWORD dataSize)    
 {    
-	DWORD lclType = 0;    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    		auto entry = LogFunctionEntry();    
+    DWORD lclType = 0;    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);            auto entry = LogFunctionEntry();    
     
     auto result = RegGetValueImpl(key, subKey, value, flags, type, data, dataSize);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
-	if (type)    
-		*type = lclType;    
+    if (type)    
+        *type = lclType;    
     
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			if (value)    
-				inputs += "\nValue=" + InterpretStringA(value);    
-			inputs += "\n" + InterpretRegKeyQueryFlags(flags);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            if (value)    
+                inputs += "\nValue=" + InterpretStringA(value);    
+            inputs += "\n" + InterpretRegKeyQueryFlags(flags);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs += InterpretLastError();    
-			}    
-			else     
-			{    
-				outputs += InterpretRegKeyType(lclType);    
-				if (data && dataSize)    
-				{    
-					outputs += "\n" + InterpretRegValueA<CharT>(lclType, data, *dataSize);    
-				}    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs += InterpretLastError();    
+            }    
+            else     
+            {    
+                outputs += InterpretRegKeyType(lclType);    
+                if (data && dataSize)    
+                {    
+                    outputs += "\n" + InterpretRegValueA<CharT>(lclType, data, *dataSize);    
+                }    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout <<InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout <<InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegGetValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegGetValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegGetValue:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -409,7 +409,7 @@ LSTATUS __stdcall RegGetValueFixup(
             if (data && dataSize) LogRegValue<CharT>(*type, data, *dataSize);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -424,44 +424,44 @@ LSTATUS __stdcall RegQueryValueFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *dataSize) CharT* data,    
     _Inout_opt_ PLONG dataSize)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegQueryValueImpl(key, subKey, data, dataSize);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
     
-			results = InterpretReturn(functionResult,result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs += InterpretLastError();    
-			}    
-			else if (data && dataSize)    
-				outputs +=  InterpretCountedString("Data", data, *dataSize);    
+            results = InterpretReturn(functionResult,result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs += InterpretLastError();    
+            }    
+            else if (data && dataSize)    
+                outputs +=  InterpretCountedString("Data", data, *dataSize);    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout <<  InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout <<  InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegQueryValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegQueryValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegQueryValue:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -475,7 +475,7 @@ LSTATUS __stdcall RegQueryValueFixup(
             LogCountedString("Data", data, *dataSize / sizeof(CharT));    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -492,48 +492,48 @@ LSTATUS __stdcall RegQueryValueExFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *dataSize) LPBYTE data,    
     _When_(data == NULL, _Out_opt_) _When_(data != NULL, _Inout_opt_) LPDWORD dataSize)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegQueryValueExImpl(key, valueName, reserved, type, data, dataSize);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (valueName)    
-				inputs += "\nValue Name=" + InterpretStringA(valueName);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (valueName)    
+                inputs += "\nValue Name=" + InterpretStringA(valueName);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
-			else if (type)    
-			{    
-				outputs +=  InterpretRegKeyType(*type);    
-				if (data && dataSize)    
-					outputs += "\n" + InterpretRegValueA<CharT>(*type, data, *dataSize);    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
+            else if (type)    
+            {    
+                outputs +=  InterpretRegKeyType(*type);    
+                if (data && dataSize)    
+                    outputs += "\n" + InterpretRegValueA<CharT>(*type, data, *dataSize);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegQueryValueEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegQueryValueEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegQueryValueEx:\n");    
         LogKeyPath(key);    
         if (valueName) LogString("Value Name", valueName);    
@@ -548,7 +548,7 @@ LSTATUS __stdcall RegQueryValueExFixup(
             if (data && dataSize) LogRegValue<CharT>(*type, data, *dataSize);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -565,48 +565,48 @@ LSTATUS __stdcall RegSetKeyValueFixup(
     _In_reads_bytes_opt_(dataSize) LPCVOID data,    
     _In_ DWORD dataSize)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegSetKeyValueImpl(key, subKey, valueName, type, data, dataSize);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			inputs += "\n" + InterpretRegKeyType(type);    
-			if (valueName)    
-				inputs += "\nValue Name" + InterpretStringA(valueName);    
-			inputs += "\n" + InterpretRegKeyType(type);    
-			if (data )    
-				inputs += "\n" + InterpretRegValueA<CharT>(type, data, dataSize);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs += "\n" + InterpretRegKeyType(type);    
+            if (valueName)    
+                inputs += "\nValue Name" + InterpretStringA(valueName);    
+            inputs += "\n" + InterpretRegKeyType(type);    
+            if (data )    
+                inputs += "\n" + InterpretRegValueA<CharT>(type, data, dataSize);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegSetKeyValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegSetKeyValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegSetKeyValue:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -619,7 +619,7 @@ LSTATUS __stdcall RegSetKeyValueFixup(
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -635,45 +635,45 @@ LSTATUS __stdcall RegSetValueFixup(
     _In_reads_bytes_opt_(dataSize) const CharT* data,    
     _In_ DWORD dataSize)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegSetValueImpl(key, subKey, type, data, dataSize);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			inputs += "\n" + InterpretRegKeyType(type);    
-			if (data)    
-				inputs += "\n" + InterpretRegValueA<CharT>(type, data, dataSize);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs += "\n" + InterpretRegKeyType(type);    
+            if (data)    
+                inputs += "\n" + InterpretRegValueA<CharT>(type, data, dataSize);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegSetValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegSetValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegSetValue:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -685,7 +685,7 @@ LSTATUS __stdcall RegSetValueFixup(
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -702,45 +702,45 @@ LSTATUS __stdcall RegSetValueExFixup(
     _In_reads_bytes_opt_(dataSize) CONST BYTE* data,    
     _In_ DWORD dataSize)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegSetValueExImpl(key, valueName, reserved, type, data, dataSize);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (valueName)    
-				inputs += "\nValue Name=" + InterpretStringA(valueName);    
-			inputs += "\n" + InterpretRegKeyType(type);    
-			if (data)    
-				inputs += "\n" + InterpretRegValueA<CharT>(type, data, dataSize);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (valueName)    
+                inputs += "\nValue Name=" + InterpretStringA(valueName);    
+            inputs += "\n" + InterpretRegKeyType(type);    
+            if (data)    
+                inputs += "\n" + InterpretRegValueA<CharT>(type, data, dataSize);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegSetValueEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegSetValueEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegSetValueEx:\n");    
         LogKeyPath(key);    
         if (valueName) LogString("Value Name", valueName);    
@@ -752,7 +752,7 @@ LSTATUS __stdcall RegSetValueExFixup(
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -763,42 +763,42 @@ auto RegDeleteKeyImpl = psf::detoured_string_function(&::RegDeleteKeyA, &::RegDe
 template <typename CharT>    
 LSTATUS __stdcall RegDeleteKeyFixup(_In_ HKEY key, _In_ const CharT* subKey)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegDeleteKeyImpl(key, subKey);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegDeleteKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegDeleteKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegDeleteKey:\n");    
         LogKeyPath(key);    
         LogString("Sub Key", subKey);    
@@ -808,7 +808,7 @@ LSTATUS __stdcall RegDeleteKeyFixup(_In_ HKEY key, _In_ const CharT* subKey)
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -823,43 +823,43 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
     _In_ REGSAM samDesired,    
     _Reserved_ DWORD reserved)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
-	auto entry = LogFunctionEntry();    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
+    auto entry = LogFunctionEntry();    
     auto result = RegDeleteKeyExImpl(key, subKey, samDesired, reserved);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			inputs += "\n" + InterpretRegKeyAccess(samDesired);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs += "\n" + InterpretRegKeyAccess(samDesired);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs += InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs += InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegDeleteKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegDeleteKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegDeleteKeyEx:\n");    
         LogKeyPath(key);    
         LogString("Sub Key", subKey);    
@@ -870,7 +870,7 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -881,44 +881,44 @@ auto RegDeleteKeyValueImpl = psf::detoured_string_function(&::RegDeleteKeyValueA
 template <typename CharT>    
 LSTATUS __stdcall RegDeleteKeyValueFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _In_opt_ const CharT* valueName)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegDeleteKeyValueImpl(key, subKey, valueName);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			if (valueName)    
-				inputs += "\nValue Name=" + InterpretStringA(valueName);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            if (valueName)    
+                inputs += "\nValue Name=" + InterpretStringA(valueName);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs += InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs += InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegDeleteKeyValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegDeleteKeyValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegDeleteKeyValue:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -929,7 +929,7 @@ LSTATUS __stdcall RegDeleteKeyValueFixup(_In_ HKEY key, _In_opt_ const CharT* su
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -940,42 +940,42 @@ auto RegDeleteValueImpl = psf::detoured_string_function(&::RegDeleteValueA, &::R
 template <typename CharT>    
 LSTATUS __stdcall RegDeleteValueFixup(_In_ HKEY key, _In_opt_ const CharT* valueName)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegDeleteValueImpl(key, valueName);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (valueName)    
-				inputs += "\nValue Name=" + InterpretStringA(valueName);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (valueName)    
+                inputs += "\nValue Name=" + InterpretStringA(valueName);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegDeleteValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegDeleteValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegDeleteValue:\n");    
         LogKeyPath(key);    
         if (valueName) LogString("Value Name", valueName);    
@@ -985,7 +985,7 @@ LSTATUS __stdcall RegDeleteValueFixup(_In_ HKEY key, _In_opt_ const CharT* value
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -996,42 +996,42 @@ auto RegDeleteTreeImpl = psf::detoured_string_function(&::RegDeleteTreeA, &::Reg
 template <typename CharT>    
 LSTATUS __stdcall RegDeleteTreeFixup(_In_ HKEY key, _In_opt_ const CharT* subKey)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegDeleteTreeImpl(key, subKey);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs += InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs += InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegDeleteTree", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegDeleteTree", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegDeleteTree:\n");    
         LogKeyPath(key);    
         if (subKey) LogString("Sub Key", subKey);    
@@ -1041,7 +1041,7 @@ LSTATUS __stdcall RegDeleteTreeFixup(_In_ HKEY key, _In_opt_ const CharT* subKey
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -1052,44 +1052,44 @@ auto RegCopyTreeImpl = psf::detoured_string_function(&::RegCopyTreeA, &::RegCopy
 template <typename CharT>    
 LSTATUS __stdcall RegCopyTreeFixup(_In_ HKEY keySrc, _In_opt_ const CharT* subKey, _In_ HKEY keyDest)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegCopyTreeImpl(keySrc, subKey, keyDest);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(keySrc);    
-			inputs += " (" + InterpretAsHex("", keySrc) + ")";    
-			if (subKey)    
-				inputs += "\nSubkey=" + InterpretStringA(subKey);    
-			inputs += "\n" + InterpretKeyPath(keyDest, "Destination Key");  InterpretAsHex("Destination Key", keyDest);    
-			inputs += "\n" + InterpretAsHex("Destination Key", keyDest);    
+            inputs = InterpretKeyPath(keySrc);    
+            inputs += " (" + InterpretAsHex("", keySrc) + ")";    
+            if (subKey)    
+                inputs += "\nSubkey=" + InterpretStringA(subKey);    
+            inputs += "\n" + InterpretKeyPath(keyDest, "Destination Key");  InterpretAsHex("Destination Key", keyDest);    
+            inputs += "\n" + InterpretAsHex("Destination Key", keyDest);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs += InterpretLastError();    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs += InterpretLastError();    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegCopyTree", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegCopyTree", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegCopyTree:\n");    
         LogKeyPath(keySrc, "Source");    
         if (subKey) LogString("Sub Key", subKey);    
@@ -1100,7 +1100,7 @@ LSTATUS __stdcall RegCopyTreeFixup(_In_ HKEY keySrc, _In_opt_ const CharT* subKe
             LogWin32Error(result);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -1115,45 +1115,45 @@ LSTATUS __stdcall RegEnumKeyFixup(
     _Out_writes_opt_(nameLength) CharT* name,    
     _In_ DWORD nameLength)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegEnumKeyImpl(key, index, name, nameLength);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			inputs += "\n" + InterpretAsHex("Index", index);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            inputs += "\n" + InterpretAsHex("Index", index);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
-			else if (name)    
-			{    
-				outputs += "\n Name=" + InterpretStringA(name);    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
+            else if (name)    
+            {    
+                outputs += "\n Name=" + InterpretStringA(name);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegEnumKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegEnumKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegEnumKey:\n");    
         LogKeyPath(key);    
         Log("\tIndex=%d\n", index);    
@@ -1167,7 +1167,7 @@ LSTATUS __stdcall RegEnumKeyFixup(
             LogString("Name", name);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -1186,48 +1186,48 @@ LSTATUS __stdcall RegEnumKeyExFixup(
     _Inout_opt_ LPDWORD classNameLength,    
     _Out_opt_ PFILETIME lastWriteTime)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegEnumKeyExImpl(key, index, name, nameLength, reserved, className, classNameLength, lastWriteTime);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
-			inputs += "\n" + InterpretAsHex("Index", index);    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
+            inputs += "\n" + InterpretAsHex("Index", index);    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs += InterpretLastError();    
-			}    
-			else     
-			{    
-				if (name)    
-					outputs += "\n Name=" + InterpretStringA(name);    
-				if (className && classNameLength)    
-					outputs += "\n" + InterpretCountedString("Class", className, *classNameLength);    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs += InterpretLastError();    
+            }    
+            else     
+            {    
+                if (name)    
+                    outputs += "\n Name=" + InterpretStringA(name);    
+                if (className && classNameLength)    
+                    outputs += "\n" + InterpretCountedString("Class", className, *classNameLength);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegEnumKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegEnumKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegEnumKeyEx:\n");    
         LogKeyPath(key);    
         Log("\tIndex=%d\n", index);    
@@ -1242,7 +1242,7 @@ LSTATUS __stdcall RegEnumKeyExFixup(
             if (className && classNameLength) LogCountedString("Class", className, *classNameLength);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    
@@ -1261,53 +1261,53 @@ LSTATUS __stdcall RegEnumValueFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *dataSize) __out_data_source(REGISTRY) LPBYTE data,    
     _Inout_opt_ LPDWORD dataSize)    
 {    
-	LARGE_INTEGER TickStart, TickEnd;    
-	QueryPerformanceCounter(&TickStart);    
+    LARGE_INTEGER TickStart, TickEnd;    
+    QueryPerformanceCounter(&TickStart);    
     auto entry = LogFunctionEntry();    
     auto result = RegEnumValueImpl(key, index, valueName, valueNameLength, reserved, type, data, dataSize);    
-	QueryPerformanceCounter(&TickEnd);    
+    QueryPerformanceCounter(&TickEnd);    
     
     auto functionResult = from_win32(result);    
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))    
     {    
-		if (output_method == trace_method::eventlog)    
-		{    
-			std::string inputs = "";    
-			std::string outputs = "";    
-			std::string results = "";    
+        if (output_method == trace_method::eventlog)    
+        {    
+            std::string inputs = "";    
+            std::string outputs = "";    
+            std::string results = "";    
     
-			inputs = InterpretKeyPath(key);    
-			inputs += " (" + InterpretAsHex("", key) + ")";    
+            inputs = InterpretKeyPath(key);    
+            inputs += " (" + InterpretAsHex("", key) + ")";    
     
-			std::ostringstream sout1;    
-			sout1 << "\nIndex 0x" << std::uppercase << std::hex;    
-			inputs += sout1.str();    
+            std::ostringstream sout1;    
+            sout1 << "\nIndex 0x" << std::uppercase << std::hex;    
+            inputs += sout1.str();    
     
-			results = InterpretReturn(functionResult, result).c_str();    
-			if (function_failed(functionResult))    
-			{    
-				outputs +=  InterpretLastError();    
-			}    
-			else    
-			{    
-				if (valueName)    
-					outputs += InterpretCountedString("Value Name", valueName, *valueNameLength) + "\n";    
-				if (type)    
-					outputs +=  InterpretRegKeyType(*type) + "\n";    
-				if (type && data && dataSize)    
-					outputs += "Value=" + InterpretRegValueA<CharT>(*type, data, *dataSize);    
-			}    
+            results = InterpretReturn(functionResult, result).c_str();    
+            if (function_failed(functionResult))    
+            {    
+                outputs +=  InterpretLastError();    
+            }    
+            else    
+            {    
+                if (valueName)    
+                    outputs += InterpretCountedString("Value Name", valueName, *valueNameLength) + "\n";    
+                if (type)    
+                    outputs +=  InterpretRegKeyType(*type) + "\n";    
+                if (type && data && dataSize)    
+                    outputs += "Value=" + InterpretRegValueA<CharT>(*type, data, *dataSize);    
+            }    
     
-			std::ostringstream sout;    
-			InterpretCallingModulePart1()    
-				sout << InterpretCallingModulePart2()    
-				InterpretCallingModulePart3()    
-				std::string cm = sout.str();    
+            std::ostringstream sout;    
+            InterpretCallingModulePart1()    
+                sout << InterpretCallingModulePart2()    
+                InterpretCallingModulePart3()    
+                std::string cm = sout.str();    
     
-			Log_ETW_PostMsgOperationA("RegEnumValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
-		}    
-		else    
-		{    
+            Log_ETW_PostMsgOperationA("RegEnumValue", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);    
+        }    
+        else    
+        {    
         Log("RegEnumValue:\n");    
         LogKeyPath(key);    
         Log("\tIndex=%d\n", index);    
@@ -1323,7 +1323,7 @@ LSTATUS __stdcall RegEnumValueFixup(
             if (type && data && dataSize) LogRegValue<CharT>(*type, data, *dataSize);    
         }    
         LogCallingModule();    
-	}    
+    }    
     }    
     
     return result;    

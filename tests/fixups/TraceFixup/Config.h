@@ -12,7 +12,7 @@ enum class trace_method
 {    
     printf,    
     output_debug_string,    
-	eventlog,    
+    eventlog,    
 };    
     
 enum class function_result    
@@ -66,33 +66,33 @@ inline function_result from_win32(DWORD code)
 }    
 inline std::string InterpretFrom_win32(DWORD code)    
 {    
-	switch (code)    
-	{    
-	case ERROR_SUCCESS:    
-		return "Success";    
-	case ERROR_FILE_NOT_FOUND:    
-		return "File not found";    
-	case ERROR_PATH_NOT_FOUND:    
-		return "Path not found";    
-	case ERROR_INVALID_NAME:    
-		return "Invalid Name";    
-	case ERROR_ALREADY_EXISTS:    
-		return "Already exists";    
-	case ERROR_FILE_EXISTS:    
-		return "File exists";    
-	case ERROR_INSUFFICIENT_BUFFER:    
-		return "Buffer overflow";    
-	case ERROR_MORE_DATA:    
-		return "More data";    
-	case ERROR_NO_MORE_ITEMS:    
-		return "No more items";    
-	case ERROR_NO_MORE_FILES:    
-		return "No more files";    
-	case ERROR_MOD_NOT_FOUND:    
-		return "Module not found";    
-	default:    
-		return "Unknown failure";    
-	}    
+    switch (code)    
+    {    
+    case ERROR_SUCCESS:    
+        return "Success";    
+    case ERROR_FILE_NOT_FOUND:    
+        return "File not found";    
+    case ERROR_PATH_NOT_FOUND:    
+        return "Path not found";    
+    case ERROR_INVALID_NAME:    
+        return "Invalid Name";    
+    case ERROR_ALREADY_EXISTS:    
+        return "Already exists";    
+    case ERROR_FILE_EXISTS:    
+        return "File exists";    
+    case ERROR_INSUFFICIENT_BUFFER:    
+        return "Buffer overflow";    
+    case ERROR_MORE_DATA:    
+        return "More data";    
+    case ERROR_NO_MORE_ITEMS:    
+        return "No more items";    
+    case ERROR_NO_MORE_FILES:    
+        return "No more files";    
+    case ERROR_MOD_NOT_FOUND:    
+        return "Module not found";    
+    default:    
+        return "Unknown failure";    
+    }    
 }    
     
 inline function_result from_win32_bool(BOOL value)    
