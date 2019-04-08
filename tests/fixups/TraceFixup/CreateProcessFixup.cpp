@@ -121,7 +121,7 @@ BOOL __stdcall CreateProcessAsUserFixup(
     _Out_ LPPROCESS_INFORMATION processInformation)    
 {    
     LARGE_INTEGER TickStart, TickEnd;    
-    QueryPerformanceCounter(&TickStart);    		    
+    QueryPerformanceCounter(&TickStart);                
     auto entry = LogFunctionEntry();    
     auto result = CreateProcessAsUserImpl(token, applicationName, commandLine, processAttributes, threadAttributes, inheritHandles, creationFlags, environment, currentDirectory, startupInfo, processInformation);    
     QueryPerformanceCounter(&TickEnd);    

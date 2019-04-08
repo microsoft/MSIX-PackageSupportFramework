@@ -89,7 +89,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     
     if (monitor != nullptr )    
     {    
-        // A monitor is an optional additional program to run, such as the PSFShimMonitor. This program is run prior to the "main application".		    
+        // A monitor is an optional additional program to run, such as the PSFShimMonitor. This program is run prior to the "main application".            
         bool asadmin = false;    
         bool wait = false;    
         auto monitor_executable = monitor->try_get("executable");    
@@ -217,7 +217,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     
             default:    
                 return ERROR_INVALID_HANDLE;    
-            }			    
+            }                
         }    
     }    
 }    
