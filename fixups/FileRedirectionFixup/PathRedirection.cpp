@@ -365,8 +365,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     if (shouldredirectToPackageRoot)
     {
         auto lengthPackageRootPath = g_packageRootPath.native().length();
-        auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
-        relativePath = std::wstring_view(stringToTurnIntoAStringView);
+        relativePath = std::wstring_view(deVirtualizedPath.full_path.substr(lengthPackageRootPath));
 
         return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
     }
