@@ -100,46 +100,6 @@ static int DoCopyFileTest(
 	return ERROR_SUCCESS;
 }
 
-inline int TestPathRedirectionLogic(std::filesystem::path fileFileSystemPath)
-{
-    std::ofstream outputFile(fileFileSystemPath.native());
-    outputFile << "I am the best" << std::endl;
-
-    outputFile.close();
-
-	auto file = ::CreateFileW(fileFileSystemPath.native().c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-	auto bufferSize = GetFinalPathNameByHandleW(file, nullptr, 0, 8);
-
-	if (0 == bufferSize)
-	{
-		return trace_last_error(L"Error when getting the buffer size for the file path");
-	}
-
-	auto fileStringBuffer = std::make_unique<TCHAR[]>(bufferSize);
-	bufferSize = GetFinalPathNameByHandleW(file, fileStringBuffer.get(), bufferSize, 8);
-
-	if (0 == bufferSize)
-	{
-		return trace_last_error(L"Error when getting the file path");
-	}
-
-	std::wstring packageFamilyName = psf::current_package_family_name();
-	std::wstring filePath(fileStringBuffer.get());
-	if (filePath.find(packageFamilyName) == std::wstring::npos)
-	{
-		trace_message(L"ERROR: written file does not contain the package family name\n", error_color);
-		trace_message(L"ERROR: File written to " + filePath, error_color);
-        ::DeleteFileW(fileFileSystemPath.native().c_str());
-		return ERROR_ASSERTION_FAILURE;
-	}
-
-    fileStringBuffer.release();
-    ::DeleteFileW(fileFileSystemPath.native().c_str());
-    ::CloseHandle(file);
-	return ERROR_SUCCESS;
-}
-
 int CopyFileTests()
 {
 	int result = ERROR_SUCCESS;
@@ -192,14 +152,6 @@ int CopyFileTests()
 	testResult = DoCopyFileTest(CopyFileExFunc, "CopyFileEx", otherFilePath, packageFilePath, otherFileContents);
 	result = result ? result : testResult;
 	test_end(testResult);
-
-    //Following tests do not work at the moment.
-    //Pushing them to git so I won't lose my work.
-	auto nonPathDirectory = std::filesystem::path(L"C:\\Program Files\\WindowsApps\\" + psf::current_package_full_name() + L"\\VFS\\SystemX86");
-	std::filesystem::create_directory(nonPathDirectory);
-	
-	auto packageFilePathInRoot = g_packageRootPath / g_packageFileName;
-    auto packageFilePathNotInRoot = nonPathDirectory / std::filesystem::path(L"InitialFile.txt");
 
 	return result;
 }
