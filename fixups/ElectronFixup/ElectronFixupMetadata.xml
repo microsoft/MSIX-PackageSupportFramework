@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ElectronFixup>
+  <ElectronFixupForPartialTrust>
+    <version>1.0.0.0</version>
+    <HowToUse></HowToUse>
+    <description></description>
+    <procmon></procmon>
+  </ElectronFixupForPartialTrust>
+</ElectronFixup>
