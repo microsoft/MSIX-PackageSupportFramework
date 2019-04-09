@@ -9,7 +9,6 @@
 #include <Windows.h>
 
 #include <error_logging.h>
-#include <psf_utils.h>
 #include <test_config.h>
 
 using namespace std::literals;
