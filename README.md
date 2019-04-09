@@ -16,10 +16,10 @@ Code licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageS
 Package Support Framework adopts a development and master branching style.
 
 ### Master
-This branch is what our NuGet repository uses.  The code in this branch is the most stable.  Please do not form off this branch for development.
+This branch represents the source in the most recent nuget package.  The code in this branch is the most stable.  Please do not fork off this branch for development.
 
 ### Develop
-This branch has the latest code, but is unstable.  Please form off this branch to make any contributions to Package Support Framework.
+This branch has the latest code. Keep in mind that there might be features in this branch that is not yet in master.  Please make a private fork off this branch to make any contributions to Package Support Framework.
 
 ## Contribute
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
