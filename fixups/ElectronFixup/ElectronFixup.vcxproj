@@ -30,6 +30,9 @@
   <ItemGroup>
     <ClInclude Include="ElectronFixupForPartialTrustImpls.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="ElectronFixupMetadata.xml" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{923CD640-3BCC-4716-A64B-49A35148FBC2}</ProjectGuid>

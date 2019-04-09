@@ -31,6 +31,9 @@
       <Project>{87cce0ac-a7fb-4a31-89d3-c0acdb315ee0}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="PSFLauncherMetadata.xml" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{29EE27EF-A3A3-4B8F-8DA2-532A5C04BD9E}</ProjectGuid>

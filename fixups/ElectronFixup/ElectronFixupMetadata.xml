@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ElectronFixup>
+  <version>1.0.0</version>
+  <MinimumWindowsPlatform>10.0.14393.0</MinimumWindowsPlatform>
+  <Description>Allows electron runtime to work in an msix enviorment.</Description>
+</ElectronFixup>
