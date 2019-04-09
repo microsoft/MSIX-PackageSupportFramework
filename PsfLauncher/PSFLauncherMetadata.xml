@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PSFLauncher>
-  <Version>1.0.0</Version>
-  <MinimumWindowsPlatform>10.0.14393.0</MinimumWindowsPlatform>
+    <Version>1.0.0</Version>
+    <MinimumWindowsPlatform>10.0.14393.0</MinimumWindowsPlatform>
 </PSFLauncher>
