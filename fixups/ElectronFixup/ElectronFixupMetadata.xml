@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ElectronFixup>
+<PSFData Name="ElectronFixup"
+         xmlns="https://www.w3schools.com"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://www.w3schools.com ..\MetadataSchema.xsd">>
   <version>1.0.0</version>
-  <MinimumWindowsPlatform>10.0.14393.0</MinimumWindowsPlatform>
-  <Description>Allows electron runtime to work in an msix enviorment.</Description>
-</ElectronFixup>
+  <MinimumWindowsPlatform>1803</MinimumWindowsPlatform>
+  <Description>Support for AppContainer execution for the Electron runtime. Enables PartialTrust support in MSIX.</Description>
+  <WhenToUse></WhenToUse>
+</PSFData>
