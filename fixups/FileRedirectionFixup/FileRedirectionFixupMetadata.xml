@@ -9,6 +9,6 @@
         To redirect filesystem IO calls to an appx/msix friendly location.
     </Description>
     <WhenToUse>
-        When your source code is encountering any Access Is Denied error because the path is not allowed by the Appx enviorment.
+        When your packaged application is unable to launch due to restrictions on file path. Common indicators are 'Access Is Denied' and 'File Not Found' errors.
     </WhenToUse>
 </PSFData>
