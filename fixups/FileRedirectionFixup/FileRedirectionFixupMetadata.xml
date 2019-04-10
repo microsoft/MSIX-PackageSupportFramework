@@ -1,5 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<FileRedirectionFixup>
+<PSFData Name="FileRedirectionFixup"
+         xmlns="https://www.w3schools.com"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://www.w3schools.com ..\MetadataSchema.xsd">>
     <Version>1.0.0</Version>
     <MinimumWindowsPlatform>10.0.14393.0</MinimumWindowsPlatform>
     <Description>
@@ -8,4 +11,4 @@
     <WhenToUse>
         When your source code is encountering any Access Is Denied error because the path is not allowed by the Appx enviorment.
     </WhenToUse>
-</FileRedirectionFixup>
+</PSFData>
