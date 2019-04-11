@@ -1,8 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PSFData Name="PSFLauncher"
-         xmlns="https://www.w3schools.com"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://www.w3schools.com ..\MetadataSchema.xsd">
+         SchemaLocation="https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/MetadataSchema.xml ..\MetadataSchema.xsd">
     <Version>1.0.0</Version>
     <MinimumWindowsPlatform>1607</MinimumWindowsPlatform>
 	<Description></Description>

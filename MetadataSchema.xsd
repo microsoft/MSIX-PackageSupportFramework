@@ -1,18 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<xs:schema targetNamespace="https://www.w3schools.com"
-    elementFormDefault="qualified"
-    xmlns="https://www.w3schools.com"
-    xmlns:xs="http://www.w3.org/2001/XMLSchema"
->
-    <xs:element name="PSFData">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:element name="Version" type="xs:string"></xs:element>
-                <xs:element name="MinimumWindowsPlatform" type="xs:int"></xs:element>
-                <xs:element name="Description" type="xs:string"></xs:element>
-                <xs:element name="WhenToUse" type="xs:string"></xs:element>
-            </xs:sequence>
-            <xs:attribute name="Name" type="xs:string"></xs:attribute>
-        </xs:complexType>
-    </xs:element>
-</xs:schema>
+<schema
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://schemas.microsoft.com/2019/04/PSFData">
+    <element name="PSFData">
+        <complexType>
+            <sequence>
+                <element name="Version" type="string"></element>
+                <element name="MinimumWindowsPlatform" type="int"></element>
+                <element name="Description" type="string"></element>
+                <element name="WhenToUse" type="string"></element>
+            </sequence>
+            <attribute name="Name" type="string"></attribute>
+        </complexType>
+    </element>
+</schema>
