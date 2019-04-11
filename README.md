@@ -31,7 +31,7 @@ Each fixup and the PSF Launcher has a metadata file in xml format.  Each file co
  3. Description: Short description of the Fixup.
  4. WhenToUse: Heuristics on when you should apply the fixup.
 
-Aditionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
+Addtionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
 
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
