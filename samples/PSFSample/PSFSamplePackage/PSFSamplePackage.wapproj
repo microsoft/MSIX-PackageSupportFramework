@@ -38,7 +38,7 @@
     <TargetPlatformVersion>10.0.17134.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <PackageCertificateKeyFile>Package_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>PSFSamplePackage_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
@@ -49,6 +49,7 @@
   <PropertyGroup>
     <AppxBundle>Always</AppxBundle>
     <EntryPointProjectUniqueName>..\PSF\PSF.vcxproj</EntryPointProjectUniqueName>
+    <PackageCertificateThumbprint>85E7033A5F256A5462C16A3AC0BD3AFF68564B6B</PackageCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AppxBundle>Auto</AppxBundle>
@@ -84,6 +85,7 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <Content Include="config.json" />
+    <None Include="PSFSamplePackage_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PSFSampleApp\PSFSampleApp.csproj" />
