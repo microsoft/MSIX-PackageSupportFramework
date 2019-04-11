@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PSFData Name="ElectronFixup"
+         SchemaLocation="https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/MetadataSchema.xml ..\MetadataSchema.xsd">
+  <version>1.0.0</version>
+  <MinimumWindowsPlatform>1803</MinimumWindowsPlatform>
+  <Description>Support for AppContainer execution for the Electron runtime. Enables PartialTrust support in MSIX.</Description>
+  <WhenToUse></WhenToUse>
+</PSFData>

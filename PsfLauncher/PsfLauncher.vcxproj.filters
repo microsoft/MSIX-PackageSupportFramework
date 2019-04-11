@@ -13,4 +13,9 @@
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="PSFLauncherMetadata.xml">
+      <Filter>src</Filter>
+    </Xml>
+  </ItemGroup>
 </Project>

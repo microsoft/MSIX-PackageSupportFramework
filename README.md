@@ -24,6 +24,15 @@ This branch has the latest code. Keep in mind that there might be features in th
 ## Contribute
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
+## Fixup Metadata
+Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
+ 1. Version:  The version of the PSF is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/)
+ 2. Minimum Windows Platform the the minimum windows version required for the fixup or PSF Launcher.
+ 3. Description: Short description of the Fixup.
+ 4. WhenToUse: Heuristics on when you should apply the fixup.
+
+Addtionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
+
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
 2. Make your changes in your private branch

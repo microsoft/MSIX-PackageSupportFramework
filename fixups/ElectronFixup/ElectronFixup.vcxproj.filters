@@ -21,4 +21,9 @@
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="ElectronFixupMetadata.xml">
+      <Filter>src</Filter>
+    </Xml>
+  </ItemGroup>
 </Project>
