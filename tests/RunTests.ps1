@@ -48,8 +48,13 @@ function RunTest($Arch, $Config)
 
 if (!(Test-Path "$pfxPath"))
 {
-    Write-Error "$pfxPath does not exist" -RecommendedAction "Run $PSScriptRoot\scenarios\signing\CreateCert.ps1 to create it"
-    Exit -1
+	Invoke-Expression "$PSScriptRoot\scenarios\signing\CreateCert.ps1 -Install -PasswordAsPlainText CentennialFixupsTestSigning" | Out-Null
+	Write-Host "Creating test cert"
+}
+
+if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
+{
+	New-Item -ItemType Directory "$PSScriptRoot\scenarios\Appx"
 }
 
 RunTest "x64" "Debug"
