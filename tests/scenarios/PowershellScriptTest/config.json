@@ -1,0 +1,24 @@
+{
+    "applications": [
+        {
+            "id": "Fixed",
+            "executable": "PowershellScriptTest.exe"
+        }
+    ],
+    "processes": [
+        {
+            "executable": "PowershellScriptTest*"
+        },
+        {
+            "executable": ".*",
+            "fixups": [
+                {
+                    "dll": "MultiByteToWideCharTestFixup.dll"
+                },
+                {
+                    "dll": "CompositionTestFixup.dll"
+                }
+            ]
+        }
+    ]
+}
