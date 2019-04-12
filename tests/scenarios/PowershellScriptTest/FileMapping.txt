@@ -1,0 +1,17 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\..\Win32\${Configuration}\PsfLauncher32.exe" "PsfLauncher32.exe"
+"..\..\..\x64\${Configuration}\PsfLauncher64.exe" "PsfLauncher64.exe"
+"..\..\..\Win32\${Configuration}\PsfRunDll32.exe" "PsfRunDll32.exe"
+"..\..\..\x64\${Configuration}\PsfRunDll64.exe" "PsfRunDll64.exe"
+"..\..\..\Win32\${Configuration}\PsfRuntime32.dll" "PsfRuntime32.dll"
+"..\..\..\x64\${Configuration}\PsfRuntime64.dll" "PsfRuntime64.dll"
+"..\..\..\Win32\${Configuration}\MultiByteToWideCharTestFixup32.dll" "MultiByteToWideCharTestFixup32.dll"
+"..\..\..\x64\${Configuration}\MultiByteToWideCharTestFixup64.dll" "MultiByteToWideCharTestFixup64.dll"
+"..\..\Win32\${Configuration}\PowershellScriptTest.exe" "PowershellScriptTest32.exe"
+"..\..\x64\${Configuration}\PowershellScriptTest.exe" "PowershellScriptTest64.exe"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

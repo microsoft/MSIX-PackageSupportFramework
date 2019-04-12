@@ -30,7 +30,8 @@ static constexpr const wchar_t* g_applications[] =
     L"CompositionTest_8wekyb3d8bbwe!Fixed",
     L"FileSystemTest_8wekyb3d8bbwe!Fixed",
     L"LongPathsTest_8wekyb3d8bbwe!Fixed",
-    L"WorkingDirectoryTest_8wekyb3d8bbwe!Fixed"
+    L"PowershellScriptTest_8wekyb3d8bbwe!Fixed32",
+    L"PowershellScriptTest_8wekyb3d8bbwe!Fixed64"
 };
 
 bool g_onlyPrintSummary = false;
