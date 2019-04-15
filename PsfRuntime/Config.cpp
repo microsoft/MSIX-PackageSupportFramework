@@ -463,6 +463,15 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept
 	return PSFQueryAppMonitorConfig_try();
 }
 
+PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept
+{
+    const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
+    auto& mon = application->get("startScript").as_object();
+    auto& monObj = mon.as_object();
+
+    return &monObj;
+}
+
 static inline constexpr iwstring_view remove_suffix_if(iwstring_view str, iwstring_view suffix)
 {
     if ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix))

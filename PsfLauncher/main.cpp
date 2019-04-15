@@ -13,6 +13,8 @@
 #include <psf_runtime.h>
 #include <shellapi.h>
 #include <combaseapi.h>
+#include <ppltasks.h>
+#include <ShObjIdl.h>
 
 using namespace std::literals;
 
@@ -64,6 +66,8 @@ void LogStringW(const char* name, const wchar_t* value)
 }
 int launcher_main(PWSTR args, int cmdShow) noexcept try
 {
+    //TEST
+    MessageBoxEx(NULL, L"In Here", L"In Here", 0, 0);
     Log("\tIn Launcher_main()");
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     if (!appConfig)
@@ -74,6 +78,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto exeName = appConfig->get("executable").as_string().wide();
     auto dirPtr = appConfig->try_get("workingDirectory");
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : nullptr;
+
 
     auto exeArgs = appConfig->try_get("arguments");
     auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
@@ -121,6 +126,68 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         wd =  wdwd ;
     }
     std::wstring quotedapp = exePath.native(); // L"\"" + exePath.native() + L"\"";
+
+    auto startScript = PSFQueryStartScriptInfo();
+
+    auto powershellStartScript = appConfig->get("startScript").as_string().wide();
+    auto currentDirectory = (packageRoot / dirStr);
+    
+    std::filesystem::path powershellScriptPath(powershellStartScript);
+    auto doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
+    if(doesFileExist)
+    {
+        std::wstring powershellStartString(L"powershell.exe -file ");
+        powershellStartString.append(powershellStartScript);
+        
+        STARTUPINFO startupInfo = { sizeof(startupInfo) };
+        startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+        startupInfo.wShowWindow = static_cast<WORD>(cmdShow);
+
+        PROCESS_INFORMATION processInfo;
+        if (!::CreateProcessW(
+            NULL,
+            powershellStartString.data(),
+            nullptr, nullptr, // Process/ThreadAttributes
+            true, // InheritHandles
+            0, // CreationFlags
+            nullptr, // Environment
+            dirStr ? (packageRoot / dirStr).c_str() : nullptr, // NOTE: extended-length path not supported
+            &startupInfo,
+            &processInfo))
+        {
+            std::wostringstream ss;
+            auto err{ ::GetLastError() };
+            // Remove the ".\r\n" that gets added to all messages
+            auto msg = widen(std::system_category().message(err));
+            msg.resize(msg.length() - 3);
+            ss << L"ERROR: Failed to create detoured process\n  Path: \"" << exeName << "\"\n  Error: " << msg << " (" << err << ")";
+            ::PSFReportError(ss.str().c_str());
+            return err;
+        }
+
+        // Propagate exit code to caller, in case they care
+        switch (::WaitForSingleObject(processInfo.hProcess, INFINITE))
+        {
+        case WAIT_OBJECT_0:
+            break; // Success case... handle at the end of main
+
+        case WAIT_FAILED:
+            return ::GetLastError();
+
+        default:
+            return ERROR_INVALID_HANDLE;
+        }
+
+        DWORD exitCode;
+        if (!::GetExitCodeProcess(processInfo.hProcess, &exitCode))
+        {
+            return ::GetLastError();
+        }
+    }
+    else
+    {
+
+    }
 
     if (check_suffix_if(exeName, L".exe"_isv))
     {
