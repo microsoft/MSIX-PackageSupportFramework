@@ -795,7 +795,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 #ifdef LOGIT2
         Log("\t\tFRF post check 4");
 #endif
-
+        [[maybe_unused]] BOOL copyResult = false;
         // Special case for the AppData's as VFS Layering doesn't apply in the Runtime
         std::filesystem::path CopySource = normalizedPath.drive_absolute_path;
         if (IsUnderUserAppDataLocal(normalizedPath.drive_absolute_path) ||
@@ -821,7 +821,6 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         }
         else
         {
-            [[maybe_unused]] BOOL copyResult;
             auto attr = impl::GetFileAttributes(CopySource.c_str()); //normalizedPath.drive_absolute_path);
 #ifdef LOGIT
             Log("\t\tFRF source attributes=0x%x", attr);
