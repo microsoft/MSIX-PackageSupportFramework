@@ -487,7 +487,24 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     std::wstring result;
     if (isUnmanagedRetarget)
     {
-        result = LR"(\\?\)" + psf::remove_trailing_path_separators(destinationTargetBase).wstring();
+        std::filesystem::path destNoTrailer = psf::remove_trailing_path_separators(destinationTargetBase);
+        result = LR"(\\?\)" + destNoTrailer.wstring();
+
+        // This doesn't work currently to redirect to AppData/Roaming as it is further redirected to AppData/Local/Packages/pkgname/LocalCache/Roaming and not even RoamingState
+        // Need to find a better way.  For now, user can redirect to a home drive.
+        //size_t folderidlen = destNoTrailer.wstring().find(L"FOLDERID_");
+        //if (folderidlen != std::string::npos &&
+        //    folderidlen == 9)
+        //{
+        //   size_t rootlen = destNoTrailer.wstring().find(L"\\");
+        //    if (rootlen != std::string::npos)
+        //    {
+        //        std::filesystem::path redirbase = path_from_known_folder_string(destNoTrailer.wstring().substr(folderidlen, rootlen - folderidlen));
+        //        result = LR"(\\?\)" + redirbase.wstring();
+        //        result += destNoTrailer.wstring().substr(rootlen);
+        //    }
+        //}
+       
         size_t offset = result.length();
         result += L"\\PackageCache\\";
         result += ::PSFQueryPackageFullName();
