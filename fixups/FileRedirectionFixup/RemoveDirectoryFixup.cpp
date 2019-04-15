@@ -15,7 +15,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         if (guard)
         {
             // NOTE: See commentary in DeleteFileFixup for limitations on deleting files/directories
-            auto [shouldRedirect, redirectPath] = ShouldRedirect(pathName, redirect_flags::none);
+            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(pathName, redirect_flags::none);
             if (shouldRedirect)
             {
                 if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(pathName))

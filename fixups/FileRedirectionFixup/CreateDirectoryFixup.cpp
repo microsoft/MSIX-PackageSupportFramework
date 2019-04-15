@@ -14,7 +14,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
     {
         if (guard)
         {
-            auto [shouldRedirect, redirectPath] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure);
+            auto [shouldRedirect, redirectPath,shouldReadonlySource] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure);
             if (shouldRedirect)
             {
                 return impl::CreateDirectory(redirectPath.c_str(), securityAttributes);
@@ -41,8 +41,8 @@ BOOL __stdcall CreateDirectoryExFixup(
     {
         if (guard)
         {
-            auto [redirectTemplate, redirectTemplatePath] = ShouldRedirect(templateDirectory, redirect_flags::check_file_presence);
-            auto [redirectDest, redirectDestPath] = ShouldRedirect(newDirectory, redirect_flags::ensure_directory_structure);
+            auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirect(templateDirectory, redirect_flags::check_file_presence);
+            auto [redirectDest, redirectDestPath,shouldReadonlySource] = ShouldRedirect(newDirectory, redirect_flags::ensure_directory_structure);
             if (redirectTemplate || redirectDest)
             {
                 return impl::CreateDirectoryEx(

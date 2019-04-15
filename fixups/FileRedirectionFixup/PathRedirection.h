@@ -27,6 +27,7 @@ struct path_redirect_info
 {
     bool should_redirect = false;
     std::filesystem::path redirect_path;
+    bool shouldReadonly = false;
 };
 
 path_redirect_info ShouldRedirect(const char* path, redirect_flags flags);
@@ -57,3 +58,25 @@ normalized_path DeVirtualizePath(normalized_path path);
 // Short-circuit to determine what the redirected path would be. No check to see if the path should be redirected is
 // performed.
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure = false);
+
+// does path start with basePath
+bool path_relative_to(const wchar_t* path, const std::filesystem::path& basePath);
+bool path_relative_to(const char* path, const std::filesystem::path& basePath);
+
+
+// Determines if the path of the filename falls under the user's appdata local or roaming folders.
+bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName);
+bool IsUnderUserAppDataRoaming(_In_ const wchar_t* fileName);
+bool IsUnderUserAppDataLocal(_In_ const char* fileName);
+bool IsUnderUserAppDataRoaming(_In_ const char* fileName);
+
+// Return path to existing package VFS file (or NULL if not present)
+std::filesystem::path GetPackageVFSPath(const wchar_t* fileName);
+std::filesystem::path GetPackageVFSPath(const char* fileName);
+
+//#define LOGIT
+//#define LOGIT2
+
+#ifdef LOGIT
+void Log(const char* fmt, ...);
+#endif

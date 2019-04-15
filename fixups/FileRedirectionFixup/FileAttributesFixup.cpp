@@ -14,10 +14,16 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-            auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
+            auto [shouldRedirect, redirectPath, shoudReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
             {
-                return impl::GetFileAttributes(redirectPath.c_str());
+                DWORD attributes =  impl::GetFileAttributes(redirectPath.c_str());
+				if (shouldReadonly)
+				{
+					if ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+					attributes |= FILE_ATTRIBUTE_READONLY;
+				}
+				return attributes;
             }
         }
     }
@@ -41,10 +47,19 @@ BOOL __stdcall GetFileAttributesExFixup(
     {
         if (guard)
         {
-            auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
+            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
             {
-                return impl::GetFileAttributesEx(redirectPath.c_str(), infoLevelId, fileInformation);
+                BOOL retval = impl::GetFileAttributesEx(redirectPath.c_str(), infoLevelId, fileInformation);
+				if (retval != 0 && shouldReadonly)
+				{
+					if (infoLevelId == GetFileExInfoStandard  )
+					{
+						if ((((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+							((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+					}
+				}
+				return retval;
             }
         }
     }
@@ -65,10 +80,16 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     {
         if (guard)
         {
-            auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
-                return impl::SetFileAttributes(redirectPath.c_str(), fileAttributes);
+                DWORD redirectedAttributes = fileAttributes;
+				if (shouldReadonly)
+				{
+					if ((fileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+						redirectedAttributes |= FILE_ATTRIBUTE_READONLY;
+				}
+                return impl::SetFileAttributes(redirectPath.c_str(), redirectedAttributes);
             }
         }
     }

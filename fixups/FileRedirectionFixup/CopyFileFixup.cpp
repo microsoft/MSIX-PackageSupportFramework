@@ -23,8 +23,8 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             //       manually fail out ourselves if 'failIfExists' is true and the file exists in the package, but
             //       that's arguably worse since we currently aren't handling the case where an application tries to
             //       delete a file in its package path.
-            auto [redirectSource, sourceRedirectPath] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
-            auto [redirectDest, destRedirectPath] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
+            auto [redirectDest, destRedirectPath,shouldReadonlySource] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectSource || redirectDest)
             {
                 return impl::CopyFile(
@@ -58,8 +58,8 @@ BOOL __stdcall CopyFileExFixup(
         if (guard)
         {
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            auto [redirectSource, sourceRedirectPath] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
-            auto [redirectDest, destRedirectPath] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
+            auto [redirectDest, destRedirectPath,shouldReadonlySource] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectSource || redirectDest)
             {
                 return impl::CopyFileEx(
@@ -92,8 +92,8 @@ HRESULT __stdcall CopyFile2Fixup(
         if (guard)
         {
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            auto [redirectSource, sourceRedirectPath] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
-            auto [redirectDest, destRedirectPath] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
+            auto [redirectDest, destRedirectPath,shouldReadonlySource] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectSource || redirectDest)
             {
                 return impl::CopyFile2(

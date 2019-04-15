@@ -25,9 +25,9 @@ BOOL __stdcall ReplaceFileFixup(
             //       immediately get deleted. We could improve this in the future if we wanted, but that would
             //       effectively require that we re-write ReplaceFile, which we opt not to do right now. Also note that
             //       this implies that we have the same file deletion limitation that we have for DeleteFile, etc.
-            auto [redirectTarget, targetRedirectPath] = ShouldRedirect(replacedFileName, redirect_flags::copy_on_read);
-            auto [redirectSource, sourceRedirectPath] = ShouldRedirect(replacementFileName, redirect_flags::copy_on_read);
-            auto [redirectBackup, backupRedirectPath] = ShouldRedirect(backupFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectTarget, targetRedirectPath, shouldReadonly] = ShouldRedirect(replacedFileName, redirect_flags::copy_on_read);
+            auto [redirectSource, sourceRedirectPath, shouldReadonly] = ShouldRedirect(replacementFileName, redirect_flags::copy_on_read);
+            auto [redirectBackup, backupRedirectPath, shouldReadonly] = ShouldRedirect(backupFileName, redirect_flags::ensure_directory_structure);
             if (redirectTarget || redirectSource || redirectBackup)
             {
                 return impl::ReplaceFile(

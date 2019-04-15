@@ -18,7 +18,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
     {
         if (guard)
         {
-            auto[shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+            auto[shouldRedirect, redirectPath], shouldReadonly = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
                 return impl::WritePrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
