@@ -23,8 +23,8 @@ BOOL __stdcall CreateHardLinkFixup(
             //       link file already exists. I.e. we're giving the application the benefit of the doubt that, if they
             //       are trying to create a hard-link with the same path as a file inside the package, they had
             //       previously attempted to delete that file.
-            auto [redirectLink, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::ensure_directory_structure);
-            auto [redirectTarget, redirectTargetPath, shouldReadonly] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
+            auto [redirectLink, redirectPath, shouldReadonlySource] = ShouldRedirect(fileName, redirect_flags::ensure_directory_structure);
+            auto [redirectTarget, redirectTargetPath, shouldReadonlyDest] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
             if (redirectLink || redirectTarget)
             {
                 return impl::CreateHardLink(

@@ -42,7 +42,7 @@ BOOL __stdcall CreateDirectoryExFixup(
         if (guard)
         {
             auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirect(templateDirectory, redirect_flags::check_file_presence);
-            auto [redirectDest, redirectDestPath,shouldReadonlySource] = ShouldRedirect(newDirectory, redirect_flags::ensure_directory_structure);
+            auto [redirectDest, redirectDestPath,shouldReadonlyDest] = ShouldRedirect(newDirectory, redirect_flags::ensure_directory_structure);
             if (redirectTemplate || redirectDest)
             {
                 return impl::CreateDirectoryEx(
