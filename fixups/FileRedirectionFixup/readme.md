@@ -295,4 +295,4 @@ The Package Support Framework does not currently handle scenarios where an appli
 
 
 ### RoamingAppData
-The MSIX runtime, which operates after the PSF, will automatically redirect any writes made by contained processes that are aimed at the user's AppData\Roaming folder, whether requested directly by the application or if redirected by this shim.  These writes are redirected to AppData\Local
+The MSIX runtime, which operates after the PSF, will automatically redirect any writes made by contained processes that are aimed at the user's AppData\Roaming folder, whether requested directly by the application or if redirected by this shim.  These writes are redirected to AppData\Local\Packages\PackageName\RoamingState folder. For more information on this folder, how it is cloud backed, and limitations, see the blog post: https://blogs.windows.com/buildingapps/2016/05/04/roaming-app-data-and-the-user-experience/#4AuZVb5pUlw4O21b.97 
