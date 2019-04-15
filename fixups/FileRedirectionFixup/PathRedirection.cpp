@@ -19,6 +19,7 @@ using namespace std::literals;
 std::filesystem::path g_packageRootPath;
 std::filesystem::path g_packageVfsRootPath;
 std::filesystem::path g_redirectRootPath;
+std::filesystem::path g_writablePackageRootPath;
 std::filesystem::path g_redirectRootPathDefault;
 
 struct vfs_folder_mapping
@@ -481,8 +482,7 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
 /// <param name="deVirtualizedPath">The original path from the app</param>
 /// <param name="ensureDirectoryStructure">If true, the deVirtualizedPath will be appended to the allowed write location</param>
 /// <returns>The new absolute path.</returns>
-std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure, std::filesystem::path destinationTargetBase, bool isUnmanagedRetarget,
-                            bool isUnmanagedRetarget )
+std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure, std::filesystem::path destinationTargetBase, bool isUnmanagedRetarget )
 {
     std::wstring result;
 	if (isUnmanagedRetarget)
@@ -559,50 +559,48 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 	else
 	{
         
+		//To prevent apps breaking on an upgrade we redirect writes to the package root path to
+		//a path that contains the package family name and not the package full name.
+		bool shouldredirectToPackageRoot = false;
+		if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
+		{
+			//Maybe result = LR"(\\?\)" + psf::remove_trailing_path_separators(destinationTargetBase).wstring();
+			result = LR"(\\?\)" + g_writablePackageRootPath.native();
+			shouldredirectToPackageRoot = true;
+		}
+		else
+		{
+			//Maybe result = LR"(\\?\)" + psf::remove_trailing_path_separators(destinationTargetBase).wstring();
+			result = LR"(\\?\)" + g_redirectRootPath.native();
+		}
 
-    //To prevent apps breaking on an upgrade we redirect writes to the package root path to
-    //a path that contains the package family name and not the package full name.
-    std::wstring result;
-    bool shouldredirectToPackageRoot = false;
-    if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
-    {
-        //Maybe result = LR"(\\?\)" + psf::remove_trailing_path_separators(destinationTargetBase).wstring();
-        result = LR"(\\?\)" + g_writablePackageRootPath.native();
-        shouldredirectToPackageRoot = true;
-    }
-    else
-    {
-        //Maybe result = LR"(\\?\)" + psf::remove_trailing_path_separators(destinationTargetBase).wstring();
-        result = LR"(\\?\)" + g_redirectRootPath.native();
-    }
+		//std::wstring_view relativePath;
+		//if (shouldredirectToPackageRoot)
+		//{
+		//    auto lengthPackageRootPath = g_packageRootPath.native().length();
+		//    auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
+		//    relativePath = std::wstring_view(stringToTurnIntoAStringView);
+		//
+		//    return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
+		//}
 
-    //std::wstring_view relativePath;
-    //if (shouldredirectToPackageRoot)
-    //{
-    //    auto lengthPackageRootPath = g_packageRootPath.native().length();
-    //    auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
-    //    relativePath = std::wstring_view(stringToTurnIntoAStringView);
-    //
-    //    return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
-    //}
+		// NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
+		// similar to what's done for UNC paths
+		assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
+		result.push_back(L'\\');
+		result.push_back(deVirtualizedPath.drive_absolute_path[0]);
+		result.push_back('$');
 
-    // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
-    // similar to what's done for UNC paths
-    assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
-    result.push_back(L'\\');
-    result.push_back(deVirtualizedPath.drive_absolute_path[0]);
-    result.push_back('$');
-
-    auto remainingLength = deVirtualizedPath.full_path.length();
-    remainingLength -= (deVirtualizedPath.drive_absolute_path - deVirtualizedPath.full_path.c_str());
-    remainingLength -= 2;
-    std::wstring_view relativePath = std::wstring_view(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
+		auto remainingLength = deVirtualizedPath.full_path.length();
+		remainingLength -= (deVirtualizedPath.drive_absolute_path - deVirtualizedPath.full_path.c_str());
+		remainingLength -= 2;
+		std::wstring_view relativePath = std::wstring_view(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
     
-#ifdef LOGIT
-		Log("\tFRF relativepath = %d", relativePath.length());
-#endif
+	#ifdef LOGIT
+			Log("\tFRF relativepath = %d", relativePath.length());
+	#endif
 
-    if (ensureDirectoryStructure)
+		if (ensureDirectoryStructure)
 		{
 			for (std::size_t pos = 0; pos < relativePath.length(); )
 			{
@@ -629,10 +627,10 @@ auto err = ::GetLastError();
 				pos = nextPos;
 			}
 		}
-		else
-		{
-			result += relativePath;
-		}
+	else
+	{
+		result += relativePath;
+	}
     return result; ///GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
     }
 }
@@ -777,7 +775,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
     if (flag_set(flags, redirect_flags::copy_file))
     {
-ifdef LOGIT2
+#ifdef LOGIT2
 		Log("\t\tFRF post check 4");
 #endif
 

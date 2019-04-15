@@ -92,8 +92,8 @@ HRESULT __stdcall CopyFile2Fixup(
         if (guard)
         {
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
-            auto [redirectDest, destRedirectPath,shouldReadonlySource] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectSource, sourceRedirectPath, shouldReadonly] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
+            auto [redirectDest, destRedirectPath, shouldReadonly] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectSource || redirectDest)
             {
                 return impl::CopyFile2(
