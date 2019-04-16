@@ -45,7 +45,6 @@ Each unnamed element of the array has the following structure:
 | `redirectTargetBase` | (Optional) Base folder designation for destination. When not specified, the VFS folder under the user's LocalAppData folder will be used.|
 | `isExclusion` | (Optional) When true, redirection operations are not allowed on this pattern match. This value defaults to false when not present, but when set to true to implement an exclusion as described below. |
 | `isReadOnly` | (Optional) When true, a copy on access and redirection operation is performed, but the copy should be read-only to prevent changes. |
-| `isUnmanagedRetarget` | (Optional) The retargeted location is unmanaged by the MSIX runtime. This value defaults to false when not present. |
 
 The value of `base` is to be a path that is relative to the installation folder of the package. 
 The full path for any pattern matching will start from a runtime determined construction of the installation root of the package, followed by the value of `base`.
@@ -61,7 +60,6 @@ Each unnamed element of the array has the following structure:
 | `redirectTargetBase` | (Optional) Base folder designation for destination. When not specified, the VFS folder under the user's LocalAppData folder will be used.|
 | `isExclusion` | (Optional) When true, redirection operations are not allowed on this pattern match. This value defaults to false when not present, but when set to true to implement an exclusion as described below. |
 | `isReadOnly` | (Optional) When true, a copy on access and redirection operation is performed, but the copy should be read-only to prevent changes. |
-| `isUnmanagedRetarget` | (Optional) The retargeted location is unmanaged by the MSIX runtime. This value defaults to false when not present. |
 
 The value of `base` is to be a folder path relative to the drive that the package is installed to (nominally C:\).
 The full path for any pattern matching will start from a runtime determined construction of the drive of the installed package, followed by the value of `base`.
@@ -104,7 +102,6 @@ Each element of the of the `knownFolders` type has the following structure:
 | `redirectTargetBase` | (Optional) Base folder designation for destination. When not specified, the VFS folder under the user's LocalAppData folder will be used.|
 | `isExclusion` | (Optional) When true, redirection operations are not allowed on this pattern match. This value defaults to false when not present, but when set to true to implement an exclusion as described below. |
 | `isReadOnly` | (Optional) When true, a copy on access and redirection operation is performed, but the copy should be read-only to prevent changes. |
-| `isUnmanagedRetarget` | (Optional) The retargeted location is unmanaged by the MSIX runtime. This value defaults to false when not present. |
 
 The value of `base` is to be a path that is relative to the known folder id already specified. 
 The full path for any pattern matching will start from a runtime determined construction of the local value of the knownFolder `id`, followed by the value of `base`.
@@ -201,7 +198,8 @@ ere is a second example:
                 "patterns": [
                     "AutoUpdate\\.ini$"
                 ]
-				"IsExclusion": "true" 
+				"redirectTargetBase": "H:"
+				"IsReadOnly": "true" 
             },
             {
                 "base": "configs",
@@ -218,7 +216,7 @@ ere is a second example:
                 "patterns": [
                     ".*"
                 ]
-				"redirectTargetBase": "FOLDERID_RoamingAppData"
+				"redirectTargetBase": "H:"
             },
 			{
                 "base": "",
@@ -234,7 +232,7 @@ Te read the example, it might help to read from the bottom element up. In this e
 
 > * Most files for copy on write operation, redirecting to a safe place the default LocalAppData folder.
 > * Except for files that were under the configs subfolder of the package. for these:
-> > * Most will be redirected to a safe place in the RoamingAppdata folder.
+> > * Most will be redirected to a safe place in the user's home drive (PackageCache\Packagename).
 > > * Except for certain Windows PE file types
 > > * And except for one named AutoUpdate.ini, which is to remain as read only as provided in the package to prevent the end-user from configuring updates back on.
 

@@ -334,6 +334,7 @@ void LoadConfig()
         g_CurrentExecutable = psf::current_executable_path();
 
         LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
+        LogCountedStringW("g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
         LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
         LogCountedStringW("g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
         LogString("g_PackageRootPath", g_PackageRootPath.c_str());

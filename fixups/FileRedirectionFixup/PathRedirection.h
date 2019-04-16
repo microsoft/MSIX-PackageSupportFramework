@@ -55,6 +55,13 @@ normalized_path NormalizePath(const wchar_t* path);
 // then modifies that path to its virtualized equivalent (e.g. "C:\Windows\System32\foo.txt")
 normalized_path DeVirtualizePath(normalized_path path);
 
+// If the input path is a physical path outside of the package (e.g. "C:\Windows\System32\foo.txt"),
+// this returns what the package VFS equivalent would be (e.g "C:\Program Files\WindowsApps\Packagename\VFS\SystemX64\foo.txt");
+// NOTE: Does not check if package has this virtualized path.
+normalized_path VirtualizePath(normalized_path path);
+
+
+
 // Short-circuit to determine what the redirected path would be. No check to see if the path should be redirected is
 // performed.
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure = false);

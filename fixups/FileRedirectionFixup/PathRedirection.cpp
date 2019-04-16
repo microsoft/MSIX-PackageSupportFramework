@@ -33,7 +33,7 @@ void InitializePaths()
 {
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
-    auto packageRootPath = ::PSFQueryPackageRootPath();
+    auto packageRootPath = ::PSFQueryPackageRootPath(); 
     if (auto pathType = psf::path_type(packageRootPath);
         (pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
     {
@@ -67,9 +67,9 @@ void InitializePaths()
     //      FOLDERID_System\driverstore     AppVSystem32Driverstore                         x86, amd64
     //      FOLDERID_System\logfiles        AppVSystem32Logfiles                            x86, amd64
     //      FOLDERID_System\spool           AppVSystem32Spool                               x86, amd64
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_SystemX86), LR"(SystemX86)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesX86), LR"(ProgramFilesX86)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesCommonX86), LR"(ProgramFilesCommonX86)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_SystemX86),                   LR"(SystemX86)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesX86),             LR"(ProgramFilesX86)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesCommonX86),       LR"(ProgramFilesCommonX86)"sv });
 #if !_M_IX86
     // FUTURE: We may want to consider the possibility of a 32-bit application trying to reference "%windir%\sysnative\"
     //         in which case we'll have to get smarter about how we resolve paths
@@ -80,14 +80,17 @@ void InitializePaths()
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesX64), LR"(ProgramFilesX64)"sv });
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesCommonX64), LR"(ProgramFilesCommonX64)"sv });
 #endif
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Windows), LR"(Windows)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramData), LR"(Common AppData)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(catroot)"sv, LR"(AppVSystem32Catroot)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(catroot2)"sv, LR"(AppVSystem32Catroot2)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Windows),                      LR"(Windows)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramData),                  LR"(Common AppData)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System),                       LR"(System)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(catroot)"sv,     LR"(AppVSystem32Catroot)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(catroot2)"sv,    LR"(AppVSystem32Catroot2)"sv });
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(drivers\etc)"sv, LR"(AppVSystem32DriversEtc)"sv });
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(driverstore)"sv, LR"(AppVSystem32Driverstore)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(logfiles)"sv, LR"(AppVSystem32Logfiles)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(spool)"sv, LR"(AppVSystem32Spool)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(logfiles)"sv,    LR"(AppVSystem32Logfiles)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(spool)"sv,       LR"(AppVSystem32Spool)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_LocalAppData),                 LR"(Local AppData)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_RoamingAppData),               LR"(AppData)"sv });
 }
 
 std::filesystem::path path_from_known_folder_string(std::wstring_view str)
@@ -164,7 +167,6 @@ struct path_redirection_spec
     std::filesystem::path redirect_targetbase;
     bool isExclusion;
     bool isReadOnly;
-    bool isUnmanagedRetarget;
 };
 
 std::vector<path_redirection_spec> g_redirectionSpecs;
@@ -286,11 +288,6 @@ void InitializeConfiguration()
                         IsReadOnlyValue = specObject.get("isReadOnly").as_boolean().get();
                     }
 
-                    bool IsUnmanagedRetargetValue = false;
-                    if (auto IsUnmanagedRetarget = specObject.try_get("isUnmanagedRetarget"))
-                    {
-                        IsUnmanagedRetargetValue = specObject.get("isUnmanagedRetarget").as_boolean().get();
-                    }
                     for (auto& pattern : specObject.get("patterns").as_array())
                     {
                         auto patternString = pattern.as_string().wstring();
@@ -301,7 +298,6 @@ void InitializeConfiguration()
                         g_redirectionSpecs.back().redirect_targetbase = redirectTargetBaseValue;
                         g_redirectionSpecs.back().isExclusion = IsExclusionValue;
                         g_redirectionSpecs.back().isReadOnly = IsReadOnlyValue;
-                        g_redirectionSpecs.back().isUnmanagedRetarget = IsUnmanagedRetargetValue;
                     }
 #ifdef LOGIT
                     Log("\t\tFRF RULE: Path=%ls retarget=%ls", path.c_str(), redirectTargetBaseValue.c_str());
@@ -408,6 +404,8 @@ normalized_path NormalizePath(const wchar_t* path)
     return NormalizePathImpl(path);
 }
 
+// If the input path is relative to the VFS folder under the package path (e.g. "${PackageRoot}\VFS\SystemX64\foo.txt"),
+// then modifies that path to its virtualized equivalent (e.g. "C:\Windows\System32\foo.txt")
 normalized_path DeVirtualizePath(normalized_path path)
 {
     if (path.drive_absolute_path && path_relative_to(path.drive_absolute_path, g_packageVfsRootPath))
@@ -442,6 +440,51 @@ normalized_path DeVirtualizePath(normalized_path path)
         // Otherwise a directory/file named something like "VFSx" for some non-path separator/null terminator 'x'
     }
 
+    return path;
+}
+
+// If the input path is a physical path outside of the package (e.g. "C:\Windows\System32\foo.txt"),
+// this returns what the package VFS equivalent would be (e.g "C:\Program Files\WindowsApps\Packagename\VFS\SystemX64\foo.txt");
+// NOTE: Does not check if package has this virtualized path.
+normalized_path VirtualizePath(normalized_path path)
+{
+#ifdef LOGIT3
+    Log("\t\tVirtualizePath: Input drive_absolute_path %ls", path.drive_absolute_path);
+#endif
+    if (path.drive_absolute_path && path_relative_to(path.drive_absolute_path, g_packageRootPath))
+    {
+#ifdef LOGIT3
+        Log("\t\tVirtualizePath: output same as input, is in package");
+#endif
+        return path;
+    }
+    
+    for (std::vector<vfs_folder_mapping>::reverse_iterator iter = g_vfsFolderMappings.rbegin();   iter != g_vfsFolderMappings.rend(); ++iter)
+    {
+        auto& mapping = *iter;
+        if (path_relative_to(path.full_path.c_str(), mapping.path))
+        {
+#ifdef LOGIT3
+            Log("\t\t\t mapping entry match on path %ls", mapping.path.wstring().c_str());
+            Log("\t\t\t mapping entry match on package_vfs_relative_path %ls", mapping.package_vfs_relative_path.native().c_str());
+            Log("\t\t\t rel length =%d, %d", mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
+#endif
+            auto vfsRelativePath = path.full_path.c_str() + mapping.path.native().length();
+            if (psf::is_path_separator(vfsRelativePath[0]))
+            {
+                ++vfsRelativePath;
+            }
+#ifdef LOGIT3
+            Log("\t\t\t vfsRelativePath %ls", vfsRelativePath);
+#endif            
+            path.full_path = (g_packageVfsRootPath / mapping.package_vfs_relative_path / vfsRelativePath).native();
+            path.drive_absolute_path = path.full_path.data();
+            return path;
+        }
+    }
+#ifdef LOGIT3
+    Log("\t\tVirtualizePath: output same as input, no match.");
+#endif
     return path;
 }
 
@@ -482,180 +525,71 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
 /// <param name="deVirtualizedPath">The original path from the app</param>
 /// <param name="ensureDirectoryStructure">If true, the deVirtualizedPath will be appended to the allowed write location</param>
 /// <returns>The new absolute path.</returns>
-std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure, std::filesystem::path destinationTargetBase, bool isUnmanagedRetarget )
+std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure, std::filesystem::path destinationTargetBase)
 {
     std::wstring result;
-    if (isUnmanagedRetarget)
+
+    std::filesystem::path destNoTrailer = psf::remove_trailing_path_separators(destinationTargetBase);
+    result = LR"(\\?\)" + destNoTrailer.wstring();
+
+      
+    size_t offset = result.length();
+    result += L"\\PackageCache\\";
+    result += psf::current_package_family_name(); // ::PSFQueryPackageFullName();
+    result += deVirtualizedPath.full_path.substr(g_packageRootPath.wstring().length());
+
+#ifdef LOGIT
+    ////Log("\tFRF devirt.full_path %ls", deVirtualizedPath.full_path.c_str());
+    ////Log("\tFRF devirt.da_path %ls", deVirtualizedPath.drive_absolute_path);
+    Log("\tFRF unmanged %ls", result.c_str());
+#endif
+    // Create folder structure, if needed
+    if (impl::PathExists(result.c_str()))
     {
-        std::filesystem::path destNoTrailer = psf::remove_trailing_path_separators(destinationTargetBase);
-        result = LR"(\\?\)" + destNoTrailer.wstring();
-
-        // This doesn't work currently to redirect to AppData/Roaming as it is further redirected to AppData/Local/Packages/pkgname/LocalCache/Roaming and not even RoamingState
-        // Need to find a better way.  For now, user can redirect to a home drive.
-        //size_t folderidlen = destNoTrailer.wstring().find(L"FOLDERID_");
-        //if (folderidlen != std::string::npos &&
-        //    folderidlen == 9)
-        //{
-        //   size_t rootlen = destNoTrailer.wstring().find(L"\\");
-        //    if (rootlen != std::string::npos)
-        //    {
-        //        std::filesystem::path redirbase = path_from_known_folder_string(destNoTrailer.wstring().substr(folderidlen, rootlen - folderidlen));
-        //        result = LR"(\\?\)" + redirbase.wstring();
-        //        result += destNoTrailer.wstring().substr(rootlen);
-        //    }
-        //}
-       
-        size_t offset = result.length();
-        result += L"\\PackageCache\\";
-        result += ::PSFQueryPackageFullName();
-        //result = psf::remove_trailing_path_separators(destinationTargetBase).wstring() + L"\\PackageCache\\" + ::PSFQueryPackageFullName();
-        if (IsUnderUserAppDataLocal(deVirtualizedPath.full_path.c_str()))
-        {
-            result.push_back(L'\\');
-            result.append(L"VFS\\");
-            result.append(L"LocalAppData");
-            result.append(deVirtualizedPath.full_path.substr(psf::known_folder(FOLDERID_LocalAppData).wstring().length()).c_str());
-        }
-        else if (IsUnderUserAppDataRoaming(deVirtualizedPath.full_path.c_str()))
-        {
-            result += L"\\VFS\\RoamingAppData" + deVirtualizedPath.full_path.substr(psf::known_folder(FOLDERID_RoamingAppData).wstring().length());
-        }
-        else
-        {
-            result += deVirtualizedPath.full_path.substr(g_packageRootPath.wstring().length());
-        }
-
-        //g_packageRootPath;
 #ifdef LOGIT
-        Log("\tFRF devirt.full_path %ls", deVirtualizedPath.full_path.c_str());
-        Log("\tFRF devirt.da_path %ls", deVirtualizedPath.drive_absolute_path);
-        Log("\tFRF unmanged %ls", result.c_str());
+        Log("\t\tFRF Found that a copy exists in the redirected area so we skip the folder creation.");
 #endif
-        // Create folder structure, if needed
-        if (impl::PathExists(result.c_str()))
-        {
-#ifdef LOGIT
-            Log("\t\tFRF Found that a copy exists in the redirected area so we skip the folder creation.");
-#endif
-        }
-        else
-        {
-            if (ensureDirectoryStructure)
-            {
-                while (offset < result.length())
-                {
-                    size_t newoffset = result.find('\\', offset);
-                    if (newoffset == -1)
-                        break;
-#ifdef LOGIT2
-                    Log("\t\tFRF find at %d", newoffset);
-#endif			
-                    if (newoffset > 2)  // skip the C:\\ 
-                    {
-                        std::wstring partialdir = result.substr(0, newoffset);
-                        [[maybe_unused]] auto dirResultU = impl::CreateDirectory(partialdir.c_str(), nullptr);
-#ifdef LOGIT
-                        std::wstring res = L"false";
-                        if (dirResultU)
-                            res = L"true";
-                        Log("\t\tFRF Create Unmanaged folder %ls RES=%ls", partialdir.c_str(), res.c_str());
-#endif
-                    }
-#ifdef LOGIT2
-                    else
-                    {
-                        Log("\t\tFRF skip %d", newoffset);
-                    }
-#endif
-                    offset = newoffset + 1;
-                }
-            }
-        }
-        return result;
     }
     else
     {
-        
-        //To prevent apps breaking on an upgrade we redirect writes to the package root path to
-        //a path that contains the package family name and not the package full name.
-        bool shouldredirectToPackageRoot = false;
-        if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
-        {
-            //Maybe result = LR"(\\?\)" + psf::remove_trailing_path_separators(destinationTargetBase).wstring();
-            result = LR"(\\?\)" + g_writablePackageRootPath.native();
-            shouldredirectToPackageRoot = true;
-        }
-        else
-        {
-            //Maybe result = LR"(\\?\)" + psf::remove_trailing_path_separators(destinationTargetBase).wstring();
-            result = LR"(\\?\)" + g_redirectRootPath.native();
-        }
-
-        //std::wstring_view relativePath;
-        //if (shouldredirectToPackageRoot)
-        //{
-        //    auto lengthPackageRootPath = g_packageRootPath.native().length();
-        //    auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
-        //    relativePath = std::wstring_view(stringToTurnIntoAStringView);
-        //
-        //    return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
-        //}
-
-        // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
-        // similar to what's done for UNC paths
-        assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
-        result.push_back(L'\\');
-        result.push_back(deVirtualizedPath.drive_absolute_path[0]);
-        result.push_back('$');
-
-        auto remainingLength = deVirtualizedPath.full_path.length();
-        remainingLength -= (deVirtualizedPath.drive_absolute_path - deVirtualizedPath.full_path.c_str());
-        remainingLength -= 2;
-        std::wstring_view relativePath = std::wstring_view(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
-    
-    #ifdef LOGIT
-            Log("\tFRF relativepath = %d", relativePath.length());
-    #endif
-
         if (ensureDirectoryStructure)
         {
-            for (std::size_t pos = 0; pos < relativePath.length(); )
+            while (offset < result.length())
             {
-                [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
-#if _DEBUG
-auto err = ::GetLastError();
-                assert(dirResult || (err == ERROR_ALREADY_EXISTS));
-#endif
-#ifdef LOGIT
-                std::wstring res = L"false";
-                if (dirResult)
-                    res = L"true";
-                Log("\t\tFRF Create Managed folder %ls RES=%ls", result.c_str(), res.c_str());
-#endif
-                auto nextPos = relativePath.find_first_of(LR"(\/)", pos + 1);
-                if (nextPos == relativePath.length())
+                size_t newoffset = result.find('\\', offset);
+                if (newoffset == -1)
+                    break;
+#ifdef LOGIT2
+                Log("\t\tFRF find at %d", newoffset);
+#endif			
+                if (newoffset > 2)  // skip the C:\\ 
                 {
-                    // Ignore trailing path separators. E.g. if the call is to CreateDirectory, we don't want it to "fail"
-                    // with an "already exists" error
-                    nextPos = std::wstring_view::npos;
+                    std::wstring partialdir = result.substr(0, newoffset);
+                    [[maybe_unused]] auto dirResultU = impl::CreateDirectory(partialdir.c_str(), nullptr);
+#ifdef LOGIT
+                    std::wstring res = L"false";
+                    if (dirResultU)
+                        res = L"true";
+                    Log("\t\tFRF Create Unmanaged folder %ls RES=%ls", partialdir.c_str(), res.c_str());
+#endif
                 }
-
-                result += relativePath.substr(pos, nextPos - pos);
-                pos = nextPos;
+#ifdef LOGIT2
+                else
+                {
+                    Log("\t\tFRF skip %d", newoffset);
+                }
+#endif
+                offset = newoffset + 1;
             }
         }
-    else
-    {
-        result += relativePath;
     }
-    return result; ///GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
-    }
+    return result;
 }
 
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
     // Only until all code paths use the new version of the interface...
-    return RedirectedPath(deVirtualizedPath, ensureDirectoryStructure, g_redirectRootPathDefault.native(),  false);
+    return RedirectedPath(deVirtualizedPath, ensureDirectoryStructure, g_redirectRootPathDefault.native());
 }
 
 template <typename CharT>
@@ -679,7 +613,6 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
     // To be consistent in where we redirect files, we need to map VFS paths to their non-package-relative equivalent
     normalizedPath = DeVirtualizePath(std::move(normalizedPath));
-
 #ifdef LOGIT
     Log("\tFRF Should: for %ls", path);
     if (normalizedPath.drive_absolute_path != NULL)
@@ -688,15 +621,24 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     }
 #endif
 
+    auto vfspath = NormalizePath(path);
+    vfspath = VirtualizePath(std::move(vfspath));
+#ifdef LOGIT
+    if (vfspath.drive_absolute_path != NULL)
+    {
+        Log("\t\tFRF Normalized&Virtualized=%ls", vfspath.drive_absolute_path);
+    }
+#endif
+
     // Figure out if this is something we need to redirect
     for (auto& redirectSpec : g_redirectionSpecs)
     {
-        if (path_relative_to(normalizedPath.drive_absolute_path, redirectSpec.base_path))
+        if (path_relative_to(vfspath.drive_absolute_path, redirectSpec.base_path))
         {
 #ifdef LOGIT
             Log("\t\tFRF In ball park of base %ls", redirectSpec.base_path.c_str());
 #endif   
-            auto relativePath = normalizedPath.drive_absolute_path + redirectSpec.base_path.native().length();
+            auto relativePath = vfspath.drive_absolute_path + redirectSpec.base_path.native().length();
             if (psf::is_path_separator(relativePath[0]))
             {
                 ++relativePath;
@@ -709,7 +651,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             // Otherwise exact match. Assume an implicit directory separator at the end (e.g. for matches to satisfy the
             // first call to CreateDirectory
 #ifdef LOGIT
-            Log("\t\tFRF relativePath=%ls",relativePath);
+            //Log("\t\tFRF relativePath=%ls",relativePath);
 #endif
             if (std::regex_match(relativePath, redirectSpec.pattern))
             {
@@ -724,22 +666,18 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                 else
                 {
                     result.should_redirect = true;
-                    result.shouldReadonly = (redirectSpec.isReadOnly == true);
-                    if (redirectSpec.isUnmanagedRetarget == false)
+                    result.shouldReadonly = (redirectSpec.isReadOnly == true);			
+
+                    // Check if file exists as VFS path in the package
+                    if (impl::PathExists(vfspath.drive_absolute_path))
                     {
-#ifdef LOGIT
-                        Log("\t\tFRF CASE: Managed for %ls", path);
-#endif						
                         destinationTargetBase = redirectSpec.redirect_targetbase;
-                        result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase,false);
+                        result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
                     }
                     else
                     {
-#ifdef LOGIT
-                        Log("\t\tFRF CASE: Unmanaged for %ls", path);
-#endif						
                         destinationTargetBase = redirectSpec.redirect_targetbase;
-                        result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase, true);
+                        result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
                     }
                 }
                 break;
@@ -753,7 +691,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         }
         else
         {
-#ifdef LOGIT
+#ifdef LOGIT3
             Log("\t\tFRF Not in ball park of base %ls", redirectSpec.base_path.c_str());
 #endif
         }
@@ -774,7 +712,6 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 #ifdef LOGIT2
     Log("\t\tFRF post check 2");
 #endif
-    //result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure));
 
     if (flag_set(flags, redirect_flags::check_file_presence) && !impl::PathExists(result.redirect_path.c_str()))
     {
@@ -796,23 +733,6 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         Log("\t\tFRF post check 4");
 #endif
         [[maybe_unused]] BOOL copyResult = false;
-        // Special case for the AppData's as VFS Layering doesn't apply in the Runtime
-        std::filesystem::path CopySource = normalizedPath.drive_absolute_path;
-        if (IsUnderUserAppDataLocal(normalizedPath.drive_absolute_path) ||
-            IsUnderUserAppDataRoaming(normalizedPath.drive_absolute_path) )
-        {
-            std::filesystem::path PotentialCopySource = GetPackageVFSPath(normalizedPath.drive_absolute_path);
-#ifdef LOGIT
-            Log("\t\tFRF Looking for Potential Source=%ls", PotentialCopySource.c_str());
-#endif			
-            if (impl::PathExists(PotentialCopySource.c_str()))
-            {
-                CopySource = PotentialCopySource;
-#ifdef LOGIT
-                Log("\t\tFRF Found a copy in Package Appdata Folders");
-#endif
-            }
-        }
         if (impl::PathExists(result.redirect_path.c_str()))
         {
 #ifdef LOGIT
@@ -821,6 +741,13 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         }
         else
         {
+            std::filesystem::path CopySource = normalizedPath.drive_absolute_path;
+            if (impl::PathExists(vfspath.drive_absolute_path))
+            {
+                CopySource = vfspath.drive_absolute_path;
+            }
+
+
             auto attr = impl::GetFileAttributes(CopySource.c_str()); //normalizedPath.drive_absolute_path);
 #ifdef LOGIT
             Log("\t\tFRF source attributes=0x%x", attr);
@@ -858,6 +785,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                         Log("\t\tFRF  was ERROR_ALREADY_EXISTS");
                         break;
                     default:
+                        Log("\t\tFRF was 0x%x", err);
                         break;
                     }
                 }
@@ -872,15 +800,16 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                 else
                     Log("\t\tFRF CreateDir Fail=0x%x %ls %ls", ::GetLastError(), CopySource.c_str(), result.redirect_path.c_str());
 #endif       
+#if _DEBUG
+                auto err = ::GetLastError();
+                assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND) || (err == ERROR_ALREADY_EXISTS));
+#endif
             }
         }
 #ifdef LOGIT2
         Log("\t\tFRF post check 6");
 #endif
-#if _DEBUG
-        auto err = ::GetLastError();
-        assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND) || (err == ERROR_ALREADY_EXISTS));
-#endif
+
     }
 
 #ifdef LOGIT2
