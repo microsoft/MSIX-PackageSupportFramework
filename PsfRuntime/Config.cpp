@@ -215,41 +215,41 @@ static struct
 
 void Log(const char* fmt, ...)
 {
-	std::string str;
-	str.resize(256);
+    std::string str;
+    str.resize(256);
 
-	va_list args;
-	va_start(args, fmt);
-	std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-	assert(count >= 0);
-	va_end(args);
+    va_list args;
+    va_start(args, fmt);
+    std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
+    assert(count >= 0);
+    va_end(args);
 
-	if (count > str.size())
-	{
-		str.resize(count);
+    if (count > str.size())
+    {
+        str.resize(count);
 
-		va_list args2;
-		va_start(args2, fmt);
-		count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-		assert(count >= 0);
-		va_end(args2);
-	}
+        va_list args2;
+        va_start(args2, fmt);
+        count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
+        assert(count >= 0);
+        va_end(args2);
+    }
 
-	str.resize(count);
-	::OutputDebugStringA(str.c_str());
+    str.resize(count);
+    ::OutputDebugStringA(str.c_str());
 }
 void LogString(const char* name, const char* value)
 {
-	Log("\t%s=%s\n", name, value);
+    Log("\t%s=%s\n", name, value);
 }
 void LogString(const char* name, const wchar_t* value)
 {
-	Log("\t%s=%ls\n", name, value);
+    Log("\t%s=%ls\n", name, value);
 }
 
 void LogCountedStringW(const char* name, const wchar_t* value, std::size_t length)
 {
-	Log("\t%s=%.*ls\n", name, length, value);
+    Log("\t%s=%.*ls\n", name, length, value);
 }
 
 static const psf::json_object* g_CurrentExeConfig = nullptr;
@@ -300,11 +300,11 @@ void load_json()
         for (auto& processConfig : processes->as_array())
         {
             auto& obj = processConfig.as_object();
-			auto exe = obj.get("executable").as_string().wstring();  
+            auto exe = obj.get("executable").as_string().wstring();  
             if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
             {
                 g_CurrentExeConfig = &obj; 
-		LogCountedStringW("Processes config match", exe.data(), exe.length());
+        LogCountedStringW("Processes config match", exe.data(), exe.length());
                 break;
             }
             else if (!g_CurrentExeConfig)
@@ -357,7 +357,7 @@ const std::wstring& PackageFullName() noexcept
 
 const std::wstring& PackageFamilyName() noexcept
 {
-	return g_PackageFamilyName;
+    return g_PackageFamilyName;
 }
 
 const std::wstring& ApplicationUserModelId() noexcept
@@ -393,7 +393,7 @@ PSFAPI const wchar_t* __stdcall PSFQueryPackageFullName() noexcept
 
 PSFAPI const wchar_t* __stdcall PSFQueryPackageFamilyName() noexcept
 {
-	return g_PackageFamilyName.c_str();
+    return g_PackageFamilyName.c_str();
 }
 
 PSFAPI const wchar_t* __stdcall PSFQueryApplicationUserModelId() noexcept
@@ -422,11 +422,11 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
     {
         auto& appObj = app.as_object();
         auto appId = appObj.get("id").as_string().wstring();
-	if (verbose)
-	{
+    if (verbose)
+    {
             LogCountedStringW("Compare against json id", appId.data(), appId.length());
         }
-	if (iwstring_view(appId.data(), appId.length()) == applicationId)
+    if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {
             return &appObj;
         }
@@ -449,19 +449,19 @@ PSFAPI const psf::json_object* __stdcall PSFQueryCurrentAppLaunchConfig(bool ver
 
 PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig_try() noexcept try
 {
-	const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(),false);
-	auto& mon = application->get("monitor").as_object();
-	auto& monObj = mon.as_object();
+    const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(),false);
+    auto& mon = application->get("monitor").as_object();
+    auto& monObj = mon.as_object();
 
-	return &monObj;
+    return &monObj;
 }
 catch (...)
 {
-	return nullptr;
+    return nullptr;
 }
 PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept
 {
-	return PSFQueryAppMonitorConfig_try();
+    return PSFQueryAppMonitorConfig_try();
 }
 
 static inline constexpr iwstring_view remove_suffix_if(iwstring_view str, iwstring_view suffix)
