@@ -110,8 +110,8 @@ In order to make sure packages that write to their package root don't break on a
 > *%LOCAL_APP_DATA%\Packages\[Package family name]\LocalCache\Local\Microsoft\WritablePackageRoot
 > *%LOCAL_APP_DATA%\VFS
 
-If the path to redirect is in the package root path then the redirected path is to the writable package root (option 1)  
-For all other paths, the redirected path is to VFS (option 2)
+If the path to redirect is in the package root path then the redirected path is to the writable package root (option 1).  
+For all other paths, the redirected path is to VFS (option 2).
 
 Once it is determined that the access should get redirected, the following steps are performed:
 
