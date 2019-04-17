@@ -9,38 +9,38 @@
 /// ConvertToReadOnlyAccess: Modify a file operation call if it requests write access to one without write access.
 DWORD inline ConvertToReadOnlyAccess(DWORD desiredAccess)
 {
-	DWORD redirectedAccess = desiredAccess;
-	if ((desiredAccess & GENERIC_ALL) != 0)
-	{
-		redirectedAccess &= ~GENERIC_ALL;
-	}
-	if ((desiredAccess & GENERIC_WRITE) != 0)
-	{
-		redirectedAccess &= ~GENERIC_WRITE;
-	}
-	if ((desiredAccess & (GENERIC_ALL | GENERIC_WRITE)) != 0 &&
-		(desiredAccess & ~(GENERIC_ALL | GENERIC_WRITE)) == 0)
-	{
-		redirectedAccess |= GENERIC_READ;
-	}
-	if ((desiredAccess & FILE_GENERIC_WRITE) != 0)
-	{
-		redirectedAccess &= ~FILE_GENERIC_WRITE;
-		redirectedAccess |= FILE_GENERIC_READ;
-	}
-	if ((desiredAccess & FILE_WRITE_DATA) != 0)
-	{
-		redirectedAccess &= ~FILE_WRITE_DATA;
-	}
-	if ((desiredAccess & FILE_WRITE_ATTRIBUTES) != 0)
-	{
-		redirectedAccess &= FILE_WRITE_ATTRIBUTES;
-	}
-	if ((desiredAccess & FILE_WRITE_EA) != 0)
-	{
-		redirectedAccess &= FILE_WRITE_EA;
-	}
-	return redirectedAccess;
+    DWORD redirectedAccess = desiredAccess;
+    if ((desiredAccess & GENERIC_ALL) != 0)
+    {
+        redirectedAccess &= ~GENERIC_ALL;
+    }
+    if ((desiredAccess & GENERIC_WRITE) != 0)
+    {
+        redirectedAccess &= ~GENERIC_WRITE;
+    }
+    if ((desiredAccess & (GENERIC_ALL | GENERIC_WRITE)) != 0 &&
+        (desiredAccess & ~(GENERIC_ALL | GENERIC_WRITE)) == 0)
+    {
+        redirectedAccess |= GENERIC_READ;
+    }
+    if ((desiredAccess & FILE_GENERIC_WRITE) != 0)
+    {
+        redirectedAccess &= ~FILE_GENERIC_WRITE;
+        redirectedAccess |= FILE_GENERIC_READ;
+    }
+    if ((desiredAccess & FILE_WRITE_DATA) != 0)
+    {
+        redirectedAccess &= ~FILE_WRITE_DATA;
+    }
+    if ((desiredAccess & FILE_WRITE_ATTRIBUTES) != 0)
+    {
+        redirectedAccess &= FILE_WRITE_ATTRIBUTES;
+    }
+    if ((desiredAccess & FILE_WRITE_EA) != 0)
+    {
+        redirectedAccess &= FILE_WRITE_EA;
+    }
+    return redirectedAccess;
 }
 
 
@@ -65,51 +65,51 @@ HANDLE __stdcall CreateFileFixup(
             if (shouldRedirect)
             {
                 if (IsUnderUserAppDataLocal(fileName))
-				{
-					// special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
-					std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
-					if (wcslen(PackageVersion.c_str()) >= 0)
-					{
-						if (impl::PathExists(PackageVersion.c_str()))
-						{
-							if (!impl::PathExists(redirectPath.c_str()))
-							{
-								// Need to copy now
-#ifdef LOGIT
-								Log("\tFRF CreateFile COA from ADL to %ls", redirectPath.c_str());
+                {
+                    // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
+                    std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                    if (wcslen(PackageVersion.c_str()) >= 0)
+                    {
+                        if (impl::PathExists(PackageVersion.c_str()))
+                        {
+                            if (!impl::PathExists(redirectPath.c_str()))
+                            {
+                                // Need to copy now
+#ifdef DEBUG
+                                Log("\tFRF CreateFile COA from ADL to %ls", redirectPath.c_str());
 #endif
-								impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
-							}
-						}
-					}
-				}
-				else if (IsUnderUserAppDataRoaming(fileName))
-				{
-					// special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
-					std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
-					if (wcslen(PackageVersion.c_str()) >= 0)
-					{
-						if (impl::PathExists(PackageVersion.c_str()))
-						{
-							if (!impl::PathExists(redirectPath.c_str()))
-							{
-								// Need to copy now
-#ifdef LOGIT
-								Log("\tFRF CreateFile COA from ADR to %ls", redirectPath.c_str());
+                                impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                            }
+                        }
+                    }
+                }
+                else if (IsUnderUserAppDataRoaming(fileName))
+                {
+                    // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
+                    std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                    if (wcslen(PackageVersion.c_str()) >= 0)
+                    {
+                        if (impl::PathExists(PackageVersion.c_str()))
+                        {
+                            if (!impl::PathExists(redirectPath.c_str()))
+                            {
+                                // Need to copy now
+#ifdef DEBUG
+                                Log("\tFRF CreateFile COA from ADR to %ls", redirectPath.c_str());
 #endif							
-								impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
-							}
-						}
-					}
-				}
-			
-				DWORD redirectedAccess = desiredAccess;
-				if (shouldReadonly)
-				{
-					redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
-				}
+                                impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                            }
+                        }
+                    }
+                }
+            
+                DWORD redirectedAccess = desiredAccess;
+                if (shouldReadonly)
+                {
+                    redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
+                }
 
-				return impl::CreateFile(redirectPath.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+                return impl::CreateFile(redirectPath.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
             }
         }
     }
@@ -140,50 +140,50 @@ HANDLE __stdcall CreateFile2Fixup(
             if (shouldRedirect)
             {
                 if (IsUnderUserAppDataLocal(fileName))
-				{
-					// special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
-					std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
-					if (wcslen(PackageVersion.c_str()) >= 0)
-					{
-						if (impl::PathExists(PackageVersion.c_str()))
-						{
-							if (!impl::PathExists(redirectPath.c_str()))
-							{
-								// Need to copy now
-#ifdef LOGIT
-								Log("\tFRF CreateFile2 COA from ADL to %ls", redirectPath.c_str());
+                {
+                    // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
+                    std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                    if (wcslen(PackageVersion.c_str()) >= 0)
+                    {
+                        if (impl::PathExists(PackageVersion.c_str()))
+                        {
+                            if (!impl::PathExists(redirectPath.c_str()))
+                            {
+                                // Need to copy now
+#ifdef DEBUG
+                                Log("\tFRF CreateFile2 COA from ADL to %ls", redirectPath.c_str());
 #endif
-								impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
-							}
-						}
-					}
-				}
-				else if (IsUnderUserAppDataRoaming(fileName))
-				{
-					// special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
-					std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
-					if (wcslen(PackageVersion.c_str()) >= 0)
-					{
-						if (impl::PathExists(PackageVersion.c_str()))
-						{
-							if (!impl::PathExists(redirectPath.c_str()))
-							{
-								// Need to copy now
-#ifdef LOGIT
-								Log("\tFRF CreateFile2 COA from ADR to %ls", redirectPath.c_str());
+                                impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                            }
+                        }
+                    }
+                }
+                else if (IsUnderUserAppDataRoaming(fileName))
+                {
+                    // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
+                    std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                    if (wcslen(PackageVersion.c_str()) >= 0)
+                    {
+                        if (impl::PathExists(PackageVersion.c_str()))
+                        {
+                            if (!impl::PathExists(redirectPath.c_str()))
+                            {
+                                // Need to copy now
+#ifdef DEBUG
+                                Log("\tFRF CreateFile2 COA from ADR to %ls", redirectPath.c_str());
 #endif
-								impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
-							}
-						}
-					}
-				}
-				DWORD redirectedAccess = desiredAccess;
-				if (shouldReadonly)
-				{
-					redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
-				}
+                                impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                            }
+                        }
+                    }
+                }
+                DWORD redirectedAccess = desiredAccess;
+                if (shouldReadonly)
+                {
+                    redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
+                }
                 
-				return impl::CreateFile2(redirectPath.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+                return impl::CreateFile2(redirectPath.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
             }
         }
     }

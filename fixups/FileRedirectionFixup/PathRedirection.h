@@ -81,9 +81,8 @@ bool IsUnderUserAppDataRoaming(_In_ const char* fileName);
 std::filesystem::path GetPackageVFSPath(const wchar_t* fileName);
 std::filesystem::path GetPackageVFSPath(const char* fileName);
 
-//#define LOGIT
-//#define LOGIT2
 
-#ifdef LOGIT
+
+#ifdef DEBUG
 void Log(const char* fmt, ...);
 #endif
