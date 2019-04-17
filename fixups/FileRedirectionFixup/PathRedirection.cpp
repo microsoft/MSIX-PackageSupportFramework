@@ -33,8 +33,8 @@ void InitializePaths()
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
     auto packageRootPath = std::wstring(::PSFQueryPackageRootPath());
-    if (auto pathType = psf::path_type(packageRootPath.c_str());
-        (pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
+    auto pathType = psf::path_type(packageRootPath.c_str());
+    if (pathType == psf::dos_path_type::root_local_device || (pathType == psf::dos_path_type::local_device))
     {
         packageRootPath += 4;
     }
@@ -357,7 +357,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     auto deVirtualizedFullPath = deVirtualizedPath.full_path;
 
     //Lowercase the devirtualized full path because .find is case-sensitive.
-    transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(),        towlower);
+    transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(), towlower);
 
     if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
