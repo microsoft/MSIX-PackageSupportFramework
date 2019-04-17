@@ -17,7 +17,6 @@
 using namespace std::literals;
 
 std::filesystem::path g_packageRootPath;
-std::filesystem::path g_loweredPackageRootPath;
 std::filesystem::path g_packageVfsRootPath;
 std::filesystem::path g_redirectRootPath;
 std::filesystem::path g_writablePackageRootPath;
@@ -33,19 +32,16 @@ void InitializePaths()
 {
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
-    auto packageRootPath = ::PSFQueryPackageRootPath();
-    if (auto pathType = psf::path_type(packageRootPath);
+    auto packageRootPath = std::wstring(::PSFQueryPackageRootPath());
+    if (auto pathType = psf::path_type(packageRootPath.c_str());
         (pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
     {
         packageRootPath += 4;
     }
-    assert(psf::path_type(packageRootPath) == psf::dos_path_type::drive_absolute);
+    assert(psf::path_type(packageRootPath.c_str()) == psf::dos_path_type::drive_absolute);
+
+    transform(packageRootPath.begin(), packageRootPath.end(), packageRootPath.begin(), towlower);
     g_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
-
-    std::wstring loweredPackageRootPath(packageRootPath);
-    transform(loweredPackageRootPath.begin(), loweredPackageRootPath.end(), loweredPackageRootPath.begin(), towlower);
-    g_loweredPackageRootPath = psf::remove_trailing_path_separators(loweredPackageRootPath);
-
 
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
 
@@ -359,10 +355,12 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     std::wstring result;
     bool shouldredirectToPackageRoot = false;
     auto deVirtualizedFullPath = deVirtualizedPath.full_path;
+
+    //Lowercase the devirtualized full path because .find is case-sensitive.
     transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(),        towlower);
 
 
-    if (deVirtualizedFullPath.find(g_loweredPackageRootPath) != std::wstring::npos)
+    if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
         result = LR"(\\?\)" + g_writablePackageRootPath.native();
         shouldredirectToPackageRoot = true;
