@@ -359,7 +359,6 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     //Lowercase the devirtualized full path because .find is case-sensitive.
     transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(),        towlower);
 
-
     if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
         result = LR"(\\?\)" + g_writablePackageRootPath.native();
