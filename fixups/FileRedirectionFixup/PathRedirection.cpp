@@ -32,14 +32,17 @@ void InitializePaths()
 {
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
-    auto packageRootPath = ::PSFQueryPackageRootPath();
-    if (auto pathType = psf::path_type(packageRootPath);
-        (pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
+    auto packageRootPath = std::wstring(::PSFQueryPackageRootPath());
+    auto pathType = psf::path_type(packageRootPath.c_str());
+    if (pathType == psf::dos_path_type::root_local_device || (pathType == psf::dos_path_type::local_device))
     {
         packageRootPath += 4;
     }
-    assert(psf::path_type(packageRootPath) == psf::dos_path_type::drive_absolute);
+    assert(psf::path_type(packageRootPath.c_str()) == psf::dos_path_type::drive_absolute);
+
+    transform(packageRootPath.begin(), packageRootPath.end(), packageRootPath.begin(), towlower);
     g_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
+
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
 
     // Ensure that the redirected root path exists
@@ -351,7 +354,12 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     //a path that contains the package family name and not the package full name.
     std::wstring result;
     bool shouldredirectToPackageRoot = false;
-    if (deVirtualizedPath.full_path.find(g_packageRootPath) != std::wstring::npos)
+    auto deVirtualizedFullPath = deVirtualizedPath.full_path;
+
+    //Lowercase the devirtualized full path because .find is case-sensitive.
+    transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(), towlower);
+
+    if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
         result = LR"(\\?\)" + g_writablePackageRootPath.native();
         shouldredirectToPackageRoot = true;
