@@ -19,9 +19,9 @@
 using namespace std::literals;
 
 //Forward declarations
-DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, std::wstring currentDirectory, std::wstring exeName, int cmdShow);
+DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR currentDirectory, std::wstring exeName, int cmdShow);
 int launcher_main(PWSTR args, int cmdShow) noexcept;
-DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, std::filesystem::path dirStr);
+DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr);
 void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix);
@@ -101,7 +101,7 @@ catch (...)
     return win32_from_caught_exception();
 }
 
-DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, std::filesystem::path dirStr)
+DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr)
 {
     //auto startScript = PSFQueryStartScriptInfo();
     auto scriptPath = scriptInformation->get("scriptPath").as_string().wide();
@@ -222,7 +222,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
 }
 
-DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, std::wstring currentDirectory, std::wstring exeName, int cmdShow)
+DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR currentDirectory, std::wstring exeName, int cmdShow)
 {
     STARTUPINFO startupInfo = { sizeof(startupInfo) };
     startupInfo.dwFlags = STARTF_USESHOWWINDOW;
@@ -236,7 +236,7 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, std::wstri
         true, // InheritHandles
         0, // CreationFlags
         nullptr, // Environment
-        currentDirectory.c_str(),
+        currentDirectory,
         &startupInfo,
         &processInfo))
     {
