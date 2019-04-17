@@ -107,8 +107,8 @@ Redirecting paths in the package root path.
 
 In order to make sure packages that write to their package root don't break on an upgrade, path redirection will redirect paths to one of two places  
 
-> *%LOCAL_APP_DATA%\Packages\[Package family name]\LocalCache\Local\Microsoft\WritablePackageRoot
-> *%LOCAL_APP_DATA%\VFS
+> 1. %LOCAL_APP_DATA%\Packages\[Package family name]\LocalCache\Local\Microsoft\WritablePackageRoot
+> 1. %LOCAL_APP_DATA%\VFS
 
 If the path to redirect is in the package root path then the redirected path is to the writable package root (option 1).  
 For all other paths, the redirected path is to VFS (option 2).
