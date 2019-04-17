@@ -249,6 +249,8 @@ void handle_message(const test_trace_message* msg)
 
 int wmain(int argc, const wchar_t** argv)
 {
+    //TEST
+    MessageBoxEx(NULL, L"In main", L"In main", 0, 0);
     // Display UTF-16 correctly...
     // NOTE: The CRT will assert if we try and use 'cout' with this set
     _setmode(_fileno(stdout), _O_U16TEXT);

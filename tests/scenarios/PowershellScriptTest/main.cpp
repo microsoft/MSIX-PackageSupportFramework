@@ -14,6 +14,8 @@ using namespace std::literals;
 
 int wmain(int argc, const wchar_t** argv)
 {
+    //TEST
+    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
     auto result = parse_args(argc, argv);
     test_initialize("Powershell Script Tests", 1);
     test_begin("Powershell Script Test");

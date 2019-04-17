@@ -463,7 +463,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept
 	return PSFQueryAppMonitorConfig_try();
 }
 
-PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept
+PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept try
 {
     const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
     auto& mon = application->get("startScript").as_object();
@@ -471,14 +471,22 @@ PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept
 
     return &monObj;
 }
+catch (...)
+{
+    return nullptr;
+}
 
-PSFAPI const psf::json_object* __stdcall PSFQueryEndScriptInfo() noexcept
+PSFAPI const psf::json_object* __stdcall PSFQueryEndScriptInfo() noexcept try
 {
     const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
     auto& mon = application->get("endScript").as_object();
     auto& monObj = mon.as_object();
 
     return &monObj;
+}
+catch (...)
+{
+    return nullptr;
 }
 
 static inline constexpr iwstring_view remove_suffix_if(iwstring_view str, iwstring_view suffix)

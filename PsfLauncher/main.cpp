@@ -21,7 +21,7 @@ using namespace std::literals;
 //Forward declarations
 DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR currentDirectory, std::wstring exeName, int cmdShow);
 int launcher_main(PWSTR args, int cmdShow) noexcept;
-DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr);
+DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
 void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix);
@@ -38,7 +38,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 int launcher_main(PWSTR args, int cmdShow) noexcept try
 {
     //TEST
-    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
+    MessageBoxEx(NULL, L"IN launcher Main", L"In launcher main", 0, 0);
     Log("\tIn Launcher_main()");
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     if (!appConfig)
@@ -50,10 +50,8 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : nullptr;
     auto exeArgs = appConfig->try_get("arguments");
 
-
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
-
 
     //Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -62,12 +60,11 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         GetAndLaunchMonitor(monitor, packageRoot);
     }
 
-    auto directory = dirStr ? (packageRoot / dirStr).c_str() : nullptr;
     //Launch the starting powershell script if we are using one.
     auto startScriptInformation = PSFQueryStartScriptInfo();
     if(startScriptInformation)
     { 
-        RunScript(startScriptInformation, NULL, packageRoot, directory);
+        RunScript(startScriptInformation, nullptr, packageRoot, dirStr, cmdShow);
     }
 
     //Launch underlying application.
@@ -78,7 +75,13 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        StartProcess(exePath.c_str(), cmdLine.data(), directory, exeName, cmdShow);
+        std::wstring workingDirectory;
+
+        if (dirStr)
+        {
+            workingDirectory = (packageRoot / dirStr).native();
+        }
+        StartProcess(exePath.c_str(), cmdLine.data(), workingDirectory.c_str(), exeName, cmdShow);
     }
     else
     {
@@ -89,7 +92,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto endScriptInformation = PSFQueryEndScriptInfo();
     if (endScriptInformation)
     {
-        RunScript(endScriptInformation, nullptr, packageRoot, dirStr);
+        RunScript(endScriptInformation, nullptr, packageRoot, dirStr, cmdShow);
     }
 
     return 0;
@@ -100,7 +103,7 @@ catch (...)
     return win32_from_caught_exception();
 }
 
-DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr)
+DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
 {
     //auto startScript = PSFQueryStartScriptInfo();
     auto scriptPath = scriptInformation->get("scriptPath").as_string().wide();
@@ -120,7 +123,7 @@ DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationN
     if (doesFileExist)
     {
         //TODO Change this to an enum, not a magic number
-        return StartProcess(applicationName, powershellCommandString, dirStr, L"Powershell", 5);
+        return StartProcess(applicationName, powershellCommandString, currentDirectory.c_str(), L"Powershell", cmdShow);
     }
     else
     {
@@ -189,35 +192,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     else
     {
         std::wstring cmdarg = cmd + L" " + arguments;
-
         StartProcess(nullptr, cmdarg.data(), nullptr, executable, 1);
-
-        //PROCESS_INFORMATION processInfo;
-        //STARTUPINFO startupInfo = { sizeof(startupInfo) };
-        //startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-        //startupInfo.wShowWindow = static_cast<WORD>(1);
-
-        //if (!::CreateProcessW(
-        //    nullptr, //quotedapp.data(),
-        //    (wchar_t *)cmdarg.c_str(),
-        //    nullptr, nullptr, // Process/ThreadAttributes
-        //    true, // InheritHandles
-        //    0, // CreationFlags
-        //    nullptr, // Environment
-        //    nullptr,
-        //    &startupInfo,
-        //    &processInfo))
-        //{
-        //    if (::GetLastError() == ERROR_ELEVATION_REQUIRED)
-        //        Log("error starting monitor using CreateProcessW. You must specify 'monitor/asadmin' in config.json\n");
-        //    else
-        //        Log("error starting monitor using CreateProcessW. Error=0x%x\n", ::GetLastError());
-        //}
-        //else
-        //{
-        //    if (wait)
-        //        WaitForSingleObject(processInfo.hProcess, INFINITE);
-        //}
     }
 }
 
