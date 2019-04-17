@@ -62,12 +62,12 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         GetAndLaunchMonitor(monitor, packageRoot);
     }
 
-
+    auto directory = dirStr ? (packageRoot / dirStr).c_str() : nullptr;
     //Launch the starting powershell script if we are using one.
     auto startScriptInformation = PSFQueryStartScriptInfo();
     if(startScriptInformation)
     { 
-        RunScript(startScriptInformation, nullptr, packageRoot, dirStr);
+        RunScript(startScriptInformation, NULL, packageRoot, directory);
     }
 
     //Launch underlying application.
@@ -78,7 +78,6 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        auto directory = dirStr ? (packageRoot / dirStr).c_str() : nullptr;
         StartProcess(exePath.c_str(), cmdLine.data(), directory, exeName, cmdShow);
     }
     else
