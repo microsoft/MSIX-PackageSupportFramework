@@ -16,14 +16,24 @@
 #include <ppltasks.h>
 #include <ShObjIdl.h>
 
+//These two macros don't exist in RS1.  Define them here to prevent build
+//failures when building for RS1.
+#ifndef PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
+#    define PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE PROCESS_CREATION_DESKTOP_APPX_OVERRIDE
+#endif
+
+#ifndef PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+#    define PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY
+#endif
+
 using namespace std::literals;
 
 //Forward declarations
-DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR currentDirectory, std::wstring exeName, int cmdShow);
+DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR dirStr, std::filesystem::path packageRoot, std::wstring exeName, int cmdShow, bool runInAppContainer);
 int launcher_main(PWSTR args, int cmdShow) noexcept;
 DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
-void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot);
-void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
+void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
+void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin, int cmdShow, LPCWSTR dirStr);
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix);
 void LogStringW(const char* name, const wchar_t* value);
 void LogString(const char* name, const char* value);
@@ -37,8 +47,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 
 int launcher_main(PWSTR args, int cmdShow) noexcept try
 {
-    //TEST
-    MessageBoxEx(NULL, L"IN launcher Main", L"In launcher main", 0, 0);
     Log("\tIn Launcher_main()");
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     if (!appConfig)
@@ -57,13 +65,13 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto monitor = PSFQueryAppMonitorConfig();
     if (monitor != nullptr)
     {
-        GetAndLaunchMonitor(monitor, packageRoot);
+        GetAndLaunchMonitor(monitor, packageRoot, cmdShow, dirStr);
     }
 
     //Launch the starting powershell script if we are using one.
     auto startScriptInformation = PSFQueryStartScriptInfo();
-    if(startScriptInformation)
-    { 
+    if (startScriptInformation)
+    {
         RunScript(startScriptInformation, nullptr, packageRoot, dirStr, cmdShow);
     }
 
@@ -81,7 +89,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         {
             workingDirectory = (packageRoot / dirStr).native();
         }
-        StartProcess(exePath.c_str(), cmdLine.data(), workingDirectory.c_str(), exeName, cmdShow);
+        StartProcess(exePath.c_str(), cmdLine.data(), dirStr, packageRoot, exeName, cmdShow, false);
     }
     else
     {
@@ -105,10 +113,16 @@ catch (...)
 
 DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
 {
-    //auto startScript = PSFQueryStartScriptInfo();
     auto scriptPath = scriptInformation->get("scriptPath").as_string().wide();
     auto scriptArguments = scriptInformation->get("scriptArguments").as_string().wide();
     auto currentDirectory = (packageRoot / dirStr);
+    auto runInAppEnviormentJObject = scriptInformation->try_get("runInAppEnviorment");
+    auto runInAppEnviorment = false;
+    
+    if (runInAppEnviormentJObject)
+    {
+        runInAppEnviorment = runInAppEnviormentJObject->as_string().wide();
+    }
 
     std::filesystem::path powershellScriptPath(scriptPath);
 
@@ -117,13 +131,12 @@ DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationN
     powershellCommandString.append(scriptPath);
     powershellCommandString.append(L" ");
     powershellCommandString.append(scriptArguments);
-    
+
     auto doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
 
     if (doesFileExist)
     {
-        //TODO Change this to an enum, not a magic number
-        return StartProcess(applicationName, powershellCommandString, currentDirectory.c_str(), L"Powershell", cmdShow);
+        return StartProcess(applicationName, powershellCommandString, dirStr, packageRoot, L"Powershell", cmdShow, runInAppEnviorment);
     }
     else
     {
@@ -131,7 +144,7 @@ DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationN
     }
 }
 
-void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot)
+void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
 {
     bool asadmin = false;
     bool wait = false;
@@ -144,10 +157,10 @@ void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path
     if (monitor_wait)
         wait = monitor_wait->as_boolean().get();
     Log("\tCreating the monitor: %ls", monitor_executable->as_string().wide());
-    LaunchMonitorInBackground(packageRoot, monitor_executable->as_string().wide(), monitor_arguments->as_string().wide(), wait, asadmin);
+    LaunchMonitorInBackground(packageRoot, monitor_executable->as_string().wide(), monitor_arguments->as_string().wide(), wait, asadmin, cmdShow, dirStr);
 }
 
-void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin)
+void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin, int cmdShow, LPCWSTR dirStr)
 {
     std::wstring cmd = L"\"" + (packageRoot / executable).native() + L"\"";
 
@@ -192,26 +205,68 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     else
     {
         std::wstring cmdarg = cmd + L" " + arguments;
-        StartProcess(nullptr, cmdarg.data(), nullptr, executable, 1);
+        StartProcess(nullptr, cmdarg.data(), dirStr, packageRoot, executable, cmdShow, false);
     }
 }
 
-DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR currentDirectory, std::wstring exeName, int cmdShow)
+DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR dirStr, std::filesystem::path packageRoot, std::wstring exeName, int cmdShow, bool startInAppContainer)
 {
-    STARTUPINFO startupInfo = { sizeof(startupInfo) };
-    startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-    startupInfo.wShowWindow = static_cast<WORD>(cmdShow);
+    STARTUPINFOEXW StartupInfoEx = { 0 };
 
-    PROCESS_INFORMATION processInfo;
+    StartupInfoEx.StartupInfo.cb = sizeof(StartupInfoEx);
+    StartupInfoEx.StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
+    StartupInfoEx.StartupInfo.wShowWindow = static_cast<WORD>(cmdShow);
+
+    if (startInAppContainer)
+    {
+        SIZE_T AttributeListSize;
+        InitializeProcThreadAttributeList(NULL, 1, 0, &AttributeListSize);
+        StartupInfoEx.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
+            GetProcessHeap(),
+            0,
+            AttributeListSize
+        );
+
+        if (InitializeProcThreadAttributeList(StartupInfoEx.lpAttributeList,
+            1,
+            0,
+            &AttributeListSize) == FALSE)
+        {
+            auto Result = GetLastError();
+            if (Result)
+            {
+
+            }
+        }
+
+        //PROC_THREAD_ATTRIBUTE_ALL_APPLICATION_PACKAGES_POLICY
+        DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
+        if (UpdateProcThreadAttribute(StartupInfoEx.lpAttributeList,
+            0,
+            PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
+            &attribute,
+            sizeof(attribute),
+            NULL,
+            NULL) == FALSE)
+        {
+            auto Result = GetLastError();
+            if (Result)
+            {
+
+            }
+        }
+    }
+
+    PROCESS_INFORMATION processInfo = { 0 };
     if (::CreateProcessW(
         applicationName,
         commandLine.data(),
         nullptr, nullptr, // Process/ThreadAttributes
         true, // InheritHandles
-        0, // CreationFlags
+        EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
         nullptr, // Environment
-        currentDirectory,
-        &startupInfo,
+        dirStr ? (packageRoot / dirStr).c_str() : nullptr,
+        (LPSTARTUPINFO)&StartupInfoEx,
         &processInfo))
     {
         // Propagate exit code to caller, in case they care
@@ -234,8 +289,8 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR cu
         // Remove the ".\r\n" that gets added to all messages
         auto msg = widen(std::system_category().message(err));
         msg.resize(msg.length() - 3);
-        ss << L"ERROR: Failed to create a process for " << applicationName 
-            << " Path: \"" << currentDirectory << "\\" << exeName << "\" "
+        ss << L"ERROR: Failed to create a process for " << " nothingtoseehere"
+            //<< " Path: \"" << currentDirectory << "\\" << exeName << "\" "
             << "Error: " << msg << " (" << err << ")";
         ::PSFReportError(ss.str().c_str());
         return err;
