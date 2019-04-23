@@ -120,7 +120,7 @@ DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationN
     //RunInAppEnviorment is optional.
     auto runInAppEnviormentJObject = scriptInformation->try_get("runInAppEnviorment");
     auto runInAppEnviorment = false;
-    
+
     if (runInAppEnviormentJObject)
     {
         runInAppEnviorment = runInAppEnviormentJObject->as_string().wide();
@@ -172,9 +172,13 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
         SHELLEXECUTEINFOW shExInfo = { 0 };
         shExInfo.cbSize = sizeof(shExInfo);
         if (wait)
+        {
             shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+        }
         else
+        {
             shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_WAITFORINPUTIDLE;  // make sure we wait a bit for the monitor to be running before continuing on.
+        }
         shExInfo.hwnd = 0;
         shExInfo.lpVerb = L"runas";                // Operation to perform
         shExInfo.lpFile = cmd.c_str();       // Application to start    
@@ -201,7 +205,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
         }
         else
         {
-            //Log("error starting monitor using SellExecuteEx also. Error=0x%x\n", ::GetLastError());
+            Log("error starting monitor using SellExecuteEx also. Error=0x%x\n", ::GetLastError());
         }
     }
     else
@@ -234,11 +238,16 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
             0,
             &AttributeListSize) == FALSE)
         {
-            auto Result = GetLastError();
-            if (Result)
-            {
-
-            }
+            auto err{ ::GetLastError() };
+            // Remove the ".\r\n" that gets added to all messages
+            auto msg = widen(std::system_category().message(err));
+            msg.resize(msg.length() - 3);
+            std::wostringstream ss;
+            ss << L"Could not initilize the proc thread attribute list. "
+                << L"Message: " << msg
+                << L" Error number (" << err << L")";
+            ::PSFReportError(ss.str().c_str());
+            return err;
         }
 
         //PROC_THREAD_ATTRIBUTE_ALL_APPLICATION_PACKAGES_POLICY
@@ -251,11 +260,16 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
             NULL,
             NULL) == FALSE)
         {
-            auto Result = GetLastError();
-            if (Result)
-            {
-
-            }
+            auto err{ ::GetLastError() };
+            // Remove the ".\r\n" that gets added to all messages
+            auto msg = widen(std::system_category().message(err));
+            msg.resize(msg.length() - 3);
+            std::wostringstream ss;
+            ss << L"Could not update Proc thread attribute. "
+                << L"Message: " << msg
+                << L" Error number (" << err << L")";
+            ::PSFReportError(ss.str().c_str());
+            return err;
         }
     }
 
@@ -304,8 +318,8 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
         }
 
         ss << " Path: \"" << (dirStr ? (packageRoot / dirStr).c_str() : nullptr)
-        << exeName << "\" "
-        << " Error: " << msg << " (" << err << ")";
+            << exeName << "\" "
+            << " Error: " << msg << " (" << err << ")";
         ::PSFReportError(ss.str().c_str());
         return err;
     }
