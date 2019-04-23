@@ -116,6 +116,8 @@ DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationN
     auto scriptPath = scriptInformation->get("scriptPath").as_string().wide();
     auto scriptArguments = scriptInformation->get("scriptArguments").as_string().wide();
     auto currentDirectory = (packageRoot / dirStr);
+
+    //RunInAppEnviorment is optional.
     auto runInAppEnviormentJObject = scriptInformation->try_get("runInAppEnviorment");
     auto runInAppEnviorment = false;
     
@@ -289,9 +291,21 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
         // Remove the ".\r\n" that gets added to all messages
         auto msg = widen(std::system_category().message(err));
         msg.resize(msg.length() - 3);
-        ss << L"ERROR: Failed to create a process for " << " nothingtoseehere"
-            //<< " Path: \"" << currentDirectory << "\\" << exeName << "\" "
-            << "Error: " << msg << " (" << err << ")";
+
+        if (applicationName)
+        {
+            ss << L"ERROR: Failed to create a process for " << applicationName << " ";
+        }
+        else
+        {
+            std::wstring applicationNameForError;
+            applicationNameForError = commandLine.substr(0, commandLine.find(' '));
+            ss << L"ERROR: Failed to create a process for " << applicationNameForError << " ";
+        }
+
+        ss << " Path: \"" << (dirStr ? (packageRoot / dirStr).c_str() : nullptr)
+        << exeName << "\" "
+        << " Error: " << msg << " (" << err << ")";
         ::PSFReportError(ss.str().c_str());
         return err;
     }
