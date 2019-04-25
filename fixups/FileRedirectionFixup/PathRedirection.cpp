@@ -19,8 +19,7 @@ using namespace std::literals;
 std::filesystem::path g_packageRootPath;
 std::filesystem::path g_packageVfsRootPath;
 std::filesystem::path g_redirectRootPath;
-//std::filesystem::path g_writablePackageRootPath;
-std::filesystem::path g_redirectRootPathDefault;
+std::filesystem::path g_writablePackageRootPath;
 
 struct vfs_folder_mapping
 {
@@ -33,22 +32,23 @@ void InitializePaths()
 {
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
-    auto packageRootPath = ::PSFQueryPackageRootPath(); 
-    if (auto pathType = psf::path_type(packageRootPath);
-        (pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
+    auto packageRootPath = std::wstring(::PSFQueryPackageRootPath());
+
+    auto pathType = psf::path_type(packageRootPath.c_str());
+    if (pathType == psf::dos_path_type::root_local_device || (pathType == psf::dos_path_type::local_device))
     {
         packageRootPath += 4;
     }
-    assert(psf::path_type(packageRootPath) == psf::dos_path_type::drive_absolute);
+    assert(psf::path_type(packageRootPath.c_str()) == psf::dos_path_type::drive_absolute);
+    transform(packageRootPath.begin(), packageRootPath.end(), packageRootPath.begin(), towlower);
     g_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
+    
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
 
-    // Ensure that the redirected root path exists
-    g_redirectRootPathDefault = psf::known_folder(FOLDERID_LocalAppData) / L"VFS";
-    impl::CreateDirectory(g_redirectRootPathDefault.c_str(), nullptr);
-
-    //g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
-    //impl::CreateDirectory(g_writablePackageRootPath.c_str(), nullptr);
+    g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+    impl::CreateDirectory(g_writablePackageRootPath.c_str(), nullptr);
+    
+    g_redirectRootPath = g_writablePackageRootPath;
 
     // Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
     // https://docs.microsoft.com/en-us/windows/uwp/porting/desktop-to-uwp-behind-the-scenes
@@ -280,7 +280,7 @@ void InitializeConfiguration()
                 {
                     auto& specObject = spec.as_object();
                     auto path = psf::remove_trailing_path_separators(basePath / specObject.get("base").as_string().wstring());
-                    std::filesystem::path redirectTargetBaseValue = g_redirectRootPathDefault;
+                    std::filesystem::path redirectTargetBaseValue = g_writablePackageRootPath;
                     if (auto redirectTargetBase = specObject.try_get("redirectTargetBase"))
                     {
                         redirectTargetBaseValue = specObject.get("redirectTargetBase").as_string().wstring();	
@@ -655,6 +655,36 @@ normalized_path VirtualizePath(normalized_path path)
     return path;
 }
 
+std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureDirectoryStructure, std::wstring result)
+{
+    if (ensureDirectoryStructure)
+    {
+        for (std::size_t pos = 0; pos < relativePath.length(); )
+        {
+            [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
+#if _DEBUG
+            auto err = ::GetLastError();
+            assert(dirResult || (err == ERROR_ALREADY_EXISTS));
+#endif
+            auto nextPos = relativePath.find_first_of(LR"(\/)", pos + 1);
+            if (nextPos == relativePath.length())
+            {
+                // Ignore trailing path separators. E.g. if the call is to CreateDirectory, we don't want it to "fail"
+                // with an "already exists" error
+                nextPos = std::wstring_view::npos;
+            }
+
+            result += relativePath.substr(pos, nextPos - pos);
+            pos = nextPos;
+        }
+    }
+    else
+    {
+        result += relativePath;
+    }
+
+    return result;
+}
 /// <summary>
 /// Figures out the absolute path to redirect to.
 /// </summary>
@@ -664,67 +694,121 @@ normalized_path VirtualizePath(normalized_path path)
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure, std::filesystem::path destinationTargetBase)
 {
     std::wstring result;
+    std::wstring basePath;
+    std::wstring relativePath;
 
-    std::filesystem::path destNoTrailer = psf::remove_trailing_path_separators(destinationTargetBase);
-    result = LR"(\\?\)" + destNoTrailer.wstring();
+    bool shouldredirectToPackageRoot = false;
+    auto deVirtualizedFullPath = deVirtualizedPath.full_path;
 
-      
-    size_t offset = result.length();
-    result += L"\\PackageCache\\";
-    result += psf::current_package_family_name(); // ::PSFQueryPackageFullName();
-    if (deVirtualizedPath.full_path.length() >= g_packageRootPath.wstring().length())
+    if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
     {
-        result += deVirtualizedPath.full_path.substr(g_packageRootPath.wstring().length());
+        // PSF defaulted destination target.
+        basePath = LR"(\\?\)" + g_writablePackageRootPath.native();
     }
     else
     {
-        result += L"\\" + deVirtualizedPath.full_path;
+        std::filesystem::path destNoTrailer = psf::remove_trailing_path_separators(destinationTargetBase);
+        basePath = LR"(\\?\)" + destNoTrailer.wstring();
+    }
+
+    //Lowercase the full path because .find is case-sensitive.
+    transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(), towlower);
+ 
+    if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
+    {
+#if _DEBUG
+        Log("case: target in package.");
+        //Log("      destinationTargetBase: %ls", destinationTargetBase.c_str());
+        //Log("      g_redirectRootPath:    %ls", g_redirectRootPath.c_str());
+#endif
+        auto lengthPackageRootPath = g_packageRootPath.native().length();
+        if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+        {
+#if _DEBUG
+            Log("subcase: redirect to default.");
+#endif
+            // PSF defaulted destination target.
+            shouldredirectToPackageRoot = true;
+            auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
+            relativePath = std::wstring_view(stringToTurnIntoAStringView);
+        }
+        else
+        {
+#if _DEBUG
+            Log("subcase: redirect specified.");
+#endif
+            // PSF configured destination target: probably a home drive.
+            relativePath = L"\\PackageCache\\" + psf::current_package_family_name() +  deVirtualizedPath.full_path.substr(lengthPackageRootPath);
+        }
+    }
+    else
+    {
+#if _DEBUG
+        Log("case: target not in package.");
+#endif
+        // input was not in package path, but might be subject to VFS.
+        if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+        {
+#if _DEBUG
+            Log("subcase: redirect to default.");
+#endif
+            // PSF defaulted destination target.
+            relativePath = L"\\";
+        }
+        else
+        {
+#if _DEBUG
+            Log("subcase: redirect specified.");
+#endif
+            // PSF  configured destination target: probably a home drive.
+            relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + + L"\\VFS\\PackageDrive";
+        }
+
+        // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
+        // similar to what's done for UNC paths
+        assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
+        relativePath.push_back(L'\\');
+        relativePath.push_back(deVirtualizedPath.drive_absolute_path[0]);
+        relativePath.push_back('$');
+        auto remainingLength = wcslen(deVirtualizedPath.drive_absolute_path);
+        remainingLength -= 2;
+
+        relativePath.append(deVirtualizedPath.drive_absolute_path + 2, remainingLength); 
     }
 
 #if _DEBUG
     ////Log("\tFRF devirt.full_path %ls", deVirtualizedPath.full_path.c_str());
     ////Log("\tFRF devirt.da_path %ls", deVirtualizedPath.drive_absolute_path);
-    Log("\tFRF test result %ls", result.c_str());
+    Log("\tFRF initial basePath=%ls relative=%ls", basePath.c_str(),relativePath.c_str());
+
 #endif
     // Create folder structure, if needed
-    if (impl::PathExists(result.c_str()))
+    if (impl::PathExists( (basePath +  relativePath).c_str()))
     {
+        result = basePath + relativePath;
 #if _DEBUG
         Log("\t\tFRF Found that a copy exists in the redirected area so we skip the folder creation.");
 #endif
     }
     else
     {
-        if (ensureDirectoryStructure)
+        std::wstring_view relativePathview = std::wstring_view(relativePath);
+
+        if (shouldredirectToPackageRoot)
         {
-            while (offset < result.length())
-            {
-                size_t newoffset = result.find('\\', offset);
-                if (newoffset == -1)
-                    break;
+            result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
 #if _DEBUG
-                ///Log("\t\tFRF find at %d", newoffset);
-#endif			
-                if (newoffset > 2)  // skip the C:\\ 
-                {
-                    std::wstring partialdir = result.substr(0, newoffset);
-                    [[maybe_unused]] auto dirResultU = impl::CreateDirectory(partialdir.c_str(), nullptr);
-#if _DEBUG
-                    std::wstring res = L"false";
-                    if (dirResultU)
-                        res = L"true";
-                    Log("\t\tFRF Create Unmanaged folder %ls RES=%ls", partialdir.c_str(), res.c_str());
-#endif
-                }
-#if _DEBUG
-                else
-                {
-                    Log("\t\tFRF skip %d", newoffset);
-                }
-#endif
-                offset = newoffset + 1;
-            }
+            Log("\t\tFRF shouldredirectToPackageRoot case returns %ls.", result.c_str());
+#endif        
         }
+        else
+        {
+            result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
+#if _DEBUG
+            Log("\t\tFRF not to PackageRoot case returns %ls.", result.c_str());
+#endif
+        }       
+       
     }
     return result;
 }
@@ -732,7 +816,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
     // Only until all code paths use the new version of the interface...
-    return RedirectedPath(deVirtualizedPath, ensureDirectoryStructure, g_redirectRootPathDefault.native());
+    return RedirectedPath(deVirtualizedPath, ensureDirectoryStructure, g_writablePackageRootPath.native());
 }
 
 template <typename CharT>
