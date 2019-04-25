@@ -14,15 +14,49 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
+            auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
             {
-                DWORD attributes =  impl::GetFileAttributes(redirectPath.c_str());
-                if (shouldReadonly)
+                DWORD attributes = impl::GetFileAttributes(redirectPath.c_str());
+                if (attributes == INVALID_FILE_ATTRIBUTES)
                 {
-                    if ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-                    attributes |= FILE_ATTRIBUTE_READONLY;
+                    // Might be file/dir has not been copied yet, but might also be funky ADL/ADR.
+                    if (IsUnderUserAppDataLocal(fileName) ||
+                        IsUnderUserAppDataRoaming(fileName))
+                    {
+                        // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
+                        std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                        if (wcslen(PackageVersion.c_str()) >= 0)
+                        {
+                            attributes = impl::GetFileAttributes(PackageVersion.c_str());
+#if _DEBUG
+                            Log("GetFileAttributes: uncopied ADL/ADR case");
+#endif                        
+                        }
+                    }
+                    else
+                    {
+                        attributes = impl::GetFileAttributes(fileName);
+#if _DEBUG
+                        Log("GetFileAttributes: other not yet redirected case");
+#endif  
+                    }
                 }
+                if (attributes != INVALID_FILE_ATTRIBUTES)
+                {
+                    if (shouldReadonly)
+                    {
+                        if ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+                            attributes |= FILE_ATTRIBUTE_READONLY;
+                    }
+                    else
+                    {
+                        attributes &= ~FILE_ATTRIBUTE_READONLY;
+                    }
+                }
+#if _DEBUG
+                Log("GetFileAttributes: ShouldRedirect att=%d", attributes);
+#endif
                 return attributes;
             }
         }
@@ -51,14 +85,58 @@ BOOL __stdcall GetFileAttributesExFixup(
             if (shouldRedirect)
             {
                 BOOL retval = impl::GetFileAttributesEx(redirectPath.c_str(), infoLevelId, fileInformation);
-                if (retval != 0 && shouldReadonly)
+                if (retval == 0)
                 {
-                    if (infoLevelId == GetFileExInfoStandard  )
+                    // We know it exists, so must be file/dir has not been copied yet.
+                    if (IsUnderUserAppDataLocal(fileName) ||
+                        IsUnderUserAppDataRoaming(fileName))
                     {
-                        if ((((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-                            ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+                        // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
+                        std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                        if (wcslen(PackageVersion.c_str()) >= 0)
+                        {
+                            retval = impl::GetFileAttributesEx(PackageVersion.c_str(), infoLevelId, fileInformation);
+#if _DEBUG
+                            Log("GetFileAttributesEx: uncopied ADL/ADR case");
+#endif                        
+                        }
+                    }
+                    else
+                    {
+                        retval = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
+#if _DEBUG
+                        Log("GetFileAttributesEx: uncopied other case");
+#endif                  
                     }
                 }
+                if (retval != 0)
+                {
+                    if (shouldReadonly)
+                    {
+                        if (infoLevelId == GetFileExInfoStandard)
+                        {
+                            if ((((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+                                ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+                        }
+                    }
+                    else
+                    {
+                        if (infoLevelId == GetFileExInfoStandard)
+                        {
+                            ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes &= ~FILE_ATTRIBUTE_READONLY;
+                        }
+                    }
+                }
+#if _DEBUG
+                if (retval != 0)
+                {
+                    Log("GetFileAttributesEx: ShouldRedirect retval=%d att=%d", retval, ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes);
+                }
+                else
+                {
+                    Log("GetFileAttributesEx: ShouldRedirect retval=%d", retval);
+                }
+#endif                
                 return retval;
             }
         }

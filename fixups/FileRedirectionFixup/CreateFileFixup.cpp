@@ -75,7 +75,7 @@ HANDLE __stdcall CreateFileFixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-#ifdef DEBUG
+#if _DEBUG
                                 Log("\tFRF CreateFile COA from ADL to %ls", redirectPath.c_str());
 #endif
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
@@ -94,7 +94,7 @@ HANDLE __stdcall CreateFileFixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-#ifdef DEBUG
+#if _DEBUG
                                 Log("\tFRF CreateFile COA from ADR to %ls", redirectPath.c_str());
 #endif							
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
@@ -150,7 +150,7 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-#ifdef DEBUG
+#if _DEBUG
                                 Log("\tFRF CreateFile2 COA from ADL to %ls", redirectPath.c_str());
 #endif
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
@@ -169,7 +169,7 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-#ifdef DEBUG
+#if _DEBUG
                                 Log("\tFRF CreateFile2 COA from ADR to %ls", redirectPath.c_str());
 #endif
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
