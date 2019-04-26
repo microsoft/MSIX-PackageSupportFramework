@@ -7,6 +7,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include "ErrorInformation.h"
 
 #include <windows.h>
 #include <psf_constants.h>
@@ -29,9 +30,9 @@
 using namespace std::literals;
 
 //Forward declarations
-DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR dirStr, std::filesystem::path packageRoot, std::wstring exeName, int cmdShow, bool runInAppContainer);
+ErrorInformation StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR dirStr, std::filesystem::path packageRoot, std::wstring exeName, int cmdShow, bool runInAppContainer);
 int launcher_main(PWSTR args, int cmdShow) noexcept;
-DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
+ErrorInformation RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
 void GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin, int cmdShow, LPCWSTR dirStr);
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix);
@@ -72,7 +73,12 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto startScriptInformation = PSFQueryStartScriptInfo();
     if (startScriptInformation)
     {
-        RunScript(startScriptInformation, nullptr, packageRoot, dirStr, cmdShow);
+        ErrorInformation error = RunScript(startScriptInformation, nullptr, packageRoot, dirStr, cmdShow);
+
+        if (error.IsThereAnError())
+        {
+            ::PSFReportError(error.Print());
+        }
     }
 
     //Launch underlying application.
@@ -101,6 +107,13 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     if (endScriptInformation)
     {
         RunScript(endScriptInformation, nullptr, packageRoot, dirStr, cmdShow);
+
+        ErrorInformation error = RunScript(startScriptInformation, nullptr, packageRoot, dirStr, cmdShow);
+
+        if (error.IsThereAnError())
+        {
+            ::PSFReportError(error.Print());
+        }
     }
 
     return 0;
@@ -111,7 +124,7 @@ catch (...)
     return win32_from_caught_exception();
 }
 
-DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
+ErrorInformation RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationName, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
 {
     auto scriptPath = scriptInformation->get("scriptPath").as_string().wide();
     auto scriptArguments = scriptInformation->get("scriptArguments").as_string().wide();
@@ -142,7 +155,12 @@ DWORD RunScript(const psf::json_object * scriptInformation, LPCWSTR applicationN
     }
     else
     {
-        return ERROR_FILE_NOT_FOUND;
+        std::wstring errorMessage = L"The powershell file ";
+        errorMessage.append(scriptPath);
+        errorMessage.append(L" can't be found");
+        ErrorInformation error(errorMessage, ERROR_FILE_NOT_FOUND);
+
+        return error;
     }
 }
 
@@ -215,7 +233,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
 }
 
-DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR dirStr, std::filesystem::path packageRoot, std::wstring exeName, int cmdShow, bool startInAppContainer)
+ErrorInformation StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR dirStr, std::filesystem::path packageRoot, std::wstring exeName, int cmdShow, bool startInAppContainer)
 {
     STARTUPINFOEXW StartupInfoEx = { 0 };
 
@@ -239,18 +257,13 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
             &AttributeListSize) == FALSE)
         {
             auto err{ ::GetLastError() };
-            // Remove the ".\r\n" that gets added to all messages
-            auto msg = widen(std::system_category().message(err));
-            msg.resize(msg.length() - 3);
             std::wostringstream ss;
-            ss << L"Could not initilize the proc thread attribute list. "
-                << L"Message: " << msg
-                << L" Error number (" << err << L")";
-            ::PSFReportError(ss.str().c_str());
-            return err;
+            ss << L"Could not initilize the proc thread attribute list.";
+
+            ErrorInformation error(ss.str(), err);
+            return error;
         }
 
-        //PROC_THREAD_ATTRIBUTE_ALL_APPLICATION_PACKAGES_POLICY
         DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
         if (UpdateProcThreadAttribute(StartupInfoEx.lpAttributeList,
             0,
@@ -261,15 +274,11 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
             NULL) == FALSE)
         {
             auto err{ ::GetLastError() };
-            // Remove the ".\r\n" that gets added to all messages
-            auto msg = widen(std::system_category().message(err));
-            msg.resize(msg.length() - 3);
             std::wostringstream ss;
-            ss << L"Could not update Proc thread attribute. "
-                << L"Message: " << msg
-                << L" Error number (" << err << L")";
-            ::PSFReportError(ss.str().c_str());
-            return err;
+            ss << L"Could not update Proc thread attribute.";
+
+            ErrorInformation error(ss.str(), err);
+            return error;
         }
     }
 
@@ -286,25 +295,28 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
         &processInfo))
     {
         // Propagate exit code to caller, in case they care
-        switch (::WaitForSingleObject(processInfo.hProcess, INFINITE))
+
+        DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, INFINITE);
+
+        if (waitResult == WAIT_OBJECT_0)
         {
-        case WAIT_OBJECT_0:
-            break;
+            ErrorInformation noError;
+            return noError;
+        }
+        else
+        {
+            auto err{ ::GetLastError() };
+            std::wostringstream ss;
+            ss << L"Running process failed.";
 
-        case WAIT_FAILED:
-            return ::GetLastError();
-
-        default:
-            return ERROR_INVALID_HANDLE;
+            ErrorInformation error(ss.str(), err);
+            return error;
         }
     }
     else
     {
         std::wostringstream ss;
         auto err{ ::GetLastError() };
-        // Remove the ".\r\n" that gets added to all messages
-        auto msg = widen(std::system_category().message(err));
-        msg.resize(msg.length() - 3);
 
         if (applicationName)
         {
@@ -317,20 +329,11 @@ DWORD StartProcess(LPCWSTR applicationName, std::wstring commandLine, LPCWSTR di
             ss << L"ERROR: Failed to create a process for " << applicationNameForError << " ";
         }
 
-        ss << " Path: \"" << (dirStr ? (packageRoot / dirStr).c_str() : nullptr)
-            << exeName << "\" "
-            << " Error: " << msg << " (" << err << ")";
-        ::PSFReportError(ss.str().c_str());
-        return err;
+        ErrorInformation error(ss.str(), err);
     }
 
-    DWORD exitCode;
-    if (!::GetExitCodeProcess(processInfo.hProcess, &exitCode))
-    {
-        return ::GetLastError();
-    }
-
-    return exitCode;
+    ErrorInformation noError;
+    return noError;
 }
 
 DWORD StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow)

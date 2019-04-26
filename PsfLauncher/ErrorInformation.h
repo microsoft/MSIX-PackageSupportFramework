@@ -1,20 +1,21 @@
 #pragma once
 #include <string>
 #include <minwindef.h>
+#include <iostream>
 #include "utilities.h"
 class ErrorInformation
 {
 public:
+    ErrorInformation();
     ErrorInformation(std::wstring customMessage, DWORD errorNumber);
     ~ErrorInformation();
     ErrorInformation(const ErrorInformation &toCopy);
 
-    ErrorInformation GetInfoWithNoError();
+    LPCWSTR Print();
     bool IsThereAnError();
 
 private:
-    ErrorInformation();
-    std::wstring customMessage;
+    std::wostringstream customMessage;
     DWORD errorNumber;
     std::wstring errorMessage;
     bool isThereAnError;

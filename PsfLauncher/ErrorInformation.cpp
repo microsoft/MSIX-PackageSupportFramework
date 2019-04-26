@@ -1,10 +1,8 @@
 #include "ErrorInformation.h"
 
-
-
 ErrorInformation::ErrorInformation(std::wstring customMessage, DWORD errorNumber)
 {
-    this->customMessage = customMessage;
+    this->customMessage << customMessage;
     this->errorNumber = errorNumber;
 
     this->errorMessage = widen(std::system_category().message(this->errorNumber));
@@ -14,17 +12,25 @@ ErrorInformation::ErrorInformation(std::wstring customMessage, DWORD errorNumber
 
 ErrorInformation::ErrorInformation()
 {
-    this->customMessage = L"";
+    this->customMessage << L"";
     this->errorMessage = L"";
     this->isThereAnError = false;
 }
 
 ErrorInformation::ErrorInformation(const ErrorInformation &toCopy)
 {
-    this->customMessage = toCopy.customMessage;
+    this->customMessage << toCopy.customMessage.str();
     this->errorMessage = toCopy.errorMessage;
     this->isThereAnError = toCopy.isThereAnError;
     this->errorNumber = toCopy.errorNumber;
+}
+
+LPCWSTR ErrorInformation::Print()
+{
+    this->customMessage << L"Message: " << this->errorMessage << "\r\n";
+    this->customMessage << L"Error number: " << this->errorNumber << "\r\n";
+
+    return this->customMessage.str().c_str();
 }
 
 
@@ -35,9 +41,4 @@ ErrorInformation::~ErrorInformation()
 bool ErrorInformation::IsThereAnError()
 {
     return this->isThereAnError;
-}
-
-ErrorInformation ErrorInformation::GetInfoWithNoError()
-{
-    return ErrorInformation();
 }
