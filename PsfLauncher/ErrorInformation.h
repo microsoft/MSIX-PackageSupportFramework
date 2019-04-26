@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <minwindef.h>
+#include <windows.h>
 #include <iostream>
 #include "utilities.h"
 class ErrorInformation

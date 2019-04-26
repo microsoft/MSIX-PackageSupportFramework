@@ -7,7 +7,6 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include "ErrorInformation.h"
 
 #include <windows.h>
 #include <psf_constants.h>
@@ -16,6 +15,7 @@
 #include <combaseapi.h>
 #include <ppltasks.h>
 #include <ShObjIdl.h>
+#include "ErrorInformation.h"
 
 //These two macros don't exist in RS1.  Define them here to prevent build
 //failures when building for RS1.

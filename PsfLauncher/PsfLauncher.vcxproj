@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ErrorInformation.cpp" />
     <ClCompile Include="main.cpp">
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
@@ -33,6 +34,9 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="PSFLauncherMetadata.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ErrorInformation.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
