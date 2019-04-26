@@ -353,7 +353,34 @@ bool path_relative_to(const char* path, const std::filesystem::path& basePath)
     return path_relative_toImpl(path, basePath);
 }
 
-bool IsBlobColon(std::string path)
+bool IsColonColonGuid(const char *path)
+{
+    if (strlen(path) > 39)
+    {
+        if (path[0] == ':' &&
+            path[1] == ':' &&
+            path[2] == '{')
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool IsColonColonGuid(const wchar_t *path)
+{
+    if (wcslen(path) > 39)
+    {
+        if (path[0] == L':' &&
+            path[1] == L':' &&
+            path[2] == L'{'   )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool IsBlobColon(const std::string path)
 {
     size_t found = path.find("blob:", 0);
     if (found == 0)
@@ -363,7 +390,7 @@ bool IsBlobColon(std::string path)
         return true;
     return false;
 }
-bool IsBlobColon(std::wstring path)
+bool IsBlobColon(const std::wstring path)
 {
     size_t found = path.find(L"blob:", 0);
     if (found == 0)
@@ -385,10 +412,7 @@ std::string UrlDecode(std::string str)
     {
         if (str[i] != '%') 
         {
-            if (str[i] == '+')
-                ret += ' ';
-            else
-                ret += str[i];
+            ret += str[i];
         }
         else 
         {
@@ -412,10 +436,7 @@ std::wstring UrlDecode(std::wstring str)
     {
         if (str[i] != L'%') 
         {
-            if (str[i] == L'+')
-                ret += L' ';
-            else
-                ret += str[i];
+            ret += str[i];
         }
         else 
         {
@@ -528,6 +549,15 @@ normalized_path NormalizePath(const char* path)
     if (path != NULL && path[0] != 0)
     {
         std::string new_string = path;
+        if (IsColonColonGuid(path))
+        {
+#if _DEBUG
+            Log("Guid: avoidance");
+#endif
+            normalized_path npath;
+            npath.full_path = widen(new_string);
+            return npath;
+        }
         if (IsBlobColon(new_string))  // blog:hexstring has been seen, believed to be associated with writing encrypted data,  Just pass it through as it is not a real file.
         {
 #if _DEBUG
@@ -552,6 +582,15 @@ normalized_path NormalizePath(const wchar_t* path)
     if (path != NULL && path[0] != 0)
     {
         std::wstring new_wstring = path;
+        if (IsColonColonGuid(path))
+        {
+#if _DEBUG
+            Log("Guid: avoidance");
+#endif
+            normalized_path npath;
+            npath.full_path = widen(new_wstring);
+            return npath;
+        }
         if (IsBlobColon(new_wstring))  // blog:hexstring has been seen, believed to be associated with writing encrypted data,  Just pass it through as it is not a real file.
         {
 #if _DEBUG
@@ -661,6 +700,9 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
     {
         for (std::size_t pos = 0; pos < relativePath.length(); )
         {
+#if _DEBUG
+            Log("\t\tCreate dir: %ls", result.c_str());
+#endif
             [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
 #if _DEBUG
             auto err = ::GetLastError();
@@ -829,6 +871,14 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         return result;
     }
 
+#if _DEBUG
+    Log("\tFRF Should: for %ls", path);
+    bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
+    bool c_copy = flag_set(flags, redirect_flags::copy_file);
+    bool c_ensure = flag_set(flags, redirect_flags::ensure_directory_structure);
+    Log("\t\tFRF flags  CheckPresense:%d  CopyFile:%d  EnsureDirectory:%d", c_presense, c_copy, c_ensure);
+#endif
+
     // normalizedPath represents the requested path, redirected to the external system if relevant, or just as requested if not.
     // vfsPath represents this as a package relative path
     auto normalizedPath = NormalizePath(path);
@@ -840,20 +890,14 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         return result;
     }
 
+#if _DEBUG
+    Log("\t\tFRF Normalized=%ls", normalizedPath.drive_absolute_path);
+#endif
     // To be consistent in where we redirect files, we need to map VFS paths to their non-package-relative equivalent
     normalizedPath = DeVirtualizePath(std::move(normalizedPath));
 
 #if _DEBUG
-    Log("\tFRF Should: for %ls", path);
-    bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
-    bool c_copy = flag_set(flags, redirect_flags::copy_file);
-    bool c_ensure = flag_set(flags, redirect_flags::ensure_directory_structure);
-    Log("\t\tFRF flags  CheckPresense:%d  CopyFile:%d  EnsureDIrectory:%d", c_presense, c_copy, c_ensure);
-
-    if (normalizedPath.drive_absolute_path != NULL)
-    {
-        Log("\t\tFRF Normalized&DeVirtualized=%ls", normalizedPath.drive_absolute_path);
-    }
+    Log("\t\tFRF DeVirtualized=%ls", normalizedPath.drive_absolute_path);
 #endif
 
     auto vfspath = NormalizePath(path);
@@ -861,7 +905,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 #if _DEBUG
     if (vfspath.drive_absolute_path != NULL)
     {
-        Log("\t\tFRF Normalized&Virtualized=%ls", vfspath.drive_absolute_path);
+        Log("\t\tFRF Virtualized=%ls", vfspath.drive_absolute_path);
     }
 #endif
 
