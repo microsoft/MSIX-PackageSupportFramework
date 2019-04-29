@@ -328,10 +328,9 @@ void LogTelemetryData()
 			auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
 			TraceLoggingWrite(
 				g_Log_ETW_ComponentProvider,
-				"MadhupaApplicationsConfigdata",
+				"ApplicationsConfigdata",
 				TraceLoggingWideString(exeStr, "applications_executable"),
 				TraceLoggingWideString(idStr, "applications_id"),
-				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
 				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
 		}
@@ -344,7 +343,7 @@ void LogTelemetryData()
 			auto exeStr = processConfig.as_object().get("executable").as_string().wide();
 			TraceLoggingWrite(
 				g_Log_ETW_ComponentProvider,
-				"MadhupaProcessesExecutableConfigdata",
+				"ProcessesExecutableConfigdata",
 				TraceLoggingWideString(exeStr, "processes_executable"),
 				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
@@ -357,9 +356,8 @@ void LogTelemetryData()
 					auto dllStr = fixupConfig.as_object().try_get("dll")->as_string().wide();
 					TraceLoggingWrite(
 						g_Log_ETW_ComponentProvider,
-						"MadhupaProcessesFixUpConfigdata",
+						"ProcessesFixUpConfigdata",
 						TraceLoggingWideString(dllStr, "processes_fixups"),
-						TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 						TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
 						TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));					
 				}
@@ -384,7 +382,7 @@ void ReadJSonConfig()
 
 		TraceLoggingWrite(
 			g_Log_ETW_ComponentProvider,
-			"madhupaJsonConfig",
+			"JsonConfig",
 			TraceLoggingValue(fileContents.get(), "config_data"),
 			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),

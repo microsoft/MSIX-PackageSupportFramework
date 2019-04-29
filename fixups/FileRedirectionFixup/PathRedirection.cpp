@@ -233,7 +233,7 @@ void InitializeConfiguration()
 
 		TraceLoggingWrite(
 			g_Log_ETW_ComponentProvider,
-			"MadhupaFileRedirectionFixupConfigdata",
+			"FileRedirectionFixupConfigdata",
 			TraceLoggingWideString(traceDataStream.str().c_str(), "FileRedirectionFixupConfig"),
 			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),

@@ -50,7 +50,7 @@ extern "C" {
 
 				TraceLoggingWrite(
 					g_Log_ETW_ComponentProvider,
-					"MadhupaWaitForDebuggerFixupConfigdata",
+					"WaitForDebuggerFixupConfigdata",
 					TraceLoggingWideString(traceDataStream.str().c_str(), "WaitForDebuggerFixupConfig"),
 					TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 					TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),

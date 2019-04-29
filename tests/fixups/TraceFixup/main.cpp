@@ -197,15 +197,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
 	if (reason == DLL_PROCESS_ATTACH)
 	{
-		Log_ETW_Register();
-
-		TraceLoggingWrite(
-			g_Log_ETW_ComponentProvider,
-			"MadhupaTestingTraceFixupConfigdata",
-			TraceLoggingWideString(L"testing", "TestingTraceFixupConfig"),
-			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-			TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+		Log_ETW_Register();		
 
 		std::wstringstream traceDataStream;
 
@@ -288,7 +280,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 
 			TraceLoggingWrite(
 				g_Log_ETW_ComponentProvider,
-				"MadhupaTraceFixupConfigdata",
+				"TraceFixupConfigdata",
 				TraceLoggingWideString(traceDataStream.str().c_str(), "TraceFixupConfig"),
 				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
