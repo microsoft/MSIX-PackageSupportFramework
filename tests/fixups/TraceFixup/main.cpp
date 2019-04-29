@@ -15,8 +15,18 @@
 //////// Need to undefine Preprocessor definition for NONAMELESSUNION on this .cpp file only for this to work
 
 #include <TraceLoggingProvider.h>
+#include "Telemetry.h"
 
 #include "Logging.h"
+
+// This handles event logging via ETW
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+	g_Log_ETW_ComponentProvider,
+	"Microsoft.Windows.PSFRuntime",
+	(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
+
 using namespace std::literals;
 
 trace_method output_method = trace_method::output_debug_string;
@@ -33,13 +43,7 @@ static trace_level g_defaultBreakLevel = trace_level::ignore;
 
 
 
-// This handles event logging via ETW
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
-TRACELOGGING_DEFINE_PROVIDER(
-	g_Log_ETW_ComponentProvider,
-	"Microsoft-Windows-PSFTrace",
-	(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
 
 static trace_level trace_level_from_configuration(std::string_view str, trace_level defaultLevel)
 {
@@ -191,80 +195,118 @@ void Log_ETW_UnRegister()
 
 BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
-    if (reason == DLL_PROCESS_ATTACH)
-    {
-        if (auto config = PSFQueryCurrentDllConfig())
-        {
-            auto& configObj = config->as_object();
+	if (reason == DLL_PROCESS_ATTACH)
+	{
+		Log_ETW_Register();
 
-            if (auto method = configObj.try_get("traceMethod"))
-            {
-                auto methodStr = method->as_string().string();
-                if (methodStr == "printf"sv)
-                {
-                    output_method = trace_method::printf;
+		TraceLoggingWrite(
+			g_Log_ETW_ComponentProvider,
+			"MadhupaTestingTraceFixupConfigdata",
+			TraceLoggingWideString(L"testing", "TestingTraceFixupConfig"),
+			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+			TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+
+		std::wstringstream traceDataStream;
+
+		if (auto config = PSFQueryCurrentDllConfig())
+		{
+			auto& configObj = config->as_object();
+
+			traceDataStream << "config : \n";
+			if (auto method = configObj.try_get("traceMethod"))
+			{
+				auto methodStr = method->as_string().string();
+				traceDataStream << " traceMethod : " << method->as_string().wide() << " ;";
+
+				if (methodStr == "printf"sv)
+				{
+					output_method = trace_method::printf;
 					Log("config traceMethod is printf");
-                }
+				}
 				else if (methodStr == "eventlog"sv)
 				{
 					output_method = trace_method::eventlog;
-					Log_ETW_Register();
 					Log("config traceMethod is eventlog");
 				}
 				else {
-                    // Otherwise, use the default (OutputDebugString)
+					// Otherwise, use the default (OutputDebugString)
 					Log("config traceMethod is default");
-                }
-            }
+				}
+			}
 
-            if (auto levels = configObj.try_get("traceLevels"))
-            {
-                g_traceLevels = &levels->as_object();
+			if (auto levels = configObj.try_get("traceLevels"))
+			{
+				g_traceLevels = &levels->as_object();
+				traceDataStream << " traceLevels : \n";
 
-                // Set default level immediately for fallback purposes
-                if (auto defaultLevel = g_traceLevels->try_get("default"))
-                {
-                    g_defaultTraceLevel = trace_level_from_configuration(defaultLevel->as_string().string(), g_defaultTraceLevel);
-                }
-            }
+				// Set default level immediately for fallback purposes
+				if (auto defaultLevel = g_traceLevels->try_get("default"))
+				{
+					traceDataStream << " default : \n" << defaultLevel->as_string().wide() << " ;";
+					g_defaultTraceLevel = trace_level_from_configuration(defaultLevel->as_string().string(), g_defaultTraceLevel);
+				}
+			}
 
-            if (auto levels = configObj.try_get("breakOn"))
-            {
-                g_breakLevels = &levels->as_object();
+			if (auto levels = configObj.try_get("breakOn"))
+			{
+				g_breakLevels = &levels->as_object();
+				traceDataStream << " breakOn : \n";
 
-                // Set default level immediately for fallback purposes
-                if (auto defaultLevel = g_breakLevels->try_get("default"))
-                {
-                    g_defaultBreakLevel = trace_level_from_configuration(defaultLevel->as_string().string(), g_defaultBreakLevel);
-                }
-            }
+				// Set default level immediately for fallback purposes
+				if (auto defaultLevel = g_breakLevels->try_get("default"))
+				{
+					traceDataStream << " default : " << defaultLevel->as_string().wide() << " ;";
+					g_defaultBreakLevel = trace_level_from_configuration(defaultLevel->as_string().string(), g_defaultBreakLevel);
+				}
+			}
 
-            if (auto debuggerConfig = configObj.try_get("waitForDebugger"))
-            {
-                wait_for_debugger = static_cast<bool>(debuggerConfig->as_boolean());
-            }
+			if (auto debuggerConfig = configObj.try_get("waitForDebugger"))
+			{
+				traceDataStream << " waitForDebugger : " << static_cast<bool>(debuggerConfig->as_boolean()) << " ;";
+				wait_for_debugger = static_cast<bool>(debuggerConfig->as_boolean());
+			}
 
-            if (auto traceEntryConfig = configObj.try_get("traceFunctionEntry"))
-            {
-                trace_function_entry = static_cast<bool>(traceEntryConfig->as_boolean());
-            }
+			if (auto traceEntryConfig = configObj.try_get("traceFunctionEntry"))
+			{
+				traceDataStream << " traceFunctionEntry : " << static_cast<bool>(traceEntryConfig->as_boolean()) << " ;";
+				trace_function_entry = static_cast<bool>(traceEntryConfig->as_boolean());
+			}
 
-            if (auto callerConfig = configObj.try_get("traceCallingModule"))
-            {
-                trace_calling_module = static_cast<bool>(callerConfig->as_boolean());
-            }
+			if (auto callerConfig = configObj.try_get("traceCallingModule"))
+			{
+				traceDataStream << " traceCallingModule : " << static_cast<bool>(callerConfig->as_boolean()) << " ;";
+				trace_calling_module = static_cast<bool>(callerConfig->as_boolean());
+			}
 
-            if (auto ignoreDllConfig = configObj.try_get("ignoreDllLoad"))
-            {
-                ignore_dll_load = static_cast<bool>(ignoreDllConfig->as_boolean());
-            }
-        }
+			if (auto ignoreDllConfig = configObj.try_get("ignoreDllLoad"))
+			{
+				traceDataStream << " ignoreDllLoad : " << static_cast<bool>(ignoreDllConfig->as_boolean()) << " ;";
+				ignore_dll_load = static_cast<bool>(ignoreDllConfig->as_boolean());
+			}
 
-        if (wait_for_debugger)
-        {
-            psf::wait_for_debugger();
-        }
-    }
+
+			TraceLoggingWrite(
+				g_Log_ETW_ComponentProvider,
+				"MadhupaTraceFixupConfigdata",
+				TraceLoggingWideString(traceDataStream.str().c_str(), "TraceFixupConfig"),
+				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+
+		}
+
+		if (wait_for_debugger)
+		{
+			psf::wait_for_debugger();
+		}
+
+	}
+
+	if (reason == DLL_PROCESS_DETACH)
+	{
+		Log_ETW_UnRegister();
+	}
 
     return TRUE;
 }

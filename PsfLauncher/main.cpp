@@ -13,11 +13,21 @@
 #include <psf_runtime.h>
 #include <shellapi.h>
 #include <combaseapi.h>
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+	g_Log_ETW_ComponentProvider,
+	"Microsoft.Windows.PSFRuntime",
+	(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0),
+	TraceLoggingOptionMicrosoftTelemetry());
 
 using namespace std::literals;
 
 // Forward declaration
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
+void LogTelemetryData();
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix)
 {
@@ -79,6 +89,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     auto monitor = PSFQueryAppMonitorConfig();
 
+	LogTelemetryData();
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
@@ -304,7 +315,89 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
         }
     }
 }
+
+void LogTelemetryData()
+{
+	auto configRoot = PSFQueryConfigRoot();
+
+	if (auto applications = configRoot->as_object().try_get("applications"))
+	{
+		for (auto& applicationsConfig : applications->as_array())
+		{
+			auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
+			auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
+			TraceLoggingWrite(
+				g_Log_ETW_ComponentProvider,
+				"MadhupaApplicationsConfigdata",
+				TraceLoggingWideString(exeStr, "applications_executable"),
+				TraceLoggingWideString(idStr, "applications_id"),
+				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+		}
+	}
+
+	if (auto processes = configRoot->as_object().try_get("processes"))
+	{
+		for (auto& processConfig : processes->as_array())
+		{
+			auto exeStr = processConfig.as_object().get("executable").as_string().wide();
+			TraceLoggingWrite(
+				g_Log_ETW_ComponentProvider,
+				"MadhupaProcessesExecutableConfigdata",
+				TraceLoggingWideString(exeStr, "processes_executable"),
+				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+
+			if (auto fixups = processConfig.as_object().try_get("fixups"))
+			{
+				for (auto& fixupConfig : fixups->as_array())
+				{
+					auto dllStr = fixupConfig.as_object().try_get("dll")->as_string().wide();
+					TraceLoggingWrite(
+						g_Log_ETW_ComponentProvider,
+						"MadhupaProcessesFixUpConfigdata",
+						TraceLoggingWideString(dllStr, "processes_fixups"),
+						TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+						TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+						TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));					
+				}
+			}
+		}
+	}
+}
+
+void ReadJSonConfig()
+{
+#pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
+	auto file = _wfopen((std::filesystem::path(PSFQueryPackageRootPath()) / L"config.json").c_str(), L"rb, ccs=UTF-8");
+	if (file)
+	{
+		fseek(file, 0, SEEK_END);
+		auto size = ftell(file);
+		auto fileContents = std::make_unique<char[]>(static_cast<int>(size + 1));
+		rewind(file);
+		fread(fileContents.get(), sizeof(char), size, file);
+		fileContents[size] = 0;
+
+
+		TraceLoggingWrite(
+			g_Log_ETW_ComponentProvider,
+			"madhupaJsonConfig",
+			TraceLoggingValue(fileContents.get(), "config_data"),
+			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+			TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+		fclose(file);
+	}
+}
+
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 {
-    return launcher_main(args, cmdShow);
+	TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+	ReadJSonConfig();
+	int result = launcher_main(args, cmdShow);
+	TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+	return result;
 }

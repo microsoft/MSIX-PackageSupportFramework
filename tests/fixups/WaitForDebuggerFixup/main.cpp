@@ -5,6 +5,15 @@
 
 #include <debug.h>
 #include <psf_framework.h>
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+	g_Log_ETW_ComponentProvider,
+	"Microsoft.Windows.PSFRuntime",
+	(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0),
+	TraceLoggingOptionMicrosoftTelemetry());
 
 extern "C" {
 
@@ -26,30 +35,44 @@ extern "C" {
 //              }, ...
 //          ]
 //      }
-int __stdcall PSFInitialize() noexcept
-{
-    bool waitForDebugger = true;
-    if (auto config = ::PSFQueryCurrentDllConfig())
-    {
-        auto& configObject = config->as_object();
-        if (auto enabledValue = configObject.try_get("enabled"))
-        {
-            waitForDebugger = enabledValue->as_boolean().get();
-        }
-    }
+	int __stdcall PSFInitialize() noexcept
+	{
+		TraceLoggingRegister(g_Log_ETW_ComponentProvider);
 
-    if (waitForDebugger)
-    {
-        psf::wait_for_debugger();
-    }
+		bool waitForDebugger = true;
+		if (auto config = ::PSFQueryCurrentDllConfig())
+		{
+			auto& configObject = config->as_object();
+			if (auto enabledValue = configObject.try_get("enabled"))
+			{
+				std::wstringstream traceDataStream;
+				traceDataStream << " enabled : " << static_cast<bool>(enabledValue->as_boolean()) << " ;";
 
-    return ERROR_SUCCESS;
-}
+				TraceLoggingWrite(
+					g_Log_ETW_ComponentProvider,
+					"MadhupaWaitForDebuggerFixupConfigdata",
+					TraceLoggingWideString(traceDataStream.str().c_str(), "WaitForDebuggerFixupConfig"),
+					TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+					TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+					TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
 
-int __stdcall PSFUninitialize() noexcept
-{
-    return ERROR_SUCCESS;
-}
+				waitForDebugger = enabledValue->as_boolean().get();
+			}
+		}
+
+		if (waitForDebugger)
+		{
+			psf::wait_for_debugger();
+		}
+
+		return ERROR_SUCCESS;
+		}
+
+	int __stdcall PSFUninitialize() noexcept
+	{
+		TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+		return ERROR_SUCCESS;
+	}
 
 #ifdef _M_IX86
 #pragma comment(linker, "/EXPORT:PSFInitialize=_PSFInitialize@0")
