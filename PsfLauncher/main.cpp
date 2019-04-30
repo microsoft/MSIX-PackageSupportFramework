@@ -27,7 +27,7 @@ using namespace std::literals;
 
 // Forward declaration
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
-void LogTelemetryData();
+void LogApplicationAndProcessesCollection();
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix)
 {
@@ -89,7 +89,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     auto monitor = PSFQueryAppMonitorConfig();
 
-	LogTelemetryData();
+	LogApplicationAndProcessesCollection();
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
@@ -316,7 +316,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
 }
 
-void LogTelemetryData()
+void LogApplicationAndProcessesCollection()
 {
 	auto configRoot = PSFQueryConfigRoot();
 
@@ -345,7 +345,6 @@ void LogTelemetryData()
 				g_Log_ETW_ComponentProvider,
 				"ProcessesExecutableConfigdata",
 				TraceLoggingWideString(exeStr, "processes_executable"),
-				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
 				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
 
@@ -366,7 +365,7 @@ void LogTelemetryData()
 	}
 }
 
-void ReadJSonConfig()
+void LogJsonConfig()
 {
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
 	auto file = _wfopen((std::filesystem::path(PSFQueryPackageRootPath()) / L"config.json").c_str(), L"rb, ccs=UTF-8");
@@ -394,7 +393,7 @@ void ReadJSonConfig()
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 {
 	TraceLoggingRegister(g_Log_ETW_ComponentProvider);
-	ReadJSonConfig();
+	LogJsonConfig();
 	int result = launcher_main(args, cmdShow);
 	TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
 	return result;
