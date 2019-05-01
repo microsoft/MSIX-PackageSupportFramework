@@ -69,7 +69,7 @@ If there is an error starting the script an error will be thrown and code execut
 
 
 ### Visual representation of the flow
-
+<pre>
 +------------+ Success, or  +-----------------+              +-----------------+
 |  Starting  | Script error |   Monitor and   |   Success    |      Ending     |
 |   Script   |------------->|   Packaged exe  |------------> |      Script     |
@@ -90,7 +90,7 @@ If there is an error starting the script an error will be thrown and code execut
                              |  Throw error |
                              |   and exit   |
                              +--------------+
-
+</pre>
 ## Fixup Metadata
 Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
  1. Version:  The version of the PSF is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/)
