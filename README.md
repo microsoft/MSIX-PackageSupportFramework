@@ -91,6 +91,51 @@ If there is an error starting the script an error will be thrown and code execut
                              |   and exit   |
                              +--------------+
 </pre>
+
+## Sample configuration
+Here is a sample configuration using two different exes.
+<pre>
+	{
+  "applications": [
+    {
+      "id": "Sample",
+      "executable": "Sample.exe",
+      "workingDirectory": "",
+	  "startScript":
+	  {
+		"scriptPath": "RunMePlease.ps1",
+		"scriptArguments": "ThisIsMe.txt",
+		"runInAppEnviorment": "true"
+	  },
+	  "endScript":
+	  {
+		"scriptPath": "RunMeAfter.ps1",
+		"scriptArguments": "ThisIsMe.txt"
+	  }
+    },
+	{
+      "id": "CPPSample",
+      "executable": "CPPSample.exe",
+      "workingDirectory": "",
+	  "startScript":
+	  {
+		"scriptPath": "CPPStart.ps1",
+		"scriptArguments": "ThisIsMe.txt",
+		"runInAppEnviorment": "true"
+	  },
+	  "endScript":
+	  {
+		"scriptPath": "CPPEnd.ps1",
+		"scriptArguments": "ThisIsMe.txt"
+	  }
+    }
+  ],
+  "processes": [
+    ..(taken out for brevity)
+  ]
+}
+</pre>
+
 ## Fixup Metadata
 Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
  1. Version:  The version of the PSF is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/)
