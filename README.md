@@ -74,16 +74,16 @@ If there is an error starting the script an error will be thrown and code execut
 |  Starting  | Script error |   Monitor and   |   Success    |      Ending     |
 |   Script   |------------->|   Packaged exe  |------------> |      Script     |
 +------------+              +-----------------+              +-----------------+
-     | Create                        |                                |
-     | Process                       |                                |
-     | Error                         |                                |
+     | Create                        | Create                         | Create
+     | Process                       | Process                        | Process
+     | Error                         | Error                          | Error
      V                               V                                V
-+-------------+             +-----------------+                +----------------+
-| Throw error |             |    Run ending   |                |   Throw error  | 
-|  and exit   |             |     script      |                |    and exit.   |
-+-------------+             +-----------------+                +----------------+
-                                    |
-                                    |
++-------------+             +-----------------+   Create Process +----------------+
+| Throw error |             |    Run ending   |       Error      |   Throw error  | 
+|  and exit   |             |     script      |----------------->|    and exit.   |
++-------------+             +-----------------+                  +----------------+
+                                    | 
+                                    | Success
                                     |
                                     V
                              +--------------+
