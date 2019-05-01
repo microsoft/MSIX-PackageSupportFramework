@@ -331,6 +331,7 @@ void LogApplicationAndProcessesCollection()
 				"ApplicationsConfigdata",
 				TraceLoggingWideString(exeStr, "applications_executable"),
 				TraceLoggingWideString(idStr, "applications_id"),
+				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
 				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
 		}
@@ -345,6 +346,7 @@ void LogApplicationAndProcessesCollection()
 				g_Log_ETW_ComponentProvider,
 				"ProcessesExecutableConfigdata",
 				TraceLoggingWideString(exeStr, "processes_executable"),
+				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
 				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
 
@@ -357,6 +359,7 @@ void LogApplicationAndProcessesCollection()
 						g_Log_ETW_ComponentProvider,
 						"ProcessesFixUpConfigdata",
 						TraceLoggingWideString(dllStr, "processes_fixups"),
+						TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
 						TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
 						TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));					
 				}
