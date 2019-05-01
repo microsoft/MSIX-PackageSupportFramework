@@ -95,7 +95,7 @@ If there is an error starting the script an error will be thrown and code execut
 ## Sample configuration
 Here is a sample configuration using two different exes.
 <pre>
-	{
+    {
   "applications": [
     {
       "id": "Sample",
