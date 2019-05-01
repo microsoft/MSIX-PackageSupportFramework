@@ -34,7 +34,6 @@ struct ExecutionInformation
     LPCWSTR ApplicationName;
     std::wstring CommandLine;
     LPCWSTR CurrentDirectory;
-    std::wstring ExeName;  //ExeName used for error handling.  Might go better in ErrorInformation
 };
 
 //Forward declarations
@@ -48,7 +47,7 @@ void LogStringW(const char* name, const wchar_t* value);
 void LogString(const char* name, const char* value);
 void Log(const char* fmt, ...);
 ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
-bool IsPowerShellInstalled();
+bool CheckIfPowerShellIsInstalled();
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 {
@@ -83,16 +82,16 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         }
     }
 
-    bool isPowershellInstalled = IsPowerShellInstalled();
-
-    if (isPowershellInstalled)
-    {
-
-    }
+    bool isPowershellInstalled = CheckIfPowerShellIsInstalled();
     //Launch the starting powershell script if we are using one.
     auto startScriptInformation = PSFQueryStartScriptInfo();
     if (startScriptInformation)
     {
+        if (!isPowershellInstalled)
+        {
+            ::PSFReportError(L"Powershell is not installed.  Please install powershell to run scripts in PSF");
+        }
+
         ErrorInformation error = RunScript(startScriptInformation, packageRoot, dirStr, cmdShow);
 
         if (error.IsThereAnError())
@@ -122,8 +121,8 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
 
         auto currentDirectory = (packageRoot / dirStr);
         execInfo.CurrentDirectory = currentDirectory.c_str();
-        execInfo.ExeName = exeName;
         ErrorInformation error = StartProcess(execInfo, cmdShow, false);
+        error.AddExeName(exeName);
 
         if (error.IsThereAnError())
         {
@@ -132,7 +131,12 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     }
     else
     {
-        StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
+        ErrorInformation error = StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
+
+        if (error.IsThereAnError())
+        {
+            ::PSFReportError(error.Print());
+        }
     }
 
     //Launch the end powershell script if we are using one.
@@ -140,6 +144,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     if (endScriptInformation)
     {
         ErrorInformation error = RunScript(startScriptInformation, packageRoot, dirStr, cmdShow);
+        error.AddExeName(L"Powershell.exe");
 
         if (error.IsThereAnError())
         {
@@ -157,7 +162,7 @@ catch (...)
 
 ErrorInformation RunScript(const psf::json_object * scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
 {
-    auto scriptPath = scriptInformation->get("scriptPath").as_string().wide();
+    std::wstring scriptPath = scriptInformation->get("scriptPath").as_string().wide();
     auto scriptArguments = scriptInformation->get("scriptArguments").as_string().wide();
     auto currentDirectory = (packageRoot / dirStr);
 
@@ -178,6 +183,8 @@ ErrorInformation RunScript(const psf::json_object * scriptInformation, std::file
     powershellCommandString.append(L" ");
     powershellCommandString.append(scriptArguments);
 
+    Log("Looking for the script here: ");
+    LogStringW("Script Path", scriptPath.c_str());
     auto doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
 
     if (doesFileExist)
@@ -186,7 +193,6 @@ ErrorInformation RunScript(const psf::json_object * scriptInformation, std::file
         execInfo.ApplicationName = nullptr;
         execInfo.CommandLine = powershellCommandString;
         execInfo.CurrentDirectory = currentDirectory.c_str();
-        execInfo.ExeName = L"Powershell";
         return StartProcess(execInfo, cmdShow, runInAppEnviorment);
     }
     else
@@ -265,7 +271,7 @@ ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, co
             std::wostringstream ss;
             ss << L"error starting monitor using SellExecuteEx";
             auto err = ::GetLastError();
-            ErrorInformation error(ss.str(), err);
+            ErrorInformation error(ss.str(), err, executable);
 
             return error;
         }
@@ -280,8 +286,8 @@ ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, co
 
         auto currentDirectory = (packageRoot / dirStr);
         execInfo.CurrentDirectory = currentDirectory.c_str();
-        execInfo.ExeName = executable;
         ErrorInformation error = StartProcess(execInfo, cmdShow, false);
+        error.AddExeName(executable);
 
         return error;
     }
@@ -467,7 +473,7 @@ void LogStringW(const char* name, const wchar_t* value)
     Log("\t%s=%ls\n", name, value);
 }
 
-bool IsPowerShellInstalled()
+bool CheckIfPowerShellIsInstalled()
 {
     HKEY registryHandle;
     DWORD statusOfRegistryKey;

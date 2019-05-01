@@ -1,9 +1,16 @@
 #include "ErrorInformation.h"
 
+ErrorInformation::ErrorInformation(std::wstring customMessage, DWORD errorNumber, std::wstring exeName) 
+    : ErrorInformation(customMessage, errorNumber)
+{
+    this->exeName = exeName;
+}
+
 ErrorInformation::ErrorInformation(std::wstring customMessage, DWORD errorNumber)
 {
     this->customMessage << customMessage;
     this->errorNumber = errorNumber;
+    this->exeName = exeName;
 
     this->errorMessage = widen(std::system_category().message(this->errorNumber));
     this->errorMessage.resize(this->errorMessage.length() - 3);
@@ -41,4 +48,9 @@ ErrorInformation::~ErrorInformation()
 bool ErrorInformation::IsThereAnError()
 {
     return this->isThereAnError;
+}
+
+void ErrorInformation::AddExeName(std::wstring exeNameToAdd)
+{
+    this->exeName = exeNameToAdd;
 }
