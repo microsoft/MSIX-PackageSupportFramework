@@ -43,6 +43,8 @@ ErrorInformation &ErrorInformation::operator=(const ErrorInformation &toAssign)
     this->errorMessage = toAssign.errorMessage;
     this->isThereAnError = toAssign.isThereAnError;
     this->errorNumber = toAssign.errorNumber;
+
+    return *this;
 }
 
 LPCWSTR ErrorInformation::Print()
