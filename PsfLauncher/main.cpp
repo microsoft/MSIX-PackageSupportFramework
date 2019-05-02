@@ -70,18 +70,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 
-    //Launch monitor if we are using one.
-    auto monitor = PSFQueryAppMonitorConfig();
-    if (monitor != nullptr)
-    {
-        ErrorInformation error = GetAndLaunchMonitor(monitor, packageRoot, cmdShow, dirStr);
-
-        if (error.IsThereAnError())
-        {
-            ::PSFReportError(error.Print());
-        }
-    }
-
+    ErrorInformation error;
     bool isPowershellInstalled = CheckIfPowerShellIsInstalled();
     //Launch the starting powershell script if we are using one.
     auto startScriptInformation = PSFQueryStartScriptInfo();
@@ -90,52 +79,56 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         if (!isPowershellInstalled)
         {
             ::PSFReportError(L"Powershell is not installed.  Please install powershell to run scripts in PSF");
+            return E_APPLICATION_NOT_REGISTERED;
         }
 
-        ErrorInformation error = RunScript(startScriptInformation, packageRoot, dirStr, cmdShow);
+        error = RunScript(startScriptInformation, packageRoot, dirStr, cmdShow);
 
         if (error.IsThereAnError())
         {
             ::PSFReportError(error.Print());
+            return error.GetErrorNumber();
         }
     }
 
-    //Launch underlying application.
-    auto exeName = appConfig->get("executable").as_string().wide();
-    auto exePath = packageRoot / exeName;
-    auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
-    // Allow arguments to be specified in config.json now also.
-    std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
-    if (check_suffix_if(exeName, L".exe"_isv))
+    //If we get here we know that starting script did NOT encounter an error
+    //run the monitor.
+    //Launch monitor if we are using one.
+    auto monitor = PSFQueryAppMonitorConfig();
+    if (monitor != nullptr)
     {
-        std::wstring workingDirectory;
-
-        if (dirStr)
-        {
-            workingDirectory = (packageRoot / dirStr).native();
-        }
-        
-        ExecutionInformation execInfo;
-        execInfo.ApplicationName = exePath.c_str();
-        execInfo.CommandLine = cmdLine;
-
-        auto currentDirectory = (packageRoot / dirStr);
-        execInfo.CurrentDirectory = currentDirectory.c_str();
-        ErrorInformation error = StartProcess(execInfo, cmdShow, false);
-        error.AddExeName(exeName);
-
-        if (error.IsThereAnError())
-        {
-            ::PSFReportError(error.Print());
-        }
+        error = GetAndLaunchMonitor(monitor, packageRoot, cmdShow, dirStr);
     }
-    else
-    {
-        ErrorInformation error = StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
 
-        if (error.IsThereAnError())
+    if (!error.IsThereAnError())
+    {
+        //Launch underlying application.
+        auto exeName = appConfig->get("executable").as_string().wide();
+        auto exePath = packageRoot / exeName;
+        auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+        // Allow arguments to be specified in config.json now also.
+        std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
+        if (check_suffix_if(exeName, L".exe"_isv))
         {
-            ::PSFReportError(error.Print());
+            std::wstring workingDirectory;
+
+            if (dirStr)
+            {
+                workingDirectory = (packageRoot / dirStr).native();
+            }
+
+            ExecutionInformation execInfo;
+            execInfo.ApplicationName = exePath.c_str();
+            execInfo.CommandLine = cmdLine;
+
+            auto currentDirectory = (packageRoot / dirStr);
+            execInfo.CurrentDirectory = currentDirectory.c_str();
+            error = StartProcess(execInfo, cmdShow, false);
+            error.AddExeName(exeName);
+        }
+        else
+        {
+            error = StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
         }
     }
 
@@ -143,12 +136,19 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto endScriptInformation = PSFQueryEndScriptInfo();
     if (endScriptInformation)
     {
-        ErrorInformation error = RunScript(startScriptInformation, packageRoot, dirStr, cmdShow);
+        ErrorInformation endingScriptError = RunScript(startScriptInformation, packageRoot, dirStr, cmdShow);
         error.AddExeName(L"Powershell.exe");
 
+        //If there is an existing error from Monitor or the packaged exe
         if (error.IsThereAnError())
         {
             ::PSFReportError(error.Print());
+            return error.GetErrorNumber();
+        }
+        else if (endingScriptError.IsThereAnError())
+        {
+            ::PSFReportError(endingScriptError.Print());
+            return endingScriptError.GetErrorNumber();
         }
     }
 
@@ -198,7 +198,7 @@ ErrorInformation RunScript(const psf::json_object * scriptInformation, std::file
     else
     {
         std::wstring errorMessage = L"The powershell file ";
-        errorMessage.append(scriptPath);
+        errorMessage.append(currentDirectory / powershellScriptPath);
         errorMessage.append(L" can't be found");
         ErrorInformation error(errorMessage, ERROR_FILE_NOT_FOUND);
 
