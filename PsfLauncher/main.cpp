@@ -162,19 +162,15 @@ catch (...)
 
 ErrorInformation RunScript(const psf::json_object * scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
 {
-    std::wstring scriptPath = scriptInformation->get("scriptPath").as_string().wide();
-    auto scriptArguments = scriptInformation->get("scriptArguments").as_string().wide();
-    auto currentDirectory = (packageRoot / dirStr);
-
-    //RunInAppEnviorment is optional.
-    auto runInAppEnviormentJObject = scriptInformation->try_get("runInAppEnviorment");
-    auto runInAppEnviorment = false;
-
-    if (runInAppEnviormentJObject)
+    //Script arguments are optional.
+    auto scriptArgumentsJObject = scriptInformation->try_get("scriptArguments");
+    std::wstring scriptArguments;
+    if (scriptArgumentsJObject)
     {
-        runInAppEnviorment = runInAppEnviormentJObject->as_string().wide();
+        scriptArguments = scriptArgumentsJObject->as_string().wide();
     }
 
+    std::wstring scriptPath = scriptInformation->get("scriptPath").as_string().wide();
     std::filesystem::path powershellScriptPath(scriptPath);
 
     std::wstring powershellCommandString(L"powershell.exe -file ");
@@ -185,6 +181,7 @@ ErrorInformation RunScript(const psf::json_object * scriptInformation, std::file
 
     Log("Looking for the script here: ");
     LogStringW("Script Path", scriptPath.c_str());
+    auto currentDirectory = (packageRoot / dirStr);
     auto doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
 
     if (doesFileExist)
@@ -193,7 +190,17 @@ ErrorInformation RunScript(const psf::json_object * scriptInformation, std::file
         execInfo.ApplicationName = nullptr;
         execInfo.CommandLine = powershellCommandString;
         execInfo.CurrentDirectory = currentDirectory.c_str();
-        return StartProcess(execInfo, cmdShow, runInAppEnviorment);
+
+        //RunInAppEnviorment is optional.
+        auto runInVirtualEnviormentJObject = scriptInformation->try_get("runInVirtualEnvironment");
+        auto runInVirtualEnviorment = false;
+
+        if (runInVirtualEnviormentJObject)
+        {
+            runInVirtualEnviorment = runInVirtualEnviormentJObject->as_string().wide();
+        }
+
+        return StartProcess(execInfo, cmdShow, runInVirtualEnviorment);
     }
     else
     {
