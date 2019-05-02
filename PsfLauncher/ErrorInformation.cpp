@@ -32,6 +32,19 @@ ErrorInformation::ErrorInformation(const ErrorInformation &toCopy)
     this->errorNumber = toCopy.errorNumber;
 }
 
+ErrorInformation &ErrorInformation::operator=(const ErrorInformation &toAssign)
+{
+    if (this == &toAssign)
+    {
+        return *this;
+    }
+
+    this->customMessage << toAssign.customMessage.str();
+    this->errorMessage = toAssign.errorMessage;
+    this->isThereAnError = toAssign.isThereAnError;
+    this->errorNumber = toAssign.errorNumber;
+}
+
 LPCWSTR ErrorInformation::Print()
 {
     this->customMessage << L"Message: " << this->errorMessage << "\r\n";
@@ -48,6 +61,11 @@ ErrorInformation::~ErrorInformation()
 bool ErrorInformation::IsThereAnError()
 {
     return this->isThereAnError;
+}
+
+DWORD ErrorInformation::GetErrorNumber()
+{
+    return this->errorNumber;
 }
 
 void ErrorInformation::AddExeName(std::wstring exeNameToAdd)

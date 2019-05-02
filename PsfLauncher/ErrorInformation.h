@@ -11,9 +11,11 @@ public:
     ErrorInformation(std::wstring customMessage, DWORD errorNumber, std::wstring exeName);
     ~ErrorInformation();
     ErrorInformation(const ErrorInformation &toCopy);
+    ErrorInformation& operator=(const ErrorInformation &toAssign);
 
     LPCWSTR Print();
     bool IsThereAnError();
+    DWORD GetErrorNumber();
     void AddExeName(std::wstring exeNameToAdd);
 
 private:
