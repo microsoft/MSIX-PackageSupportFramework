@@ -1,9 +1,25 @@
 {
     "applications": [
         {
-            "id": "Fixed",
+            "id": "PSTNoScripts",
             "executable": "PowershellScriptTest.exe"
-        }
+        },
+		{
+			"id": "PSTOnlyStart",
+            "executable": "PowershellScriptTest.exe"
+		},
+		{
+			"id": "PSTOnlyEnd",
+            "executable": "PowershellScriptTest.exe"
+		},
+		{
+			"id": "PSTBothStartingFirst",
+            "executable": "PowershellScriptTest.exe"
+		},
+		{
+			"id": "PSTBothEndingFirst",
+            "executable": "PowershellScriptTest.exe"
+		}
     ],
     "processes": [
         {
