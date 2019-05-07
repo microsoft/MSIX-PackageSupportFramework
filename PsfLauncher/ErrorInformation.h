@@ -13,7 +13,7 @@ public:
     ErrorInformation(const ErrorInformation &toCopy);
     ErrorInformation& operator=(const ErrorInformation &toAssign);
 
-    LPCWSTR Print();
+    std::wstring Print();
     bool IsThereAnError();
     DWORD GetErrorNumber();
     void AddExeName(std::wstring exeNameToAdd);

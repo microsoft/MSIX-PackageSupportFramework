@@ -67,6 +67,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
     auto exeArgs = appConfig->try_get("arguments");
 
+    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 
@@ -86,7 +87,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
 
         if (error.IsThereAnError())
         {
-            ::PSFReportError(error.Print());
+            ::PSFReportError(error.Print().c_str());
             return error.GetErrorNumber();
         }
     }
@@ -142,12 +143,12 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         //If there is an existing error from Monitor or the packaged exe
         if (error.IsThereAnError())
         {
-            ::PSFReportError(error.Print());
+            //::PSFReportError(error.Print());
             return error.GetErrorNumber();
         }
         else if (endingScriptError.IsThereAnError())
         {
-            ::PSFReportError(endingScriptError.Print());
+            //::PSFReportError(endingScriptError.Print());
             return endingScriptError.GetErrorNumber();
         }
     }
@@ -489,7 +490,7 @@ bool CheckIfPowerShellIsInstalled()
     if (createResult != ERROR_SUCCESS)
     {
         ErrorInformation error(L"Error with getting the key to see if powershell is installed. ", createResult);
-        ::PSFReportError(error.Print());
+        //::PSFReportError(error.Print());
     }
 
     DWORD valueFromRegistry = 0;
@@ -500,7 +501,7 @@ bool CheckIfPowerShellIsInstalled()
     if (getResult != ERROR_SUCCESS)
     {
         ErrorInformation error(L"Error with querying the key to see if powershell is installed. ", createResult);
-        ::PSFReportError(error.Print());
+        //::PSFReportError(error.Print());
     }
 
     return valueFromRegistry;

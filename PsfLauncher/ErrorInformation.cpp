@@ -47,12 +47,12 @@ ErrorInformation &ErrorInformation::operator=(const ErrorInformation &toAssign)
     return *this;
 }
 
-LPCWSTR ErrorInformation::Print()
+std::wstring ErrorInformation::Print()
 {
-    this->customMessage << L"Message: " << this->errorMessage << "\r\n";
+    this->customMessage << L"\r\nMessage: " << this->errorMessage << "\r\n";
     this->customMessage << L"Error number: " << this->errorNumber << "\r\n";
 
-    return this->customMessage.str().c_str();
+    return this->customMessage.str();
 }
 
 
