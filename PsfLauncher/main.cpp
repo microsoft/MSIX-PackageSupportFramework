@@ -56,6 +56,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 
 int launcher_main(PWSTR args, int cmdShow) noexcept try
 {
+    //TEST
+    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
     Log("\tIn Launcher_main()");
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     if (!appConfig)
@@ -136,7 +138,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto endScriptInformation = PSFQueryEndScriptInfo();
     if (endScriptInformation)
     {
-        ErrorInformation endingScriptError = RunScript(startScriptInformation, packageRoot, dirStr, cmdShow);
+        ErrorInformation endingScriptError = RunScript(endScriptInformation, packageRoot, dirStr, cmdShow);
         error.AddExeName(L"Powershell.exe");
 
         //If there is an existing error from Monitor or the packaged exe

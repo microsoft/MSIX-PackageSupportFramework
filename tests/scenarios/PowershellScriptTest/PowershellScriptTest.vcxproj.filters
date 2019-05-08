@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
+    <None Include="SayHello.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
