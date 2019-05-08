@@ -1,0 +1,78 @@
+{
+    "applications": [
+        {
+            "id": "PSTNoScripts",
+            "executable": "PowershellScriptTest.exe"
+        },
+		{
+			"id": "PSTOnlyStart",
+            "executable": "PowershellScriptTest.exe",
+			"startScript":
+			{
+				"scriptPath": "SayHello.ps1"
+			}
+		},
+		{
+			"id": "PSTOnlyEnd",
+            "executable": "PowershellScriptTest.exe",
+			"endScript" :
+			{
+				"scriptPath" : "SayHi.ps1"
+			}
+		},
+		{
+			"id": "PSTBothStartingFirst",
+            "executable": "PowershellScriptTest.exe",
+			"startScript" :
+			{
+				"scriptPath": "SayHello.ps1"
+			},
+			"endScript" :
+			{
+				"scriptPath": "SayHi.ps1"
+			}
+		},
+		{
+			"id": "PSTBothEndingFirst",
+            "executable": "PowershellScriptTest.exe",
+			"endScript" :
+			{
+				"scriptPath": "SayHi.ps1"
+			},
+			"startScript" :
+			{
+				"scriptPath": "SayHello.ps1"
+			}
+		},
+		{
+			"id" : "PSTScriptWithArg",
+			"executable": "PowershellScriptTest.exe",
+			"startScript" :
+			{
+				"scriptPath" : "SayWithArgument.ps1",
+				"scriptArguments": "Start"
+			},
+			"endScript" :
+			{
+				"scriptPath" : "SayWithArgument.ps1",
+				"scriptArguments": "End"
+			}
+		}
+    ],
+    "processes": [
+        {
+            "executable": "PowershellScriptTest*"
+        },
+        {
+            "executable": ".*",
+            "fixups": [
+                {
+                    "dll": "MultiByteToWideCharTestFixup.dll"
+                },
+                {
+                    "dll": "CompositionTestFixup.dll"
+                }
+            ]
+        }
+    ]
+}

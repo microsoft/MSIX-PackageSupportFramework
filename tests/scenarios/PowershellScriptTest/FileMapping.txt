@@ -1,0 +1,15 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\..\${Architecture}${Configuration}\PsfLauncher${Bitness}.exe" "PsfLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\PsfRuntime${Bitness}.dll" "PsfRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\CompositionTestFixup${Bitness}.dll" "CompositionTestFixup${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\MultiByteToWideCharTestFixup${Bitness}.dll" "MultiByteToWideCharTestFixup${Bitness}.dll"
+"..\..\${Architecture}${Configuration}\PowershellScriptTest.exe" "PowershellScriptTest.exe"
+"..\..\${Architecture}${Configuration}\SayHello.ps1" "SayHello.ps1"
+"..\..\${Architecture}${Configuration}\SayHi.ps1" "SayHi.ps1"
+"..\..\${Architecture}${Configuration}\SayWithArgument.ps1" "SayWithArgument.ps1"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

@@ -19,40 +19,39 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ErrorInformation.cpp" />
-    <ClCompile Include="main.cpp">
-      <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
-      <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
-      <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
-      <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PsfRuntime\PsfRuntime.vcxproj">
-      <Project>{87cce0ac-a7fb-4a31-89d3-c0acdb315ee0}</Project>
-    </ProjectReference>
+    <None Include="readme.md" />
+	<Content Include="SayHello.ps1">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
+	<Content Include="SayHi.ps1">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
+	<Content Include="SayWithArgument.ps1">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
+    <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="PSFLauncherMetadata.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ErrorInformation.h" />
+    <Xml Include="AppxManifest.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{29EE27EF-A3A3-4B8F-8DA2-532A5C04BD9E}</ProjectGuid>
+    <ProjectGuid>{852E608E-F40B-4F51-B687-09B7F9DACB19}</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <SubSystem>Windows</SubSystem>
+    <SubSystem>Console</SubSystem>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <Import Project="$(MSBuildThisFileDirectory)\..\Fixups.props" />
+  <Import Project="$(MSBuildThisFileDirectory)\..\..\Common.Tests.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <Import Project="$(MSBuildThisFileDirectory)\..\Common.Build.props" />
+  <Import Project="$(MSBuildThisFileDirectory)\..\..\Common.Tests.Build.props" />
   <ItemDefinitionGroup>
     <!-- For some reason Visual Studio ignores ItemDefinitionGroup settings from props files if there's no
          ItemDefinitionGroup in the vcxproj, even if it's empty... -->

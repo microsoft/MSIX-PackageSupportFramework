@@ -12,10 +12,14 @@
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="ErrorInformation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="PSFLauncherMetadata.xml">
       <Filter>src</Filter>
     </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ErrorInformation.h" />
   </ItemGroup>
 </Project>
