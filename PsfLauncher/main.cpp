@@ -56,8 +56,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 
 int launcher_main(PWSTR args, int cmdShow) noexcept try
 {
-    //TEST
-    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
     Log("\tIn Launcher_main()");
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     if (!appConfig)
