@@ -41,7 +41,7 @@ Both nodes use the same three keys.
 | runInVirtualEnviorment | boolean    | False (defaults to true) |
  
  #### Key descriptions
- 1. scriptPath: The path to the script to run, including the name and extension.  This path is appended to the workingDirectory path.
+ 1. scriptPath: The path to the script to run, including the name and extension.  THe Path starts from the root directory of the application.
  2. scriptArguments: Space delimited argument list.  Format this the same way you would for a normal powershell application.  This string gets appended to scriptPath to make a valid powershell.exe call.
  3. runInVirtualEnviorment: If you want the script to run in the same virtual enviorment that the packaged exe runs in.
  
