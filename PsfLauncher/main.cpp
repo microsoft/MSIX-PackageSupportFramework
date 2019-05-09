@@ -38,7 +38,7 @@ struct ExecutionInformation
 
 //Forward declarations
 ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInAppContainer);
-int launcher_main(PWSTR args, int cmdShow) noexcept;
+int launcher_main(PCWSTR args, int cmdShow) noexcept;
 ErrorInformation RunScript(const psf::json_object * scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
 ErrorInformation GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin, int cmdShow, LPCWSTR dirStr);
@@ -54,7 +54,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
     return launcher_main(args, cmdShow);
 }
 
-int launcher_main(PWSTR args, int cmdShow) noexcept try
+int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
     Log("\tIn Launcher_main()");
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
