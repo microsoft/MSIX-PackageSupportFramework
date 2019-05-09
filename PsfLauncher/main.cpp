@@ -39,13 +39,13 @@ struct ExecutionInformation
 //Forward declarations
 ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInAppContainer);
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
-ErrorInformation RunScript(const psf::json_object * scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
-ErrorInformation GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
-ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
+ErrorInformation RunScript(const psf::json_object *scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
+ErrorInformation GetAndLaunchMonitor(const psf::json_object *monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
+ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix);
-void LogStringW(const char* name, const wchar_t* value);
-void LogString(const char* name, const char* value);
-void Log(const char* fmt, ...);
+void LogString(const char name[], const wchar_t value[]);
+void LogString(const char name[], const char value[]);
+void Log(const char fmt[], ...);
 ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
 bool CheckIfPowerShellIsInstalled();
 
@@ -160,7 +160,7 @@ catch (...)
     return win32_from_caught_exception();
 }
 
-ErrorInformation RunScript(const psf::json_object * scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
+ErrorInformation RunScript(const psf::json_object *scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
 {
     //Script arguments are optional.
     auto scriptArgumentsJObject = scriptInformation->try_get("scriptArguments");
@@ -180,7 +180,7 @@ ErrorInformation RunScript(const psf::json_object * scriptInformation, std::file
     powershellCommandString.append(scriptArguments);
 
     Log("Looking for the script here: ");
-    LogStringW("Script Path", scriptPath.c_str());
+    LogString("Script Path", scriptPath.c_str());
     auto currentDirectory = (packageRoot / dirStr);
     auto doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
 
@@ -213,7 +213,7 @@ ErrorInformation RunScript(const psf::json_object * scriptInformation, std::file
     }
 }
 
-ErrorInformation GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
+ErrorInformation GetAndLaunchMonitor(const psf::json_object *monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
 {
     bool asadmin = false;
     bool wait = false;
@@ -231,7 +231,7 @@ ErrorInformation GetAndLaunchMonitor(const psf::json_object * monitor, std::file
     return error;
 }
 
-ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr)
+ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr)
 {
     std::wstring cmd = L"\"" + (packageRoot / executable).native() + L"\"";
 
@@ -446,7 +446,7 @@ static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix)
     return false;
 }
 
-void Log(const char* fmt, ...)
+void Log(const char fmt[], ...)
 {
     std::string str;
     str.resize(256);
@@ -471,11 +471,11 @@ void Log(const char* fmt, ...)
     str.resize(count);
     ::OutputDebugStringA(str.c_str());
 }
-void LogString(const char* name, const char* value)
+void LogString(const char name[], const char value[])
 {
     Log("\t%s=%s\n", name, value);
 }
-void LogStringW(const char* name, const wchar_t* value)
+void LogString(const char name[], const wchar_t value[])
 {
     Log("\t%s=%ls\n", name, value);
 }
