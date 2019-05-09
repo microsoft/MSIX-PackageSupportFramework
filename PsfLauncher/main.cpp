@@ -41,7 +41,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
 ErrorInformation RunScript(const psf::json_object * scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
 ErrorInformation GetAndLaunchMonitor(const psf::json_object * monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
-ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin, int cmdShow, LPCWSTR dirStr);
+ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix);
 void LogStringW(const char* name, const wchar_t* value);
 void LogString(const char* name, const char* value);
@@ -231,11 +231,11 @@ ErrorInformation GetAndLaunchMonitor(const psf::json_object * monitor, std::file
     return error;
 }
 
-ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin, int cmdShow, LPCWSTR dirStr)
+ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr)
 {
     std::wstring cmd = L"\"" + (packageRoot / executable).native() + L"\"";
 
-    if (asadmin)
+    if (asAdmin)
     {
         // This happens when the program is requested for elevation.
         SHELLEXECUTEINFOW shExInfo = { 0 };
