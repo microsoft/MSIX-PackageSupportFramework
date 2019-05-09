@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <iostream>
 #include "utilities.h"
+
 class ErrorInformation
 {
 public:
