@@ -25,10 +25,9 @@ This branch has the latest code. Keep in mind that there might be features in th
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
 ## Script support
-IT admins need a way to configure an enviorment prior to the package exe running. PSF allows one powershell script to be ran before an exe runs, and one powershell script to be ran after the exe runs.
+PSF allows one powershell script to be ran before an exe runs, and one powershell script to be ran after the exe runs.
 
-Each exe defined in the application manifest can have their own scripts.  This means that different packaged exe's can run different scripts.
-Additionally each script is optional.  You can have a script that runs after the pacakged exe finishes, but no script that runs before.
+Each exe defined in the application manifest can have their own scripts.
 
 ### Configuration changes
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
