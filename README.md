@@ -86,7 +86,7 @@ Here is a sample configuration using two different exes.
 	  {
 		"scriptPath": "RunMePlease.ps1",
 		"scriptArguments": "ThisIsMe.txt",
-		"runInAppEnviorment": "true"
+		"runInVirtualEnvironment": "true"
 	  },
 	  "endScript":
 	  {
@@ -102,7 +102,7 @@ Here is a sample configuration using two different exes.
 	  {
 		"scriptPath": "CPPStart.ps1",
 		"scriptArguments": "ThisIsMe.txt",
-		"runInAppEnviorment": "true"
+		"runInVirtualEnvironment": "true"
 	  },
 	  "endScript":
 	  {
