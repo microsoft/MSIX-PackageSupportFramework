@@ -50,7 +50,7 @@ void Log(const char fmt[], ...) noexcept;
 ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow) noexcept;
 ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexcept;
 
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
+int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow) noexcept
 {
     return launcher_main(args, cmdShow);
 }
