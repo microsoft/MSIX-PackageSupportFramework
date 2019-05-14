@@ -33,16 +33,16 @@ Each exe defined in the application manifest can have their own scripts.
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
 Both objects use the same three keys.
 
-| Key name               | Value type | Required?             |
-|------------------------|------------|-----------------------|
-| scriptPath             | string     | Yes                   |
-| scriptArguments        | string     | No                    |
-| runInVirtualEnviorment | boolean    | No (defaults to true) |
+| Key name                | Value type | Required?             |
+|-------------------------|------------|-----------------------|
+| scriptPath              | string     | Yes                   |
+| scriptArguments         | string     | No                    |
+| runInVirtualEnvironment | boolean    | No (defaults to true) |
  
  #### Key descriptions
  1. scriptPath: The path to the script including the name and extension.  The Path starts from the root directory of the application.
  2. scriptArguments: Space delimited argument list.  The format is the same for a powershell script call.  This string gets appended to scriptPath to make a valid powershell.exe call.
- 3. runInVirtualEnviorment: If the script should run in the same virtual enviorment that the packaged exe runs in.
+ 3. runInVirtualEnvironment: If the script should run in the same virtual enviorment that the packaged exe runs in.
  
 ### Flow of PSF with scripts
 Below is the flow of PSF with scripting support.  
