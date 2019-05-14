@@ -19,6 +19,11 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ErrorInformation.h" />
+    <ClInclude Include="ErrorInformation.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="UniqueHkey.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
