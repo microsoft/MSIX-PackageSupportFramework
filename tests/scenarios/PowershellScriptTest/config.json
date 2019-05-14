@@ -57,6 +57,22 @@
 				"scriptPath" : "SayWithArgument.ps1",
 				"scriptArguments": "End"
 			}
+		},
+		{
+			"id" : "PSTScriptInVirtual",
+			"executable": "PowershellScriptTest.exe",
+			"startScript" :
+			{
+				"scriptPath" : "SayWithArgument.ps1",
+				"scriptArguments": "Start",
+				"runInVirtualEnvironment": "true"
+			},
+			"endScript" :
+			{
+				"scriptPath" : "SayWithArgument.ps1",
+				"scriptArguments": "End",
+				"runInVirtualEnvironment": "true"
+			}
 		}
     ],
     "processes": [
