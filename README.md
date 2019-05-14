@@ -25,47 +25,28 @@ This branch has the latest code. Keep in mind that there might be features in th
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
 ## Script support
-IT admins need a way to configure an enviorment prior to the package exe running in PSF to set up things that they can't set up from the exe in the virtual enviorment.  Things like: Mapping a drive, checking for a license, or configuring a database.
-To help IT admins in this area PSF allows the running of a powershell script before the packaged exe runs and one powershell script after the packaged exe finishes.  This will allow IT admins to set up and tear down anything they want prior to the packaged exe running.
+PSF allows one powershell script to be ran before an exe runs, and one powershell script to be ran after the exe runs.
 
-Each exe defined in the application manifest can have their own scripts.  This means that different packaged exe's can run different scripts.  Additionally each script is optional.  You can have a script that runs after the pacakged exe finishes, but no script that runs before.
+Each exe defined in the application manifest can have their own scripts.
 
 ### Configuration changes
-In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add a node called "startScript".  To tell PSF to run a script after the packaged exe finishes add a node called "endScript".
-Both nodes use the same three keys.
+In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
+Both objects use the same three keys.
 
-| Key name               | Value type | Required?                |
-|------------------------|------------|--------------------------|
-| scriptPath             | string     | True                     |
-| scriptArguments        | string     | False                    |
-| runInVirtualEnviorment | boolean    | False (defaults to true) |
+| Key name                | Value type | Required?             |
+|-------------------------|------------|-----------------------|
+| scriptPath              | string     | Yes                   |
+| scriptArguments         | string     | No                    |
+| runInVirtualEnvironment | boolean    | No (defaults to true) |
  
  #### Key descriptions
- 1. scriptPath: The path to the script to run, including the name and extension.  THe Path starts from the root directory of the application.
- 2. scriptArguments: Space delimited argument list.  Format this the same way you would for a normal powershell application.  This string gets appended to scriptPath to make a valid powershell.exe call.
- 3. runInVirtualEnviorment: If you want the script to run in the same virtual enviorment that the packaged exe runs in.
+ 1. scriptPath: The path to the script including the name and extension.  The Path starts from the root directory of the application.
+ 2. scriptArguments: Space delimited argument list.  The format is the same for a powershell script call.  This string gets appended to scriptPath to make a valid powershell.exe call.
+ 3. runInVirtualEnvironment: If the script should run in the same virtual enviorment that the packaged exe runs in.
  
 ### Flow of PSF with scripts
-With the addition of a starting script and ending script along with the monitor and packaged exe the flow of when the scripts run, along with what happens where there is an error needs to be specified.  
+Below is the flow of PSF with scripting support.  
 The flow from beginning to end is [Starting Script] -> [Monitor] -> [Packaged exe] -> [Ending script]
-Below is how PSf will act upon errors in each step.
-
-#### Starting script
-The starting script will start and finish before the monitor and packaged exe runs.
-If there is an error in the script, code will still execute when the script exits.  If you want to see any errors that happened in the script you will either need to pause the script or log all output to a log file.
-If there is an error starting the script no more code will run and PSF will exit.
-If powershell is not installed and a starting script is specified no code will run and PSF will exit.
-
-#### Monitor
-If the exe used to monitor PSF fails the ending script and packaged exe will still run.
-
-#### Packaged exe
-If the packaged exe has an error the ending script will still run.
-
-#### Ending Script
-The ending script will run after the packaged exe finishes.  No matter if there was an error or not.  This is to allow the ending script to clean up the enviorment.
-If there is an error in the script, code will still execute when the script exits.  If you want to see any errors that happened in the script you will either need to pause the script or log all output to a log file.
-If there is an error starting the script an error will be thrown and code execution will stop.
 
 
 ### Visual representation of the flow
@@ -131,7 +112,7 @@ Here is a sample configuration using two different exes.
     }
   ],
   "processes": [
-    ..(taken out for brevity)
+    ...(taken out for brevity)
   ]
 }
 </pre>
