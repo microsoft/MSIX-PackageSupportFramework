@@ -42,7 +42,6 @@ PSFAPI const psf::json_value* __stdcall PSFQueryConfigRoot() noexcept;
 PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wchar_t* applicationId, bool verbose) noexcept;
 PSFAPI const psf::json_object* __stdcall PSFQueryCurrentAppLaunchConfig(bool verbose) noexcept;
 PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept;
-PSFAPI const psf::json_object* __stdcall PSFQueryCurrentAppLaunchConfig(bool verbose) noexcept;
 PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept;
 PSFAPI const psf::json_object* __stdcall PSFQueryEndScriptInfo() noexcept;
 
