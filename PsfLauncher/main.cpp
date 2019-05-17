@@ -18,15 +18,15 @@
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
-	g_Log_ETW_ComponentProvider,
-	"Microsoft.Windows.PSFRuntime",
-	(0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
-	TraceLoggingOptionMicrosoftTelemetry());
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 using namespace std::literals;
 
 // Forward declaration
-void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
+void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t* executable, const wchar_t* arguments, bool wait, bool asadmin);
 void LogApplicationAndProcessesCollection();
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix)
@@ -89,7 +89,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     auto monitor = PSFQueryAppMonitorConfig();
 
-	LogApplicationAndProcessesCollection();
+    LogApplicationAndProcessesCollection();
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
@@ -98,7 +98,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     // Allow arguments to be specified in config.json now also.
     std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
 
-    if (monitor != nullptr )
+    if (monitor != nullptr)
     {
         // A monitor is an optional additional program to run, such as the PSFShimMonitor. This program is run prior to the "main application".		
         bool asadmin = false;
@@ -120,7 +120,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
     std::wstring wd;
     if (dirStr == nullptr)
     {
-        std::wstring wdwd =  exePath.parent_path().native() ; // force working directory to exe's folder
+        std::wstring wdwd = exePath.parent_path().native(); // force working directory to exe's folder
         wdwd.resize(wdwd.size() - 1); // remove trailing slash
         wd = L"\"" + wdwd + L"\"";
     }
@@ -129,7 +129,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         // Use requested path, relative to the package root folder.
         std::wstring wdwd = (packageRoot / dirStr).native();
         wdwd.resize(wdwd.size() - 1); // remove trailing slash
-        wd =  wdwd ;
+        wd = wdwd;
     }
     std::wstring quotedapp = exePath.native(); // L"\"" + exePath.native() + L"\"";
 
@@ -199,7 +199,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
         shex.lpParameters = exeArgString;
         shex.lpDirectory = dirStr ? (packageRoot / dirStr).c_str() : nullptr;
         shex.nShow = static_cast<WORD>(cmdShow);
-        
+
 
         Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
         if (!ShellExecuteEx(&shex))
@@ -214,7 +214,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
             return err;
         }
         else
-        { 
+        {
             // Propagate exit code to caller, in case they care
             switch (::WaitForSingleObject(shex.hProcess, INFINITE))
             {
@@ -228,7 +228,7 @@ int launcher_main(PWSTR args, int cmdShow) noexcept try
 
             default:
                 return ERROR_INVALID_HANDLE;
-            }			
+            }
         }
     }
 }
@@ -240,7 +240,7 @@ catch (...)
 }
 
 
-void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin )
+void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t* executable, const wchar_t* arguments, bool wait, bool asadmin)
 {
     std::wstring cmd = L"\"" + (packageRoot / executable).native() + L"\"";
 
@@ -252,7 +252,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
         if (wait)
             shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
         else
-            shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS|SEE_MASK_WAITFORINPUTIDLE;  // make sure we wait a bit for the monitor to be running before continuing on.
+            shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_WAITFORINPUTIDLE;  // make sure we wait a bit for the monitor to be running before continuing on.
         shExInfo.hwnd = 0;
         shExInfo.lpVerb = L"runas";                // Operation to perform
         shExInfo.lpFile = cmd.c_str();       // Application to start    
@@ -260,7 +260,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
         shExInfo.lpDirectory = 0;
         shExInfo.nShow = 1;
         shExInfo.hInstApp = 0;
-        
+
 
         if (ShellExecuteEx(&shExInfo))
         {
@@ -294,7 +294,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
 
         if (!::CreateProcessW(
             nullptr, //quotedapp.data(),
-            (wchar_t *)cmdarg.c_str(),
+            (wchar_t*)cmdarg.c_str(),
             nullptr, nullptr, // Process/ThreadAttributes
             true, // InheritHandles
             0, // CreationFlags
@@ -318,86 +318,86 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
 
 void LogApplicationAndProcessesCollection()
 {
-	auto configRoot = PSFQueryConfigRoot();
+    auto configRoot = PSFQueryConfigRoot();
 
-	if (auto applications = configRoot->as_object().try_get("applications"))
-	{
-		for (auto& applicationsConfig : applications->as_array())
-		{
-			auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
-			auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
-			TraceLoggingWrite(
-				g_Log_ETW_ComponentProvider,
-				"ApplicationsConfigdata",
-				TraceLoggingWideString(exeStr, "applications_executable"),
-				TraceLoggingWideString(idStr, "applications_id"),
-				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-		}
-	}
+    if (auto applications = configRoot->as_object().try_get("applications"))
+    {
+        for (auto& applicationsConfig : applications->as_array())
+        {
+            auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
+            auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
+            TraceLoggingWrite(
+                g_Log_ETW_ComponentProvider,
+                "ApplicationsConfigdata",
+                TraceLoggingWideString(exeStr, "applications_executable"),
+                TraceLoggingWideString(idStr, "applications_id"),
+                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+        }
+    }
 
-	if (auto processes = configRoot->as_object().try_get("processes"))
-	{
-		for (auto& processConfig : processes->as_array())
-		{
-			auto exeStr = processConfig.as_object().get("executable").as_string().wide();
-			TraceLoggingWrite(
-				g_Log_ETW_ComponentProvider,
-				"ProcessesExecutableConfigdata",
-				TraceLoggingWideString(exeStr, "processes_executable"),
-				TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-				TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-				TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+    if (auto processes = configRoot->as_object().try_get("processes"))
+    {
+        for (auto& processConfig : processes->as_array())
+        {
+            auto exeStr = processConfig.as_object().get("executable").as_string().wide();
+            TraceLoggingWrite(
+                g_Log_ETW_ComponentProvider,
+                "ProcessesExecutableConfigdata",
+                TraceLoggingWideString(exeStr, "processes_executable"),
+                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
 
-			if (auto fixups = processConfig.as_object().try_get("fixups"))
-			{
-				for (auto& fixupConfig : fixups->as_array())
-				{
-					auto dllStr = fixupConfig.as_object().try_get("dll")->as_string().wide();
-					TraceLoggingWrite(
-						g_Log_ETW_ComponentProvider,
-						"ProcessesFixUpConfigdata",
-						TraceLoggingWideString(dllStr, "processes_fixups"),
-						TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-						TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-						TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));					
-				}
-			}
-		}
-	}
+            if (auto fixups = processConfig.as_object().try_get("fixups"))
+            {
+                for (auto& fixupConfig : fixups->as_array())
+                {
+                    auto dllStr = fixupConfig.as_object().try_get("dll")->as_string().wide();
+                    TraceLoggingWrite(
+                        g_Log_ETW_ComponentProvider,
+                        "ProcessesFixUpConfigdata",
+                        TraceLoggingWideString(dllStr, "processes_fixups"),
+                        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                        TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+                }
+            }
+        }
+    }
 }
 
 void LogJsonConfig()
 {
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-	auto file = _wfopen((std::filesystem::path(PSFQueryPackageRootPath()) / L"config.json").c_str(), L"rb, ccs=UTF-8");
-	if (file)
-	{
-		fseek(file, 0, SEEK_END);
-		auto size = ftell(file);
-		auto fileContents = std::make_unique<char[]>(static_cast<int>(size + 1));
-		rewind(file);
-		fread(fileContents.get(), sizeof(char), size, file);
-		fileContents[size] = 0;
+    auto file = _wfopen((std::filesystem::path(PSFQueryPackageRootPath()) / L"config.json").c_str(), L"rb, ccs=UTF-8");
+    if (file)
+    {
+        fseek(file, 0, SEEK_END);
+        auto size = ftell(file);
+        auto fileContents = std::make_unique<char[]>(static_cast<int>(size + 1));
+        rewind(file);
+        fread(fileContents.get(), sizeof(char), size, file);
+        fileContents[size] = 0;
 
 
-		TraceLoggingWrite(
-			g_Log_ETW_ComponentProvider,
-			"JsonConfig",
-			TraceLoggingValue(fileContents.get(), "config_data"),
-			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-			TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-		fclose(file);
-	}
+        TraceLoggingWrite(
+            g_Log_ETW_ComponentProvider,
+            "JsonConfig",
+            TraceLoggingValue(fileContents.get(), "config_data"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+        fclose(file);
+    }
 }
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 {
-	TraceLoggingRegister(g_Log_ETW_ComponentProvider);
-	LogJsonConfig();
-	int result = launcher_main(args, cmdShow);
-	TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
-	return result;
+    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+    LogJsonConfig();
+    int result = launcher_main(args, cmdShow);
+    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+    return result;
 }

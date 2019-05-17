@@ -18,10 +18,10 @@
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
-	g_Log_ETW_ComponentProvider,
-	"Microsoft.Windows.PSFRuntime",
-	(0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
-	TraceLoggingOptionMicrosoftTelemetry());
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 using namespace std::literals;
 
@@ -170,86 +170,84 @@ std::vector<path_redirection_spec> g_redirectionSpecs;
 
 void InitializeConfiguration()
 {
-	TraceLoggingRegister(g_Log_ETW_ComponentProvider);
-	std::wstringstream traceDataStream;
+    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+    std::wstringstream traceDataStream;
 
-	if (auto rootConfig = ::PSFQueryCurrentDllConfig())
-	{
-		auto& rootObject = rootConfig->as_object();
-		if (auto pathsValue = rootObject.try_get("redirectedPaths"))
-		{
-			traceDataStream << " redirectedPaths : \n";
-			auto& redirectedPathsObject = pathsValue->as_object();
-			auto initializeRedirection = [&traceDataStream](const std::filesystem::path& basePath, const psf::json_array& specs, bool traceOnly=false)
-			{
-				for (auto& spec : specs)
-				{
-					auto& specObject = spec.as_object();
-					auto path = psf::remove_trailing_path_separators(basePath / specObject.get("base").as_string().wstring());
-					traceDataStream << " base : " << specObject.get("base").as_string().wide();
-					traceDataStream << " patterns : ";
-					for (auto& pattern : specObject.get("patterns").as_array())
-					{
-						auto patternString = pattern.as_string().wstring();
-						traceDataStream << pattern.as_string().wide();
-						if (!traceOnly)
-						{ 
-							g_redirectionSpecs.emplace_back();
-							g_redirectionSpecs.back().base_path = path;
-							g_redirectionSpecs.back().pattern.assign(patternString.data(), patternString.length());
-						}
-					}
-				}
-			};
+    if (auto rootConfig = ::PSFQueryCurrentDllConfig())
+    {
+        auto& rootObject = rootConfig->as_object();
+        if (auto pathsValue = rootObject.try_get("redirectedPaths"))
+        {
+            traceDataStream << " redirectedPaths : \n";
+            auto& redirectedPathsObject = pathsValue->as_object();
+            auto initializeRedirection = [&traceDataStream](const std::filesystem::path & basePath, const psf::json_array & specs, bool traceOnly = false)
+            {
+                for (auto& spec : specs)
+                {
+                    auto& specObject = spec.as_object();
+                    auto path = psf::remove_trailing_path_separators(basePath / specObject.get("base").as_string().wstring());
+                    traceDataStream << " base : " << specObject.get("base").as_string().wide();
+                    traceDataStream << " patterns : ";
+                    for (auto& pattern : specObject.get("patterns").as_array())
+                    {
+                        auto patternString = pattern.as_string().wstring();
+                        traceDataStream << pattern.as_string().wide();
+                        if (!traceOnly)
+                        {
+                            g_redirectionSpecs.emplace_back();
+                            g_redirectionSpecs.back().base_path = path;
+                            g_redirectionSpecs.back().pattern.assign(patternString.data(), patternString.length());
+                        }
+                    }
+                }
+            };
 
-			if (auto packageRelativeValue = redirectedPathsObject.try_get("packageRelative"))
-			{
-				traceDataStream << " packageRelative : \n";
-				initializeRedirection(g_packageRootPath, packageRelativeValue->as_array());
-			}
+            if (auto packageRelativeValue = redirectedPathsObject.try_get("packageRelative"))
+            {
+                traceDataStream << " packageRelative : \n";
+                initializeRedirection(g_packageRootPath, packageRelativeValue->as_array());
+            }
 
-			if (auto packageDriveRelativeValue = redirectedPathsObject.try_get("packageDriveRelative"))
-			{
-				traceDataStream << " packageDriveRelative : \n";
-				initializeRedirection(g_packageRootPath.root_name(), packageDriveRelativeValue->as_array());
-			}
+            if (auto packageDriveRelativeValue = redirectedPathsObject.try_get("packageDriveRelative"))
+            {
+                traceDataStream << " packageDriveRelative : \n";
+                initializeRedirection(g_packageRootPath.root_name(), packageDriveRelativeValue->as_array());
+            }
 
-			if (auto knownFoldersValue = redirectedPathsObject.try_get("knownFolders"))
-			{
-				traceDataStream << " knownFolders : \n";
-				for (auto& knownFolderValue : knownFoldersValue->as_array())
-				{
-					auto& knownFolderObject = knownFolderValue.as_object();
-					auto path = path_from_known_folder_string(knownFolderObject.get("id").as_string().wstring());
-					traceDataStream << " id : " << knownFolderObject.get("id").as_string().wide();
-					
-					traceDataStream << " relativePaths : \n";
-					initializeRedirection(path, knownFolderObject.get("relativePaths").as_array(), !path.empty());
-					
-					
-				}
-			}
-		}
+            if (auto knownFoldersValue = redirectedPathsObject.try_get("knownFolders"))
+            {
+                traceDataStream << " knownFolders : \n";
+                for (auto& knownFolderValue : knownFoldersValue->as_array())
+                {
+                    auto& knownFolderObject = knownFolderValue.as_object();
+                    auto path = path_from_known_folder_string(knownFolderObject.get("id").as_string().wstring());
+                    traceDataStream << " id : " << knownFolderObject.get("id").as_string().wide();
 
-		TraceLoggingWrite(
-			g_Log_ETW_ComponentProvider,
-			"FileRedirectionFixupConfigdata",
-			TraceLoggingWideString(traceDataStream.str().c_str(), "FileRedirectionFixupConfig"),
-			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-			TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-	}
+                    traceDataStream << " relativePaths : \n";
+                    initializeRedirection(path, knownFolderObject.get("relativePaths").as_array(), !path.empty());
+                }
+            }
+        }
 
-	TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+        TraceLoggingWrite(
+            g_Log_ETW_ComponentProvider,
+            "FileRedirectionFixupConfigdata",
+            TraceLoggingWideString(traceDataStream.str().c_str(), "FileRedirectionFixupConfig"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+    }
+
+    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
 }
 
-bool path_relative_to(const wchar_t* path, const std::filesystem::path& basePath)
+bool path_relative_to(const wchar_t* path, const std::filesystem::path & basePath)
 {
     return std::equal(basePath.native().begin(), basePath.native().end(), path, psf::path_compare{});
 }
 
 template <typename CharT>
-normalized_path NormalizePathImpl(const CharT* path)
+normalized_path NormalizePathImpl(const CharT * path)
 {
     normalized_path result;
 
@@ -381,7 +379,7 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
 /// <param name="deVirtualizedPath">The original path from the app</param>
 /// <param name="ensureDirectoryStructure">If true, the deVirtualizedPath will be appended to the allowed write location</param>
 /// <returns>The new absolute path.</returns>
-std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
+std::wstring RedirectedPath(const normalized_path & deVirtualizedPath, bool ensureDirectoryStructure)
 {
     //To prevent apps breaking on an upgrade we redirect writes to the package root path to
     //a path that contains the package family name and not the package full name.
@@ -428,7 +426,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 }
 
 template <typename CharT>
-static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags flags)
+static path_redirect_info ShouldRedirectImpl(const CharT * path, redirect_flags flags)
 {
     path_redirect_info result;
 
