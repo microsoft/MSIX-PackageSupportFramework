@@ -80,15 +80,7 @@
             "executable": "PowershellScriptTest*"
         },
         {
-            "executable": ".*",
-            "fixups": [
-                {
-                    "dll": "MultiByteToWideCharTestFixup.dll"
-                },
-                {
-                    "dll": "CompositionTestFixup.dll"
-                }
-            ]
+            "executable": ".*"
         }
     ]
 }

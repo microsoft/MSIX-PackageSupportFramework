@@ -7,7 +7,7 @@
 class ErrorInformation
 {
 public:
-    ErrorInformation() : customMessage(L""), errorMessage(L""), isThereAnError(false)
+    ErrorInformation()
     {
     }
 
@@ -32,6 +32,7 @@ public:
         this->errorMessage = toCopy.errorMessage;
         this->isThereAnError = toCopy.isThereAnError;
         this->errorNumber = toCopy.errorNumber;
+        this->exeName = toCopy.exeName;
     }
 
     ErrorInformation& operator=(const ErrorInformation &toAssign)
@@ -46,6 +47,7 @@ public:
         this->errorMessage = toAssign.errorMessage;
         this->isThereAnError = toAssign.isThereAnError;
         this->errorNumber = toAssign.errorNumber;
+        this->exeName = toAssign.exeName;
 
         return *this;
     }
@@ -55,6 +57,12 @@ public:
         this->customMessage.clear();
         this->customMessage.append(L"\r\nMessage: " + this->errorMessage + L"\r\n");
         this->customMessage.append(L"Error number: " + this->errorNumber);
+        this->customMessage.append(L"\r\n");
+
+        if(!this->exeName.empty())
+        {
+            this->customMessage.append(L"ExeName: " + this->exeName);
+        }
         this->customMessage.append(L"\r\n");
 
         return this->customMessage;
@@ -80,6 +88,6 @@ private:
     DWORD errorNumber;
     std::wstring exeName;
     std::wstring errorMessage;
-    bool isThereAnError;
+    bool isThereAnError = false;
 };
 
