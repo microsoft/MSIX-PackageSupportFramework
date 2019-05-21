@@ -54,18 +54,24 @@ public:
 
     std::wstring Print()
     {
-        this->customMessage.clear();
-        this->customMessage.append(L"\r\nMessage: " + this->errorMessage + L"\r\n");
-        this->customMessage.append(L"Error number: " + this->errorNumber);
-        this->customMessage.append(L"\r\n");
+        std::wstring errorToPrint;
+
+        if (!this->customMessage.empty())
+        {
+            errorToPrint.append(this->customMessage);
+            errorToPrint.append(L"\r\n");
+        }
+
+        errorToPrint.append(L"Message: " + this->errorMessage + L"\r\n");
+        errorToPrint.append(L"Error number: " + this->errorNumber);
+        errorToPrint.append(L"\r\n");
 
         if(!this->exeName.empty())
         {
-            this->customMessage.append(L"ExeName: " + this->exeName);
+            errorToPrint.append(L"ExeName: " + this->exeName + L"\r\n");
         }
-        this->customMessage.append(L"\r\n");
 
-        return this->customMessage;
+        return errorToPrint;
     }
 
     bool IsThereAnError()
