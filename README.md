@@ -25,7 +25,7 @@ This branch has the latest code. Keep in mind that there might be features in th
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
 ## Script support
-PSF allows one powershell script to be ran before an exe runs, and one powershell script to be ran after the exe runs.
+PSF allows one PowerShell script to be run before an exe runs, and one PowerShell script to be ran after the exe runs.
 
 Each exe defined in the application manifest can have their own scripts.
 
@@ -41,8 +41,8 @@ Both objects use the same three keys.
  
  #### Key descriptions
  1. scriptPath: The path to the script including the name and extension.  The Path starts from the root directory of the application.
- 2. scriptArguments: Space delimited argument list.  The format is the same for a powershell script call.  This string gets appended to scriptPath to make a valid powershell.exe call.
- 3. runInVirtualEnvironment: If the script should run in the same virtual enviorment that the packaged exe runs in.
+ 2. scriptArguments: Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
+ 3. runInVirtualEnvironment: If the script should run in the same virtual environment that the packaged exe runs in.
  
 ### Flow of PSF with scripts
 Below is the flow of PSF with scripting support.  

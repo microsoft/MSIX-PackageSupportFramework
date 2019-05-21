@@ -17,6 +17,8 @@
 #include <ShObjIdl.h>
 #include "ErrorInformation.h"
 #include "UniqueHkey.h"
+#include <wil\resource.h>
+#include <wil\result.h>
 
 //These two macros don't exist in RS1.  Define them here to prevent build
 //failures when building for RS1.
@@ -38,7 +40,7 @@ struct ExecutionInformation
 };
 
 //Forward declarations
-ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInAppContainer) noexcept;
+ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInVirtualEnvironment) noexcept;
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
 ErrorInformation RunScript(const psf::json_object &scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow) noexcept;
 ErrorInformation GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr) noexcept;
@@ -71,6 +73,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 
+    //TEST
+    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
     ErrorInformation error;
     bool isPowershellInstalled = false;
     error = CheckIfPowershellIsInstalled(isPowershellInstalled);
@@ -178,34 +182,34 @@ ErrorInformation RunScript(const psf::json_object &scriptInformation, std::files
 
     //Script arguments are optional.
     auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
-    std::wstring scriptArguments;
     if (scriptArgumentsJObject)
     {
         powershellCommandString.append(scriptArgumentsJObject->as_string().wide());
     }
 
     auto currentDirectory = (packageRoot / dirStr);
-    std::filesystem::path PowershellScriptPath(scriptPath);
-    auto doesFileExist = std::filesystem::exists(currentDirectory / PowershellScriptPath);
+    std::filesystem::path powershellScriptPath(scriptPath);
+    auto doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
 
     if (doesFileExist)
     {
         //runInVirtualEnvironment is optional.
-        auto runInVirtualEnviormentJObject = scriptInformation.try_get("runInVirtualEnvironment");
-        auto runInVirtualEnviorment = false;
+        auto runInVirtualEnvironmentJObject = scriptInformation.try_get("runInVirtualEnvironment");
+        auto runInVirtualEnvironment = false;
 
-        if (runInVirtualEnviormentJObject)
+        if (runInVirtualEnvironmentJObject)
         {
-            runInVirtualEnviorment = runInVirtualEnviormentJObject->as_string().wide();
+            runInVirtualEnvironment = runInVirtualEnvironmentJObject->as_string().wide();
         }
 
-        ExecutionInformation execInfo = { nullptr, powershellCommandString , currentDirectory.c_str() };
-        return StartProcess(execInfo, cmdShow, runInVirtualEnviorment);
+        //I know I am running powershell from here.
+        ExecutionInformation execInfo = { L"PowerShell", powershellCommandString , currentDirectory.c_str() };
+        return StartProcess(execInfo, cmdShow, runInVirtualEnvironment);
     }
     else
     {
         std::wstring errorMessage = L"The PowerShell file ";
-        errorMessage.append(currentDirectory / PowershellScriptPath);
+        errorMessage.append(currentDirectory / powershellScriptPath);
         errorMessage.append(L" can't be found");
         ErrorInformation error = { errorMessage, ERROR_FILE_NOT_FOUND };
 
@@ -215,7 +219,7 @@ ErrorInformation RunScript(const psf::json_object &scriptInformation, std::files
 
 ErrorInformation GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr) noexcept
 {
-    bool asadmin = false;
+    bool asAdmin = false;
     bool wait = false;
     auto monitorExecutable = monitor.try_get("executable");
     auto monitorArguments = monitor.try_get("arguments");
@@ -223,7 +227,7 @@ ErrorInformation GetAndLaunchMonitor(const psf::json_object &monitor, std::files
     auto monitorWait = monitor.try_get("wait");
     if (monitorAsAdmin)
     {
-        asadmin = monitorAsAdmin->as_boolean().get();
+        asAdmin = monitorAsAdmin->as_boolean().get();
     }
 
     if (monitorWait)
@@ -232,7 +236,7 @@ ErrorInformation GetAndLaunchMonitor(const psf::json_object &monitor, std::files
     }
 
     Log("\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
-    ErrorInformation error = LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asadmin, cmdShow, dirStr);
+    ErrorInformation error = LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asAdmin, cmdShow, dirStr);
 
     return error;
 }
@@ -275,30 +279,27 @@ ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, co
         }
         else
         {
-            std::wstring errorString = L"error starting monitor using ShellExecuteEx";
             auto err = ::GetLastError();
-            ErrorInformation error = { errorString, err, executable };
-
-            return error;
+            ErrorInformation error = { L"error starting monitor using ShellExecuteEx", err, executable };
         }
     }
     else
     {
-        ExecutionInformation execInfo = { nullptr, (cmd + L" " + arguments) };
+        ExecutionInformation execInfo = { executable, (cmd + L" " + arguments) };
 
         auto currentDirectory = (packageRoot / dirStr);
         execInfo.CurrentDirectory = currentDirectory.c_str();
+
         ErrorInformation error = StartProcess(execInfo, cmdShow, false);
         error.AddExeName(executable);
 
         return error;
     }
 
-    ErrorInformation noError;
-    return noError;
+    return {};
 }
 
-ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInAppContainer) noexcept
+ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInVirtualEnvironment) noexcept
 {
     STARTUPINFOEXW startupInfoEx =
     {
@@ -319,7 +320,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         }
     };
 
-    if (runInAppContainer)
+    if (runInVirtualEnvironment)
     {
         SIZE_T AttributeListSize;
         InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
@@ -335,10 +336,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
             &AttributeListSize) == FALSE)
         {
             auto err{ ::GetLastError() };
-            std::wstring errorString = L"Could not initilize the proc thread attribute list.";
-
-            ErrorInformation error = { errorString, err };
-            return error;
+            ErrorInformation error = { L"Could not initialize the proc thread attribute list.", err };
         }
 
         DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
@@ -351,10 +349,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
             nullptr) == FALSE)
         {
             auto err{ ::GetLastError() };
-            std::wstring errorString = L"Could not update Proc thread attribute.";
-
-            ErrorInformation error{ errorString, err };
-            return error;
+            ErrorInformation error{ L"Could not update Proc thread attribute.", err };
         }
     }
 
@@ -375,16 +370,12 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
 
         if (waitResult == WAIT_OBJECT_0)
         {
-            ErrorInformation noError;
-            return noError;
+            return {};
         }
         else
         {
             auto err{ ::GetLastError() };
-            std::wstring errorString = L"Running process failed.";
-
-            ErrorInformation error = { errorString, err };
-            return error;
+            return { L"Running process failed.", err };
         }
     }
     else
@@ -403,22 +394,21 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
             ss << L"ERROR: Failed to create a process for " << applicationNameForError << " ";
         }
 
-        ErrorInformation error = { ss.str(), err };
-        return error;
+        return { ss.str(), err };
     }
 }
 
 ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow) noexcept
 {
     // Non Exe case, use shell launching to pick up local FTA
-    auto nonexePath = packageRoot / exeName;
+    auto nonExePath = packageRoot / exeName;
 
     SHELLEXECUTEINFO shex = {
         sizeof(shex)
         , SEE_MASK_NOCLOSEPROCESS
         , (HWND)nullptr
         , nullptr
-        , nonexePath.c_str()
+        , nonExePath.c_str()
         , exeArgString.c_str()
         , dirStr ? (packageRoot / dirStr).c_str() : nullptr
         , static_cast<WORD>(cmdShow)
@@ -429,14 +419,10 @@ ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::f
     if (!ShellExecuteEx(&shex))
     {
         auto err{ ::GetLastError() };
-        std::wstring errorString = L"ERROR: Failed to create detoured shell process";
-
-        ErrorInformation error = { errorString, err };
-        return error;
+        return { L"ERROR: Failed to create detoured shell process", err };
     }
 
-    ErrorInformation noError;
-    return noError;
+    return {};
 }
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept
@@ -485,26 +471,24 @@ void LogString(const char name[], const wchar_t value[]) noexcept
 
 ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexcept
 {
-    UniqueHKEY registryKey;
+    wil::unique_hkey registryHandle;
     DWORD statusOfRegistryKey;
-    LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryKey, &statusOfRegistryKey);
+    LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, &statusOfRegistryKey);
 
     if (createResult != ERROR_SUCCESS)
     {
-        ErrorInformation error = { L"Error with getting the key to see if PowerShell is installed. ", (DWORD)createResult };
-        return error;
+        return { L"Error with getting the key to see if PowerShell is installed. ", (DWORD)createResult };
     }
 
     DWORD valueFromRegistry = 0;
     DWORD bufferSize = sizeof(DWORD);
     DWORD type = REG_DWORD;
-    auto getResult = RegQueryValueExW(registryKey.Get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize);
+    auto getResult = RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize);
 
     if (getResult != ERROR_SUCCESS)
     {
         //Don't set isPowershellInstalled since we can't figure it out.
-        ErrorInformation error = { L"Error with querying the key to see if PowerShell is installed. ", (DWORD)getResult };
-        return error;
+        return { L"Error with querying the key to see if PowerShell is installed. ", (DWORD)getResult };
     }
 
     if (valueFromRegistry == 1)
@@ -516,6 +500,5 @@ ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexc
         isPowershellInstalled = false;
     }
 
-    ErrorInformation noError;
-    return noError;
+    return {};
 }
