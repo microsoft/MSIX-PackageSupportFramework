@@ -73,8 +73,6 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 
-    //TEST
-    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
     ErrorInformation error;
     bool isPowershellInstalled = false;
     error = CheckIfPowershellIsInstalled(isPowershellInstalled);
