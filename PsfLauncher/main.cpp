@@ -16,7 +16,6 @@
 #include <ppltasks.h>
 #include <ShObjIdl.h>
 #include "ErrorInformation.h"
-#include "UniqueHkey.h"
 #include <wil\resource.h>
 #include <wil\result.h>
 
