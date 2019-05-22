@@ -117,7 +117,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         auto exeName = appConfig->get("executable").as_string().wide();
         auto exePath = packageRoot / exeName;
         auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
-        // Allow arguments to be specified in config.json now also.
+        
+        //Keep these quotes here.  StartProcess assums there are quptes around the exe file name
         std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
         if (check_suffix_if(exeName, L".exe"_isv))
         {
@@ -172,7 +173,7 @@ catch (...)
 ErrorInformation RunScript(const psf::json_object &scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow) noexcept
 {
     //Generate the command string that we will use to call powershell
-    std::wstring powershellCommandString(L"PowerShell.exe -file ");
+    std::wstring powershellCommandString(L"Powershell.exe -file ");
 
     std::wstring scriptPath = scriptInformation.get("scriptPath").as_string().wide();
     powershellCommandString.append(scriptPath);
@@ -200,8 +201,7 @@ ErrorInformation RunScript(const psf::json_object &scriptInformation, std::files
             runInVirtualEnvironment = runInVirtualEnvironmentJObject->as_string().wide();
         }
 
-        //I know I am running powershell from here.
-        ExecutionInformation execInfo = { L"PowerShell", powershellCommandString , currentDirectory.c_str() };
+        ExecutionInformation execInfo = { nullptr, powershellCommandString , currentDirectory.c_str() };
         return StartProcess(execInfo, cmdShow, runInVirtualEnvironment);
     }
     else
@@ -388,7 +388,17 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         else
         {
             std::wstring applicationNameForError;
-            applicationNameForError = execInfo.CommandLine.substr(0, execInfo.CommandLine.find(' '));
+            //If the application name contains spaces, the application needs to be surrounded in quotes.
+            if (execInfo.CommandLine[0] == '"')
+            {
+                //Skip the first quote and don't include the last quote.
+                applicationNameForError = execInfo.CommandLine.substr(1, execInfo.CommandLine.find('"', 1) - 1);
+            }
+            else
+            {
+                applicationNameForError = execInfo.CommandLine.substr(0, execInfo.CommandLine.find(' '));
+
+            }
             ss << L"ERROR: Failed to create a process for " << applicationNameForError << " ";
         }
 
