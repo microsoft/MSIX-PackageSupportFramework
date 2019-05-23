@@ -5,7 +5,7 @@
             "executable": "PowershellScriptTest.exe"
         },
 		{
-			"id": "PSTOnlyStart",
+			"id": "PSOnlyStart",
             "executable": "PowershellScriptTest.exe",
 			"startScript":
 			{
@@ -13,7 +13,7 @@
 			}
 		},
 		{
-			"id": "PSTOnlyEnd",
+			"id": "PSOnlyEnd",
             "executable": "PowershellScriptTest.exe",
 			"endScript" :
 			{
@@ -21,7 +21,7 @@
 			}
 		},
 		{
-			"id": "PSTBothStartingFirst",
+			"id": "PSBothStartingFirst",
             "executable": "PowershellScriptTest.exe",
 			"startScript" :
 			{
@@ -33,7 +33,7 @@
 			}
 		},
 		{
-			"id": "PSTBothEndingFirst",
+			"id": "PSBothEndingFirst",
             "executable": "PowershellScriptTest.exe",
 			"endScript" :
 			{
@@ -45,7 +45,7 @@
 			}
 		},
 		{
-			"id" : "PSTScriptWithArg",
+			"id" : "PSScriptWithArg",
 			"executable": "PowershellScriptTest.exe",
 			"startScript" :
 			{
@@ -59,12 +59,11 @@
 			}
 		},
 		{
-			"id" : "PSTScriptInVirtual",
+			"id" : "PSScriptInVirtual",
 			"executable": "PowershellScriptTest.exe",
 			"startScript" :
 			{
-				"scriptPath" : "SayWithArgument.ps1",
-				"scriptArguments": "Start",
+				"scriptPath" : "SayHello.ps1",
 				"runInVirtualEnvironment": "true"
 			},
 			"endScript" :

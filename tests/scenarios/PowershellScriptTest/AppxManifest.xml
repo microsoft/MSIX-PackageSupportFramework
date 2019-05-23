@@ -27,49 +27,49 @@
 	<Applications>
 		<Application Id="PSTNoScripts" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PST No Scripts"
+							DisplayName="PS No Scripts"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-		<Application Id="PSTOnlyStart" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+		<Application Id="PSOnlyStart" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PST Only Starting Script"
+							DisplayName="PS Only Starting Script"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-		<Application Id="PSTOnlyEnd" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+		<Application Id="PSOnlyEnd" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PST Only Ending Script"
+							DisplayName="PS Only Ending Script"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-		<Application Id="PSTBothStartingFirst" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+		<Application Id="PSBothStartingFirst" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PST Both Script Starting First"
+							DisplayName="PS Both Script Starting First"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-		<Application Id="PSTBothEndingFirst" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+		<Application Id="PSBothEndingFirst" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PST Both Ending Script First"
+							DisplayName="PS Both Ending Script First"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-		<Application Id="PSTScriptWithArg" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+		<Application Id="PSScriptWithArg" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PST Both Ending Script First"
+							DisplayName="PS Starting script with argument"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-		<Application Id="PSTScriptInVirtual" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+		<Application Id="PSScriptInVirtual" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PST Both Ending Script First"
+							DisplayName="PS starting in virtual"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />

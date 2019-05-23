@@ -1,6 +1,5 @@
 Param (
-	[string]$introduction
+	[string]$text
 )
 
-Write-Host $introduction
-Start-Sleep -s 1
+New-Item -path $env:LOCALAPPDATA -Name "Argument.txt" -ItemType "file" -value $text

@@ -1,2 +1,1 @@
-write-host "Hello"
-Start-Sleep -s 1
+New-Item -path $env:LOCALAPPDATA -Name "Hello.txt" -ItemType "file"
