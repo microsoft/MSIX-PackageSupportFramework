@@ -15,6 +15,7 @@
 #include "PathRedirection.h"
 #include <TraceLoggingProvider.h>
 #include "Telemetry.h"
+#include "RemovePII.h"
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -186,7 +187,7 @@ void InitializeConfiguration()
                 {
                     auto& specObject = spec.as_object();
                     auto path = psf::remove_trailing_path_separators(basePath / specObject.get("base").as_string().wstring());
-                    traceDataStream << " base : " << specObject.get("base").as_string().wide();
+                    traceDataStream << " base : " << RemovePIIfromFilePath(specObject.get("base").as_string().wide());
                     traceDataStream << " patterns : ";
                     for (auto& pattern : specObject.get("patterns").as_array())
                     {
