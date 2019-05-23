@@ -22,8 +22,5 @@
     <ClInclude Include="ErrorInformation.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="UniqueHkey.h">
-      <Filter>inc</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>
