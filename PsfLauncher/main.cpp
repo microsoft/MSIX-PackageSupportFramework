@@ -13,23 +13,457 @@
 #include <psf_runtime.h>
 #include <shellapi.h>
 #include <combaseapi.h>
+#include <ppltasks.h>
+#include <ShObjIdl.h>
+#include "ErrorInformation.h"
+#include <wil\resource.h>
+#include <wil\result.h>
+
+//These two macros don't exist in RS1.  Define them here to prevent build
+//failures when building for RS1.
+#ifndef PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
+#    define PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE PROCESS_CREATION_DESKTOP_APPX_OVERRIDE
+#endif
+
+#ifndef PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+#    define PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY
+#endif
 
 using namespace std::literals;
 
-// Forward declaration
-void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin);
-
-static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix)
+struct ExecutionInformation
 {
-    if ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix))
-    {
-        return true;
-    }
+    LPCWSTR ApplicationName;
+    std::wstring CommandLine;
+    LPCWSTR CurrentDirectory;
+};
 
-    return false;
+//Forward declarations
+ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInVirtualEnvironment) noexcept;
+int launcher_main(PCWSTR args, int cmdShow) noexcept;
+ErrorInformation RunScript(const psf::json_object &scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow) noexcept;
+ErrorInformation GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr) noexcept;
+ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr) noexcept;
+static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
+void LogString(const char name[], const wchar_t value[]) noexcept;
+void LogString(const char name[], const char value[]) noexcept;
+void Log(const char fmt[], ...) noexcept;
+ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow) noexcept;
+ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexcept;
+std::wstring GetApplicationNameFromExecInfo(ExecutionInformation execInfo);
+ErrorInformation GetExitCodeForProcess(ExecutionInformation execInfo, HANDLE hProcess);
+
+int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
+{
+    return launcher_main(args, cmdShow);
 }
 
-void Log(const char* fmt, ...)
+int launcher_main(PCWSTR args, int cmdShow) noexcept try
+{
+    Log("\tIn Launcher_main()");
+    auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
+    if (!appConfig)
+    {
+        throw_win32(ERROR_NOT_FOUND, "Error: could not find matching appid in config.json and appx manifest");
+    }
+
+    auto dirPtr = appConfig->try_get("workingDirectory");
+    auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
+    auto exeArgs = appConfig->try_get("arguments");
+
+    // At least for now, configured launch paths are relative to the package root
+    std::filesystem::path packageRoot = PSFQueryPackageRootPath();
+
+    auto isPowershellInstalled = false;
+    ErrorInformation error = CheckIfPowershellIsInstalled(isPowershellInstalled);
+
+    if (error.IsThereAnError())
+    {
+        ::PSFReportError(error.Print().c_str());
+        return error.GetErrorNumber();
+    }
+
+    //Launch the starting PowerShell script if we are using one.
+    auto startScriptInformation = PSFQueryStartScriptInfo();
+    if (startScriptInformation)
+    {
+        if (!isPowershellInstalled)
+        {
+            ::PSFReportError(L"PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
+            return E_APPLICATION_NOT_REGISTERED;
+        }
+
+        error = RunScript(*startScriptInformation, packageRoot, dirStr, cmdShow);
+
+        if (error.IsThereAnError())
+        {
+            ::PSFReportError(error.Print().c_str());
+            return error.GetErrorNumber();
+        }
+    }
+
+    //If we get here we know that starting script did NOT encounter an error
+    //Launch monitor if we are using one.
+    auto monitor = PSFQueryAppMonitorConfig();
+    if (monitor != nullptr)
+    {
+        CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        error = GetAndLaunchMonitor(*monitor, packageRoot, cmdShow, dirStr);
+    }
+
+    if (!error.IsThereAnError())
+    {
+        //Launch underlying application.
+        auto exeName = appConfig->get("executable").as_string().wide();
+        auto exePath = packageRoot / exeName;
+        auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+
+        //Keep these quotes here.  StartProcess assums there are quptes around the exe file name
+        std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
+        if (check_suffix_if(exeName, L".exe"_isv))
+        {
+            std::wstring workingDirectory = (packageRoot / dirStr).native();
+
+            ExecutionInformation execInfo = { exePath.c_str(), cmdLine };
+
+            auto currentDirectory = (packageRoot / dirStr);
+            execInfo.CurrentDirectory = currentDirectory.c_str();
+            error = StartProcess(execInfo, cmdShow, false);
+            error.AddExeName(exeName);
+        }
+        else
+        {
+            error = StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
+        }
+    }
+
+    //Launch the end PowerShell script if we are using one.
+    auto endScriptInformation = PSFQueryEndScriptInfo();
+    if (endScriptInformation)
+    {
+        ErrorInformation endingScriptError = RunScript(*endScriptInformation, packageRoot, dirStr, cmdShow);
+        error.AddExeName(L"PowerShell.exe -file ");
+
+        //If there is an existing error from Monitor or the packaged exe
+        if (error.IsThereAnError())
+        {
+            ::PSFReportError(error.Print().c_str());
+            return error.GetErrorNumber();
+        }
+        else if (endingScriptError.IsThereAnError())
+        {
+            ::PSFReportError(endingScriptError.Print().c_str());
+            return endingScriptError.GetErrorNumber();
+        }
+    }
+
+    return 0;
+}
+catch (...)
+{
+    ::PSFReportError(widen(message_from_caught_exception()).c_str());
+    return win32_from_caught_exception();
+}
+
+ErrorInformation RunScript(const psf::json_object &scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow) noexcept
+{
+    //Generate the command string that we will use to call powershell
+    std::wstring powershellCommandString(L"Powershell.exe -file ");
+
+    std::wstring scriptPath = scriptInformation.get("scriptPath").as_string().wide();
+    powershellCommandString.append(scriptPath);
+    powershellCommandString.append(L" ");
+
+    //Script arguments are optional.
+    auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
+    if (scriptArgumentsJObject)
+    {
+        powershellCommandString.append(scriptArgumentsJObject->as_string().wide());
+    }
+
+    auto currentDirectory = (packageRoot / dirStr);
+    std::filesystem::path powershellScriptPath(scriptPath);
+
+    //The file might be on a network drive.
+    auto doesFileExist = std::filesystem::exists(powershellScriptPath);
+
+    //Check on local computer.
+    if (!doesFileExist)
+    {
+        doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
+    }
+
+    if (doesFileExist)
+    {
+        //runInVirtualEnvironment is optional.
+        auto runInVirtualEnvironmentJObject = scriptInformation.try_get("runInVirtualEnvironment");
+        auto runInVirtualEnvironment = false;
+
+        if (runInVirtualEnvironmentJObject)
+        {
+            runInVirtualEnvironment = runInVirtualEnvironmentJObject->as_boolean().get();
+        }
+
+        ExecutionInformation execInfo = { nullptr, powershellCommandString , currentDirectory.c_str() };
+        return StartProcess(execInfo, cmdShow, runInVirtualEnvironment);
+    }
+    else
+    {
+        std::wstring errorMessage = L"The PowerShell file ";
+        errorMessage.append(currentDirectory / powershellScriptPath);
+        errorMessage.append(L" can't be found");
+        ErrorInformation error = { errorMessage, ERROR_FILE_NOT_FOUND };
+
+        return error;
+    }
+}
+
+ErrorInformation GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr) noexcept
+{
+    bool asAdmin = false;
+    bool wait = false;
+    auto monitorExecutable = monitor.try_get("executable");
+    auto monitorArguments = monitor.try_get("arguments");
+    auto monitorAsAdmin = monitor.try_get("asadmin");
+    auto monitorWait = monitor.try_get("wait");
+    if (monitorAsAdmin)
+    {
+        asAdmin = monitorAsAdmin->as_boolean().get();
+    }
+
+    if (monitorWait)
+    {
+        wait = monitorWait->as_boolean().get();
+    }
+
+    Log("\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
+    ErrorInformation error = LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asAdmin, cmdShow, dirStr);
+
+    return error;
+}
+
+ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr) noexcept
+{
+    std::wstring cmd = L"\"" + (packageRoot / executable).native() + L"\"";
+
+    if (asAdmin)
+    {
+        // This happens when the program is requested for elevation.
+        SHELLEXECUTEINFOW shExInfo =
+        {
+            sizeof(shExInfo) //cbSize
+            , wait ? (ULONG)SEE_MASK_NOCLOSEPROCESS : (ULONG)(SEE_MASK_NOCLOSEPROCESS | SEE_MASK_WAITFORINPUTIDLE) // fmask
+            , 0 //hwnd
+            , L"runas" //lpVerb
+            , cmd.c_str() // lpFile
+            , arguments //lpParameters
+            , nullptr //lpDirectory
+            , 1 //nShow
+            , 0 //hInstApp
+        };
+
+
+        if (ShellExecuteEx(&shExInfo))
+        {
+            if (wait)
+            {
+                WaitForSingleObject(shExInfo.hProcess, INFINITE);
+                CloseHandle(shExInfo.hProcess);
+            }
+            else
+            {
+                WaitForInputIdle(shExInfo.hProcess, 1000);
+                // Due to elevation, the process starts, relaunches, and the main process ends in under 1ms.
+                // So we'll just toss in an ugly sleep here for now.
+                Sleep(5000);
+            }
+
+            return GetExitCodeForProcess({ executable }, shExInfo.hProcess);
+        }
+        else
+        {
+            auto err = ::GetLastError();
+            ErrorInformation error = { L"Error starting monitor using ShellExecuteEx", err, executable };
+        }
+    }
+    else
+    {
+        ExecutionInformation execInfo = { executable, (cmd + L" " + arguments) };
+
+        auto currentDirectory = (packageRoot / dirStr);
+        execInfo.CurrentDirectory = currentDirectory.c_str();
+
+        ErrorInformation error = StartProcess(execInfo, cmdShow, false);
+        error.AddExeName(executable);
+
+        return error;
+    }
+
+    return {};
+}
+
+ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool runInVirtualEnvironment) noexcept
+{
+    STARTUPINFOEXW startupInfoEx =
+    {
+        {
+        sizeof(startupInfoEx)
+        , nullptr //lpReserved
+        , nullptr // lpDesktop
+        , nullptr // lpTitle
+        , 0 //dwX
+        , 0 //dwY
+        , 0 //dwXSize
+        , 0 //swYSize
+        , 0 //dwXCountChar
+        , 0 //dwYCountChar
+        , 0 // dwFillAttribute
+        , STARTF_USESHOWWINDOW //dwFlags
+        , static_cast<WORD>(cmdShow) // wShowWindow
+        }
+    };
+
+    if (runInVirtualEnvironment)
+    {
+        SIZE_T AttributeListSize;
+        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
+        startupInfoEx.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
+            GetProcessHeap(),
+            0,
+            AttributeListSize
+        );
+
+        if (InitializeProcThreadAttributeList(startupInfoEx.lpAttributeList,
+            1,
+            0,
+            &AttributeListSize) == FALSE)
+        {
+            auto err{ ::GetLastError() };
+            ErrorInformation error = { L"Could not initialize the proc thread attribute list.", err };
+        }
+
+        DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
+        if (UpdateProcThreadAttribute(startupInfoEx.lpAttributeList,
+            0,
+            PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
+            &attribute,
+            sizeof(attribute),
+            nullptr,
+            nullptr) == FALSE)
+        {
+            auto err{ ::GetLastError() };
+            ErrorInformation error{ L"Could not update Proc thread attribute.", err };
+        }
+    }
+
+    PROCESS_INFORMATION processInfo = { 0 };
+    if (::CreateProcessW(
+        execInfo.ApplicationName,
+        execInfo.CommandLine.data(),
+        nullptr, nullptr, // Process/ThreadAttributes
+        true, // InheritHandles
+        EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
+        nullptr, // Environment
+        execInfo.CurrentDirectory,
+        (LPSTARTUPINFO)&startupInfoEx,
+        &processInfo))
+    {
+        DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, INFINITE);
+
+        if (waitResult != WAIT_OBJECT_0)
+        {
+            auto err{ ::GetLastError() };
+            return { L"Waiting operation failed unexpectedly.", err };
+        }
+    }
+    else
+    {
+        std::wostringstream ss;
+        auto err{ ::GetLastError() };
+        ss << L"ERROR: Failed to create a process for " << GetApplicationNameFromExecInfo(execInfo);
+
+        return { ss.str(), err };
+    }   
+
+    return {};
+}
+
+std::wstring GetApplicationNameFromExecInfo(ExecutionInformation execInfo)
+{
+    if (execInfo.ApplicationName)
+    {
+        return execInfo.ApplicationName;
+    }
+    else
+    {
+        std::wstring applicationName;
+        //If the application name contains spaces, the application needs to be surrounded in quotes.
+        if (execInfo.CommandLine[0] == '"')
+        {
+            //Skip the first quote and don't include the last quote.
+            applicationName = execInfo.CommandLine.substr(1, execInfo.CommandLine.find('"', 1) - 1);
+        }
+        else
+        {
+            applicationName = execInfo.CommandLine.substr(0, execInfo.CommandLine.find(' '));
+
+        }
+
+        return applicationName;
+    }
+}
+
+ErrorInformation GetExitCodeForProcess(ExecutionInformation execInfo, HANDLE hProcess)
+{
+    DWORD exitCode = ERROR_SUCCESS;
+    if (GetExitCodeProcess(hProcess, &exitCode))
+    {
+        if (exitCode != ERROR_SUCCESS)
+        {
+            return { L"Exit code for " + GetApplicationNameFromExecInfo(execInfo), exitCode };
+        }
+    }
+    else
+    {
+        return { L"Could not get the exit code for " + GetApplicationNameFromExecInfo(execInfo), ::GetLastError() };
+    }
+
+    return {};
+}
+
+ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow) noexcept
+{
+    // Non Exe case, use shell launching to pick up local FTA
+    auto nonExePath = packageRoot / exeName;
+
+    SHELLEXECUTEINFO shex = {
+        sizeof(shex)
+        , SEE_MASK_NOCLOSEPROCESS
+        , (HWND)nullptr
+        , nullptr
+        , nonExePath.c_str()
+        , exeArgString.c_str()
+        , dirStr ? (packageRoot / dirStr).c_str() : nullptr
+        , static_cast<WORD>(cmdShow)
+    };
+
+
+    Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
+    if (!ShellExecuteEx(&shex))
+    {
+        auto err{ ::GetLastError() };
+        return { L"ERROR: Failed to create detoured shell process", err };
+    }
+    
+    return GetExitCodeForProcess({ exeName.native().c_str() }, shex.hProcess);
+}
+
+static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept
+{
+    return ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix));
+}
+
+void Log(const char fmt[], ...) noexcept
 {
     std::string str;
     str.resize(256);
@@ -54,257 +488,45 @@ void Log(const char* fmt, ...)
     str.resize(count);
     ::OutputDebugStringA(str.c_str());
 }
-void LogString(const char* name, const char* value)
+void LogString(const char name[], const char value[]) noexcept
 {
     Log("\t%s=%s\n", name, value);
 }
-void LogStringW(const char* name, const wchar_t* value)
+void LogString(const char name[], const wchar_t value[]) noexcept
 {
     Log("\t%s=%ls\n", name, value);
 }
-int launcher_main(PWSTR args, int cmdShow) noexcept try
+
+ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexcept
 {
-    Log("\tIn Launcher_main()");
-    auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
-    if (!appConfig)
+    wil::unique_hkey registryHandle;
+    DWORD statusOfRegistryKey;
+    LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, &statusOfRegistryKey);
+
+    if (createResult != ERROR_SUCCESS)
     {
-        throw_win32(ERROR_NOT_FOUND, "Error: could not find matching appid in config.json and appx manifest");
+        return { L"Error with getting the key to see if PowerShell is installed. ", (DWORD)createResult };
     }
 
-    auto exeName = appConfig->get("executable").as_string().wide();
-    auto dirPtr = appConfig->try_get("workingDirectory");
-    auto dirStr = dirPtr ? dirPtr->as_string().wide() : nullptr;
+    DWORD valueFromRegistry = 0;
+    DWORD bufferSize = sizeof(DWORD);
+    DWORD type = REG_DWORD;
+    auto getResult = RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize);
 
-    auto exeArgs = appConfig->try_get("arguments");
-    auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
-    auto monitor = PSFQueryAppMonitorConfig();
-
-
-    // At least for now, configured launch paths are relative to the package root
-    std::filesystem::path packageRoot = PSFQueryPackageRootPath();
-    auto exePath = packageRoot / exeName;
-
-    // Allow arguments to be specified in config.json now also.
-    std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
-
-    if (monitor != nullptr )
+    if (getResult != ERROR_SUCCESS)
     {
-        // A monitor is an optional additional program to run, such as the PSFShimMonitor. This program is run prior to the "main application".		
-        bool asadmin = false;
-        bool wait = false;
-        auto monitor_executable = monitor->try_get("executable");
-        auto monitor_arguments = monitor->try_get("arguments");
-        auto monitor_asadmin = monitor->try_get("asadmin");
-        auto monitor_wait = monitor->try_get("wait");
-        if (monitor_asadmin)
-            asadmin = monitor_asadmin->as_boolean().get();
-        if (monitor_wait)
-            wait = monitor_wait->as_boolean().get();
-        Log("\tCreating the monitor: %ls", monitor_executable->as_string().wide());
-        LaunchMonitorInBackground(packageRoot, monitor_executable->as_string().wide(), monitor_arguments->as_string().wide(), wait, asadmin);
+        //Don't set isPowershellInstalled since we can't figure it out.
+        return { L"Error with querying the key to see if PowerShell is installed. ", (DWORD)getResult };
     }
 
-    // Fix-up for no working directory
-    // By default, we should use the directory of the executable.
-    std::wstring wd;
-    if (dirStr == nullptr)
+    if (valueFromRegistry == 1)
     {
-        std::wstring wdwd =  exePath.parent_path().native() ; // force working directory to exe's folder
-        wdwd.resize(wdwd.size() - 1); // remove trailing slash
-        wd = L"\"" + wdwd + L"\"";
+        isPowershellInstalled = true;
     }
     else
     {
-        // Use requested path, relative to the package root folder.
-        std::wstring wdwd = (packageRoot / dirStr).native();
-        wdwd.resize(wdwd.size() - 1); // remove trailing slash
-        wd =  wdwd ;
+        isPowershellInstalled = false;
     }
-    std::wstring quotedapp = exePath.native(); // L"\"" + exePath.native() + L"\"";
 
-    if (check_suffix_if(exeName, L".exe"_isv))
-    {
-        STARTUPINFO startupInfo = { sizeof(startupInfo) };
-        startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-        startupInfo.wShowWindow = static_cast<WORD>(cmdShow);
-
-        Log("\tCreating process %ls", cmdLine.data());
-        // NOTE: PsfRuntime, which we dynamically link against, detours this call
-        PROCESS_INFORMATION processInfo;
-        if (!::CreateProcessW(
-            exePath.c_str(),
-            cmdLine.data(),
-            nullptr, nullptr, // Process/ThreadAttributes
-            true, // InheritHandles
-            0, // CreationFlags
-            nullptr, // Environment
-            dirStr ? (packageRoot / dirStr).c_str() : nullptr, // NOTE: extended-length path not supported
-            &startupInfo,
-            &processInfo))
-        {
-            std::wostringstream ss;
-            auto err{ ::GetLastError() };
-            // Remove the ".\r\n" that gets added to all messages
-            auto msg = widen(std::system_category().message(err));
-            msg.resize(msg.length() - 3);
-            ss << L"ERROR: Failed to create detoured process\n  Path: \"" << exeName << "\"\n  Error: " << msg << " (" << err << ")";
-            ::PSFReportError(ss.str().c_str());
-            return err;
-        }
-
-        // Propagate exit code to caller, in case they care
-        switch (::WaitForSingleObject(processInfo.hProcess, INFINITE))
-        {
-        case WAIT_OBJECT_0:
-            break; // Success case... handle at the end of main
-
-        case WAIT_FAILED:
-            return ::GetLastError();
-
-        default:
-            return ERROR_INVALID_HANDLE;
-        }
-
-        DWORD exitCode;
-        if (!::GetExitCodeProcess(processInfo.hProcess, &exitCode))
-        {
-            return ::GetLastError();
-        }
-        return exitCode;
-    }
-    else
-    {
-        // Non Exe case, use shell launching to pick up local FTA
-        auto nonexePath = packageRoot / exeName;
-
-        CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-        SHELLEXECUTEINFO shex;
-        memset(&shex, 0, sizeof(SHELLEXECUTEINFO));
-        shex.cbSize = sizeof(shex);
-        shex.fMask = SEE_MASK_NOCLOSEPROCESS;
-        shex.hwnd = (HWND)NULL;
-        shex.lpVerb = NULL;  // just use the default action for the fta
-        shex.lpFile = nonexePath.c_str();
-        shex.lpParameters = exeArgString;
-        shex.lpDirectory = dirStr ? (packageRoot / dirStr).c_str() : nullptr;
-        shex.nShow = static_cast<WORD>(cmdShow);
-        
-
-        Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
-        if (!ShellExecuteEx(&shex))
-        {
-            std::wostringstream ss;
-            auto err{ ::GetLastError() };
-            // Remove the ".\r\n" that gets added to all messages
-            auto msg = widen(std::system_category().message(err));
-            msg.resize(msg.length() - 3);
-            ss << L"ERROR: Failed to create detoured shell process\n  Path: \"" << exeName << "\"\n  Error: " << msg << " (" << err << ")";
-            ::PSFReportError(ss.str().c_str());
-            return err;
-        }
-        else
-        { 
-            // Propagate exit code to caller, in case they care
-            switch (::WaitForSingleObject(shex.hProcess, INFINITE))
-            {
-            case WAIT_OBJECT_0: // SUCCESS
-                if (((unsigned long long)(shex.hInstApp)) > 32)
-                    return 0;
-                else
-                    return (int)(unsigned long long)(shex.hInstApp);
-            case WAIT_FAILED:
-                return ::GetLastError();
-
-            default:
-                return ERROR_INVALID_HANDLE;
-            }			
-        }
-    }
-}
-catch (...)
-{
-    ::PSFReportError(widen(message_from_caught_exception()).c_str());
-    return win32_from_caught_exception();
-
-}
-
-
-void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t * executable, const wchar_t * arguments, bool wait, bool asadmin )
-{
-    std::wstring cmd = L"\"" + (packageRoot / executable).native() + L"\"";
-
-    if (asadmin)
-    {
-        // This happens when the program is requested for elevation.
-        SHELLEXECUTEINFOW shExInfo = { 0 };
-        shExInfo.cbSize = sizeof(shExInfo);
-        if (wait)
-            shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-        else
-            shExInfo.fMask = SEE_MASK_NOCLOSEPROCESS|SEE_MASK_WAITFORINPUTIDLE;  // make sure we wait a bit for the monitor to be running before continuing on.
-        shExInfo.hwnd = 0;
-        shExInfo.lpVerb = L"runas";                // Operation to perform
-        shExInfo.lpFile = cmd.c_str();       // Application to start    
-        shExInfo.lpParameters = arguments;                  // Additional parameters
-        shExInfo.lpDirectory = 0;
-        shExInfo.nShow = 1;
-        shExInfo.hInstApp = 0;
-        
-
-        if (ShellExecuteEx(&shExInfo))
-        {
-            if (wait)
-            {
-                WaitForSingleObject(shExInfo.hProcess, INFINITE);
-                CloseHandle(shExInfo.hProcess);
-            }
-            else
-            {
-                WaitForInputIdle(shExInfo.hProcess, 1000);
-                // Due to elevation, the process starts, relaunches, and the main process ends in under 1ms.
-                // So we'll just toss in an ugly sleep here for now.
-                Sleep(5000);
-            }
-        }
-        else
-        {
-            //Log("error starting monitor using SellExecuteEx also. Error=0x%x\n", ::GetLastError());
-        }
-    }
-    else
-    {
-        STARTUPINFO startupInfo = { sizeof(startupInfo) };
-        startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-        startupInfo.wShowWindow = static_cast<WORD>(1);
-
-        PROCESS_INFORMATION processInfo;
-
-        std::wstring cmdarg = cmd + L" " + arguments;
-
-        if (!::CreateProcessW(
-            nullptr, //quotedapp.data(),
-            (wchar_t *)cmdarg.c_str(),
-            nullptr, nullptr, // Process/ThreadAttributes
-            true, // InheritHandles
-            0, // CreationFlags
-            nullptr, // Environment
-            nullptr,
-            &startupInfo,
-            &processInfo))
-        {
-            if (::GetLastError() == ERROR_ELEVATION_REQUIRED)
-                Log("error starting monitor using CreateProcessW. You must specify 'monitor/asadmin' in config.json\n");
-            else
-                Log("error starting monitor using CreateProcessW. Error=0x%x\n", ::GetLastError());
-        }
-        else
-        {
-            if (wait)
-                WaitForSingleObject(processInfo.hProcess, INFINITE);
-        }
-    }
-}
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
-{
-    return launcher_main(args, cmdShow);
+    return {};
 }

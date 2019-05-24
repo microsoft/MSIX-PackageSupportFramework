@@ -18,4 +18,9 @@
       <Filter>src</Filter>
     </Xml>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ErrorInformation.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
