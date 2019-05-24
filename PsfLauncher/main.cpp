@@ -279,6 +279,19 @@ ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, co
             auto err = ::GetLastError();
             ErrorInformation error = { L"error starting monitor using ShellExecuteEx", err, executable };
         }
+
+        LPDWORD exitCode = ERROR_SUCCESS;
+        if (!GetExitCodeProcess(shExInfo.hProcess, exitCode))
+        {
+            return { L"Could not get the exit process for " + std::wstring(executable), GetLastError() };
+        }
+        else
+        {
+            if (exitCode != ERROR_SUCCESS)
+            {
+                return { L"The process " + std::wstring(executable) + L" exited with with an unsuccessful code.", *exitCode };
+            }
+        }
     }
     else
     {
