@@ -1,11 +1,11 @@
 {
     "applications": [
         {
-            "id": "PSTNoScripts",
+            "id": "PSNoScripts",
             "executable": "PowershellScriptTest.exe"
         },
 		{
-			"id": "PSTOnlyStart",
+			"id": "PSOnlyStart",
             "executable": "PowershellScriptTest.exe",
 			"startScript":
 			{
@@ -13,15 +13,7 @@
 			}
 		},
 		{
-			"id": "PSTOnlyEnd",
-            "executable": "PowershellScriptTest.exe",
-			"endScript" :
-			{
-				"scriptPath" : "SayHi.ps1"
-			}
-		},
-		{
-			"id": "PSTBothStartingFirst",
+			"id": "PSBothStartingFirst",
             "executable": "PowershellScriptTest.exe",
 			"startScript" :
 			{
@@ -33,7 +25,7 @@
 			}
 		},
 		{
-			"id": "PSTBothEndingFirst",
+			"id": "PSBothEndingFirst",
             "executable": "PowershellScriptTest.exe",
 			"endScript" :
 			{
@@ -45,32 +37,20 @@
 			}
 		},
 		{
-			"id" : "PSTScriptWithArg",
+			"id" : "PSScriptWithArg",
 			"executable": "PowershellScriptTest.exe",
 			"startScript" :
 			{
 				"scriptPath" : "SayWithArgument.ps1",
 				"scriptArguments": "Start"
-			},
-			"endScript" :
-			{
-				"scriptPath" : "SayWithArgument.ps1",
-				"scriptArguments": "End"
 			}
 		},
 		{
-			"id" : "PSTScriptInVirtual",
+			"id" : "PSScriptInVirtual",
 			"executable": "PowershellScriptTest.exe",
 			"startScript" :
 			{
-				"scriptPath" : "SayWithArgument.ps1",
-				"scriptArguments": "Start",
-				"runInVirtualEnvironment": "true"
-			},
-			"endScript" :
-			{
-				"scriptPath" : "SayWithArgument.ps1",
-				"scriptArguments": "End",
+				"scriptPath" : "SayHello.ps1",
 				"runInVirtualEnvironment": "true"
 			}
 		}

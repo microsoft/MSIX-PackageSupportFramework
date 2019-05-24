@@ -29,6 +29,16 @@ PSF allows one PowerShell script to be run before an exe runs, and one PowerShel
 
 Each exe defined in the application manifest can have their own scripts.
 
+### Prerequisite to allow scripts to run
+In order to allow scripts to run you need to set the execution policy to unrestricted.  The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.
+
+Here are the locations of each executable.
+* If on a 64-bit computer
+  * 64-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
+  * 32-bit: %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
+* If on a 32-bit computer
+  * 32-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
+
 ### Configuration changes
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
 Both objects use the same three keys.

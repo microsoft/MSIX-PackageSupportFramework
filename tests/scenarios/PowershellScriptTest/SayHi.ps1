@@ -1,2 +1,1 @@
-Write-Host "Hi"
-Start-Sleep -s 1
+write-host "I am doing nothing"

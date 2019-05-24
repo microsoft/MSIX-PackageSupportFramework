@@ -50,6 +50,7 @@ void LogString(const char name[], const char value[]) noexcept;
 void Log(const char fmt[], ...) noexcept;
 ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow) noexcept;
 ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexcept;
+std::wstring GetApplicationNameFromExecInfo(ExecutionInformation execInfo);
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 {
@@ -72,9 +73,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 
-    ErrorInformation error;
-    bool isPowershellInstalled = false;
-    error = CheckIfPowershellIsInstalled(isPowershellInstalled);
+    auto isPowershellInstalled = false;
+    ErrorInformation error = CheckIfPowershellIsInstalled(isPowershellInstalled);
 
     if (error.IsThereAnError())
     {
@@ -116,7 +116,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         auto exeName = appConfig->get("executable").as_string().wide();
         auto exePath = packageRoot / exeName;
         auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
-        
+
         //Keep these quotes here.  StartProcess assums there are quptes around the exe file name
         std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
         if (check_suffix_if(exeName, L".exe"_isv))
@@ -128,7 +128,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
                 workingDirectory = (packageRoot / dirStr).native();
             }
 
-            ExecutionInformation execInfo = {exePath.c_str(), cmdLine};
+            ExecutionInformation execInfo = { exePath.c_str(), cmdLine };
 
             auto currentDirectory = (packageRoot / dirStr);
             execInfo.CurrentDirectory = currentDirectory.c_str();
@@ -146,7 +146,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     if (endScriptInformation)
     {
         ErrorInformation endingScriptError = RunScript(*endScriptInformation, packageRoot, dirStr, cmdShow);
-        error.AddExeName(L"PowerShell.exe");
+        error.AddExeName(L"PowerShell.exe -file ");
 
         //If there is an existing error from Monitor or the packaged exe
         if (error.IsThereAnError())
@@ -365,43 +365,59 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         // Propagate exit code to caller, in case they care
         DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, INFINITE);
 
-        if (waitResult == WAIT_OBJECT_0)
-        {
-            return {};
-        }
-        else
+        if (waitResult != WAIT_OBJECT_0)
         {
             auto err{ ::GetLastError() };
-            return { L"Running process failed.", err };
+            return { L"Waiting for the application terminated unexpectedly.", err };
         }
     }
     else
     {
         std::wostringstream ss;
         auto err{ ::GetLastError() };
+        ss << L"ERROR: Failed to create a process for " << GetApplicationNameFromExecInfo(execInfo);
 
-        if (execInfo.ApplicationName)
+        return { ss.str(), err };
+    }
+
+    LPDWORD exitCode = ERROR_SUCCESS;
+    if (GetExitCodeProcess(processInfo.hProcess, exitCode))
+    {
+        if (*exitCode != ERROR_SUCCESS)
         {
-            ss << L"ERROR: Failed to create a process for " << execInfo.ApplicationName << " ";
+            return { L"ERROR: Application failed for " + GetApplicationNameFromExecInfo(execInfo), *exitCode };
+        }
+    }
+    else
+    {
+        return { L"Counld not get the exit code process for " + GetApplicationNameFromExecInfo(execInfo), ::GetLastError() };
+    }
+
+    return {};
+}
+
+std::wstring GetApplicationNameFromExecInfo(ExecutionInformation execInfo)
+{
+    if (execInfo.ApplicationName)
+    {
+        return execInfo.ApplicationName;
+    }
+    else
+    {
+        std::wstring applicationName;
+        //If the application name contains spaces, the application needs to be surrounded in quotes.
+        if (execInfo.CommandLine[0] == '"')
+        {
+            //Skip the first quote and don't include the last quote.
+            applicationName = execInfo.CommandLine.substr(1, execInfo.CommandLine.find('"', 1) - 1);
         }
         else
         {
-            std::wstring applicationNameForError;
-            //If the application name contains spaces, the application needs to be surrounded in quotes.
-            if (execInfo.CommandLine[0] == '"')
-            {
-                //Skip the first quote and don't include the last quote.
-                applicationNameForError = execInfo.CommandLine.substr(1, execInfo.CommandLine.find('"', 1) - 1);
-            }
-            else
-            {
-                applicationNameForError = execInfo.CommandLine.substr(0, execInfo.CommandLine.find(' '));
+            applicationName = execInfo.CommandLine.substr(0, execInfo.CommandLine.find(' '));
 
-            }
-            ss << L"ERROR: Failed to create a process for " << applicationNameForError << " ";
         }
 
-        return { ss.str(), err };
+        return applicationName;
     }
 }
 
@@ -427,6 +443,19 @@ ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::f
     {
         auto err{ ::GetLastError() };
         return { L"ERROR: Failed to create detoured shell process", err };
+    }
+    
+    LPDWORD exitCode = ERROR_SUCCESS;
+    if (GetExitCodeProcess(shex.hProcess, exitCode))
+    {
+        if (*exitCode != ERROR_SUCCESS)
+        {
+            return { L"Application exited and was not successful. " + exeName.native(), *exitCode };
+        }
+    }
+    else
+    {
+        return { L"Could not get the exit process for " + exeName.native(), GetLastError() };
     }
 
     return {};
