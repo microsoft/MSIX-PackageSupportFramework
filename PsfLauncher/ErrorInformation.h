@@ -26,32 +26,6 @@ public:
     {
     }
 
-    ErrorInformation(const ErrorInformation &toCopy)
-    {
-        this->customMessage = toCopy.customMessage;
-        this->errorMessage = toCopy.errorMessage;
-        this->isThereAnError = toCopy.isThereAnError;
-        this->errorNumber = toCopy.errorNumber;
-        this->exeName = toCopy.exeName;
-    }
-
-    ErrorInformation& operator=(const ErrorInformation &toAssign)
-    {
-        if (this == &toAssign)
-        {
-            return *this;
-        }
-
-        this->customMessage.clear();
-        this->customMessage = toAssign.customMessage;
-        this->errorMessage = toAssign.errorMessage;
-        this->isThereAnError = toAssign.isThereAnError;
-        this->errorNumber = toAssign.errorNumber;
-        this->exeName = toAssign.exeName;
-
-        return *this;
-    }
-
     std::wstring Print()
     {
         std::wstring errorToPrint;
@@ -63,7 +37,7 @@ public:
         }
 
         errorToPrint.append(L"Message: " + this->errorMessage + L"\r\n");
-        errorToPrint.append(L"Error number: " + this->errorNumber);
+        errorToPrint.append(L"Error number: " + std::to_wstring(this->errorNumber));
         errorToPrint.append(L"\r\n");
 
         if(!this->exeName.empty())
