@@ -280,8 +280,8 @@ ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, co
             ErrorInformation error = { L"error starting monitor using ShellExecuteEx", err, executable };
         }
 
-        LPDWORD exitCode = ERROR_SUCCESS;
-        if (!GetExitCodeProcess(shExInfo.hProcess, exitCode))
+        DWORD exitCode = ERROR_SUCCESS;
+        if (!GetExitCodeProcess(shExInfo.hProcess, &exitCode))
         {
             return { L"Could not get the exit process for " + std::wstring(executable), GetLastError() };
         }
@@ -289,7 +289,7 @@ ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, co
         {
             if (exitCode != ERROR_SUCCESS)
             {
-                return { L"The process " + std::wstring(executable) + L" exited with with an unsuccessful code.", *exitCode };
+                return { L"The process " + std::wstring(executable) + L" exited with with an unsuccessful code.", exitCode };
             }
         }
     }
@@ -393,17 +393,17 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         return { ss.str(), err };
     }
 
-    LPDWORD exitCode = ERROR_SUCCESS;
-    if (GetExitCodeProcess(processInfo.hProcess, exitCode))
+    DWORD exitCode = ERROR_SUCCESS;
+    if (GetExitCodeProcess(processInfo.hProcess, &exitCode))
     {
-        if (*exitCode != ERROR_SUCCESS)
+        if (exitCode != ERROR_SUCCESS)
         {
-            return { L"ERROR: Application failed for " + GetApplicationNameFromExecInfo(execInfo), *exitCode };
+            return { L"ERROR: Application failed for " + GetApplicationNameFromExecInfo(execInfo), exitCode };
         }
     }
     else
     {
-        return { L"Counld not get the exit code process for " + GetApplicationNameFromExecInfo(execInfo), ::GetLastError() };
+        return { L"Could not get the exit code process for " + GetApplicationNameFromExecInfo(execInfo), ::GetLastError() };
     }
 
     return {};
@@ -458,12 +458,12 @@ ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::f
         return { L"ERROR: Failed to create detoured shell process", err };
     }
     
-    LPDWORD exitCode = ERROR_SUCCESS;
-    if (GetExitCodeProcess(shex.hProcess, exitCode))
+    DWORD exitCode = ERROR_SUCCESS;
+    if (GetExitCodeProcess(shex.hProcess, &exitCode))
     {
-        if (*exitCode != ERROR_SUCCESS)
+        if (exitCode != ERROR_SUCCESS)
         {
-            return { L"Application exited and was not successful. " + exeName.native(), *exitCode };
+            return { L"Application exited and was not successful. " + exeName.native(), exitCode };
         }
     }
     else
