@@ -25,7 +25,7 @@
 		<rescap:Capability Name="runFullTrust" />
 	</Capabilities>
 	<Applications>
-		<Application Id="PSTNoScripts" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+		<Application Id="PSNoScripts" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
 							DisplayName="PS No Scripts"
 							Square150x150Logo="Assets\Logo150x150.png"
@@ -35,13 +35,6 @@
 		<Application Id="PSOnlyStart" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
 							DisplayName="PS Only Starting Script"
-							Square150x150Logo="Assets\Logo150x150.png"
-							Square44x44Logo="Assets\Logo44x44.png"
-							Description="No description entered" />
-		</Application>
-		<Application Id="PSOnlyEnd" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
-			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PS Only Ending Script"
 							Square150x150Logo="Assets\Logo150x150.png"
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />

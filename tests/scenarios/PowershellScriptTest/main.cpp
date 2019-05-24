@@ -55,8 +55,6 @@ void RemoveFile(std::filesystem::path localAppData, LPCWSTR fileName)
 
 int wmain(int argc, const wchar_t** argv)
 {
-    //TEST
-    MessageBoxEx(NULL, L"In here", L"In here", 0, 0);
     auto result = parse_args(argc, argv);
     std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
     test_initialize("Powershell Script Tests", 1);
@@ -69,7 +67,6 @@ int wmain(int argc, const wchar_t** argv)
     TCHAR localAppDataPath[MAX_PATH];
     SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppDataPath);
     bool doesHelloExist = DoesFileExist(localAppDataPath, L"Hello.txt");
-    bool doesHiExist = DoesFileExist(localAppDataPath, L"Hi.txt");
     bool doesArgumentExist = DoesFileExist(localAppDataPath, L"Argument.txt");
 
 
@@ -80,17 +77,10 @@ int wmain(int argc, const wchar_t** argv)
             result = ERROR_FILE_NOT_FOUND;
         }
     }
-    else if (testType.compare(L"psonlyend") == 0)
-    {
-        if (doesHiExist)
-        {
-            result = ERROR_FILE_NOT_FOUND;
-        }
-    }
     else if (testType.compare(L"psbothstartingfirst") == 0 ||
         testType.compare(L"psbothendingfirst") == 0)
     {
-        if (!doesHelloExist || !doesHiExist)
+        if (!doesHelloExist)
         {
             result = ERROR_FILE_NOT_FOUND;
         }
@@ -104,7 +94,7 @@ int wmain(int argc, const wchar_t** argv)
     }
     else if(testType.compare(L"psscriptinvirtual") == 0)
     {
-        if (!doesHelloExist || !doesArgumentExist)
+        if (!doesHelloExist)
         {
             result = ERROR_FILE_NOT_FOUND;
         }
@@ -112,7 +102,6 @@ int wmain(int argc, const wchar_t** argv)
 
 
     RemoveFile(localAppDataPath, L"Hello.txt");
-    RemoveFile(localAppDataPath, L"Hi.txt");
     RemoveFile(localAppDataPath, L"Argument.txt");
 
     test_end(result);

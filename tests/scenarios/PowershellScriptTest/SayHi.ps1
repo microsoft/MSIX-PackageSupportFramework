@@ -1,1 +1,1 @@
-New-Item -path $env:LOCALAPPDATA -Name "Hi.txt" -ItemType "file"
+write-host "I am doing nothing"

@@ -145,7 +145,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     if (endScriptInformation)
     {
         ErrorInformation endingScriptError = RunScript(*endScriptInformation, packageRoot, dirStr, cmdShow);
-        error.AddExeName(L"PowerShell.exe");
+        error.AddExeName(L"PowerShell.exe -file ");
 
         //If there is an existing error from Monitor or the packaged exe
         if (error.IsThereAnError())

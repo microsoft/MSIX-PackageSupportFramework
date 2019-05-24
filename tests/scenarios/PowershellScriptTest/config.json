@@ -1,7 +1,7 @@
 {
     "applications": [
         {
-            "id": "PSTNoScripts",
+            "id": "PSNoScripts",
             "executable": "PowershellScriptTest.exe"
         },
 		{
@@ -10,14 +10,6 @@
 			"startScript":
 			{
 				"scriptPath": "SayHello.ps1"
-			}
-		},
-		{
-			"id": "PSOnlyEnd",
-            "executable": "PowershellScriptTest.exe",
-			"endScript" :
-			{
-				"scriptPath" : "SayHi.ps1"
 			}
 		},
 		{
@@ -51,11 +43,6 @@
 			{
 				"scriptPath" : "SayWithArgument.ps1",
 				"scriptArguments": "Start"
-			},
-			"endScript" :
-			{
-				"scriptPath" : "SayWithArgument.ps1",
-				"scriptArguments": "End"
 			}
 		},
 		{
@@ -64,12 +51,6 @@
 			"startScript" :
 			{
 				"scriptPath" : "SayHello.ps1",
-				"runInVirtualEnvironment": "true"
-			},
-			"endScript" :
-			{
-				"scriptPath" : "SayWithArgument.ps1",
-				"scriptArguments": "End",
 				"runInVirtualEnvironment": "true"
 			}
 		}
