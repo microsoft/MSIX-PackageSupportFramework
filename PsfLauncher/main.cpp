@@ -51,6 +51,7 @@ void Log(const char fmt[], ...) noexcept;
 ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow) noexcept;
 ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexcept;
 std::wstring GetApplicationNameFromExecInfo(ExecutionInformation execInfo);
+ErrorInformation GetExitCodeForProcess(ExecutionInformation execInfo, HANDLE hProcess);
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 {
@@ -121,12 +122,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         std::wstring cmdLine = L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args;
         if (check_suffix_if(exeName, L".exe"_isv))
         {
-            std::wstring workingDirectory;
-
-            if (dirStr)
-            {
-                workingDirectory = (packageRoot / dirStr).native();
-            }
+            std::wstring workingDirectory = (packageRoot / dirStr).native();
 
             ExecutionInformation execInfo = { exePath.c_str(), cmdLine };
 
@@ -187,7 +183,15 @@ ErrorInformation RunScript(const psf::json_object &scriptInformation, std::files
 
     auto currentDirectory = (packageRoot / dirStr);
     std::filesystem::path powershellScriptPath(scriptPath);
-    auto doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
+
+    //The file might be on a network drive.
+    auto doesFileExist = std::filesystem::exists(powershellScriptPath);
+
+    //Check on local computer.
+    if (!doesFileExist)
+    {
+        doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
+    }
 
     if (doesFileExist)
     {
@@ -197,7 +201,7 @@ ErrorInformation RunScript(const psf::json_object &scriptInformation, std::files
 
         if (runInVirtualEnvironmentJObject)
         {
-            runInVirtualEnvironment = runInVirtualEnvironmentJObject->as_string().wide();
+            runInVirtualEnvironment = runInVirtualEnvironmentJObject->as_boolean().get();
         }
 
         ExecutionInformation execInfo = { nullptr, powershellCommandString , currentDirectory.c_str() };
@@ -273,24 +277,13 @@ ErrorInformation LaunchMonitorInBackground(std::filesystem::path packageRoot, co
                 // So we'll just toss in an ugly sleep here for now.
                 Sleep(5000);
             }
+
+            return GetExitCodeForProcess({ executable }, shExInfo.hProcess);
         }
         else
         {
             auto err = ::GetLastError();
-            ErrorInformation error = { L"error starting monitor using ShellExecuteEx", err, executable };
-        }
-
-        DWORD exitCode = ERROR_SUCCESS;
-        if (!GetExitCodeProcess(shExInfo.hProcess, &exitCode))
-        {
-            return { L"Could not get the exit process for " + std::wstring(executable), GetLastError() };
-        }
-        else
-        {
-            if (exitCode != ERROR_SUCCESS)
-            {
-                return { L"The process " + std::wstring(executable) + L" exited with with an unsuccessful code.", exitCode };
-            }
+            ErrorInformation error = { L"Error starting monitor using ShellExecuteEx", err, executable };
         }
     }
     else
@@ -381,7 +374,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         if (waitResult != WAIT_OBJECT_0)
         {
             auto err{ ::GetLastError() };
-            return { L"Waiting for the application terminated unexpectedly.", err };
+            return { L"Waiting operation failed unexpectedly.", err };
         }
     }
     else
@@ -393,18 +386,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         return { ss.str(), err };
     }
 
-    DWORD exitCode = ERROR_SUCCESS;
-    if (GetExitCodeProcess(processInfo.hProcess, &exitCode))
-    {
-        if (exitCode != ERROR_SUCCESS)
-        {
-            return { L"ERROR: Application failed for " + GetApplicationNameFromExecInfo(execInfo), exitCode };
-        }
-    }
-    else
-    {
-        return { L"Could not get the exit code process for " + GetApplicationNameFromExecInfo(execInfo), ::GetLastError() };
-    }
+   
 
     return {};
 }
@@ -434,6 +416,24 @@ std::wstring GetApplicationNameFromExecInfo(ExecutionInformation execInfo)
     }
 }
 
+ErrorInformation GetExitCodeForProcess(ExecutionInformation execInfo, HANDLE hProcess)
+{
+    DWORD exitCode = ERROR_SUCCESS;
+    if (GetExitCodeProcess(hProcess, &exitCode))
+    {
+        if (exitCode != ERROR_SUCCESS)
+        {
+            return { L"Exit code for " + GetApplicationNameFromExecInfo(execInfo), exitCode };
+        }
+    }
+    else
+    {
+        return { L"Could not get the exit code for " + GetApplicationNameFromExecInfo(execInfo), ::GetLastError() };
+    }
+
+    return {};
+}
+
 ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow) noexcept
 {
     // Non Exe case, use shell launching to pick up local FTA
@@ -458,30 +458,12 @@ ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::f
         return { L"ERROR: Failed to create detoured shell process", err };
     }
     
-    DWORD exitCode = ERROR_SUCCESS;
-    if (GetExitCodeProcess(shex.hProcess, &exitCode))
-    {
-        if (exitCode != ERROR_SUCCESS)
-        {
-            return { L"Application exited and was not successful. " + exeName.native(), exitCode };
-        }
-    }
-    else
-    {
-        return { L"Could not get the exit process for " + exeName.native(), GetLastError() };
-    }
-
-    return {};
+    return GetExitCodeForProcess({ exeName.native().c_str() }, shex.hProcess);
 }
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept
 {
-    if ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix))
-    {
-        return true;
-    }
-
-    return false;
+    return ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix));
 }
 
 void Log(const char fmt[], ...) noexcept
