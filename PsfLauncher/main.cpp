@@ -368,7 +368,6 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         (LPSTARTUPINFO)&startupInfoEx,
         &processInfo))
     {
-        // Propagate exit code to caller, in case they care
         DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, INFINITE);
 
         if (waitResult != WAIT_OBJECT_0)
@@ -384,9 +383,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         ss << L"ERROR: Failed to create a process for " << GetApplicationNameFromExecInfo(execInfo);
 
         return { ss.str(), err };
-    }
-
-   
+    }   
 
     return {};
 }
