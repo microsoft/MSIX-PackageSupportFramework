@@ -51,7 +51,7 @@
 			"startScript" :
 			{
 				"scriptPath" : "SayHello.ps1",
-				"runInVirtualEnvironment": "true"
+				"runInVirtualEnvironment": true
 			}
 		}
     ],
