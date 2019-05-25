@@ -22,13 +22,13 @@ function TryGetCert
 {
     write-host ("Cert friendly name is: " + $CertFriendlyName)
     $results = Get-ChildItem "$CertStoreLocation" | Where-Object { $_.FriendlyName -eq "$certFriendlyName" }
-    if ($results.Count -eq 1)
+    if ($results.Count -gt 1)
     {
         return $results[0];
     }
 	else
 	{
-		write-Host ("There is more than one certificate with the friendly name of " + $CertFriendlyName + " in location " + $CertStoreLocation)
+		write-Host ("There is no certificate with the friendly name of " + $CertFriendlyName + " in location " + $CertStoreLocation)
 		return $null
 	}
 }
