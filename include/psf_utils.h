@@ -67,9 +67,6 @@ namespace psf
 	{
 		static const unsigned int PACKAGE_PATH_TYPE_EFFECTIVE = 2;
 
-		/**
-			Summary: Used to call a method in appmodel.h and formats the return string.
-		*/
 		inline std::wstring appmodel_string(LONG(__stdcall *AppModelFunc)(UINT32, UINT32*, wchar_t*))
 		{
 			UINT32 length = MAX_PATH + 1;

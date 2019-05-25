@@ -72,15 +72,13 @@ Param (
 
 $certFile = "$PSScriptRoot\$FileName"
 
-function TryGetCert
+function RemoveCertIfExists
 {
     $results = Get-ChildItem "$CertStoreLocation" | Where-Object { $_.FriendlyName -eq "$FriendlyName" }
     if ($results.Count -gt 0)
     {
-        return $results[0];
+        remove-item $results[0]
     }
-
-    return $null
 }
 
 function Cleanup
@@ -102,12 +100,10 @@ function CreateCert()
     }
 
     # Create a cert in the specified store if one does not already exist
-    $cert = TryGetCert
-    if ($cert -eq $null)
-    {
-		write-host "Making a new self-signed certififcate"
-        $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
-    }	
+    RemoveCertIfExists
+
+    write-host "Making a new self-signed certififcate"
+    $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
 	
 	Write-host "Exporting cert to build"
 
