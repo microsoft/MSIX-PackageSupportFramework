@@ -7,9 +7,9 @@
 "..\..\..\Win32\Release\CompositionTestFixup32.dll" "CompositionTestFixup32.dll"
 "..\..\..\Win32\Release\MultiByteToWideCharTestFixup32.dll" "MultiByteToWideCharTestFixup32.dll"
 "..\..\Win32\Release\PowershellScriptTest.exe" "PowershellScriptTest.exe"
-"..\..\Win32\Release\SayHello.ps1" "SayHello.ps1"
-"..\..\Win32\Release\SayHi.ps1" "SayHi.ps1"
-"..\..\Win32\Release\SayWithArgument.ps1" "SayWithArgument.ps1"
+"..\Win32\Release\SayHello.ps1" "SayHello.ps1"
+"..\Win32\Release\SayHi.ps1" "SayHi.ps1"
+"..\Win32\Release\SayWithArgument.ps1" "SayWithArgument.ps1"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
