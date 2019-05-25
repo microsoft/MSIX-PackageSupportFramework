@@ -30,7 +30,7 @@ PSF allows one PowerShell script to be run before an exe runs, and one PowerShel
 Each exe defined in the application manifest can have their own scripts.
 
 ### Prerequisite to allow scripts to run
-In order to allow scripts to run you need to set the execution policy to unrestricted.  The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.
+In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.  The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.
 
 Here are the locations of each executable.
 * If on a 64-bit computer
