@@ -38,6 +38,8 @@ Here are the locations of each executable.
   * 32-bit: %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
 * If on a 32-bit computer
   * 32-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
+  
+[More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
 
 ### Configuration changes
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
@@ -96,7 +98,7 @@ Here is a sample configuration using two different exes.
 	  {
 		"scriptPath": "RunMePlease.ps1",
 		"scriptArguments": "ThisIsMe.txt",
-		"runInVirtualEnvironment": "true"
+		"runInVirtualEnvironment": true
 	  },
 	  "endScript":
 	  {
@@ -112,7 +114,7 @@ Here is a sample configuration using two different exes.
 	  {
 		"scriptPath": "CPPStart.ps1",
 		"scriptArguments": "ThisIsMe.txt",
-		"runInVirtualEnvironment": "true"
+		"runInVirtualEnvironment": true
 	  },
 	  "endScript":
 	  {
