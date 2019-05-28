@@ -296,7 +296,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 
     }
 
-    if (reason == DLL_PROCESS_DETACH)
+    else if (reason == DLL_PROCESS_DETACH)
     {
         Log_ETW_UnRegister();
     }
