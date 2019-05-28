@@ -368,35 +368,9 @@ void LogApplicationAndProcessesCollection()
     }
 }
 
-void LogJsonConfig()
-{
-#pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-    auto file = _wfopen((std::filesystem::path(PSFQueryPackageRootPath()) / L"config.json").c_str(), L"rb, ccs=UTF-8");
-    if (file)
-    {
-        fseek(file, 0, SEEK_END);
-        auto size = ftell(file);
-        auto fileContents = std::make_unique<char[]>(static_cast<int>(size + 1));
-        rewind(file);
-        fread(fileContents.get(), sizeof(char), size, file);
-        fileContents[size] = 0;
-
-
-        TraceLoggingWrite(
-            g_Log_ETW_ComponentProvider,
-            "JsonConfig",
-            TraceLoggingValue(fileContents.get(), "config_data"),
-            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-        fclose(file);
-    }
-}
-
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR args, int cmdShow)
 {
     TraceLoggingRegister(g_Log_ETW_ComponentProvider);
-    LogJsonConfig();
     int result = launcher_main(args, cmdShow);
     TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
     return result;

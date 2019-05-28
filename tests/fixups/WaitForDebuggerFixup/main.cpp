@@ -42,11 +42,12 @@ extern "C" {
         bool waitForDebugger = true;
         if (auto config = ::PSFQueryCurrentDllConfig())
         {
-            auto& configObject = config->as_object();
+            auto& configObject = config->as_object();            
             if (auto enabledValue = configObject.try_get("enabled"))
             {
                 std::wstringstream traceDataStream;
-                traceDataStream << " enabled : " << static_cast<bool>(enabledValue->as_boolean()) << " ;";
+                traceDataStream << " config:\n";
+                traceDataStream << " enabled:" << static_cast<bool>(enabledValue->as_boolean()) << " ;";
 
                 TraceLoggingWrite(
                     g_Log_ETW_ComponentProvider,

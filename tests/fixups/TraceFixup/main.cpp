@@ -206,11 +206,11 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
         {
             auto& configObj = config->as_object();
 
-            traceDataStream << "config : \n";
+            traceDataStream << " config:\n";
             if (auto method = configObj.try_get("traceMethod"))
             {
                 auto methodStr = method->as_string().string();
-                traceDataStream << " traceMethod : " << method->as_string().wide() << " ;";
+                traceDataStream << " traceMethod:" << method->as_string().wide() << " ;";
 
                 if (methodStr == "printf"sv)
                 {
@@ -231,12 +231,12 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
             if (auto levels = configObj.try_get("traceLevels"))
             {
                 g_traceLevels = &levels->as_object();
-                traceDataStream << " traceLevels : \n";
+                traceDataStream << " traceLevels:\n";
 
                 // Set default level immediately for fallback purposes
                 if (auto defaultLevel = g_traceLevels->try_get("default"))
                 {
-                    traceDataStream << " default : \n" << defaultLevel->as_string().wide() << " ;";
+                    traceDataStream << " default:\n" << defaultLevel->as_string().wide() << " ;";
                     g_defaultTraceLevel = trace_level_from_configuration(defaultLevel->as_string().string(), g_defaultTraceLevel);
                 }
             }
@@ -244,37 +244,37 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
             if (auto levels = configObj.try_get("breakOn"))
             {
                 g_breakLevels = &levels->as_object();
-                traceDataStream << " breakOn : \n";
+                traceDataStream << " breakOn:\n";
 
                 // Set default level immediately for fallback purposes
                 if (auto defaultLevel = g_breakLevels->try_get("default"))
                 {
-                    traceDataStream << " default : " << defaultLevel->as_string().wide() << " ;";
+                    traceDataStream << " default:" << defaultLevel->as_string().wide() << " ;";
                     g_defaultBreakLevel = trace_level_from_configuration(defaultLevel->as_string().string(), g_defaultBreakLevel);
                 }
             }
 
             if (auto debuggerConfig = configObj.try_get("waitForDebugger"))
             {
-                traceDataStream << " waitForDebugger : " << static_cast<bool>(debuggerConfig->as_boolean()) << " ;";
+                traceDataStream << " waitForDebugger:" << static_cast<bool>(debuggerConfig->as_boolean()) << " ;";
                 wait_for_debugger = static_cast<bool>(debuggerConfig->as_boolean());
             }
 
             if (auto traceEntryConfig = configObj.try_get("traceFunctionEntry"))
             {
-                traceDataStream << " traceFunctionEntry : " << static_cast<bool>(traceEntryConfig->as_boolean()) << " ;";
+                traceDataStream << " traceFunctionEntry:" << static_cast<bool>(traceEntryConfig->as_boolean()) << " ;";
                 trace_function_entry = static_cast<bool>(traceEntryConfig->as_boolean());
             }
 
             if (auto callerConfig = configObj.try_get("traceCallingModule"))
             {
-                traceDataStream << " traceCallingModule : " << static_cast<bool>(callerConfig->as_boolean()) << " ;";
+                traceDataStream << " traceCallingModule:" << static_cast<bool>(callerConfig->as_boolean()) << " ;";
                 trace_calling_module = static_cast<bool>(callerConfig->as_boolean());
             }
 
             if (auto ignoreDllConfig = configObj.try_get("ignoreDllLoad"))
             {
-                traceDataStream << " ignoreDllLoad : " << static_cast<bool>(ignoreDllConfig->as_boolean()) << " ;";
+                traceDataStream << " ignoreDllLoad:" << static_cast<bool>(ignoreDllConfig->as_boolean()) << " ;";
                 ignore_dll_load = static_cast<bool>(ignoreDllConfig->as_boolean());
             }
 
