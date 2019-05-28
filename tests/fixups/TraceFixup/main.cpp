@@ -289,7 +289,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 
         }
 
-        else if (wait_for_debugger)
+        if (wait_for_debugger)
         {
             psf::wait_for_debugger();
         }
