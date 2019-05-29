@@ -22,7 +22,7 @@ function TryGetCert
 {
     write-host ("Cert friendly name is: " + $CertFriendlyName)
     $results = Get-ChildItem "$CertStoreLocation" | Where-Object { $_.FriendlyName -eq "$certFriendlyName" }
-    if ($results.Count -gt 1)
+    if ($results.Count -gt 0)
     {
         return $results[0];
     }
