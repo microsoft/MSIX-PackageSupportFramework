@@ -46,11 +46,14 @@ function RunTest($Arch, $Config)
     }
 }
 
+write-host ("Checking to see if a cert exists at " + $pfxPath)
 if (!(Test-Path "$pfxPath"))
 {
+	write-host "Invoking Create Cert"
 	Invoke-Expression "$PSScriptRoot\scenarios\signing\CreateCert.ps1 -Install -PasswordAsPlainText CentennialFixupsTestSigning" | Out-Null
-	Write-Host "Creating test cert"
 }
+
+write-host "Cert exists"
 
 if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 {
