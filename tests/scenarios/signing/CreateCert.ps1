@@ -129,6 +129,7 @@ function CreateCert()
 
     if ($Install)
     {
+		write-host "Installing pfx cert"
         Import-PfxCertificate -FilePath "$certFile" -CertStoreLocation "Cert:\LocalMachine\Root" -Password $Password
     }
 }
