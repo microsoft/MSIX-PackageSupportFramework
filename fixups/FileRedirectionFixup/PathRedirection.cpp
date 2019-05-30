@@ -13,6 +13,16 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+#include "RemovePII.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 using namespace std::literals;
 
@@ -161,53 +171,76 @@ std::vector<path_redirection_spec> g_redirectionSpecs;
 
 void InitializeConfiguration()
 {
+    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+    std::wstringstream traceDataStream;
+
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         auto& rootObject = rootConfig->as_object();
+        traceDataStream << " config:\n";
         if (auto pathsValue = rootObject.try_get("redirectedPaths"))
         {
+            traceDataStream << " redirectedPaths:\n";
             auto& redirectedPathsObject = pathsValue->as_object();
-            auto initializeRedirection = [](const std::filesystem::path& basePath, const psf::json_array& specs)
+            auto initializeRedirection = [&traceDataStream](const std::filesystem::path & basePath, const psf::json_array & specs, bool traceOnly = false)
             {
                 for (auto& spec : specs)
                 {
                     auto& specObject = spec.as_object();
                     auto path = psf::remove_trailing_path_separators(basePath / specObject.get("base").as_string().wstring());
+                    traceDataStream << " base:" << RemovePIIfromFilePath(specObject.get("base").as_string().wide()) << " ;";
+                    traceDataStream << " patterns:";
                     for (auto& pattern : specObject.get("patterns").as_array())
                     {
                         auto patternString = pattern.as_string().wstring();
-
-                        g_redirectionSpecs.emplace_back();
-                        g_redirectionSpecs.back().base_path = path;
-                        g_redirectionSpecs.back().pattern.assign(patternString.data(), patternString.length());
+                        traceDataStream << pattern.as_string().wide() << " ;";
+                        if (!traceOnly)
+                        {
+                            g_redirectionSpecs.emplace_back();
+                            g_redirectionSpecs.back().base_path = path;
+                            g_redirectionSpecs.back().pattern.assign(patternString.data(), patternString.length());
+                        }
                     }
                 }
             };
 
             if (auto packageRelativeValue = redirectedPathsObject.try_get("packageRelative"))
             {
+                traceDataStream << " packageRelative:\n";
                 initializeRedirection(g_packageRootPath, packageRelativeValue->as_array());
             }
 
             if (auto packageDriveRelativeValue = redirectedPathsObject.try_get("packageDriveRelative"))
             {
+                traceDataStream << " packageDriveRelative:\n";
                 initializeRedirection(g_packageRootPath.root_name(), packageDriveRelativeValue->as_array());
             }
 
             if (auto knownFoldersValue = redirectedPathsObject.try_get("knownFolders"))
             {
+                traceDataStream << " knownFolders:\n";
                 for (auto& knownFolderValue : knownFoldersValue->as_array())
                 {
                     auto& knownFolderObject = knownFolderValue.as_object();
                     auto path = path_from_known_folder_string(knownFolderObject.get("id").as_string().wstring());
-                    if (!path.empty())
-                    {
-                        initializeRedirection(path, knownFolderObject.get("relativePaths").as_array());
-                    }
+                    traceDataStream << " id:" << knownFolderObject.get("id").as_string().wide() << " ;";
+
+                    traceDataStream << " relativePaths:\n";
+                    initializeRedirection(path, knownFolderObject.get("relativePaths").as_array(), !path.empty());
                 }
             }
         }
+
+        TraceLoggingWrite(
+            g_Log_ETW_ComponentProvider,
+            "FileRedirectionFixupConfigdata",
+            TraceLoggingWideString(traceDataStream.str().c_str(), "FileRedirectionFixupConfig"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
     }
+
+    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
 }
 
 bool path_relative_to(const wchar_t* path, const std::filesystem::path& basePath)
