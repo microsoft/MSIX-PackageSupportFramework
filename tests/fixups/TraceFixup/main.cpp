@@ -236,7 +236,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 // Set default level immediately for fallback purposes
                 if (auto defaultLevel = g_traceLevels->try_get("default"))
                 {
-                    traceDataStream << " default:\n" << defaultLevel->as_string().wide() << " ;";
+                    traceDataStream << " default:" << defaultLevel->as_string().wide() << " ;";
                     g_defaultTraceLevel = trace_level_from_configuration(defaultLevel->as_string().string(), g_defaultTraceLevel);
                 }
             }
@@ -278,7 +278,6 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 ignore_dll_load = static_cast<bool>(ignoreDllConfig->as_boolean());
             }
 
-
             TraceLoggingWrite(
                 g_Log_ETW_ComponentProvider,
                 "TraceFixupConfigdata",
@@ -286,16 +285,13 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                 TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                 TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-
         }
 
         if (wait_for_debugger)
         {
             psf::wait_for_debugger();
         }
-
     }
-
     else if (reason == DLL_PROCESS_DETACH)
     {
         Log_ETW_UnRegister();
