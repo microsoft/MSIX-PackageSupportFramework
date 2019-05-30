@@ -1,0 +1,1 @@
+New-Item -path $env:LOCALAPPDATA -Name "Hello.txt" -ItemType "file"

@@ -38,7 +38,7 @@ function RunTest($Arch, $Config)
     {
         # Uninstall all packages on exit. Ideally Add-AppxPackage would give us back something that we could use here,
         # but alas we must hard-code it
-        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "WorkingDirectoryTest")
+        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "WorkingDirectoryTest", "PowershellScriptTest")
         foreach ($pkg in $packagesToUninstall)
         {
             Get-AppxPackage $pkg | Remove-AppxPackage
@@ -46,11 +46,14 @@ function RunTest($Arch, $Config)
     }
 }
 
+write-host ("Checking to see if a cert exists at " + $pfxPath)
 if (!(Test-Path "$pfxPath"))
 {
+	write-host "Invoking Create Cert"
 	Invoke-Expression "$PSScriptRoot\scenarios\signing\CreateCert.ps1 -Install -PasswordAsPlainText CentennialFixupsTestSigning" | Out-Null
-	Write-Host "Creating test cert"
 }
+
+write-host "Cert exists"
 
 if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 {
