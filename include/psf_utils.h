@@ -201,7 +201,7 @@ namespace psf
 			{
 				result.resize(length - 1);
 				length = GetFinalPathNameByHandle(file, result.data(), length, flags);
-				assert(length < finalPackageRootPath.size());
+				assert(length < result.size());
 			}
 
 			CloseHandle(file);
