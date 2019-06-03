@@ -19,6 +19,9 @@
     The output ".pfx" file name. The default is "CentennialFixupsTestSigningCertificate.pfx". Note that other scripts may
     try and reference this hardcoded name, so using the default is recommended.
 
+.PARAMETER PasswordAsPlainText
+	The password used to sign the certificate with.  This is for the build system.
+
 .PARAMETER Force
     Forces the (re-)creation of the certificate, even if one with the same friendly name already exists. This is
     effectively the same as running with -Clean followed by a normal create call
@@ -51,6 +54,9 @@ Param (
     [Parameter(ParameterSetName='CertCreation')]
     [string]$FileName="CentennialFixupsTestSigningCertificate.pfx",
 
+	[Parameter(ParameterSetName='CertCreation')]
+	[string]$passwordAsPlainText,
+
     [Parameter(ParameterSetName='CertCreation')]
     [switch]$Force,
 
@@ -69,12 +75,20 @@ $certFile = "$PSScriptRoot\$FileName"
 function TryGetCert
 {
     $results = Get-ChildItem "$CertStoreLocation" | Where-Object { $_.FriendlyName -eq "$FriendlyName" }
-    if ($results.Count -gt 0)
+    if ($results.Count -eq 1)
     {
-        return $results[0];
+        return $results[0]
     }
-
-    return $null
+	elseif ($results.Count -eq 0)
+	{
+		write-Host ("There is no certificate with the friendly name of " + $FriendlyName + " in location " + $CertStoreLocation)
+		return $null
+	}
+	else
+	{
+		write-Host ("There is more than one certificate with the friendly name of " + $FriendlyName + " in location " + $CertStoreLocation)
+		return $null
+	}
 }
 
 function Cleanup
@@ -96,13 +110,18 @@ function CreateCert()
     }
 
     # Create a cert in the specified store if one does not already exist
-    $cert = TryGetCert
-    if ($cert -eq $null)
-    {
-        $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
-    }
+    
 
-    $Password = ConvertTo-SecureString "CentennialFixupsTestSigning" -AsPlainText -Force
+    $cert = TryGetCert
+	if ($cert -eq $null)
+    {
+		write-host "Making a new self-signed certififcate"
+        $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
+} 
+	
+	Write-host "Exporting cert to build"
+
+    $Password = ConvertTo-SecureString $passwordAsPlainText -AsPlainText -Force
     if (-not (Test-Path "$certFile"))
     {
         Export-PfxCertificate -Cert $cert -FilePath $certFile -Password $Password | Out-Null
@@ -110,6 +129,7 @@ function CreateCert()
 
     if ($Install)
     {
+		write-host "Installing pfx cert"
         Import-PfxCertificate -FilePath "$certFile" -CertStoreLocation "Cert:\LocalMachine\Root" -Password $Password
     }
 }

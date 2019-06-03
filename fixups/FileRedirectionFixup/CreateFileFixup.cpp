@@ -23,7 +23,7 @@ HANDLE __stdcall CreateFileFixup(
         {
             // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
             //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
-            auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+            auto[shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
                 return impl::CreateFile(redirectPath.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
@@ -53,7 +53,7 @@ HANDLE __stdcall CreateFile2Fixup(
         {
             // FUTURE: See comment in CreateFileFixup about using 'creationDisposition' to choose a potentially better
             //         redirect flags value
-            auto [shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+            auto[shouldRedirect, redirectPath] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
                 return impl::CreateFile2(redirectPath.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);

@@ -75,6 +75,8 @@ NTSTATUS __stdcall NtCreateFileFixup(
             eaLength);
     }
 
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtCreateFileImpl(
         fileHandle,
@@ -88,10 +90,56 @@ NTSTATUS __stdcall NtCreateFileFixup(
         createOptions,
         eaBuffer,
         eaLength);
+	QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_ntstatus(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs =  InterpretObjectAttributes(objectAttributes);
+
+			inputs += "\n" + InterpretFileCreateOptions(createOptions);
+			if (createOptions & FILE_DIRECTORY_FILE)
+			{
+				inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
+			}
+			else if (createOptions & FILE_NON_DIRECTORY_FILE)
+			{
+				inputs += "\n" + InterpretFileAccess(desiredAccess);
+			}
+			else
+			{
+				inputs += "\n" + InterpretGenericAccess(desiredAccess);
+			}
+			outputs =  InterpretFileAttributes(fileAttributes, "File Attributes");
+			outputs += "\n" + InterpretShareMode(shareAccess);
+			outputs += "\n" + InterpretCreationDispositionInternal(createDisposition);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs += "\n" + InterpretNTStatus(result);
+			}
+			else
+			{
+				outputs += "\n" + InterpretAsHex("Handle", fileHandle);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtCreateFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtCreateFile:\n");
         LogObjectAttributes(objectAttributes);
         if (createOptions & FILE_DIRECTORY_FILE)
@@ -116,6 +164,7 @@ NTSTATUS __stdcall NtCreateFileFixup(
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -136,12 +185,58 @@ NTSTATUS __stdcall NtOpenFileFixup(
         return NtOpenFileImpl(fileHandle, desiredAccess, objectAttributes, ioStatusBlock, shareAccess, openOptions);
     }
 
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenFileImpl(fileHandle, desiredAccess, objectAttributes, ioStatusBlock, shareAccess, openOptions);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretObjectAttributes(objectAttributes);
+
+			if (openOptions & FILE_DIRECTORY_FILE)
+			{
+				inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
+			}
+			else if (openOptions & FILE_NON_DIRECTORY_FILE)
+			{
+				inputs += "\n" + InterpretFileAccess(desiredAccess);
+			}
+			else
+			{
+				inputs += "\n" + InterpretGenericAccess(desiredAccess);
+			}
+			outputs  =        InterpretShareMode(shareAccess);
+			outputs += "\n" + InterpretFileCreateOptions(openOptions);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs += "\n" + InterpretNTStatus(result);
+			}
+			else
+			{
+				outputs += "\n" + InterpretAsHex("Handle", fileHandle);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtOpenFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtOpenFile:\n");
         LogObjectAttributes(objectAttributes);
         if (openOptions & FILE_DIRECTORY_FILE)
@@ -164,6 +259,7 @@ NTSTATUS __stdcall NtOpenFileFixup(
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -181,12 +277,44 @@ NTSTATUS __stdcall NtCreateDirectoryObjectFixup(
     _In_ ACCESS_MASK desiredAccess,
     _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtCreateDirectoryObjectImpl(directoryHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretObjectAttributes(objectAttributes);
+			inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
+			
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs +=  InterpretNTStatus(result);
+			}
+			else
+			{
+				outputs +=  InterpretAsHex("Handle", directoryHandle);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtCreateDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtCreateDirectoryObject:\n");
         LogObjectAttributes(objectAttributes);
         LogDirectoryAccess(desiredAccess);
@@ -196,6 +324,7 @@ NTSTATUS __stdcall NtCreateDirectoryObjectFixup(
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -213,12 +342,44 @@ NTSTATUS __stdcall NtOpenDirectoryObjectFixup(
     _In_ ACCESS_MASK desiredAccess,
     _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenDirectoryObjectImpl(directoryHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretObjectAttributes(objectAttributes);
+			inputs += "\n" + InterpretDirectoryAccessInternal(desiredAccess);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs +=  InterpretNTStatus(result);
+			}
+			else
+			{
+				outputs +=  InterpretAsHex("Handle", directoryHandle);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtOpenDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtOpenDirectoryObject:\n");
         LogObjectAttributes(objectAttributes);
         LogDirectoryAccessInternal(desiredAccess);
@@ -228,6 +389,7 @@ NTSTATUS __stdcall NtOpenDirectoryObjectFixup(
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -253,12 +415,68 @@ NTSTATUS __stdcall NtQueryDirectoryObjectFixup(
     _Inout_ PULONG context,
     _Out_opt_ PULONG returnLength)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtQueryDirectoryObjectImpl(directoryHandle, buffer, length, returnSingleEntry, restartScan, context, returnLength);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs =  InterpretAsHex("Handle", directoryHandle);
+			inputs += "\n" +	InterpretBool("Return Single Entry",returnSingleEntry);
+			inputs += "\n" + InterpretBool("Restart Scan", restartScan);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs +=  InterpretNTStatus(result);
+			}
+			else
+			{
+				struct OBJECT_DIRECTORY_INFORMATION
+				{
+					UNICODE_STRING Name;
+					UNICODE_STRING TypeName;
+				};
+
+				std::ostringstream sout2;
+				sout2 << "Result(s):";
+				auto info = reinterpret_cast<const OBJECT_DIRECTORY_INFORMATION*>(buffer);
+				for (std::size_t i = 0; info[i].Name.Length || info[i].TypeName.Length; ++i)
+				{
+					sout2 << "\tBuffer[" << std::setw(length) << i;
+					sout2 << "]:";
+					if (info[i].Name.Length)
+					{
+						sout2 << InterpretCountedString(" Name", info[i].Name.Buffer, info[i].Name.Length/2);
+					}
+					if (info[i].TypeName.Length)
+					{
+						sout2 << InterpretCountedString(" tTypeName", info[i].TypeName.Buffer, info[i].TypeName.Length / 2);
+					}
+					sout2 << "\n";
+				}
+				outputs += "\n" + sout2.str();
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtQueryDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtQueryDirectoryObject:\n");
         LogBool("Return Single Entry", returnSingleEntry);
         LogBool("Restart Scan", restartScan);
@@ -291,6 +509,7 @@ NTSTATUS __stdcall NtQueryDirectoryObjectFixup(
             }
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -308,12 +527,44 @@ NTSTATUS __stdcall NtOpenSymbolicLinkObjectFixup(
     _In_ ACCESS_MASK desiredAccess,
     _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenSymbolicLinkObjectImpl(linkHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretObjectAttributes(objectAttributes);
+			inputs += "\n" + InterpretGenericAccess(desiredAccess);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs +=  InterpretNTStatus(result);
+			}
+			else
+			{
+				outputs += InterpretAsHex("LinkHandle", linkHandle);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtOpenSymbolicLinkObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtOpenSymbolicLinkObject:\n");
         LogObjectAttributes(objectAttributes);
         LogGenericAccess(desiredAccess);
@@ -323,6 +574,7 @@ NTSTATUS __stdcall NtOpenSymbolicLinkObjectFixup(
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -340,12 +592,48 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObjectFixup(
     _Inout_ PUNICODE_STRING linkTarget,
     _Out_opt_ PULONG returnedLength)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtQuerySymbolicLinkObjectImpl(linkHandle, linkTarget, returnedLength);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretAsHex("LinkHandle", linkHandle);
+			inputs += "\n" + InterpretUnicodeString("LinkTarget", linkTarget);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs += InterpretNTStatus(result);
+				if (returnedLength && (result == STATUS_BUFFER_TOO_SMALL))
+				{
+					outputs += InterpretAsHex("\nRequired Length", *returnedLength);
+				}
+			}
+			else
+			{
+				outputs +=  InterpretUnicodeString("Target", linkTarget);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtQuerySymbolicLinkObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtQuerySymbolicLinkObject:\n");
         LogFunctionResult(functionResult);
         if (function_failed(functionResult))
@@ -361,6 +649,7 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObjectFixup(
             LogUnicodeString("Target", linkTarget);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -386,12 +675,46 @@ NTSTATUS __stdcall NtCreateKeyFixup(
     _In_ ULONG createOptions,
     _Out_ PULONG disposition)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtCreateKeyImpl(keyHandle, desiredAccess, objectAttributes, titleIndex, objectClass, createOptions, disposition);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretUnicodeString("Class", objectClass); 
+			inputs += "\n" + InterpretObjectAttributes(objectAttributes);
+			inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
+			inputs += "\n" + InterpretRegKeyFlags(createOptions);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs +=  InterpretNTStatus(result);				
+			}
+			else if (disposition)
+			{
+				outputs +=  InterpretRegKeyDisposition(*disposition);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtCreateKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtCreateKey:\n");
         LogObjectAttributes(objectAttributes);
         LogRegKeyAccess(desiredAccess);
@@ -407,6 +730,7 @@ NTSTATUS __stdcall NtCreateKeyFixup(
             LogRegKeyDisposition(*disposition);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -418,12 +742,44 @@ NTSTATUS WINAPI NtOpenKey(_Out_ PHANDLE KeyHandle, _In_ ACCESS_MASK DesiredAcces
 auto NtOpenKeyImpl = WINTERNL_FUNCTION(NtOpenKey);
 NTSTATUS __stdcall NtOpenKeyFixup(_Out_ PHANDLE keyHandle, _In_ ACCESS_MASK desiredAccess, _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenKeyImpl(keyHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretObjectAttributes(objectAttributes);
+			inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs += InterpretNTStatus(result);
+			}
+			else 
+			{
+				outputs += InterpretAsHex("Handle", keyHandle);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtOpenKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtOpenKey:\n");
         LogObjectAttributes(objectAttributes);
         LogRegKeyAccess(desiredAccess);
@@ -433,6 +789,7 @@ NTSTATUS __stdcall NtOpenKeyFixup(_Out_ PHANDLE keyHandle, _In_ ACCESS_MASK desi
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -452,12 +809,45 @@ NTSTATUS __stdcall NtOpenKeyExFixup(
     _In_ POBJECT_ATTRIBUTES objectAttributes,
     _In_ ULONG openOptions)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenKeyExImpl(keyHandle, desiredAccess, objectAttributes, openOptions);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretObjectAttributes(objectAttributes);
+			inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
+			inputs += "\n" + InterpretRegKeyFlags(openOptions);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs += InterpretNTStatus(result);
+			}
+			else
+			{
+				outputs += InterpretAsHex("Handle", keyHandle);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtOpenKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtOpenKey:\n");
         LogObjectAttributes(objectAttributes);
         LogRegKeyAccess(desiredAccess);
@@ -468,6 +858,7 @@ NTSTATUS __stdcall NtOpenKeyExFixup(
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -491,12 +882,42 @@ NTSTATUS __stdcall NtSetValueKeyFixup(
     _In_ PVOID data,
     _In_ ULONG dataSize)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtSetValueKeyImpl(keyHandle, valueName, titleIndex, type, data, dataSize);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretAsHex("Handle", keyHandle); 
+			inputs += "\n" + InterpretUnicodeString("Value Name", valueName); 
+			inputs += "\n" + InterpretRegKeyType(type);
+			inputs += "\n" + InterpretRegValueA<char>(type, data, dataSize);
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs += InterpretNTStatus(result);
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtSetValueKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtSetValueKey:\n");
         // TODO: Translate keyHandle to a name?
         LogUnicodeString("Value Name", valueName);
@@ -508,6 +929,7 @@ NTSTATUS __stdcall NtSetValueKeyFixup(
             LogNTStatus(result);
         }
         LogCallingModule();
+	}
     }
 
     return result;
@@ -523,12 +945,110 @@ NTSTATUS __stdcall NtQueryValueKeyFixup(
     _In_ ULONG length,
     _Out_ PULONG resultLength)
 {
+	LARGE_INTEGER TickStart, TickEnd;
+	QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = impl::NtQueryValueKey(keyHandle, valueName, keyValueInformationClass, keyValueInformation, length, resultLength);
 
     auto functionResult = from_ntstatus(result);
+	QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
+		if (output_method == trace_method::eventlog)
+		{
+			std::string inputs = "";
+			std::string outputs = "";
+			std::string results = "";
+
+			inputs = InterpretAsHex("Handle", keyHandle);
+			inputs += "\n" + InterpretUnicodeString("Value Name", valueName);
+			inputs += "\nKeyValueInformationClass" + InterpretKeyValueInformationClass(keyValueInformationClass);
+			inputs += "(" + InterpretAsHex("", (DWORD)keyValueInformationClass) + ")";
+
+			results = InterpretReturnNT(functionResult, result).c_str();
+			if (function_failed(functionResult))
+			{
+				outputs +=  InterpretNTStatus(result);
+				if ((result == STATUS_BUFFER_OVERFLOW) || (result == STATUS_BUFFER_TOO_SMALL))
+				{
+					outputs += "\n" + InterpretAsHex("Required Length", *resultLength);
+				}
+			}
+			else
+			{
+				auto align64 = [](auto ptr)
+				{
+					auto ptrValue = reinterpret_cast<std::uintptr_t>(ptr);
+					ptrValue += 63;
+					ptrValue &= ~0x3F;
+					return reinterpret_cast<decltype(ptr)>(ptr);
+				};
+
+				std::wstring_view name;
+				ULONG type = 0;
+				const void* data = nullptr;
+				std::size_t dataSize = 0;
+
+				switch (keyValueInformationClass)
+				{
+				case winternl::KeyValueBasicInformation:
+				{
+					auto info = reinterpret_cast<const winternl::KEY_VALUE_BASIC_INFORMATION*>(keyValueInformation);
+					name = { info->Name, info->NameLength / 2 };
+					type = info->Type;
+				} break;
+
+				case winternl::KeyValueFullInformation:
+				case winternl::KeyValueFullInformationAlign64:
+				{
+					auto info = reinterpret_cast<const winternl::KEY_VALUE_FULL_INFORMATION*>(keyValueInformation);
+					if (keyValueInformationClass == winternl::KeyValueFullInformationAlign64)
+					{
+						info = align64(info);
+					}
+					name = { info->Name, info->NameLength / 2 };
+					type = info->Type;
+					data = reinterpret_cast<const void*>(reinterpret_cast<std::uintptr_t>(info) + info->DataOffset);
+					dataSize = info->DataLength;
+				} break;
+
+				case winternl::KeyValuePartialInformation:
+				case winternl::KeyValuePartialInformationAlign64:
+				{
+					auto info = reinterpret_cast<const winternl::KEY_VALUE_PARTIAL_INFORMATION*>(keyValueInformation);
+					if (keyValueInformationClass == winternl::KeyValuePartialInformationAlign64)
+					{
+						info = align64(info);
+					}
+					type = info->Type;
+					data = info->Data;
+					dataSize = info->DataLength;
+				} break;
+
+				default: // Invalid or undocumented
+					break;
+				}
+
+				if (!name.empty()) 
+					outputs +=  InterpretCountedString("Name", name.data(), name.length()) + "\n";
+				outputs += InterpretRegKeyType(type);
+				if (data)
+				{
+					outputs += "\n" + InterpretRegValueA<wchar_t>(type, data, dataSize); 
+
+				}
+			}
+
+			std::ostringstream sout;
+			InterpretCallingModulePart1()
+				sout << InterpretCallingModulePart2()
+				InterpretCallingModulePart3()
+				std::string cm = sout.str();
+
+			Log_ETW_PostMsgOperationA("NtQueryValueKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+		}
+		else
+		{
         Log("NtQueryValueKey:\n");
         LogUnicodeString("Value Name", valueName);
         LogFunctionResult(functionResult);
@@ -603,6 +1123,7 @@ NTSTATUS __stdcall NtQueryValueKeyFixup(
             }
         }
         LogCallingModule();
+	}
     }
 
     return result;

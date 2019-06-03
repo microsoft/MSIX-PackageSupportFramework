@@ -19,6 +19,7 @@ using namespace std::literals;
 std::filesystem::path g_packageRootPath;
 std::filesystem::path g_packageVfsRootPath;
 std::filesystem::path g_redirectRootPath;
+std::filesystem::path g_writablePackageRootPath;
 
 struct vfs_folder_mapping
 {
@@ -31,19 +32,25 @@ void InitializePaths()
 {
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
-    auto packageRootPath = ::PSFQueryPackageRootPath();
-    if (auto pathType = psf::path_type(packageRootPath);
-        (pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
+    auto packageRootPath = std::wstring(::PSFQueryPackageRootPath());
+    auto pathType = psf::path_type(packageRootPath.c_str());
+    if (pathType == psf::dos_path_type::root_local_device || (pathType == psf::dos_path_type::local_device))
     {
         packageRootPath += 4;
     }
-    assert(psf::path_type(packageRootPath) == psf::dos_path_type::drive_absolute);
+    assert(psf::path_type(packageRootPath.c_str()) == psf::dos_path_type::drive_absolute);
+
+    transform(packageRootPath.begin(), packageRootPath.end(), packageRootPath.begin(), towlower);
     g_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
+
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
 
     // Ensure that the redirected root path exists
     g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"VFS";
     impl::CreateDirectory(g_redirectRootPath.c_str(), nullptr);
+
+    g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+    impl::CreateDirectory(g_writablePackageRootPath.c_str(), nullptr);
 
     // Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
     // https://docs.microsoft.com/en-us/windows/uwp/porting/desktop-to-uwp-behind-the-scenes
@@ -304,22 +311,8 @@ normalized_path DeVirtualizePath(normalized_path path)
     return path;
 }
 
-std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
+std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureDirectoryStructure, std::wstring result)
 {
-    auto result = LR"(\\?\)" + g_redirectRootPath.native();
-
-    // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
-    // similar to what's done for UNC paths
-    assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
-    result.push_back(L'\\');
-    result.push_back(deVirtualizedPath.drive_absolute_path[0]);
-    result.push_back('$');
-
-    auto remainingLength = deVirtualizedPath.full_path.length();
-    remainingLength -= (deVirtualizedPath.drive_absolute_path - deVirtualizedPath.full_path.c_str());
-    remainingLength -= 2;
-    std::wstring_view relativePath(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
-
     if (ensureDirectoryStructure)
     {
         for (std::size_t pos = 0; pos < relativePath.length(); )
@@ -349,6 +342,58 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     return result;
 }
 
+/// <summary>
+/// Figures out the absolute path to redirect to.
+/// </summary>
+/// <param name="deVirtualizedPath">The original path from the app</param>
+/// <param name="ensureDirectoryStructure">If true, the deVirtualizedPath will be appended to the allowed write location</param>
+/// <returns>The new absolute path.</returns>
+std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
+{
+    //To prevent apps breaking on an upgrade we redirect writes to the package root path to
+    //a path that contains the package family name and not the package full name.
+    std::wstring result;
+    bool shouldredirectToPackageRoot = false;
+    auto deVirtualizedFullPath = deVirtualizedPath.full_path;
+
+    //Lowercase the devirtualized full path because .find is case-sensitive.
+    transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(), towlower);
+
+    if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
+    {
+        result = LR"(\\?\)" + g_writablePackageRootPath.native();
+        shouldredirectToPackageRoot = true;
+    }
+    else
+    {
+        result = LR"(\\?\)" + g_redirectRootPath.native();
+    }
+
+    std::wstring_view relativePath;
+    if (shouldredirectToPackageRoot)
+    {
+        auto lengthPackageRootPath = g_packageRootPath.native().length();
+        auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
+        relativePath = std::wstring_view(stringToTurnIntoAStringView);
+
+        return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
+    }
+
+    // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
+    // similar to what's done for UNC paths
+    assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
+    result.push_back(L'\\');
+    result.push_back(deVirtualizedPath.drive_absolute_path[0]);
+    result.push_back('$');
+
+    auto remainingLength = deVirtualizedPath.full_path.length();
+    remainingLength -= (deVirtualizedPath.drive_absolute_path - deVirtualizedPath.full_path.c_str());
+    remainingLength -= 2;
+    relativePath = std::wstring_view(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
+
+    return GenerateRedirectedPath(relativePath, ensureDirectoryStructure, result);
+}
+
 template <typename CharT>
 static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags flags)
 {
@@ -360,6 +405,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     }
 
     auto normalizedPath = NormalizePath(path);
+
     if (!normalizedPath.drive_absolute_path)
     {
         // FUTURE: We could do better about canonicalising paths, but the cost/benefit doesn't make it worth it right now

@@ -27,6 +27,8 @@
 
 using namespace std::literals;
 
+void Log(const char* fmt, ...);
+
 auto CreateProcessImpl = psf::detoured_string_function(&::CreateProcessA, &::CreateProcessW);
 
 BOOL WINAPI CreateProcessWithPsfRunDll(
@@ -159,7 +161,7 @@ BOOL WINAPI CreateProcessFixup(
             {
                 // Could not detour the target process, so return failure
                 auto err = ::GetLastError();
-
+				Log("\tUnable to inject %ls into PID=%d err=0x%x\n",  psf::runtime_dll_name, processInformation->dwProcessId, err);
                 ::TerminateProcess(processInformation->hProcess, ~0u);
                 ::CloseHandle(processInformation->hProcess);
                 ::CloseHandle(processInformation->hThread);
@@ -169,6 +171,7 @@ BOOL WINAPI CreateProcessFixup(
             }
         }
     }
+	Log("\tInject %ls into PID=%d\n", psf::runtime_dll_name, processInformation->dwProcessId);
 
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {

@@ -48,6 +48,9 @@
     <ClCompile Include="ReplaceFileFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="FileRedirectionFixupMetadata.xml" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{A3653AD0-2406-48A4-95CD-7D4264257F9F}</ProjectGuid>

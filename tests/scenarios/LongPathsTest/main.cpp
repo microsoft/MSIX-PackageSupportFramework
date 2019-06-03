@@ -7,7 +7,6 @@
 
 #include <windows.h>
 
-#include <psf_utils.h>
 #include <test_config.h>
 
 #include "paths.h"

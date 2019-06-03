@@ -12,6 +12,7 @@ enum class trace_method
 {
     printf,
     output_debug_string,
+	eventlog,
 };
 
 enum class function_result
@@ -62,6 +63,36 @@ inline function_result from_win32(DWORD code)
     default:
         return function_result::failure;
     }
+}
+inline std::string InterpretFrom_win32(DWORD code)
+{
+	switch (code)
+	{
+	case ERROR_SUCCESS:
+		return "Success";
+	case ERROR_FILE_NOT_FOUND:
+		return "File not found";
+	case ERROR_PATH_NOT_FOUND:
+		return "Path not found";
+	case ERROR_INVALID_NAME:
+		return "Invalid Name";
+	case ERROR_ALREADY_EXISTS:
+		return "Already exists";
+	case ERROR_FILE_EXISTS:
+		return "File exists";
+	case ERROR_INSUFFICIENT_BUFFER:
+		return "Buffer overflow";
+	case ERROR_MORE_DATA:
+		return "More data";
+	case ERROR_NO_MORE_ITEMS:
+		return "No more items";
+	case ERROR_NO_MORE_FILES:
+		return "No more files";
+	case ERROR_MOD_NOT_FOUND:
+		return "Module not found";
+	default:
+		return "Unknown failure";
+	}
 }
 
 inline function_result from_win32_bool(BOOL value)
@@ -153,6 +184,10 @@ extern bool wait_for_debugger;
 extern bool trace_function_entry;
 extern bool trace_calling_module;
 extern bool ignore_dll_load;
+
+extern void Log_ETW_PostMsgA(const char *);
+extern void Log_ETW_PostMsgW(const wchar_t *);
+extern void Log_ETW_PostMsgOperationA(const char *operation, const char *inputs, const char *result, const char *outputs, const char *caller, LARGE_INTEGER TickStart, LARGE_INTEGER TickEnd );
 
 struct result_configuration
 {
