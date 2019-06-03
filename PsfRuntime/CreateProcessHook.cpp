@@ -137,6 +137,7 @@ BOOL WINAPI CreateProcessFixup(
 
     // std::filesystem::path comparison doesn't seem to handle case-insensitivity or root-local device paths...
     iwstring_view packagePath(PackageRootPath().native().c_str(), PackageRootPath().native().length());
+    iwstring_view finalPackagePath(FinalPackageRootPath().native().c_str(), FinalPackageRootPath().native().length());
     iwstring_view exePath = path;
     auto fixupPath = [](iwstring_view& p)
     {
@@ -146,9 +147,11 @@ BOOL WINAPI CreateProcessFixup(
         }
     };
     fixupPath(packagePath);
+    fixupPath(finalPackagePath);
     fixupPath(exePath);
 
-    if ((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath))
+    if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
+        ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
     {
         // The target executable is in the package, so we _do_ want to fixup it
         static const auto pathToPsfRuntime = (PackageRootPath() / psf::runtime_dll_name).string();
@@ -161,7 +164,7 @@ BOOL WINAPI CreateProcessFixup(
             {
                 // Could not detour the target process, so return failure
                 auto err = ::GetLastError();
-				Log("\tUnable to inject %ls into PID=%d err=0x%x\n",  psf::runtime_dll_name, processInformation->dwProcessId, err);
+                Log("\tUnable to inject %ls into PID=%d err=0x%x\n",  psf::runtime_dll_name, processInformation->dwProcessId, err);
                 ::TerminateProcess(processInformation->hProcess, ~0u);
                 ::CloseHandle(processInformation->hProcess);
                 ::CloseHandle(processInformation->hThread);
