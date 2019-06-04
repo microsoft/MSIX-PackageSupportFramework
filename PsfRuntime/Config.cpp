@@ -258,7 +258,7 @@ static const psf::json_object* g_CurrentExeConfig = nullptr;
 void load_json()
 {
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-    auto file = _wfopen((g_PackageRootPath / L"psfconfig.json").c_str(), L"rb, ccs=UTF-8");
+    auto file = _wfopen((g_PackageRootPath / L"config.json").c_str(), L"rb, ccs=UTF-8");
     if (!file)
     {
         throw std::system_error(errno, std::generic_category(), "config.json could not be opened");

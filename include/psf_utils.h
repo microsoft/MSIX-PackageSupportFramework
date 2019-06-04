@@ -201,7 +201,8 @@ namespace psf
 			{
 				result.resize(length - 1);
 				length = GetFinalPathNameByHandle(file, result.data(), length, flags);
-				assert(length < result.size());
+				// In success case the returned length does contain the value of the null terminator
+				assert(length <= result.size());
 			}
 
 			CloseHandle(file);
