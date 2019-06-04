@@ -226,7 +226,7 @@ void InitializeConfiguration()
                     traceDataStream << " id:" << knownFolderObject.get("id").as_string().wide() << " ;";
 
                     traceDataStream << " relativePaths:\n";
-                    initializeRedirection(path, knownFolderObject.get("relativePaths").as_array(), !path.empty());
+                    initializeRedirection(path, knownFolderObject.get("relativePaths").as_array(), path.empty());
                 }
             }
         }
