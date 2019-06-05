@@ -18,6 +18,15 @@
 #include "ErrorInformation.h"
 #include <wil\resource.h>
 #include <wil\result.h>
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 //These two macros don't exist in RS1.  Define them here to prevent build
 //failures when building for RS1.
@@ -30,6 +39,8 @@
 #endif
 
 using namespace std::literals;
+
+void LogApplicationAndProcessesCollection();
 
 struct ExecutionInformation
 {
@@ -107,6 +118,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto monitor = PSFQueryAppMonitorConfig();
     if (monitor != nullptr)
     {
+        LogApplicationAndProcessesCollection();
         CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
         error = GetAndLaunchMonitor(*monitor, packageRoot, cmdShow, dirStr);
     }
@@ -383,7 +395,7 @@ ErrorInformation StartProcess(ExecutionInformation execInfo, int cmdShow, bool r
         ss << L"ERROR: Failed to create a process for " << GetApplicationNameFromExecInfo(execInfo);
 
         return { ss.str(), err };
-    }   
+    }
 
     return {};
 }
@@ -454,7 +466,7 @@ ErrorInformation StartWithShellExecute(std::filesystem::path packageRoot, std::f
         auto err{ ::GetLastError() };
         return { L"ERROR: Failed to create detoured shell process", err };
     }
-    
+
     return GetExitCodeForProcess({ exeName.native().c_str() }, shex.hProcess);
 }
 
@@ -529,4 +541,56 @@ ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexc
     }
 
     return {};
+}
+
+void LogApplicationAndProcessesCollection()
+{
+    auto configRoot = PSFQueryConfigRoot();
+
+    if (auto applications = configRoot->as_object().try_get("applications"))
+    {
+        for (auto& applicationsConfig : applications->as_array())
+        {
+            auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
+            auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
+            TraceLoggingWrite(
+                g_Log_ETW_ComponentProvider,
+                "ApplicationsConfigdata",
+                TraceLoggingWideString(exeStr, "applications_executable"),
+                TraceLoggingWideString(idStr, "applications_id"),
+                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+        }
+    }
+
+    if (auto processes = configRoot->as_object().try_get("processes"))
+    {
+        for (auto& processConfig : processes->as_array())
+        {
+            auto exeStr = processConfig.as_object().get("executable").as_string().wide();
+            TraceLoggingWrite(
+                g_Log_ETW_ComponentProvider,
+                "ProcessesExecutableConfigdata",
+                TraceLoggingWideString(exeStr, "processes_executable"),
+                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+
+            if (auto fixups = processConfig.as_object().try_get("fixups"))
+            {
+                for (auto& fixupConfig : fixups->as_array())
+                {
+                    auto dllStr = fixupConfig.as_object().try_get("dll")->as_string().wide();
+                    TraceLoggingWrite(
+                        g_Log_ETW_ComponentProvider,
+                        "ProcessesFixUpConfigdata",
+                        TraceLoggingWideString(dllStr, "processes_fixups"),
+                        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                        TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+                }
+            }
+        }
+    }
 }

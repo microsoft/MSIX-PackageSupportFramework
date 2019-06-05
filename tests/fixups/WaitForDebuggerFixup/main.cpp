@@ -5,51 +5,75 @@
 
 #include <debug.h>
 #include <psf_framework.h>
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 extern "C" {
 
-// This is a useful "fixup" for debugging other fixups. When loaded, it will hold the process until a debugger is
-// attached. This is typically most useful when scoped to PsfLauncher.* in config.json. This will hold the process on
-// initial launch, at which point the debugger can be attached and set up to debug child processes. E.g. your config
-// file might look something like:
-//
-//      {
-//          "applications": [ ... ],
-//          "processes": [
-//              {
-//                  "executable": "PsfLauncher.*",
-//                  "fixups": [
-//                      {
-//                          "dll": "WaitForDebuggerFixup.dll"
-//                      }
-//                  ]
-//              }, ...
-//          ]
-//      }
-int __stdcall PSFInitialize() noexcept
-{
-    bool waitForDebugger = true;
-    if (auto config = ::PSFQueryCurrentDllConfig())
+    // This is a useful "fixup" for debugging other fixups. When loaded, it will hold the process until a debugger is
+    // attached. This is typically most useful when scoped to PsfLauncher.* in config.json. This will hold the process on
+    // initial launch, at which point the debugger can be attached and set up to debug child processes. E.g. your config
+    // file might look something like:
+    //
+    //      {
+    //          "applications": [ ... ],
+    //          "processes": [
+    //              {
+    //                  "executable": "PsfLauncher.*",
+    //                  "fixups": [
+    //                      {
+    //                          "dll": "WaitForDebuggerFixup.dll"
+    //                      }
+    //                  ]
+    //              }, ...
+    //          ]
+    //      }
+    int __stdcall PSFInitialize() noexcept
     {
-        auto& configObject = config->as_object();
-        if (auto enabledValue = configObject.try_get("enabled"))
+        TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+
+        bool waitForDebugger = true;
+        if (auto config = ::PSFQueryCurrentDllConfig())
         {
-            waitForDebugger = enabledValue->as_boolean().get();
+            auto& configObject = config->as_object();            
+            if (auto enabledValue = configObject.try_get("enabled"))
+            {
+                std::wstringstream traceDataStream;
+                traceDataStream << " config:\n";
+                traceDataStream << " enabled:" << static_cast<bool>(enabledValue->as_boolean()) << " ;";
+
+                TraceLoggingWrite(
+                    g_Log_ETW_ComponentProvider,
+                    "WaitForDebuggerFixupConfigdata",
+                    TraceLoggingWideString(traceDataStream.str().c_str(), "WaitForDebuggerFixupConfig"),
+                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+
+                waitForDebugger = enabledValue->as_boolean().get();
+            }
         }
+
+        if (waitForDebugger)
+        {
+            psf::wait_for_debugger();
+        }
+
+        return ERROR_SUCCESS;
     }
 
-    if (waitForDebugger)
+    int __stdcall PSFUninitialize() noexcept
     {
-        psf::wait_for_debugger();
+        TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+        return ERROR_SUCCESS;
     }
-
-    return ERROR_SUCCESS;
-}
-
-int __stdcall PSFUninitialize() noexcept
-{
-    return ERROR_SUCCESS;
-}
 
 #ifdef _M_IX86
 #pragma comment(linker, "/EXPORT:PSFInitialize=_PSFInitialize@0")
