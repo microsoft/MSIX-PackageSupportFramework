@@ -74,23 +74,25 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 
-    auto isPowershellInstalled = false;
-    ErrorInformation error = CheckIfPowershellIsInstalled(isPowershellInstalled);
-
-    if (error.IsThereAnError())
-    {
-        ::PSFReportError(error.Print().c_str());
-        return error.GetErrorNumber();
-    }
+    ErrorInformation error;
 
     //Launch the starting PowerShell script if we are using one.
     auto startScriptInformation = PSFQueryStartScriptInfo();
     if (startScriptInformation)
     {
+        auto isPowershellInstalled = false;
+        error = CheckIfPowershellIsInstalled(isPowershellInstalled);
+
+        if (error.IsThereAnError())
+        {
+            ::PSFReportError(error.Print().c_str());
+            return error.GetErrorNumber();
+        }
+
         if (!isPowershellInstalled)
         {
             ::PSFReportError(L"PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
-            return E_APPLICATION_NOT_REGISTERED;
+            return HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
         }
 
         error = RunScript(*startScriptInformation, packageRoot, dirStr, cmdShow);
@@ -500,10 +502,15 @@ void LogString(const char name[], const wchar_t value[]) noexcept
 ErrorInformation CheckIfPowershellIsInstalled(bool& isPowershellInstalled) noexcept
 {
     wil::unique_hkey registryHandle;
-    DWORD statusOfRegistryKey;
-    LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, &statusOfRegistryKey);
+    LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
 
-    if (createResult != ERROR_SUCCESS)
+    if (createResult == ERROR_FILE_NOT_FOUND)
+    {
+        // If the key cannot be found, powershell is not installed
+        isPowershellInstalled = false;
+        return {};
+    }
+    else if (createResult != ERROR_SUCCESS)
     {
         return { L"Error with getting the key to see if PowerShell is installed. ", (DWORD)createResult };
     }
