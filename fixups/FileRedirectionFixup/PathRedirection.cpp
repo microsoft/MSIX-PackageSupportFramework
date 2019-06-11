@@ -28,25 +28,6 @@ struct vfs_folder_mapping
 };
 std::vector<vfs_folder_mapping> g_vfsFolderMappings;
 
-std::filesystem::path CreateDirectoryTree(std::filesystem::path path, std::wstring_view relativePath)
-{
-    std::wstring result = path;
-
-    for (std::size_t pos = 0; pos < relativePath.length(); )
-    {
-        auto nextPos = relativePath.find_first_of(LR"(\/)", pos + 1);
-
-        result += relativePath.substr(pos, nextPos - pos);
-        pos = nextPos;
-        [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
-#if _DEBUG
-        auto err = ::GetLastError();
-        assert(dirResult || (err == ERROR_ALREADY_EXISTS));
-#endif
-    }
-    return result;
-}
-
 void InitializePaths()
 {
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
@@ -65,11 +46,11 @@ void InitializePaths()
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
     
     // Ensure that the redirected root path exists
-    std::filesystem::path redirectRelativeRoot = std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)";
-    g_redirectRootPath = CreateDirectoryTree(psf::known_folder(FOLDERID_LocalAppData) / "", redirectRelativeRoot.c_str());
+    g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)";
+    std::filesystem::create_directories(g_redirectRootPath);
 
-    std::filesystem::path relativeWritableRootPath = std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
-    g_writablePackageRootPath = CreateDirectoryTree(psf::known_folder(FOLDERID_LocalAppData) / "", relativeWritableRootPath.c_str());
+    g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) /std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+    std::filesystem::create_directories(g_writablePackageRootPath);
 
     // Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
     // https://docs.microsoft.com/en-us/windows/uwp/porting/desktop-to-uwp-behind-the-scenes
