@@ -34,6 +34,7 @@ static std::wstring g_PackageFamilyName;
 static std::wstring g_ApplicationUserModelId;
 static std::wstring g_ApplicationId;
 static std::filesystem::path g_PackageRootPath;
+static std::filesystem::path g_FinalPackageRootPath;
 static std::filesystem::path g_CurrentExecutable;
 
 // The object that constructs the JSON DOM and holds the root
@@ -300,11 +301,11 @@ void load_json()
         for (auto& processConfig : processes->as_array())
         {
             auto& obj = processConfig.as_object();
-			auto exe = obj.get("executable").as_string().wstring();  
+            auto exe = obj.get("executable").as_string().wstring();
             if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
             {
-                g_CurrentExeConfig = &obj; 
-		LogCountedStringW("Processes config match", exe.data(), exe.length());
+                g_CurrentExeConfig = &obj;
+        LogCountedStringW("Processes config match", exe.data(), exe.length());
                 break;
             }
             else if (!g_CurrentExeConfig)
@@ -331,13 +332,15 @@ void LoadConfig()
         g_ApplicationUserModelId = psf::current_application_user_model_id();
         g_ApplicationId = psf::application_id_from_application_user_model_id(g_ApplicationUserModelId);
         g_PackageRootPath = psf::current_package_path();
+		g_FinalPackageRootPath = psf::get_final_path_name(g_PackageRootPath);
         g_CurrentExecutable = psf::current_executable_path();
 
         LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
         LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
         LogCountedStringW("g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
         LogString("g_PackageRootPath", g_PackageRootPath.c_str());
-        LogString("g_CurrentExecutable", g_CurrentExecutable.c_str());    
+        LogString("g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
+        LogString("g_CurrentExecutable", g_CurrentExecutable.c_str());
     }
     else
     {
@@ -374,6 +377,11 @@ const std::filesystem::path& PackageRootPath() noexcept
     return g_PackageRootPath;
 }
 
+const std::filesystem::path& FinalPackageRootPath() noexcept
+{
+    return g_FinalPackageRootPath;
+}
+
 // API definitions
 PSFAPI DWORD __stdcall PSFRegister(_Inout_ void** implFn, _In_ void* fixupFn) noexcept
 {
@@ -408,6 +416,11 @@ PSFAPI const wchar_t* __stdcall PSFQueryApplicationId() noexcept
 PSFAPI const wchar_t* __stdcall PSFQueryPackageRootPath() noexcept
 {
     return g_PackageRootPath.c_str();
+}
+
+PSFAPI const wchar_t* __stdcall PSFQueryFinalPackageRootPath() noexcept
+{
+    return g_FinalPackageRootPath.c_str();
 }
 
 PSFAPI const psf::json_value* __stdcall PSFQueryConfigRoot() noexcept
@@ -590,7 +603,7 @@ PSFAPI void __stdcall PSFReportError(const wchar_t* error) noexcept
         OutputDebugStringW(L"\n");
         DebugBreak();
     }
-    else 
+    else
     {
         MessageBoxW(NULL, error, L"Package Support Framework", MB_OK);
     }

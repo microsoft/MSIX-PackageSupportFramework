@@ -181,4 +181,32 @@ namespace psf
 		UINT32 length = 0;
 		return ::GetCurrentPackageFamilyName(&length, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
 	}
+
+	inline std::filesystem::path get_final_path_name(const std::filesystem::path& filePath)
+	{
+		std::wstring result;
+		HANDLE file = CreateFile(filePath.native().c_str(), FILE_READ_EA, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+			NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		if (file)
+		{
+			DWORD flags = 0;
+			DWORD length = GetFinalPathNameByHandle(file, nullptr, 0, flags);
+			if (length == 0)
+			{
+				flags = VOLUME_NAME_GUID;
+				length = GetFinalPathNameByHandle(file, nullptr, 0, flags);
+			}
+
+			if (length > 0)
+			{
+				result.resize(length - 1);
+				length = GetFinalPathNameByHandle(file, result.data(), length, flags);
+				// In success case the returned length does contain the value of the null terminator
+				assert(length <= result.size());
+			}
+
+			CloseHandle(file);
+		}
+		return result;
+	}
 }
