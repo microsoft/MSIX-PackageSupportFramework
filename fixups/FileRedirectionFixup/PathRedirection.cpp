@@ -54,13 +54,13 @@ void InitializePaths()
     g_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
 
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
-
+    
     // Ensure that the redirected root path exists
-    g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"VFS";
-    impl::CreateDirectory(g_redirectRootPath.c_str(), nullptr);
+    g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)";
+    std::filesystem::create_directories(g_redirectRootPath);
 
-    g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
-    impl::CreateDirectory(g_writablePackageRootPath.c_str(), nullptr);
+    g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) /std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+    std::filesystem::create_directories(g_writablePackageRootPath);
 
     // Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
     // https://docs.microsoft.com/en-us/windows/uwp/porting/desktop-to-uwp-behind-the-scenes
