@@ -78,6 +78,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         throw_win32(ERROR_NOT_FOUND, "Error: could not find matching appid in config.json and appx manifest");
     }
 
+    LogApplicationAndProcessesCollection();
+
     auto dirPtr = appConfig->try_get("workingDirectory");
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
     auto exeArgs = appConfig->try_get("arguments");
@@ -119,8 +121,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     //Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
     if (monitor != nullptr)
-    {
-        LogApplicationAndProcessesCollection();
+    {        
         CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
         error = GetAndLaunchMonitor(*monitor, packageRoot, cmdShow, dirStr);
     }
