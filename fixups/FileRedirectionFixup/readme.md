@@ -258,6 +258,16 @@ If the remainder of the path matches the pattern, then the redirection kicks in 
 > * The de-virtualized path "starts with" the base path of this rule. This leaves `log.txt` as the candidate for pattern matching
 > * `log.txt` _does_ match the pattern `.*\.txt` and therefore the create file attempt _will_ get redirected to the user appdata local area.
 
+Redirecting paths in the package root path.  
+
+In order to make sure packages that write to their package root don't break on an upgrade, path redirection will redirect paths to one of two places  
+
+> 1. %LOCAL_APP_DATA%\Packages\[Package family name]\LocalCache\Local\Microsoft\WritablePackageRoot
+> 1. %LOCAL_APP_DATA%\VFS
+
+If the path to redirect is in the package root path then the redirected path is to the writable package root (option 1).  
+For all other paths, the redirected path is to VFS (option 2).
+
 Once it is determined that the access should get redirected, the following steps are performed:
 
 > * The colon following the drive letter is replaced by a dollar sign. E.g. the path from before now becomes `C$\Program Files\Contoso\App\log.txt`

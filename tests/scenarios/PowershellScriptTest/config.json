@@ -1,0 +1,66 @@
+{
+    "applications": [
+        {
+            "id": "PSNoScripts",
+            "executable": "PowershellScriptTest.exe"
+        },
+		{
+			"id": "PSOnlyStart",
+            "executable": "PowershellScriptTest.exe",
+			"startScript":
+			{
+				"scriptPath": "SayHello.ps1"
+			}
+		},
+		{
+			"id": "PSBothStartingFirst",
+            "executable": "PowershellScriptTest.exe",
+			"startScript" :
+			{
+				"scriptPath": "SayHello.ps1"
+			},
+			"endScript" :
+			{
+				"scriptPath": "SayHi.ps1"
+			}
+		},
+		{
+			"id": "PSBothEndingFirst",
+            "executable": "PowershellScriptTest.exe",
+			"endScript" :
+			{
+				"scriptPath": "SayHi.ps1"
+			},
+			"startScript" :
+			{
+				"scriptPath": "SayHello.ps1"
+			}
+		},
+		{
+			"id" : "PSScriptWithArg",
+			"executable": "PowershellScriptTest.exe",
+			"startScript" :
+			{
+				"scriptPath" : "SayWithArgument.ps1",
+				"scriptArguments": "Start"
+			}
+		},
+		{
+			"id" : "PSScriptInVirtual",
+			"executable": "PowershellScriptTest.exe",
+			"startScript" :
+			{
+				"scriptPath" : "SayHello.ps1",
+				"runInVirtualEnvironment": true
+			}
+		}
+    ],
+    "processes": [
+        {
+            "executable": "PowershellScriptTest*"
+        },
+        {
+            "executable": ".*"
+        }
+    ]
+}

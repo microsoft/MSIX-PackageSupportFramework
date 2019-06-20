@@ -24,6 +24,120 @@ This branch has the latest code. Keep in mind that there might be features in th
 ## Contribute
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
+## Script support
+PSF allows one PowerShell script to be run before an exe runs, and one PowerShell script to be ran after the exe runs.
+
+Each exe defined in the application manifest can have their own scripts.
+
+### Prerequisite to allow scripts to run
+In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.  The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.
+
+Here are the locations of each executable.
+* If on a 64-bit computer
+  * 64-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
+  * 32-bit: %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
+* If on a 32-bit computer
+  * 32-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
+  
+[More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
+
+### Configuration changes
+In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
+Both objects use the same three keys.
+
+| Key name                | Value type | Required?             |
+|-------------------------|------------|-----------------------|
+| scriptPath              | string     | Yes                   |
+| scriptArguments         | string     | No                    |
+| runInVirtualEnvironment | boolean    | No (defaults to true) |
+ 
+ #### Key descriptions
+ 1. scriptPath: The path to the script including the name and extension.  The Path starts from the root directory of the application.
+ 2. scriptArguments: Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
+ 3. runInVirtualEnvironment: If the script should run in the same virtual environment that the packaged exe runs in.
+ 
+### Flow of PSF with scripts
+Below is the flow of PSF with scripting support.  
+The flow from beginning to end is [Starting Script] -> [Monitor] -> [Packaged exe] -> [Ending script]
+
+
+### Visual representation of the flow
+<pre>
++------------+ Success, or  +-----------------+              +-----------------+
+|  Starting  | Script error |   Monitor and   |   Success    |      Ending     |
+|   Script   |------------->|   Packaged exe  |------------> |      Script     |
++------------+              +-----------------+              +-----------------+
+     | Create                        | Create                         | Create
+     | Process                       | Process                        | Process
+     | Error                         | Error                          | Error
+     V                               V                                V
++-------------+             +-----------------+   Create Process +----------------+
+| Throw error |             |    Run ending   |       Error      |   Throw error  | 
+|  and exit   |             |     script      |----------------->|    and exit.   |
++-------------+             +-----------------+                  +----------------+
+                                    | 
+                                    | Success
+                                    |
+                                    V
+                             +--------------+
+                             |  Throw error |
+                             |   and exit   |
+                             +--------------+
+</pre>
+
+## Sample configuration
+Here is a sample configuration using two different exes.
+<pre>
+    {
+  "applications": [
+    {
+      "id": "Sample",
+      "executable": "Sample.exe",
+      "workingDirectory": "",
+	  "startScript":
+	  {
+		"scriptPath": "RunMePlease.ps1",
+		"scriptArguments": "ThisIsMe.txt",
+		"runInVirtualEnvironment": true
+	  },
+	  "endScript":
+	  {
+		"scriptPath": "RunMeAfter.ps1",
+		"scriptArguments": "ThisIsMe.txt"
+	  }
+    },
+	{
+      "id": "CPPSample",
+      "executable": "CPPSample.exe",
+      "workingDirectory": "",
+	  "startScript":
+	  {
+		"scriptPath": "CPPStart.ps1",
+		"scriptArguments": "ThisIsMe.txt",
+		"runInVirtualEnvironment": true
+	  },
+	  "endScript":
+	  {
+		"scriptPath": "CPPEnd.ps1",
+		"scriptArguments": "ThisIsMe.txt"
+	  }
+    }
+  ],
+  "processes": [
+    ...(taken out for brevity)
+  ]
+}
+</pre>
+
+## Fixup Metadata
+Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
+ 1. Version:  The version of the PSF is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/)
+ 2. Minimum Windows Platform the the minimum windows version required for the fixup or PSF Launcher.
+ 3. Description: Short description of the Fixup.
+ 4. WhenToUse: Heuristics on when you should apply the fixup.
+
+Addtionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
+
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
 2. Make your changes in your private branch
@@ -43,3 +157,6 @@ Here is how you can contribute to the Package Support Framework:
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+## Data/Telemetry
+Telemetry datapoint has been hooked to collect usage data and sends it to Microsoft to help improve our products and services. Read Microsoft's [privacy statement to learn more](https://privacy.microsoft.com/en-US/privacystatement). However, data will be collected only when the PSF binaries are used from [Nuget package](https://www.nuget.org/packages?q=packagesupportframework) 
+on Windows 10 devices and only if users have enabled collection of data. The Nuget package has binaries signed and will collect usage data from machine. When the binaries are built locally by cloning the repo or downloading the bits, then telemetry is not collected.

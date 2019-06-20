@@ -63,4 +63,7 @@
     <ClCompile Include="GetPrivateProfileStringFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="FileRedirectionFixupMetadata.xml" />
+  </ItemGroup>
 </Project>
