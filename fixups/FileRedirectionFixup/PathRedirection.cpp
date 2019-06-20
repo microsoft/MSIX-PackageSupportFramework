@@ -302,7 +302,8 @@ void InitializeConfiguration()
                     for (auto& pattern : specObject.get("patterns").as_array())
                     {
                         auto patternString = pattern.as_string().wstring();
-
+                        traceDataStream << pattern.as_string().wide() << " ;";
+                        
                         g_redirectionSpecs.emplace_back();
                         g_redirectionSpecs.back().base_path = path;
                         g_redirectionSpecs.back().pattern.assign(patternString.data(), patternString.length());
