@@ -297,6 +297,8 @@ void InitializeConfiguration()
                         IsReadOnlyValue = specObject.get("isReadOnly").as_boolean().get();
                     }
 
+                    traceDataStream << " base:" << RemovePIIfromFilePath(specObject.get("base").as_string().wide()) << " ;";
+                    traceDataStream << " patterns:";
                     for (auto& pattern : specObject.get("patterns").as_array())
                     {
                         auto patternString = pattern.as_string().wstring();
