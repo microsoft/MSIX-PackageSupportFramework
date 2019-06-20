@@ -83,6 +83,5 @@ std::filesystem::path GetPackageVFSPath(const char* fileName);
 
 
 
-#if _DEBUG
+
 void Log(const char* fmt, ...);
-#endif

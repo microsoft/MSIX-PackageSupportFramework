@@ -29,17 +29,13 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         if (wcslen(PackageVersion.c_str()) >= 0)
                         {
                             attributes = impl::GetFileAttributes(PackageVersion.c_str());
-#if _DEBUG
-                            Log("GetFileAttributes: uncopied ADL/ADR case");
-#endif                        
+                            Log("GetFileAttributes: uncopied ADL/ADR case");                       
                         }
                     }
                     else
                     {
                         attributes = impl::GetFileAttributes(fileName);
-#if _DEBUG
                         Log("GetFileAttributes: other not yet redirected case");
-#endif  
                     }
                 }
                 if (attributes != INVALID_FILE_ATTRIBUTES)
@@ -54,9 +50,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         attributes &= ~FILE_ATTRIBUTE_READONLY;
                     }
                 }
-#if _DEBUG
                 Log("GetFileAttributes: ShouldRedirect att=%d", attributes);
-#endif
                 return attributes;
             }
         }
@@ -96,17 +90,13 @@ BOOL __stdcall GetFileAttributesExFixup(
                         if (wcslen(PackageVersion.c_str()) >= 0)
                         {
                             retval = impl::GetFileAttributesEx(PackageVersion.c_str(), infoLevelId, fileInformation);
-#if _DEBUG
                             Log("GetFileAttributesEx: uncopied ADL/ADR case");
-#endif                        
                         }
                     }
                     else
                     {
                         retval = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
-#if _DEBUG
                         Log("GetFileAttributesEx: uncopied other case");
-#endif                  
                     }
                 }
                 if (retval != 0)
@@ -127,7 +117,6 @@ BOOL __stdcall GetFileAttributesExFixup(
                         }
                     }
                 }
-#if _DEBUG
                 if (retval != 0)
                 {
                     Log("GetFileAttributesEx: ShouldRedirect retval=%d att=%d", retval, ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes);
@@ -136,7 +125,6 @@ BOOL __stdcall GetFileAttributesExFixup(
                 {
                     Log("GetFileAttributesEx: ShouldRedirect retval=%d", retval);
                 }
-#endif                
                 return retval;
             }
         }
