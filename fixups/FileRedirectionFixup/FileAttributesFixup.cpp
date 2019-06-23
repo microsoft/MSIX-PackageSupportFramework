@@ -14,6 +14,8 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
+            Log("GetFileAttributesFixup for %ls", fileName);
+
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
             {
@@ -75,6 +77,8 @@ BOOL __stdcall GetFileAttributesExFixup(
     {
         if (guard)
         {
+            Log("GetFileAttributesExFixup for %ls", fileName);
+
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
             {
@@ -146,6 +150,8 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     {
         if (guard)
         {
+            Log("SetFileAttributesFixup for %ls", fileName);
+
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {

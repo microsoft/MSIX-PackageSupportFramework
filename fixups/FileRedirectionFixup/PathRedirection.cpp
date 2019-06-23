@@ -754,7 +754,8 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     bool shouldredirectToPackageRoot = false;
     auto deVirtualizedFullPath = deVirtualizedPath.full_path;
 
-    if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+    ///if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+    if (_wcsicmp(destinationTargetBase.c_str(), g_writablePackageRootPath.c_str()) == 0)
     {
         // PSF defaulted destination target.
         basePath = LR"(\\?\)" + g_writablePackageRootPath.native();
@@ -771,10 +772,10 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
         Log("case: target in package.");
-        //Log("      destinationTargetBase: %ls", destinationTargetBase.c_str());
-        //Log("      g_redirectRootPath:    %ls", g_redirectRootPath.c_str());
-        auto lengthPackageRootPath = g_packageRootPath.native().length();
-        if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+        Log("      destinationTargetBase:     %ls", destinationTargetBase.c_str());
+        Log("      g_writablePackageRootPath: %ls", g_writablePackageRootPath.c_str());
+        auto lengthPackageRootPath =  g_packageRootPath.native().length();
+        if (_wcsicmp(destinationTargetBase.c_str(), g_writablePackageRootPath.c_str()) == 0)
         {
             Log("subcase: redirect to default.");
             // PSF defaulted destination target.
@@ -792,7 +793,16 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     else
     {
         Log("case: target not in package.");
-        // input was not in package path, but might be subject to VFS.
+        Log("      destinationTargetBase: %ls", destinationTargetBase.c_str());
+        Log("      g_redirectRootPath:    %ls", g_redirectRootPath.c_str());
+        // input location was not in package path.
+            // TODO: Currently, this code redirects always.  We probably don't want to do that!
+            //       Ideally, we should look closer at the request; the text below is an example of what might be needed.
+            //       If the user asked for a native path and we aren't VFSing close to that path, and it's just a read, we probably shouldn't redirect.
+            //       But let's say it was a write, then probably still don't redirect and let the chips fall where they may.
+            //       But if we have a VFS folder in the package (such as VFS\AppDataCommon\Vendor) with files and the app tries to add a new file using native pathing, then we probably want to redirect.
+            //       There are probably more situations to consider.
+            // To avoid redirecting everything with the current implementation, the configuration spec should be as specific as possible so that we never get here.
         if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
         {
             Log("subcase: redirect to default.");

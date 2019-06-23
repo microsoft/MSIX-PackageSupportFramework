@@ -96,10 +96,12 @@ HANDLE __stdcall FindFirstFileExFixup(
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
+        Log("FindFirstFileExFixup for %ls", fileName);
+
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
 
-    Log("FindFirstFile with %s", fileName);
+    Log("FindFirstFileEx with %s", fileName);
 
     // Split the input into directory and pattern
     auto path = widen(fileName, CP_ACP);
@@ -246,6 +248,8 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
+        Log("FindNextFileFixup for %ls", findFile);
+
         return impl::FindNextFile(findFile, findFileData);
     }
 
@@ -358,6 +362,8 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
+        Log("FindCloseFixup");
+
         return impl::FindClose(findHandle);
     }
 

@@ -59,6 +59,7 @@ HANDLE __stdcall CreateFileFixup(
     {
         if (guard)
         {
+            Log("CreateFileFixup for %ls", fileName);
             // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
             //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
@@ -130,6 +131,7 @@ HANDLE __stdcall CreateFile2Fixup(
     {
         if (guard)
         {
+            Log("CreateFile2Fixup for %ls", fileName);
             // FUTURE: See comment in CreateFileFixup about using 'creationDisposition' to choose a potentially better
             //         redirect flags value
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);

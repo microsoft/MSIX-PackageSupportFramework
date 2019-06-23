@@ -20,6 +20,8 @@ BOOL __stdcall ReplaceFileFixup(
     {
         if (guard)
         {
+            Log("ReplaceFileFixup for %ls   %ls", replacedFileName, replacementFileName);
+
             // NOTE: ReplaceFile will delete the "replacement file" (the file we're copying from), so therefore we need
             //       delete access to it, thus we copy-on-read it here. I.e. we're copying the file only for it to
             //       immediately get deleted. We could improve this in the future if we wanted, but that would

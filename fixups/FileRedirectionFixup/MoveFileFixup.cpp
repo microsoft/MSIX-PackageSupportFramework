@@ -14,6 +14,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     {
         if (guard)
         {
+            Log("MoveFileFixup for %ls  %ls", existingFileName, newFileName);
+
             // NOTE: MoveFile needs delete access to the existing file, but since we won't have delete access to the
             //       file if it is in the package, we copy-on-read it here. This is slightly wasteful since we're
             //       copying it only for it to immediately get deleted, but that's simpler than trying to roll our own
@@ -51,6 +53,8 @@ BOOL __stdcall MoveFileExFixup(
     {
         if (guard)
         {
+            Log("MoveFileExFixup for %ls  %ls", existingFileName, newFileName);
+
             // See note in MoveFile for commentary on copy-on-read functionality (though we could do better by checking
             // flags for MOVEFILE_REPLACE_EXISTING)
             auto [redirectExisting, existingRedirectPath, shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
