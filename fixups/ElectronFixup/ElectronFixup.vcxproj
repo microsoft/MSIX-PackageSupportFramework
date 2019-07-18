@@ -48,6 +48,10 @@
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PlatformToolset>v141</PlatformToolset>
+    <CLRSupport>
+    </CLRSupport>
+    <UseOfMfc>
+    </UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PlatformToolset>v141</PlatformToolset>
@@ -67,39 +71,94 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>windowsapp.lib;wtsapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowsapp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </LinkTimeCodeGeneration>
+      <SubSystem Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Windows</SubSystem>
+      <SubSystem Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Windows</SubSystem>
+      <ImageHasSafeExceptionHandlers Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+      <OptimizeReferences Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</OptimizeReferences>
+      <EnableCOMDATFolding Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateDebugInformation>
     </Link>
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_DEBUG;DEBUG;_CRT_SECURE_NO_WARNINGS;_WINDOWS;NOGDICAPMASKS;NOVIRTUALKEYCODES;NOWINSTYLES;NOSYSMETRICS;NOMENUS;NOICONS;NOKEYSTATES;NOSYSCOMMANDS;NORASTEROPS;NOSHOWWINDOW;OEMRESOURCE;NOATOM;NOCLIPBOARD;NOCOLOR;NODRAWTEXT;NOGDI;NOKERNEL;NOMEMMGR;NOMETAFILE;NOMINMAX;NOOPENFILE;NOSCROLL;NOSERVICE;NOSOUND;NOTEXTMETRIC;NOWH;NOWINOFFSETS;NOCOMM;NOKANJI;NOHELP;NOPROFILER;NODEFERWINDOWPOS;NOMCX;WIN32_LEAN_AND_MEAN;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpp17</LanguageStandard>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MultiThreadedDebug</RuntimeLibrary>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</TreatWarningAsError>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EditAndContinue</DebugInformationFormat>
+      <SupportJustMyCode Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</SupportJustMyCode>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <ClCompile>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;_WINDOWS;NOGDICAPMASKS;NOVIRTUALKEYCODES;NOWINSTYLES;NOSYSMETRICS;NOMENUS;NOICONS;NOKEYSTATES;NOSYSCOMMANDS;NORASTEROPS;NOSHOWWINDOW;OEMRESOURCE;NOATOM;NOCLIPBOARD;NOCOLOR;NODRAWTEXT;NOGDI;NOKERNEL;NOMEMMGR;NOMETAFILE;NOMINMAX;NOOPENFILE;NOSCROLL;NOSERVICE;NOSOUND;NOTEXTMETRIC;NOWH;NOWINOFFSETS;NOCOMM;NOKANJI;NOHELP;NOPROFILER;NODEFERWINDOWPOS;NOMCX;WIN32_LEAN_AND_MEAN;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\include</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpp17</LanguageStandard>
+      <IntrinsicFunctions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</IntrinsicFunctions>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</WholeProgramOptimization>
+      <FunctionLevelLinking Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</FunctionLevelLinking>
+      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreaded</RuntimeLibrary>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level4</WarningLevel>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</TreatWarningAsError>
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile />
     <ClCompile />
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;DEBUG;_CRT_SECURE_NO_WARNINGS;_WINDOWS;NOGDICAPMASKS;NOVIRTUALKEYCODES;NOWINSTYLES;NOSYSMETRICS;NOMENUS;NOICONS;NOKEYSTATES;NOSYSCOMMANDS;NORASTEROPS;NOSHOWWINDOW;OEMRESOURCE;NOATOM;NOCLIPBOARD;NOCOLOR;NODRAWTEXT;NOGDI;NOKERNEL;NOMEMMGR;NOMETAFILE;NOMINMAX;NOOPENFILE;NOSCROLL;NOSERVICE;NOSOUND;NOTEXTMETRIC;NOWH;NOWINOFFSETS;NOCOMM;NOKANJI;NOHELP;NOPROFILER;NODEFERWINDOWPOS;NOMCX;WIN32_LEAN_AND_MEAN;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <SupportJustMyCode>true</SupportJustMyCode>
+      <Optimization>Disabled</Optimization>
+      <OmitFramePointers>
+      </OmitFramePointers>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile />
     <ClCompile />
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;NOGDICAPMASKS;NOVIRTUALKEYCODES;NOWINSTYLES;NOSYSMETRICS;NOMENUS;NOICONS;NOKEYSTATES;NOSYSCOMMANDS;NORASTEROPS;NOSHOWWINDOW;OEMRESOURCE;NOATOM;NOCLIPBOARD;NOCOLOR;NODRAWTEXT;NOGDI;NOKERNEL;NOMEMMGR;NOMETAFILE;NOMINMAX;NOOPENFILE;NOSCROLL;NOSERVICE;NOSOUND;NOTEXTMETRIC;NOWH;NOWINOFFSETS;NOCOMM;NOKANJI;NOHELP;NOPROFILER;NODEFERWINDOWPOS;NOMCX;WIN32_LEAN_AND_MEAN;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <WarningLevel>Level4</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <OmitFramePointers>
+      </OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
