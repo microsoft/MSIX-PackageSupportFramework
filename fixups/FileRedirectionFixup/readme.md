@@ -73,7 +73,7 @@ To make things simpler to understand, an example configuration object might look
                 ]
             },
             {
-                "id": "	{FDD39AD0-238F-46AF-ADB4-6C85480369C7}",
+                "id": " {FDD39AD0-238F-46AF-ADB4-6C85480369C7}",
                 "relativePaths": [
                     {
                         "base": "MyApplication",

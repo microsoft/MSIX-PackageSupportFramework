@@ -174,7 +174,7 @@ BOOL WINAPI CreateProcessFixup(
             }
         }
     }
-	Log("\tInject %ls into PID=%d\n", psf::runtime_dll_name, processInformation->dwProcessId);
+    Log("\tInject %ls into PID=%d\n", psf::runtime_dll_name, processInformation->dwProcessId);
 
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {

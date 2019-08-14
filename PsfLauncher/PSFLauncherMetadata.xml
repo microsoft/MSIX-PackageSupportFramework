@@ -3,6 +3,6 @@
          SchemaLocation="https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/MetadataSchema.xml ..\MetadataSchema.xsd">
     <Version>1.1.0</Version>
     <MinimumWindowsPlatform>1607</MinimumWindowsPlatform>
-	<Description></Description>
-	<WhenToUse></WhenToUse>
+    <Description></Description>
+    <WhenToUse></WhenToUse>
 </PSFData>

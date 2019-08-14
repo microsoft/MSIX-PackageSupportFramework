@@ -7,7 +7,6 @@
 
 #include <Windows.h>
 #include <fileapifromapp.h>
-#include <sstream>
 
 ///
 // detectPipe
@@ -341,10 +340,10 @@ static wide_argument_string_with_buffer getLocalPipeName(LPCWSTR pipeName)
         if (detectPipe(pipeName))
         {
             std::wstring_view name(pipeName);
-            std::wostringstream formattedPipe;
+            std::wstring formattedPipe{ LR"(\\.\pipe\LOCAL\)" };
             // Stomp on the server name. In an app container, pipe name must be as follows
-            formattedPipe << R"(\\.\pipe\LOCAL\)" << name.substr(uwpPipePrefixLen);
-            return wide_argument_string_with_buffer{ formattedPipe.str() };
+            formattedPipe.append(name.substr(uwpPipePrefixLen));
+            return wide_argument_string_with_buffer{ formattedPipe };
         }
     }
 
