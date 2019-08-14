@@ -125,7 +125,7 @@ namespace psf
 
 	inline std::filesystem::path current_package_path()
 	{
-		//Use GetCurrentPackagePath2 if avalible
+		// Use GetCurrentPackagePath2 if avalible
 		std::wstring kernelDll = L"kernel.appcore.dll";
 		HMODULE appModelDll = LoadLibraryEx(kernelDll.c_str(), nullptr, 0);
 
@@ -140,7 +140,7 @@ namespace psf
 		std::wstring result;
 		if (getCurrentPackagePath2)
 		{
-			//If GetCurrentPackagePath 2 does exists
+			// If GetCurrentPackagePath 2 does exists
 			result = details::appmodel_string(getCurrentPackagePath2);
 		}
 		else

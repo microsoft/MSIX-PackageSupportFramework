@@ -383,13 +383,13 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
 /// <returns>The new absolute path.</returns>
 std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
 {
-    //To prevent apps breaking on an upgrade we redirect writes to the package root path to
-    //a path that contains the package family name and not the package full name.
+    // To prevent apps breaking on an upgrade we redirect writes to the package root path to
+    // a path that contains the package family name and not the package full name.
     std::wstring result;
     bool shouldredirectToPackageRoot = false;
     auto deVirtualizedFullPath = deVirtualizedPath.full_path;
 
-    //Lowercase the devirtualized full path because .find is case-sensitive.
+    // Lowercase the devirtualized full path because .find is case-sensitive.
     transform(deVirtualizedFullPath.begin(), deVirtualizedFullPath.end(), deVirtualizedFullPath.begin(), towlower);
 
     if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
