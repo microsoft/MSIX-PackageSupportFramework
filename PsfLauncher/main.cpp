@@ -53,7 +53,7 @@ void Log(const char fmt[], ...) noexcept;
 void RunScript(const psf::json_object& scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
 void StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment);
 void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
-void CheckIfPowershellIsInstalled(bool& isPowershellInstalled);
+bool CheckIfPowershellIsInstalled();
 
 int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
 {
@@ -78,10 +78,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Launch the starting PowerShell script if we are using one.
     auto startScriptInformation = PSFQueryStartScriptInfo();
     if (startScriptInformation)
-    {
-        auto isPowershellInstalled = false;
-        CheckIfPowershellIsInstalled(isPowershellInstalled);
-        THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !isPowershellInstalled, "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
+    {        
+        THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
         RunScript(*startScriptInformation, packageRoot, dirStr, cmdShow);
     }
 
@@ -329,7 +327,7 @@ void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::p
         !ShellExecuteEx(&shex),
         "ERROR: Failed to create detoured shell process");
 
-    THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), shex.hProcess == INVALID_HANDLE_VALUE);
+    THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
     DWORD exitCode{};
     THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
     THROW_IF_WIN32_ERROR(exitCode);
@@ -375,7 +373,7 @@ void LogString(const char name[], const wchar_t value[]) noexcept
     Log("\t%s=%ls\n", name, value);
 }
 
-void CheckIfPowershellIsInstalled(bool& isPowershellInstalled)
+bool CheckIfPowershellIsInstalled()
 {
     wil::unique_hkey registryHandle;
     LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
@@ -383,7 +381,7 @@ void CheckIfPowershellIsInstalled(bool& isPowershellInstalled)
     if (createResult == ERROR_FILE_NOT_FOUND)
     {
         // If the key cannot be found, powershell is not installed
-        isPowershellInstalled = false;
+        return false;
     }
     else if (createResult != ERROR_SUCCESS)
     {
@@ -396,14 +394,12 @@ void CheckIfPowershellIsInstalled(bool& isPowershellInstalled)
     THROW_IF_WIN32_ERROR_MSG(RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize), 
                              "Error with querying the key to see if PowerShell is installed.");
 
-    if (valueFromRegistry == 1)
+    if (valueFromRegistry != 1)
     {
-        isPowershellInstalled = true;
+        return false;
     }
-    else
-    {
-        isPowershellInstalled = false;
-    }
+
+    return true;
 }
 
 void LogApplicationAndProcessesCollection()
