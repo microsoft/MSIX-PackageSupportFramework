@@ -19,6 +19,8 @@
 #include <wil\result.h>
 #include <TraceLoggingProvider.h>
 #include "Telemetry.h"
+#include <future>
+#include "../PsfRuntime/PsfPowershellScriptRunner.h"
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -50,8 +52,8 @@ void LogString(const char name[], const wchar_t value[]) noexcept;
 void LogString(const char name[], const char value[]) noexcept;
 void Log(const char fmt[], ...) noexcept;
 
-void RunScript(const psf::json_object& scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
-void StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment);
+HRESULT RunScript(std::wstring commandString, std::filesystem::path currentDirectory, bool runInVirtualEnvironment, int cmdShow, DWORD timeout) noexcept;
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment);
 void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
 bool CheckIfPowershellIsInstalled();
 
@@ -72,18 +74,60 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
     auto exeArgs = appConfig->try_get("arguments");
 
+	bool stopOnScriptError = false;
+
+	auto stopOnScriptErrorObject = appConfig->try_get("stopOnScriptError");
+	if (stopOnScriptErrorObject)
+	{
+		stopOnScriptError = stopOnScriptErrorObject->as_boolean().get();
+	}
+
+	auto startScriptInformation = PSFQueryStartScriptInfo();
+
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
-
+	auto currentDirectory = (packageRoot / dirStr);
     // Launch the starting PowerShell script if we are using one.
-    auto startScriptInformation = PSFQueryStartScriptInfo();
     if (startScriptInformation)
-    {        
+	{
+		bool waitForStartingScriptToFinish = false;
+		auto waitForStartingScriptToFinishObject = startScriptInformation->try_get("wait");
+		if (waitForStartingScriptToFinishObject)
+		{
+			waitForStartingScriptToFinish = waitForStartingScriptToFinishObject->as_boolean().get();
+		}
+
+		//Don't run if the users wants the starting script to run asynch
+		//AND to stop running PSF is the starting script encounters an error.
+		//We stop here because we don't want to crash the application if the
+		//starting script encountered an error.
+		if (stopOnScriptError && !waitForStartingScriptToFinish)
+		{
+			THROW_HR_MSG(ERROR_BAD_CONFIGURATION, "PSF does not allow stopping on a script error and running asynchronously.  Please either remove stopOnScriptError or add a wait");
+		}
+
         THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
-        RunScript(*startScriptInformation, packageRoot, dirStr, cmdShow);
+		PsfPowershellScriptRunner startingScript(*startScriptInformation, currentDirectory);
+		bool canScriptRun = false;
+		THROW_IF_FAILED(startingScript.CheckIfShouldRun(startingScript.GetRunOnce(), canScriptRun));
+
+		if (canScriptRun)
+		{
+			if (startingScript.DoesScriptExist())
+			{
+				if (stopOnScriptError)
+				{
+					THROW_IF_FAILED(RunScript(startingScript.GetCommandString(), currentDirectory, startingScript.RunInVirtualEnvironment(), cmdShow, startingScript.GetScriptTimeout()));
+				}
+				else
+				{
+					auto result = std::async(std::launch::async,
+						RunScript, startingScript.GetCommandString(), currentDirectory, startingScript.RunInVirtualEnvironment(), cmdShow, startingScript.GetScriptTimeout());
+				}
+			}
+		}
     }
 
-    // If we get here we know that starting script did NOT encounter an error
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
     if (monitor != nullptr)
@@ -111,7 +155,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto endScriptInformation = PSFQueryEndScriptInfo();
     if (endScriptInformation)
     {
-        RunScript(*endScriptInformation, packageRoot, dirStr, cmdShow);
+		PsfPowershellScriptRunner endingScript(*endScriptInformation, currentDirectory);
+		RunScript(endingScript.GetCommandString(), currentDirectory, endingScript.RunInVirtualEnvironment(), cmdShow, endingScript.GetScriptTimeout());
     }
 
     return 0;
@@ -122,46 +167,9 @@ catch (...)
     return win32_from_caught_exception();
 }
 
-void RunScript(const psf::json_object &scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
+HRESULT RunScript(std::wstring commandString, std::filesystem::path currentDirectory, bool runInVirtualEnvironment, int cmdShow, DWORD timeout) noexcept
 {
-    // Generate the command string that we will use to call powershell
-    std::wstring powershellCommandString(L"Powershell.exe -file ");
-
-    std::wstring scriptPath = scriptInformation.get("scriptPath").as_string().wide();
-    powershellCommandString.append(scriptPath);
-    powershellCommandString.append(L" ");
-
-    // Script arguments are optional.
-    auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
-    if (scriptArgumentsJObject)
-    {
-        powershellCommandString.append(scriptArgumentsJObject->as_string().wide());
-    }
-
-    auto currentDirectory = (packageRoot / dirStr);
-    std::filesystem::path powershellScriptPath(scriptPath);
-
-    // The file might be on a network drive.
-    auto doesFileExist = std::filesystem::exists(powershellScriptPath);
-
-    // Check on local computer.
-    if (!doesFileExist)
-    {
-        doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
-    }
-
-    THROW_HR_IF_MSG(ERROR_FILE_NOT_FOUND, !doesFileExist, "The PowerShell file %ws cannot be found", (currentDirectory / powershellScriptPath).c_str());
-
-    // runInVirtualEnvironment is optional.
-    auto runInVirtualEnvironmentJObject = scriptInformation.try_get("runInVirtualEnvironment");
-    auto runInVirtualEnvironment = false;
-
-    if (runInVirtualEnvironmentJObject)
-    {
-        runInVirtualEnvironment = runInVirtualEnvironmentJObject->as_boolean().get();
-    }
-
-    StartProcess(nullptr, powershellCommandString.data(), currentDirectory.c_str(), cmdShow, runInVirtualEnvironment);
+    StartProcess(nullptr, commandString.data(), currentDirectory.c_str(), cmdShow, runInVirtualEnvironment);
 }
 
 void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
@@ -232,7 +240,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
 }
 
-void StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment)
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment)
 {
     STARTUPINFOEXW startupInfoEx =
     {
