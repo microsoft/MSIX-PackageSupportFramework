@@ -29,7 +29,6 @@
   <ItemGroup>
     <ClInclude Include="Config.h" />
     <ClInclude Include="JsonConfig.h" />
-    <ClInclude Include="PsfPowershellScriptRunner.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Detours\Detours.vcxproj">

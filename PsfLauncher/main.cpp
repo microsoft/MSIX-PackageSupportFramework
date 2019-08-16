@@ -20,7 +20,8 @@
 #include <TraceLoggingProvider.h>
 #include "Telemetry.h"
 #include <future>
-#include "../PsfRuntime/PsfPowershellScriptRunner.h"
+#include "PsfPowershellScriptRunner.h"
+#include "StartProcessHelper.h"
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -28,16 +29,6 @@ TRACELOGGING_DEFINE_PROVIDER(
     "Microsoft.Windows.PSFRuntime",
     (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
     TraceLoggingOptionMicrosoftTelemetry());
-
-// These two macros don't exist in RS1.  Define them here to prevent build
-// failures when building for RS1.
-#ifndef PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
-#    define PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE PROCESS_CREATION_DESKTOP_APPX_OVERRIDE
-#endif
-
-#ifndef PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
-#    define PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY
-#endif
 
 using namespace std::literals;
 
@@ -52,8 +43,7 @@ void LogString(const char name[], const wchar_t value[]) noexcept;
 void LogString(const char name[], const char value[]) noexcept;
 void Log(const char fmt[], ...) noexcept;
 
-HRESULT RunScript(std::wstring commandString, std::filesystem::path currentDirectory, bool runInVirtualEnvironment, int cmdShow, DWORD timeout) noexcept;
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment);
+//HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment, DWORD timeout);
 void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
 bool CheckIfPowershellIsInstalled();
 
@@ -82,50 +72,26 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 		stopOnScriptError = stopOnScriptErrorObject->as_boolean().get();
 	}
 
-	auto startScriptInformation = PSFQueryStartScriptInfo();
-
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 	auto currentDirectory = (packageRoot / dirStr);
     // Launch the starting PowerShell script if we are using one.
+	auto startScriptInformation = PSFQueryStartScriptInfo();
     if (startScriptInformation)
 	{
-		bool waitForStartingScriptToFinish = false;
-		auto waitForStartingScriptToFinishObject = startScriptInformation->try_get("wait");
-		if (waitForStartingScriptToFinishObject)
-		{
-			waitForStartingScriptToFinish = waitForStartingScriptToFinishObject->as_boolean().get();
-		}
+        THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
+		PsfPowershellScriptRunner startingScript(*startScriptInformation, currentDirectory);
 
 		//Don't run if the users wants the starting script to run asynch
 		//AND to stop running PSF is the starting script encounters an error.
 		//We stop here because we don't want to crash the application if the
 		//starting script encountered an error.
-		if (stopOnScriptError && !waitForStartingScriptToFinish)
+		if (stopOnScriptError && !startingScript.GetWaitForScriptToFinish())
 		{
 			THROW_HR_MSG(ERROR_BAD_CONFIGURATION, "PSF does not allow stopping on a script error and running asynchronously.  Please either remove stopOnScriptError or add a wait");
 		}
 
-        THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
-		PsfPowershellScriptRunner startingScript(*startScriptInformation, currentDirectory);
-		bool canScriptRun = false;
-		THROW_IF_FAILED(startingScript.CheckIfShouldRun(startingScript.GetRunOnce(), canScriptRun));
-
-		if (canScriptRun)
-		{
-			if (startingScript.DoesScriptExist())
-			{
-				if (stopOnScriptError)
-				{
-					THROW_IF_FAILED(RunScript(startingScript.GetCommandString(), currentDirectory, startingScript.RunInVirtualEnvironment(), cmdShow, startingScript.GetScriptTimeout()));
-				}
-				else
-				{
-					auto result = std::async(std::launch::async,
-						RunScript, startingScript.GetCommandString(), currentDirectory, startingScript.RunInVirtualEnvironment(), cmdShow, startingScript.GetScriptTimeout());
-				}
-			}
-		}
+		startingScript.RunPfsScript(stopOnScriptError, currentDirectory);
     }
 
     // Launch monitor if we are using one.
@@ -144,7 +110,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, false);
+        StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
     else
     {
@@ -156,7 +122,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     if (endScriptInformation)
     {
 		PsfPowershellScriptRunner endingScript(*endScriptInformation, currentDirectory);
-		RunScript(endingScript.GetCommandString(), currentDirectory, endingScript.RunInVirtualEnvironment(), cmdShow, endingScript.GetScriptTimeout());
+		endingScript.RunPfsScript(true, currentDirectory);
     }
 
     return 0;
@@ -165,11 +131,6 @@ catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     return win32_from_caught_exception();
-}
-
-HRESULT RunScript(std::wstring commandString, std::filesystem::path currentDirectory, bool runInVirtualEnvironment, int cmdShow, DWORD timeout) noexcept
-{
-    StartProcess(nullptr, commandString.data(), currentDirectory.c_str(), cmdShow, runInVirtualEnvironment);
 }
 
 void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
@@ -236,83 +197,11 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
     else
     {
-        StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, false);
+        StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
 }
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment)
-{
-    STARTUPINFOEXW startupInfoEx =
-    {
-        {
-        sizeof(startupInfoEx)
-        , nullptr // lpReserved
-        , nullptr // lpDesktop
-        , nullptr // lpTitle
-        , 0 // dwX
-        , 0 // dwY
-        , 0 // dwXSize
-        , 0 // swYSize
-        , 0 // dwXCountChar
-        , 0 // dwYCountChar
-        , 0 // dwFillAttribute
-        , STARTF_USESHOWWINDOW // dwFlags
-        , static_cast<WORD>(cmdShow) // wShowWindow
-        }
-    };
 
-    if (runInVirtualEnvironment)
-    {
-        SIZE_T AttributeListSize{};
-        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-        startupInfoEx.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
-            GetProcessHeap(),
-            0,
-            AttributeListSize
-        );
-
-        THROW_LAST_ERROR_IF_MSG(
-            !InitializeProcThreadAttributeList(
-                startupInfoEx.lpAttributeList,
-                1,
-                0,
-                &AttributeListSize),
-            "Could not initialize the proc thread attribute list.");
-
-        DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
-        THROW_LAST_ERROR_IF_MSG(
-            !UpdateProcThreadAttribute(
-                startupInfoEx.lpAttributeList,
-                0,
-                PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
-                &attribute,
-                sizeof(attribute),
-                nullptr,
-                nullptr),
-            "Could not update Proc thread attribute.");
-    }
-
-    PROCESS_INFORMATION processInfo{};
-    THROW_LAST_ERROR_IF_MSG(
-        !::CreateProcessW(
-            applicationName,
-            commandLine,
-            nullptr, nullptr, // Process/ThreadAttributes
-            true, // InheritHandles
-            EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
-            nullptr, // Environment
-            currentDirectory,
-            (LPSTARTUPINFO)& startupInfoEx,
-            &processInfo),
-        "ERROR: Failed to create a process for %ws",
-        applicationName);
-
-    THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
-    DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, INFINITE);
-    THROW_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
-    CloseHandle(processInfo.hProcess);
-    CloseHandle(processInfo.hThread);
-}
 
 void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow)
 {

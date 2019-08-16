@@ -3,8 +3,12 @@
 
 #include "psf_runtime.h"
 #include "psf_utils.h"
+#include "StartProcessHelper.h"
+#include <wrl\client.h>
+#include <future>
 #include <wil\resource.h>
 #include <wil\result.h>
+
 
 class PsfPowershellScriptRunner
 {
@@ -15,6 +19,7 @@ public:
 		CheckIfTheUserScriptExists(currentDirectory);
 		CheckIfShowWindow(scriptInformation);
 		CheckForRunOnce(scriptInformation);
+		CheckForWaitForScriptToFinish(scriptInformation);
 	}
 
 	const std::wstring& GetCommandString() const
@@ -22,12 +27,12 @@ public:
 		return this->commandString;
 	}
 
-	bool DoesScriptExist() const
+	bool GetDoesScriptExist() const
 	{
 		return this->doesScriptExist;
 	}
 
-	bool RunInVirtualEnvironment() const
+	bool GetRunInVirtualEnvironment() const
 	{
 		return this->runInVirtualEnvironment;
 	}
@@ -47,37 +52,36 @@ public:
 		return this->runOnce;
 	}
 
-	const bool ShouldShowWindow() const
+	const bool GetShouldShowWindow() const
 	{
 		return this->showWindowAction;
 	}
 
-	HRESULT CheckIfShouldRun(bool shouldRunOnce, bool& canScriptRun)
+	const bool GetWaitForScriptToFinish() const
 	{
-		canScriptRun = true;
-		if (shouldRunOnce)
+		return this->waitForScriptToFinish;
+	}
+
+	void RunPfsScript(bool stopOnScriptError, std::filesystem::path currentDirectory)
+	{
+		bool canScriptRun = false;
+		THROW_IF_FAILED(CheckIfShouldRun(canScriptRun));
+
+		if (canScriptRun && stopOnScriptError)
 		{
-			std::wstring runOnceSubKey = L"SOFTWARE\\";
-			runOnceSubKey.append(psf::current_package_full_name());
-			runOnceSubKey.append(L"\\runOnce");
-
-			DWORD keyDisposition;
-			wil::unique_hkey registryHandle;
-			LSTATUS createResult = RegCreateKeyExW(HKEY_CURRENT_USER, runOnceSubKey.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, nullptr, &registryHandle, &keyDisposition);
-
-			if (createResult != ERROR_SUCCESS)
+			if (stopOnScriptError)
 			{
-				return createResult;
+				THROW_IF_FAILED(StartProcess(nullptr, this->commandString.data(), currentDirectory.c_str(), this->showWindowAction, this->runInVirtualEnvironment, this->timeout));
 			}
-
-			if (keyDisposition == REG_OPENED_EXISTING_KEY)
+			else
 			{
-				canScriptRun = false;
+				//We don't want to stop on an error and we want to run async
+				std::thread(StartProcess(nullptr, this->commandString.data(), currentDirectory.c_str(), this->showWindowAction, this->runInVirtualEnvironment, this->timeout));
 			}
 		}
-
-		return{};
 	}
+
+	
 
 private:
 	bool doesScriptExist = false;
@@ -87,6 +91,7 @@ private:
 	DWORD timeout = INFINITE;
 	bool runOnce = false;
 	int showWindowAction = 0;
+	bool waitForScriptToFinish = false;
 
 	void MakeCommandString(const psf::json_object& scriptInformation) noexcept
 	{
@@ -163,5 +168,41 @@ private:
 		{
 			this->runOnce = runOnceObject->as_boolean().get();
 		}
+	}
+
+	void CheckForWaitForScriptToFinish(const psf::json_object& scriptInformation)
+	{
+		auto waitForStartingScriptToFinishObject = scriptInformation.try_get("wait");
+		if (waitForStartingScriptToFinishObject)
+		{
+			this->waitForScriptToFinish = waitForStartingScriptToFinishObject->as_boolean().get();
+		}
+	}
+
+	HRESULT CheckIfShouldRun(bool& canScriptRun)
+	{
+		canScriptRun = true;
+		if (runOnce)
+		{
+			std::wstring runOnceSubKey = L"SOFTWARE\\";
+			runOnceSubKey.append(psf::current_package_full_name());
+			runOnceSubKey.append(L"\\runOnce");
+
+			DWORD keyDisposition;
+			wil::unique_hkey registryHandle;
+			LSTATUS createResult = RegCreateKeyExW(HKEY_CURRENT_USER, runOnceSubKey.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, nullptr, &registryHandle, &keyDisposition);
+
+			if (createResult != ERROR_SUCCESS)
+			{
+				return createResult;
+			}
+
+			if (keyDisposition == REG_OPENED_EXISTING_KEY)
+			{
+				canScriptRun = false;
+			}
+		}
+
+		return{};
 	}
 };

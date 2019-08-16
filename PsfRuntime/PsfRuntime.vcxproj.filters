@@ -29,8 +29,5 @@
     <ClInclude Include="JsonConfig.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="PsfPowershellScriptRunner.h">
-      <Filter>inc</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

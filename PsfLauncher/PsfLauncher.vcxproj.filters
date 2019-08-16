@@ -18,4 +18,12 @@
       <Filter>src</Filter>
     </Xml>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\PsfRuntime\PsfPowershellScriptRunner.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PsfRuntime\StartProcessHelper.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
