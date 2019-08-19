@@ -1,7 +1,6 @@
 #pragma once
 #include <windows.h>
 #include <wil\resource.h>
-#include <wil\result.h>
 
 // These two macros don't exist in RS1.  Define them here to prevent build
 // failures when building for RS1.

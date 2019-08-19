@@ -9,19 +9,20 @@
 #include <sstream>
 
 #include <windows.h>
-#include <psf_constants.h>
-#include <psf_runtime.h>
 #include <shellapi.h>
 #include <combaseapi.h>
 #include <ppltasks.h>
 #include <ShObjIdl.h>
-#include <wil\resource.h>
-#include <wil\result.h>
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
-#include <future>
-#include "PsfPowershellScriptRunner.h"
 #include "StartProcessHelper.h"
+#include "Telemetry.h"
+#include "PsfPowershellScriptRunner.h"
+#include <TraceLoggingProvider.h>
+#include <psf_constants.h>
+#include <psf_runtime.h>
+#include <future>
+#include <wil\result.h>
+#include <wil\resource.h>
+
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -43,7 +44,6 @@ void LogString(const char name[], const wchar_t value[]) noexcept;
 void LogString(const char name[], const char value[]) noexcept;
 void Log(const char fmt[], ...) noexcept;
 
-//HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment, DWORD timeout);
 void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
 bool CheckIfPowershellIsInstalled();
 
@@ -200,8 +200,6 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
         StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
 }
-
-
 
 void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow)
 {

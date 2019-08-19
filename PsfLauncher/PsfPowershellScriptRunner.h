@@ -2,12 +2,9 @@
 
 
 #include "psf_runtime.h"
-#include "psf_utils.h"
 #include "StartProcessHelper.h"
-#include <wrl\client.h>
 #include <future>
 #include <wil\resource.h>
-#include <wil\result.h>
 
 
 class PsfPowershellScriptRunner
@@ -76,12 +73,12 @@ public:
 			else
 			{
 				//We don't want to stop on an error and we want to run async
-				std::thread(StartProcess(nullptr, this->commandString.data(), currentDirectory.c_str(), this->showWindowAction, this->runInVirtualEnvironment, this->timeout));
+				std::thread(StartProcess, nullptr, this->commandString.data(), currentDirectory.c_str(), this->showWindowAction, this->runInVirtualEnvironment, this->timeout);
 			}
 		}
 	}
 
-	
+
 
 private:
 	bool doesScriptExist = false;

@@ -19,11 +19,14 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\PsfRuntime\PsfPowershellScriptRunner.h">
+    <ClInclude Include="PsfPowershellScriptRunner.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="..\PsfRuntime\StartProcessHelper.h">
+    <ClInclude Include="StartProcessHelper.h">
       <Filter>inc</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>
