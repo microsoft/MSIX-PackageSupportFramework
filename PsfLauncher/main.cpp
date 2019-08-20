@@ -45,7 +45,6 @@ void LogString(const char name[], const char value[]) noexcept;
 void Log(const char fmt[], ...) noexcept;
 
 void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
-bool CheckIfPowershellIsInstalled();
 
 int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
 {
@@ -64,35 +63,18 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
     auto exeArgs = appConfig->try_get("arguments");
 
-	bool stopOnScriptError = false;
-
-	auto stopOnScriptErrorObject = appConfig->try_get("stopOnScriptError");
-	if (stopOnScriptErrorObject)
-	{
-		stopOnScriptError = stopOnScriptErrorObject->as_boolean().get();
-	}
-
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 	auto currentDirectory = (packageRoot / dirStr);
+
+	PsfPowershellScriptRunner powershellScriptRunner(appConfig, currentDirectory);
+
+
+
     // Launch the starting PowerShell script if we are using one.
-	auto startScriptInformation = PSFQueryStartScriptInfo();
-    if (startScriptInformation)
-	{
-        THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
-		PsfPowershellScriptRunner startingScript(*startScriptInformation, currentDirectory);
+	THROW_IF_FAILED(powershellScriptRunner.RunStartingScript());
 
-		//Don't run if the users wants the starting script to run asynch
-		//AND to stop running PSF is the starting script encounters an error.
-		//We stop here because we don't want to crash the application if the
-		//starting script encountered an error.
-		if (stopOnScriptError && !startingScript.GetWaitForScriptToFinish())
-		{
-			THROW_HR_MSG(ERROR_BAD_CONFIGURATION, "PSF does not allow stopping on a script error and running asynchronously.  Please either remove stopOnScriptError or add a wait");
-		}
 
-		startingScript.RunPfsScript(stopOnScriptError, currentDirectory);
-    }
 
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -118,12 +100,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     }
 
     // Launch the end PowerShell script if we are using one.
-    auto endScriptInformation = PSFQueryEndScriptInfo();
-    if (endScriptInformation)
-    {
-		PsfPowershellScriptRunner endingScript(*endScriptInformation, currentDirectory);
-		endingScript.RunPfsScript(true, currentDirectory);
-    }
+	powershellScriptRunner.RunEndingScript();
+
 
     return 0;
 }
@@ -268,34 +246,7 @@ void LogString(const char name[], const wchar_t value[]) noexcept
     Log("\t%s=%ls\n", name, value);
 }
 
-bool CheckIfPowershellIsInstalled()
-{
-    wil::unique_hkey registryHandle;
-    LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
 
-    if (createResult == ERROR_FILE_NOT_FOUND)
-    {
-        // If the key cannot be found, powershell is not installed
-        return false;
-    }
-    else if (createResult != ERROR_SUCCESS)
-    {
-        THROW_HR_MSG(createResult, "Error with getting the key to see if PowerShell is installed.");
-    }
-
-    DWORD valueFromRegistry = 0;
-    DWORD bufferSize = sizeof(DWORD);
-    DWORD type = REG_DWORD;
-    THROW_IF_WIN32_ERROR_MSG(RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize), 
-                             "Error with querying the key to see if PowerShell is installed.");
-
-    if (valueFromRegistry != 1)
-    {
-        return false;
-    }
-
-    return true;
-}
 
 void LogApplicationAndProcessesCollection()
 {
