@@ -188,7 +188,7 @@ private:
 			doesScriptExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
 		}
 
-		THROW_HR_IF(ERROR_FILE_NOT_FOUND, doesScriptExist);
+		THROW_HR_IF_MSG(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), !doesScriptExist, "The starting script does not exist");
 	}
 
 	bool GetRunOnce(const psf::json_object& scriptInformation)
