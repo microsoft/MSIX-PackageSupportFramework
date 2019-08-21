@@ -29,6 +29,52 @@ PSF allows one PowerShell script to be run before an exe runs, and one PowerShel
 
 Each exe defined in the application manifest can have their own scripts.
 
+### Stopping application on a script error.
+PSF gives users the option to stop the application if the starting script encounters an error. To disable further PSF script runs on error, add the option "stopOnScriptError":true.
+ The default PSF value for stopOnScriptError is false.  This pair can be specified on a per exe basis.
+
+If `stopOnScriptError` is either false or not defined the behavior is to run the application and endingScript (if defined) even if there is an error with the starting script.
+
+#### Determining what constitutes an error for scripts.
+PSF does not alter the Error Action Preference for powershell.  If you need to treat non-terminating errors as terminating errors please change the Error Action Preference in each
+of your powershell scripts.  You can find more information about setting the Error Action Preference here: [MSDN setting the Error Actio Preference.](https://docs.microsoft.com/en-us/dotnet/api/system.management.automation.psinvocationsettings.erroractionpreference?view=pscore-6.2.0)
+
+### Hiding the script windows
+PSF allows the user to hide the PowerShell window for both the starting script and ending script.  To do so add `"showWindow": true` to the script object.  The default behavior is to hide the window.
+
+### Running the script once
+PSF allows the starting script and the ending script to be run once per application version.  To enable this run once feature, add `"runOnce" : true` to any script object.  Adding this indicates that the script should only execute once per package version lifetime for each user.  The default value for this pair is false.
+
+### Timeout
+Both the starting script and ending script support timeouts in seconds.  Timeouts are optional.
+
+If no timeout is supplied PSF will wait indefinitely for the script to exit. The user application will not start until the script runs to completion or is terminated.
+
+If a timeout is supplied PSF will terminate the script after the supplied number of seconds have elapsed.  Terminating a script is not considered an error.
+
+### Wait.
+The starting script accepts a wait pair.  This pair is optional and defaults to false if not supplied.  Wait is used to tell PSF if the application should run in parallel with the starting script.
+
+Wait = true tells PSF to run the application after the starting script has finished running.
+
+The endingScript ignores wait.  PSF will wait for the endingScript to finish before exiting.
+
+If you want the application and starting script to run at the same time either provide `"wait":false` or do not include this pair.
+
+
+### Combining stopOnScriptError and Wait
+With the introduction of running asynchronously certain combinations of stopOnScriptError and wait are not allowed.  This prevents the application from crashing in the middle of execution if the starting script has an error.
+
+Below are all combinations of stopOnScriptError and wait along with what PSF will do in each case.
+
+| stopOnScriptError | wait  | behavior                                                                                                                                                    |
+|-------------------|-------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| true              | false | Not allowed because this would cause the application to terminate in the middle of execution if the starting script encountered an error.                   |
+| true              | true  | The application will start only after the starting script has exited.  If the script encountered an error PSF would exit and the application would not run. |
+| false             | false | The application and starting script will run in parallel.  No error will be reported if the starting script encounters an error.                            |
+| fale              | true  | The application will start only after the starting script has exited.  No error will be reported if the starting script encountered an error.
+
+
 ### Prerequisite to allow scripts to run
 In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.  The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.
 
@@ -40,6 +86,7 @@ Here are the locations of each executable.
   * 32-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
   
 [More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
+
 
 ### Configuration changes
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
