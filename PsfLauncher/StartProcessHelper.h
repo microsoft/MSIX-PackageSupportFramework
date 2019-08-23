@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include "Logger.h"
 #include <wil\resource.h>
 
 // These two macros don't exist in RS1.  Define them here to prevent build
@@ -86,5 +87,33 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
 	CloseHandle(processInfo.hThread);
 
 	return ERROR_SUCCESS;
+}
+
+void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow)
+{
+	// Non Exe case, use shell launching to pick up local FTA
+	auto nonExePath = packageRoot / exeName;
+
+	SHELLEXECUTEINFO shex = {
+		sizeof(shex)
+		, SEE_MASK_NOCLOSEPROCESS
+		, (HWND)nullptr
+		, nullptr
+		, nonExePath.c_str()
+		, exeArgString.c_str()
+		, dirStr ? (packageRoot / dirStr).c_str() : nullptr
+		, static_cast<WORD>(cmdShow)
+	};
+
+	Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
+	THROW_LAST_ERROR_IF_MSG(
+		!ShellExecuteEx(&shex),
+		"ERROR: Failed to create detoured shell process");
+
+	THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
+	DWORD exitCode{};
+	THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
+	THROW_IF_WIN32_ERROR(exitCode);
+	CloseHandle(shex.hProcess);
 }
 

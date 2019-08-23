@@ -13,16 +13,15 @@
 #include <combaseapi.h>
 #include <ppltasks.h>
 #include <ShObjIdl.h>
+#include "Logger.h"
 #include "StartProcessHelper.h"
 #include "Telemetry.h"
 #include "PsfPowershellScriptRunner.h"
 #include <TraceLoggingProvider.h>
 #include <psf_constants.h>
 #include <psf_runtime.h>
-#include <future>
 #include <wil\result.h>
 #include <wil\resource.h>
-
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -40,11 +39,6 @@ void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path 
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
-void LogString(const char name[], const wchar_t value[]) noexcept;
-void LogString(const char name[], const char value[]) noexcept;
-void Log(const char fmt[], ...) noexcept;
-
-void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
 
 int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
 {
@@ -67,14 +61,11 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 	auto currentDirectory = (packageRoot / dirStr);
 
-	PsfPowershellScriptRunner powershellScriptRunner(appConfig, currentDirectory);
-
-
+	PsfPowershellScriptRunner powershellScriptRunner;
+	powershellScriptRunner.Initilize(appConfig, currentDirectory);
 
     // Launch the starting PowerShell script if we are using one.
-	THROW_IF_FAILED(powershellScriptRunner.RunStartingScript());
-
-
+	powershellScriptRunner.RunStartingScript();
 
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -101,7 +92,6 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     // Launch the end PowerShell script if we are using one.
 	powershellScriptRunner.RunEndingScript();
-
 
     return 0;
 }
@@ -179,74 +169,12 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
 }
 
-void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow)
-{
-    // Non Exe case, use shell launching to pick up local FTA
-    auto nonExePath = packageRoot / exeName;
 
-    SHELLEXECUTEINFO shex = {
-        sizeof(shex)
-        , SEE_MASK_NOCLOSEPROCESS
-        , (HWND)nullptr
-        , nullptr
-        , nonExePath.c_str()
-        , exeArgString.c_str()
-        , dirStr ? (packageRoot / dirStr).c_str() : nullptr
-        , static_cast<WORD>(cmdShow)
-    };
-
-    Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
-    THROW_LAST_ERROR_IF_MSG (
-        !ShellExecuteEx(&shex),
-        "ERROR: Failed to create detoured shell process");
-
-    THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
-    DWORD exitCode{};
-    THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
-    THROW_IF_WIN32_ERROR(exitCode);
-    CloseHandle(shex.hProcess);
-}
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept
 {
     return ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix));
 }
-
-void Log(const char fmt[], ...) noexcept
-{
-    std::string str;
-    str.resize(256);
-
-    va_list args;
-    va_start(args, fmt);
-    std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-    assert(count >= 0);
-    va_end(args);
-
-    if (count > str.size())
-    {
-        str.resize(count);
-
-        va_list args2;
-        va_start(args2, fmt);
-        count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-        assert(count >= 0);
-        va_end(args2);
-    }
-
-    str.resize(count);
-    ::OutputDebugStringA(str.c_str());
-}
-void LogString(const char name[], const char value[]) noexcept
-{
-    Log("\t%s=%s\n", name, value);
-}
-void LogString(const char name[], const wchar_t value[]) noexcept
-{
-    Log("\t%s=%ls\n", name, value);
-}
-
-
 
 void LogApplicationAndProcessesCollection()
 {

@@ -31,9 +31,10 @@ Each exe defined in the application manifest can have their own scripts.
 
 ### Stopping application on a script error.
 PSF gives users the option to stop the application if the starting script encounters an error. To disable further PSF script runs on error, add the option "stopOnScriptError":true.
- The default PSF value for stopOnScriptError is false.  This pair can be specified on a per exe basis.
+ The default PSF value for stopOnScriptError is false.  This configuration item can be specified on a per exe basis.
 
 If `stopOnScriptError` is either false or not defined the behavior is to run the application and endingScript (if defined) even if there is an error with the starting script.
+`stopOnScriptError` is not supported when the scripts are running asynchronosly.
 
 #### Determining what constitutes an error for scripts.
 PSF does not alter the Error Action Preference for powershell.  If you need to treat non-terminating errors as terminating errors please change the Error Action Preference in each
@@ -52,14 +53,10 @@ If no timeout is supplied PSF will wait indefinitely for the script to exit. The
 
 If a timeout is supplied PSF will terminate the script after the supplied number of seconds have elapsed.  Terminating a script is not considered an error.
 
-### Wait.
-The starting script accepts a wait pair.  This pair is optional and defaults to false if not supplied.  Wait is used to tell PSF if the application should run in parallel with the starting script.
+### Running the script in async mode.
+You can tell the starting script to run asynchronosly.  The default is for the starting script to run synchronously.
 
-Wait = true tells PSF to run the application after the starting script has finished running.
-
-The endingScript ignores wait.  PSF will wait for the endingScript to finish before exiting.
-
-If you want the application and starting script to run at the same time either provide `"wait":false` or do not include this pair.
+If you would like the starting script to run asynchronosly add the configuration item `"wait":false` to the starting script configuration.
 
 
 ### Combining stopOnScriptError and Wait

@@ -35,6 +35,7 @@
     <Xml Include="PSFLauncherMetadata.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="PsfPowershellScriptRunner.h" />
     <ClInclude Include="StartProcessHelper.h" />
   </ItemGroup>

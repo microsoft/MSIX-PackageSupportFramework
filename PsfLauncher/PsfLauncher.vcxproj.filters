@@ -25,5 +25,8 @@
     <ClInclude Include="StartProcessHelper.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
