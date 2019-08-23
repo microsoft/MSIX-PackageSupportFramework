@@ -60,7 +60,7 @@ If you would like the starting script to run asynchronous add the configuration 
 
 
 ### Combining stopOnScriptError and Wait
-With the introduction of running asynchronously certain combinations of stopOnScriptError and wait are not allowed.  This prevents the application from crashing in the middle of execution if the starting script has an error.
+With the introduction of running asynchronously certain combinations of stopOnScriptError and waitForScriptToFinish are not allowed.  This prevents the application from crashing in the middle of execution if the starting script has an error.
 
 Below are all combinations of stopOnScriptError and wait along with what PSF will do in each case.
 
