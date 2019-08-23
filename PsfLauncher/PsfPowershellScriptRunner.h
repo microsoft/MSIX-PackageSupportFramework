@@ -14,11 +14,9 @@
 class PsfPowershellScriptRunner
 {
 public:
-	PsfPowershellScriptRunner()
-	{
-	}
+	PsfPowershellScriptRunner() = default;
 
-	void Initilize(const psf::json_object* appConfig, const std::filesystem::path& currentDirectory)
+	void Initialize(const psf::json_object* appConfig, const std::filesystem::path& currentDirectory)
 	{
 		auto startScriptInformationObject = PSFQueryStartScriptInfo();
 		auto endScriptInformationObject = PSFQueryEndScriptInfo();
@@ -71,11 +69,11 @@ private:
 	{
 		std::wstring scriptPath;
 		std::wstring commandString;
-		DWORD timeout;
-		bool shouldRunOnce;
-		int showWindowAction;
-		bool runInVirtualEnvironment;
-		bool waitForScriptToFinish;
+		DWORD timeout = INFINITE;
+		bool shouldRunOnce = true;
+		int showWindowAction = SW_HIDE;
+		bool runInVirtualEnvironment = true;
+		bool waitForScriptToFinish = true;
 		bool stopOnScriptError = false;
 		std::filesystem::path currentDirectory;
 		bool doesScriptExistInConfig = false;
@@ -91,7 +89,7 @@ private:
 			return;
 		}
 
-		THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), DoesScriptExist(script.scriptPath, script.currentDirectory));
+		THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), !DoesScriptExist(script.scriptPath, script.currentDirectory));
 
 		bool canScriptRun = false;
 		THROW_IF_FAILED(CheckIfShouldRun(script.shouldRunOnce, canScriptRun));
@@ -236,7 +234,7 @@ private:
 
 	bool GetWaitForScriptToFinish(const psf::json_object& scriptInformation)
 	{
-		auto waitForStartingScriptToFinishObject = scriptInformation.try_get("wait");
+		auto waitForStartingScriptToFinishObject = scriptInformation.try_get("waitForScriptToFinish");
 		if (waitForStartingScriptToFinishObject)
 		{
 			return waitForStartingScriptToFinishObject->as_boolean().get();

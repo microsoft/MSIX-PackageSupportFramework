@@ -62,7 +62,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 	auto currentDirectory = (packageRoot / dirStr);
 
 	PsfPowershellScriptRunner powershellScriptRunner;
-	powershellScriptRunner.Initilize(appConfig, currentDirectory);
+	powershellScriptRunner.Initialize(appConfig, currentDirectory);
 
     // Launch the starting PowerShell script if we are using one.
 	powershellScriptRunner.RunStartingScript();

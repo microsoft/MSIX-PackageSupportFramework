@@ -34,7 +34,7 @@ PSF gives users the option to stop the application if the starting script encoun
  The default PSF value for stopOnScriptError is false.  This configuration item can be specified on a per exe basis.
 
 If `stopOnScriptError` is either false or not defined the behavior is to run the application and endingScript (if defined) even if there is an error with the starting script.
-`stopOnScriptError` is not supported when the scripts are running asynchronosly.
+`stopOnScriptError` is not supported when the scripts are running asynchronous.
 
 #### Determining what constitutes an error for scripts.
 PSF does not alter the Error Action Preference for powershell.  If you need to treat non-terminating errors as terminating errors please change the Error Action Preference in each
@@ -44,7 +44,7 @@ of your powershell scripts.  You can find more information about setting the Err
 PSF allows the user to hide the PowerShell window for both the starting script and ending script.  To do so add `"showWindow": true` to the script object.  The default behavior is to hide the window.
 
 ### Running the script once
-PSF allows the starting script and the ending script to be run once per application version.  To enable this run once feature, add `"runOnce" : true` to any script object.  Adding this indicates that the script should only execute once per package version lifetime for each user.  The default value for this pair is false.
+PSF allows the starting script and the ending script to be run once per application version.  To enable this run once feature, add the configuration item `"runOnce" : true` to any script object.  Adding this indicates that the script should only execute once per package version lifetime for each user.  The default value for this configuration item is false.
 
 ### Timeout
 Both the starting script and ending script support timeouts in seconds.  Timeouts are optional.
@@ -53,10 +53,10 @@ If no timeout is supplied PSF will wait indefinitely for the script to exit. The
 
 If a timeout is supplied PSF will terminate the script after the supplied number of seconds have elapsed.  Terminating a script is not considered an error.
 
-### Running the script in async mode.
-You can tell the starting script to run asynchronosly.  The default is for the starting script to run synchronously.
+### Waiting for the starting script to finish.
+You can tell the starting script to run asynchronous.  The default is for the starting script to run synchronously.
 
-If you would like the starting script to run asynchronosly add the configuration item `"wait":false` to the starting script configuration.
+If you would like the starting script to run asynchronous add the configuration item `"waitForScriptToFinish":false` to the starting script configuration.
 
 
 ### Combining stopOnScriptError and Wait
