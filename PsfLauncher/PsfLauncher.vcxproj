@@ -27,6 +27,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="StartingScriptWrapper.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\PsfRuntime\PsfRuntime.vcxproj">
       <Project>{87cce0ac-a7fb-4a31-89d3-c0acdb315ee0}</Project>
     </ProjectReference>
@@ -38,6 +43,9 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="PsfPowershellScriptRunner.h" />
     <ClInclude Include="StartProcessHelper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="StartingScriptWrapper.ps1" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

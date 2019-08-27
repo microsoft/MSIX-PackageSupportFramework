@@ -29,4 +29,7 @@
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="StartingScriptWrapper.ps1" />
+  </ItemGroup>
 </Project>
