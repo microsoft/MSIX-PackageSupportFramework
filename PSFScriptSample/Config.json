@@ -1,0 +1,33 @@
+{
+  "applications": [
+    {
+      "id": "PFSScriptSample",
+      "executable": "PFSScriptSample.exe",
+      "workingDirectory": "",
+	  "stopOnScriptError": true,
+      "startScript": {
+		"wait": true,
+		"showWindow": true,
+        "scriptPath": "SaySomethingWithArguments.ps1",
+        "scriptArguments": "\\\"Here We Are\\\" IAmCool $true",
+		"runOnce": false
+      },
+	  "endScript": {
+		"scriptPath": "TearDown.ps1"
+	  }
+    },
+    {
+      "id": "CPPPFSScriptSample",
+      "executable": "CPPPFSScriptSample.exe",
+      "workingDirectory": "",
+      "startScript": {
+        "scriptPath": "TearDown.ps1"
+      }
+    }
+  ],
+  "processes": [
+    {
+      "executable": "CPPPFSScriptSample"
+    }
+  ]
+}
