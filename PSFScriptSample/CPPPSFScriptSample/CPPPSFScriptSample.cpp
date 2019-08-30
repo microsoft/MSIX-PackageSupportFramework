@@ -1,5 +1,7 @@
-// CPPPSFScriptSample.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
 
 #include <iostream>
 #include <windows.h>
