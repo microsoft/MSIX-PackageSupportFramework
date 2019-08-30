@@ -6,7 +6,7 @@
       "workingDirectory": "",
 	  "stopOnScriptError": true,
       "startScript": {
-		"wait": true,
+		"waitForScriptToFinish": true,
 		"showWindow": true,
         "scriptPath": "SaySomethingWithArguments.ps1",
         "scriptArguments": "\\\"Here We Are\\\" IAmCool $true",
