@@ -9,16 +9,19 @@
 #include <sstream>
 
 #include <windows.h>
-#include <psf_constants.h>
-#include <psf_runtime.h>
 #include <shellapi.h>
 #include <combaseapi.h>
 #include <ppltasks.h>
 #include <ShObjIdl.h>
-#include <wil\resource.h>
-#include <wil\result.h>
-#include <TraceLoggingProvider.h>
+#include "Logger.h"
+#include "StartProcessHelper.h"
 #include "Telemetry.h"
+#include "PsfPowershellScriptRunner.h"
+#include <TraceLoggingProvider.h>
+#include <psf_constants.h>
+#include <psf_runtime.h>
+#include <wil\result.h>
+#include <wil\resource.h>
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -26,16 +29,6 @@ TRACELOGGING_DEFINE_PROVIDER(
     "Microsoft.Windows.PSFRuntime",
     (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
     TraceLoggingOptionMicrosoftTelemetry());
-
-// These two macros don't exist in RS1.  Define them here to prevent build
-// failures when building for RS1.
-#ifndef PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
-#    define PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE PROCESS_CREATION_DESKTOP_APPX_OVERRIDE
-#endif
-
-#ifndef PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
-#    define PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY
-#endif
 
 using namespace std::literals;
 
@@ -46,14 +39,6 @@ void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path 
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
-void LogString(const char name[], const wchar_t value[]) noexcept;
-void LogString(const char name[], const char value[]) noexcept;
-void Log(const char fmt[], ...) noexcept;
-
-void RunScript(const psf::json_object& scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow);
-void StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment);
-void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow);
-bool CheckIfPowershellIsInstalled();
 
 int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
 {
@@ -74,16 +59,14 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
+	auto currentDirectory = (packageRoot / dirStr);
+
+	PsfPowershellScriptRunner powershellScriptRunner;
+	powershellScriptRunner.Initialize(appConfig, currentDirectory);
 
     // Launch the starting PowerShell script if we are using one.
-    auto startScriptInformation = PSFQueryStartScriptInfo();
-    if (startScriptInformation)
-    {        
-        THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
-        RunScript(*startScriptInformation, packageRoot, dirStr, cmdShow);
-    }
+	powershellScriptRunner.RunStartingScript();
 
-    // If we get here we know that starting script did NOT encounter an error
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
     if (monitor != nullptr)
@@ -100,7 +83,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, false);
+        StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
     else
     {
@@ -108,11 +91,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     }
 
     // Launch the end PowerShell script if we are using one.
-    auto endScriptInformation = PSFQueryEndScriptInfo();
-    if (endScriptInformation)
-    {
-        RunScript(*endScriptInformation, packageRoot, dirStr, cmdShow);
-    }
+	powershellScriptRunner.RunEndingScript();
 
     return 0;
 }
@@ -120,48 +99,6 @@ catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     return win32_from_caught_exception();
-}
-
-void RunScript(const psf::json_object &scriptInformation, std::filesystem::path packageRoot, LPCWSTR dirStr, int cmdShow)
-{
-    // Generate the command string that we will use to call powershell
-    std::wstring powershellCommandString(L"Powershell.exe -file ");
-
-    std::wstring scriptPath = scriptInformation.get("scriptPath").as_string().wide();
-    powershellCommandString.append(scriptPath);
-    powershellCommandString.append(L" ");
-
-    // Script arguments are optional.
-    auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
-    if (scriptArgumentsJObject)
-    {
-        powershellCommandString.append(scriptArgumentsJObject->as_string().wide());
-    }
-
-    auto currentDirectory = (packageRoot / dirStr);
-    std::filesystem::path powershellScriptPath(scriptPath);
-
-    // The file might be on a network drive.
-    auto doesFileExist = std::filesystem::exists(powershellScriptPath);
-
-    // Check on local computer.
-    if (!doesFileExist)
-    {
-        doesFileExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
-    }
-
-    THROW_HR_IF_MSG(ERROR_FILE_NOT_FOUND, !doesFileExist, "The PowerShell file %ws cannot be found", (currentDirectory / powershellScriptPath).c_str());
-
-    // runInVirtualEnvironment is optional.
-    auto runInVirtualEnvironmentJObject = scriptInformation.try_get("runInVirtualEnvironment");
-    auto runInVirtualEnvironment = false;
-
-    if (runInVirtualEnvironmentJObject)
-    {
-        runInVirtualEnvironment = runInVirtualEnvironmentJObject->as_boolean().get();
-    }
-
-    StartProcess(nullptr, powershellCommandString.data(), currentDirectory.c_str(), cmdShow, runInVirtualEnvironment);
 }
 
 void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
@@ -228,178 +165,15 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
     else
     {
-        StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, false);
+        StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
 }
 
-void StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, bool runInVirtualEnvironment)
-{
-    STARTUPINFOEXW startupInfoEx =
-    {
-        {
-        sizeof(startupInfoEx)
-        , nullptr // lpReserved
-        , nullptr // lpDesktop
-        , nullptr // lpTitle
-        , 0 // dwX
-        , 0 // dwY
-        , 0 // dwXSize
-        , 0 // swYSize
-        , 0 // dwXCountChar
-        , 0 // dwYCountChar
-        , 0 // dwFillAttribute
-        , STARTF_USESHOWWINDOW // dwFlags
-        , static_cast<WORD>(cmdShow) // wShowWindow
-        }
-    };
 
-    if (runInVirtualEnvironment)
-    {
-        SIZE_T AttributeListSize{};
-        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-        startupInfoEx.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
-            GetProcessHeap(),
-            0,
-            AttributeListSize
-        );
-
-        THROW_LAST_ERROR_IF_MSG(
-            !InitializeProcThreadAttributeList(
-                startupInfoEx.lpAttributeList,
-                1,
-                0,
-                &AttributeListSize),
-            "Could not initialize the proc thread attribute list.");
-
-        DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
-        THROW_LAST_ERROR_IF_MSG(
-            !UpdateProcThreadAttribute(
-                startupInfoEx.lpAttributeList,
-                0,
-                PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
-                &attribute,
-                sizeof(attribute),
-                nullptr,
-                nullptr),
-            "Could not update Proc thread attribute.");
-    }
-
-    PROCESS_INFORMATION processInfo{};
-    THROW_LAST_ERROR_IF_MSG(
-        !::CreateProcessW(
-            applicationName,
-            commandLine,
-            nullptr, nullptr, // Process/ThreadAttributes
-            true, // InheritHandles
-            EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
-            nullptr, // Environment
-            currentDirectory,
-            (LPSTARTUPINFO)& startupInfoEx,
-            &processInfo),
-        "ERROR: Failed to create a process for %ws",
-        applicationName);
-
-    THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
-    DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, INFINITE);
-    THROW_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
-    CloseHandle(processInfo.hProcess);
-    CloseHandle(processInfo.hThread);
-}
-
-void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow)
-{
-    // Non Exe case, use shell launching to pick up local FTA
-    auto nonExePath = packageRoot / exeName;
-
-    SHELLEXECUTEINFO shex = {
-        sizeof(shex)
-        , SEE_MASK_NOCLOSEPROCESS
-        , (HWND)nullptr
-        , nullptr
-        , nonExePath.c_str()
-        , exeArgString.c_str()
-        , dirStr ? (packageRoot / dirStr).c_str() : nullptr
-        , static_cast<WORD>(cmdShow)
-    };
-
-    Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
-    THROW_LAST_ERROR_IF_MSG (
-        !ShellExecuteEx(&shex),
-        "ERROR: Failed to create detoured shell process");
-
-    THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
-    DWORD exitCode{};
-    THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
-    THROW_IF_WIN32_ERROR(exitCode);
-    CloseHandle(shex.hProcess);
-}
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept
 {
     return ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix));
-}
-
-void Log(const char fmt[], ...) noexcept
-{
-    std::string str;
-    str.resize(256);
-
-    va_list args;
-    va_start(args, fmt);
-    std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-    assert(count >= 0);
-    va_end(args);
-
-    if (count > str.size())
-    {
-        str.resize(count);
-
-        va_list args2;
-        va_start(args2, fmt);
-        count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-        assert(count >= 0);
-        va_end(args2);
-    }
-
-    str.resize(count);
-    ::OutputDebugStringA(str.c_str());
-}
-void LogString(const char name[], const char value[]) noexcept
-{
-    Log("\t%s=%s\n", name, value);
-}
-void LogString(const char name[], const wchar_t value[]) noexcept
-{
-    Log("\t%s=%ls\n", name, value);
-}
-
-bool CheckIfPowershellIsInstalled()
-{
-    wil::unique_hkey registryHandle;
-    LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
-
-    if (createResult == ERROR_FILE_NOT_FOUND)
-    {
-        // If the key cannot be found, powershell is not installed
-        return false;
-    }
-    else if (createResult != ERROR_SUCCESS)
-    {
-        THROW_HR_MSG(createResult, "Error with getting the key to see if PowerShell is installed.");
-    }
-
-    DWORD valueFromRegistry = 0;
-    DWORD bufferSize = sizeof(DWORD);
-    DWORD type = REG_DWORD;
-    THROW_IF_WIN32_ERROR_MSG(RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize), 
-                             "Error with querying the key to see if PowerShell is installed.");
-
-    if (valueFromRegistry != 1)
-    {
-        return false;
-    }
-
-    return true;
 }
 
 void LogApplicationAndProcessesCollection()
