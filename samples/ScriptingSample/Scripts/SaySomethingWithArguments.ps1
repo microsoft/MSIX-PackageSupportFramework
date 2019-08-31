@@ -13,20 +13,20 @@ else
 	Write-host "Nothing to say"
 }
 
- if($PSBoundParameters.ContainsKey('SomethingTwo'))
- {
+if($PSBoundParameters.ContainsKey('SomethingTwo'))
+{
 	Write-host ("Say " + $SomethingTwo)
- }
- else
- {
-	 Write-host "Nothing to else to say"
- }
- 
- if($flag)
- {
+}
+else
+{
+	Write-host "Nothing to else to say"
+}
+
+if($flag)
+{
 	write-host "Flag was true"
- }
- else
- {
+}
+else
+{
 	write-host "Flag was false"
- }
+}
