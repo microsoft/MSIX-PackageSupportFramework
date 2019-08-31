@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("PFSScriptSample")]
+[assembly: AssemblyTitle("PSFScriptingSample")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("PFSScriptSample")]
+[assembly: AssemblyProduct("PSFScriptingSample")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("3ac9a9f5-dbe5-44b1-99f4-4e3a24f9ed07")]
+[assembly: Guid("887f27b4-be57-447b-adf9-3536208ead02")]
 
 // Version information for an assembly consists of the following four values:
 //

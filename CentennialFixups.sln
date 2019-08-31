@@ -10,6 +10,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PsfLauncher", "PsfLauncher\PsfLauncher.vcxproj", "{29EE27EF-A3A3-4B8F-8DA2-532A5C04BD9E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests and Examples", "Tests and Examples", "{553A551E-8390-4C09-9ABA-54DB9A773BFB}"
+	ProjectSection(SolutionItems) = preProject
+		samples\ScriptingSample\Config.json = samples\ScriptingSample\Config.json
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework", "Framework", "{5785A7B6-A9A7-4623-B5A2-62F660695A71}"
 EndProject
@@ -34,20 +37,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		MetadataSchema.xsd = MetadataSchema.xsd
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ScriptingSample", "ScriptingSample", "{5617AD41-8574-4CD4-B65A-8DE805EF1EFD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSFScriptingSample", "samples\ScriptingSample\PSFScriptingSample\PSFScriptingSample.csproj", "{887F27B4-BE57-447B-ADF9-3536208EAD02}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CPPPSFScriptingSample", "samples\ScriptingSample\CPPPSFScriptingSample\CPPPSFScriptingSample.vcxproj", "{45DB8283-CE57-492B-AC8F-19776CE74D7E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{DE537CE3-3A87-4582-A1EC-EB19BA55127F}"
 	ProjectSection(SolutionItems) = preProject
-		PSFScriptSample\Config.json = PSFScriptSample\Config.json
+		samples\ScriptingSample\Scripts\SaySomethingWithArguments.ps1 = samples\ScriptingSample\Scripts\SaySomethingWithArguments.ps1
+		samples\ScriptingSample\Scripts\TearDown.ps1 = samples\ScriptingSample\Scripts\TearDown.ps1
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CPPPSFScriptSample", "PSFScriptSample\CPPPSFScriptSample\CPPPSFScriptSample.vcxproj", "{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{09C7CD0A-9649-4C3D-B6AC-662233A4F976}"
-	ProjectSection(SolutionItems) = preProject
-		PSFScriptSample\Scripts\SaySomethingWithArguments.ps1 = PSFScriptSample\Scripts\SaySomethingWithArguments.ps1
-		PSFScriptSample\Scripts\TearDown.ps1 = PSFScriptSample\Scripts\TearDown.ps1
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PFSScriptSample", "PSFScriptSample\PFSScriptSample\PFSScriptSample.csproj", "{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -161,28 +159,28 @@ Global
 		{BC76E43C-2E55-4BFD-95DF-DA09884F6DC4}.Release|x64.Build.0 = Release|Any CPU
 		{BC76E43C-2E55-4BFD-95DF-DA09884F6DC4}.Release|x86.ActiveCfg = Release|Any CPU
 		{BC76E43C-2E55-4BFD-95DF-DA09884F6DC4}.Release|x86.Build.0 = Release|Any CPU
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Debug|x64.ActiveCfg = Debug|x64
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Debug|x64.Build.0 = Debug|x64
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Debug|x86.ActiveCfg = Debug|Win32
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Debug|x86.Build.0 = Debug|Win32
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Release|Any CPU.ActiveCfg = Release|Win32
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Release|x64.ActiveCfg = Release|x64
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Release|x64.Build.0 = Release|x64
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Release|x86.ActiveCfg = Release|Win32
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF}.Release|x86.Build.0 = Release|Win32
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Debug|x64.Build.0 = Debug|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Debug|x86.Build.0 = Debug|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Release|x64.ActiveCfg = Release|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Release|x64.Build.0 = Release|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Release|x86.ActiveCfg = Release|Any CPU
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}.Release|x86.Build.0 = Release|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Debug|x64.Build.0 = Debug|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Debug|x86.Build.0 = Debug|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Release|x64.ActiveCfg = Release|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Release|x64.Build.0 = Release|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Release|x86.ActiveCfg = Release|Any CPU
+		{887F27B4-BE57-447B-ADF9-3536208EAD02}.Release|x86.Build.0 = Release|Any CPU
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Debug|x64.ActiveCfg = Debug|x64
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Debug|x64.Build.0 = Debug|x64
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Debug|x86.ActiveCfg = Debug|Win32
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Debug|x86.Build.0 = Debug|Win32
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Release|Any CPU.ActiveCfg = Release|Win32
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Release|x64.ActiveCfg = Release|x64
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Release|x64.Build.0 = Release|x64
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Release|x86.ActiveCfg = Release|Win32
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -198,10 +196,9 @@ Global
 		{0C1F7A43-65DE-4460-A9EB-F44F40AF0968} = {553A551E-8390-4C09-9ABA-54DB9A773BFB}
 		{A3653AD0-2406-48A4-95CD-7D4264257F9F} = {1B9D61ED-0B97-469C-A12D-079526888BF8}
 		{BC76E43C-2E55-4BFD-95DF-DA09884F6DC4} = {553A551E-8390-4C09-9ABA-54DB9A773BFB}
-		{5617AD41-8574-4CD4-B65A-8DE805EF1EFD} = {553A551E-8390-4C09-9ABA-54DB9A773BFB}
-		{DE2CB737-AE9D-4042-B7E2-73A69F08BDBF} = {5617AD41-8574-4CD4-B65A-8DE805EF1EFD}
-		{09C7CD0A-9649-4C3D-B6AC-662233A4F976} = {5617AD41-8574-4CD4-B65A-8DE805EF1EFD}
-		{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07} = {5617AD41-8574-4CD4-B65A-8DE805EF1EFD}
+		{887F27B4-BE57-447B-ADF9-3536208EAD02} = {553A551E-8390-4C09-9ABA-54DB9A773BFB}
+		{45DB8283-CE57-492B-AC8F-19776CE74D7E} = {553A551E-8390-4C09-9ABA-54DB9A773BFB}
+		{DE537CE3-3A87-4582-A1EC-EB19BA55127F} = {553A551E-8390-4C09-9ABA-54DB9A773BFB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {46CC2CF3-2979-46F8-B3C9-D85349586600}

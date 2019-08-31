@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3AC9A9F5-DBE5-44B1-99F4-4E3A24F9ED07}</ProjectGuid>
+    <ProjectGuid>{887F27B4-BE57-447B-ADF9-3536208EAD02}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>PFSScriptSample</RootNamespace>
-    <AssemblyName>PFSScriptSample</AssemblyName>
+    <RootNamespace>PSFScriptingSample</RootNamespace>
+    <AssemblyName>PSFScriptingSample</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -46,7 +46,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
+    <ItemGroup>
 	<Content Include="..\Config.json">
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</Content>
