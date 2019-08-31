@@ -9,7 +9,7 @@
 		"waitForScriptToFinish": true,
 		"showWindow": true,
         "scriptPath": "SaySomethingWithArguments.ps1",
-        "scriptArguments": "\\\"Here We Are\\\" IAmCool $true",
+        "scriptArguments": "\\\"First Argument\\\" SecondArgument $true",
 		"runOnce": false
       },
 	  "endScript": {
