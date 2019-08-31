@@ -1,7 +1,7 @@
 {
   "applications": [
     {
-      "id": "PFSScriptSample",
+      "id": "PSFScriptSample",
       "executable": "PFSScriptSample.exe",
       "workingDirectory": "",
 	  "stopOnScriptError": true,
@@ -17,7 +17,7 @@
 	  }
     },
     {
-      "id": "CPPPFSScriptSample",
+      "id": "CPPPSFScriptSample",
       "executable": "CPPPFSScriptSample.exe",
       "workingDirectory": "",
       "startScript": {
