@@ -69,7 +69,6 @@ int wmain(int argc, const wchar_t** argv)
     bool doesHelloExist = DoesFileExist(localAppDataPath, L"Hello.txt");
     bool doesArgumentExist = DoesFileExist(localAppDataPath, L"Argument.txt");
 
-
     if (testType.compare(L"psonlystart") == 0)
     {
         if (!doesHelloExist)
