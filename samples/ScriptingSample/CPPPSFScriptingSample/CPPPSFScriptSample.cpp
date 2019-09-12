@@ -6,17 +6,8 @@
 #include <iostream>
 #include <windows.h>
 
-int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
+int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR, _In_ int)
 {
-	if (cmdShow)
-	{
-
-	}
-
-	if (args)
-	{
-
-	}
 	std::cout << "Hello world from C Plus Plus" << std::endl;
 	Sleep(4000);
 	return 0;
