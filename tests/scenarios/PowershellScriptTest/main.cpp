@@ -5,9 +5,7 @@
 
 #include <iostream>
 #include <sstream>
-
 #include <Windows.h>
-
 #include <test_config.h>
 #include <appmodel.h>
 #include <algorithm>
