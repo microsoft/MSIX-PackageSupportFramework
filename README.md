@@ -81,23 +81,8 @@ The following are the configuration items available for the scripts.  The ending
 | showWindow              | boolean    | No        | false    | If the powershell window is shown.
 | waitForScriptToFinish   | boolean    | No        | true     | If the packaged exe should wait for the starting script to finish before starting.
 | timeout                 | DWORD      | No        | INFINITE | How long the script will be allowed to execute.  If elapsed the script will be stopped.
-
- #### Key descriptions
- 1. scriptPath: The path to the script including the name and extension.  The Path starts from the root directory of the application.
- 2. scriptArguments: Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
- 3. runInVirtualEnvironment: If the script should run in the same virtual environment that the packaged exe runs in.
- 4. timeout: How long the script will be allowed to execute.  If elapsed the script will be stopped.
- 5. runOnce: If the script should run once per user, per version.
- 6. showWindow: If the powershell window is shown.
- 7. waitForScriptToFinish: If the packaged exe should wait for the starting script to finish before starting.
  
- #### Enabling the app to exit if the starting script encounters an error.
- The scripting change allows users to tell PSF to exit the application if the starting script fails.  To do this, add the pair "stopOnScriptError": true to the application configuration (not the script configuration).
- 
- #### stopOnScriptError can not be true while waitForScriptToFinish is false
- This is an illegal configuration combination and PSF will throw the error ERROR_BAD_CONFIGURATION.
- 
-## Sample configuration
+### Sample configuration
 Here is a sample configuration using two different exes.
 <pre>
     {
@@ -110,7 +95,7 @@ Here is a sample configuration using two different exes.
 	  "startScript":
 	  {
 		"scriptPath": "RunMePlease.ps1",
-		"scriptArguments": "ThisIsMe.txt",
+		"scriptArguments": "\\\"First argument\\\" secondArgument",
 		"runInVirtualEnvironment": true,
 		"showWindow": true,
 		"waitForScriptToFinish": false
@@ -144,6 +129,12 @@ Here is a sample configuration using two different exes.
   ]
 }
 </pre>
+
+ ### Enabling the app to exit if the starting script encounters an error.
+ The scripting change allows users to tell PSF to exit the application if the starting script fails.  To do this, add the pair "stopOnScriptError": true to the application configuration (not the script configuration).
+ 
+ ### stopOnScriptError can not be true while waitForScriptToFinish is false
+ This is an illegal configuration combination and PSF will throw the error ERROR_BAD_CONFIGURATION.
 
 ## Fixup Metadata
 Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
