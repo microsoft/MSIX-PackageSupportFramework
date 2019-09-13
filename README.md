@@ -45,7 +45,7 @@ Here are the locations of each executable.
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the packaged exe add a configuration item called "startScript".  To tell PSF to run a script after the packaged exe finishes add a configuration item called "endScript".
 
 #### Script configuration items
-The following are the configuration items avalible for the scripts.  The ending script ignores the following configuration items: waitForScriptToFinish, and stopOnScriptError.
+The following are the configuration items available for the scripts.  The ending script ignores the following configuration items: waitForScriptToFinish, and stopOnScriptError.
 
 | Key name                | Value type | Required?                |
 |-------------------------|------------|--------------------------|
