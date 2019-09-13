@@ -42,49 +42,36 @@ Here are the locations of each executable.
 [More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
 
 ### Configuration changes
-In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the pacakged exe add an object called "startScript".  To tell PSF to run a script after the packaged exe finishes add an object called "endScript".
-Both objects use the same three keys.
+In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the packaged exe add a configuration item called "startScript".  To tell PSF to run a script after the packaged exe finishes add a configuration item called "endScript".
 
-| Key name                | Value type | Required?             |
-|-------------------------|------------|-----------------------|
-| scriptPath              | string     | Yes                   |
-| scriptArguments         | string     | No                    |
-| runInVirtualEnvironment | boolean    | No (defaults to true) |
- 
+#### Script configuration items
+The following are the configuration items avalible for the scripts.  The ending script ignores the following configuration items: waitForScriptToFinish, and stopOnScriptError.
+
+| Key name                | Value type | Required?                |
+|-------------------------|------------|--------------------------|
+| scriptPath              | string     | Yes                      |
+| scriptArguments         | string     | No                       |
+| runInVirtualEnvironment | boolean    | No (defaults to true)    |
+| timeout                 | DWORD      | No (defaults to INFINITE)|
+| runOnce                 | boolean    | No (defaults to true)    |
+| showWindow              | boolean    | No (defaults to false)   |
+| waitForScriptToFinish   | boolean    | No (defaults to true)    |
+
  #### Key descriptions
  1. scriptPath: The path to the script including the name and extension.  The Path starts from the root directory of the application.
  2. scriptArguments: Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
  3. runInVirtualEnvironment: If the script should run in the same virtual environment that the packaged exe runs in.
+ 4. timeout: How long the script will be allowed to execute.  If elapsed the script will be stopped.
+ 5. runOnce: If the script should run once per user, per version.
+ 6. showWindow: If the powershell window is shown.
+ 7. waitForScriptToFinish: If the packaged exe should wait for the starting script to finish before starting.
  
-### Flow of PSF with scripts
-Below is the flow of PSF with scripting support.  
-The flow from beginning to end is [Starting Script] -> [Monitor] -> [Packaged exe] -> [Ending script]
-
-
-### Visual representation of the flow
-<pre>
-+------------+ Success, or  +-----------------+              +-----------------+
-|  Starting  | Script error |   Monitor and   |   Success    |      Ending     |
-|   Script   |------------->|   Packaged exe  |------------> |      Script     |
-+------------+              +-----------------+              +-----------------+
-     | Create                        | Create                         | Create
-     | Process                       | Process                        | Process
-     | Error                         | Error                          | Error
-     V                               V                                V
-+-------------+             +-----------------+   Create Process +----------------+
-| Throw error |             |    Run ending   |       Error      |   Throw error  | 
-|  and exit   |             |     script      |----------------->|    and exit.   |
-+-------------+             +-----------------+                  +----------------+
-                                    | 
-                                    | Success
-                                    |
-                                    V
-                             +--------------+
-                             |  Throw error |
-                             |   and exit   |
-                             +--------------+
-</pre>
-
+ #### Enabling the app to exit if the starting script encounters an error.
+ The scripting change allows users to tell PSF to exit the application if the starting script fails.  To do this, add the pair "stopOnScriptError": true to the application configuration (not the script configuration).
+ 
+ #### stopOnScriptError can not be true while waitForScriptToFinish is false
+ This is an illegal configuration combination and PSF will throw the error ERROR_BAD_CONFIGURATION.
+ 
 ## Sample configuration
 Here is a sample configuration using two different exes.
 <pre>
@@ -94,16 +81,20 @@ Here is a sample configuration using two different exes.
       "id": "Sample",
       "executable": "Sample.exe",
       "workingDirectory": "",
+	  "stopOnScriptError": false,
 	  "startScript":
 	  {
 		"scriptPath": "RunMePlease.ps1",
 		"scriptArguments": "ThisIsMe.txt",
-		"runInVirtualEnvironment": true
+		"runInVirtualEnvironment": true,
+		"showWindow": true,
+		"waitForScriptToFinish": false
 	  },
 	  "endScript":
 	  {
 		"scriptPath": "RunMeAfter.ps1",
-		"scriptArguments": "ThisIsMe.txt"
+		"scriptArguments": "ThisIsMe.txt",
+		"runOnce": false
 	  }
     },
 	{
@@ -133,10 +124,10 @@ Here is a sample configuration using two different exes.
 Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
  1. Version:  The version of the PSF is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/)
  2. Minimum Windows Platform the the minimum windows version required for the fixup or PSF Launcher.
- 3. Description: Short description of the Fixup.
+ 3. Description: Short description of the fixup.
  4. WhenToUse: Heuristics on when you should apply the fixup.
 
-Addtionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
+Additionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
 
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
