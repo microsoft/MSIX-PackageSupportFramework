@@ -24,13 +24,38 @@ This branch has the latest code. Keep in mind that there might be features in th
 ## Contribute
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.
 
+Submit your own fixup(s) to the community:
+1. Create a private fork for yourself
+2. Make your changes in your private branch
+3. For new files that you are adding include the following Copyright statement.\
+//-------------------------------------------------------------------------------------------------------\
+// Copyright (c) #YOUR NAME#. All rights reserved.\
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.\
+//-------------------------------------------------------------------------------------------------------
+4. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:develop'
+
+When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
+
+Here is how you can contribute to the Package Support Framework:
+
+* [Submit bugs](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) and help us verify fixes
+* [Submit pull requests](https://github.com/Microsoft/MSIX-PackageSupportFramework/pulls) for bug fixes and features and discuss existing proposals
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
 ## Script support
 PSF allows one PowerShell script to be run before an exe runs, and one PowerShell script to be ran after the exe runs.
+
+Scripts allow IT Pros to customize the app for the user environment dynamically. The scripts typically change registry keys or perform file modifications based on the machine or server configuration. 
 
 Each exe defined in the application manifest can have their own scripts.
 
 ### Prerequisite to allow scripts to run
-In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.  The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.
+In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.
+
+Run the one of the two following powershell commands to set the execution policy: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned` or `Set-ExecutionPolicy -ExecutionPolicy Unrestricted` depending if you want the execution policy to be remoteSigned or unrestricted.
+
+The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.  Make sure to open each version of powershell and run the command shown above.
 
 Here are the locations of each executable.
 * If on a 64-bit computer
@@ -47,32 +72,17 @@ In order to specify what scripts will run for each packaged exe you will need to
 #### Script configuration items
 The following are the configuration items available for the scripts.  The ending script ignores the following configuration items: waitForScriptToFinish, and stopOnScriptError.
 
-| Key name                | Value type | Required?                |
-|-------------------------|------------|--------------------------|
-| scriptPath              | string     | Yes                      |
-| scriptArguments         | string     | No                       |
-| runInVirtualEnvironment | boolean    | No (defaults to true)    |
-| timeout                 | DWORD      | No (defaults to INFINITE)|
-| runOnce                 | boolean    | No (defaults to true)    |
-| showWindow              | boolean    | No (defaults to false)   |
-| waitForScriptToFinish   | boolean    | No (defaults to true)    |
-
- #### Key descriptions
- 1. scriptPath: The path to the script including the name and extension.  The Path starts from the root directory of the application.
- 2. scriptArguments: Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
- 3. runInVirtualEnvironment: If the script should run in the same virtual environment that the packaged exe runs in.
- 4. timeout: How long the script will be allowed to execute.  If elapsed the script will be stopped.
- 5. runOnce: If the script should run once per user, per version.
- 6. showWindow: If the powershell window is shown.
- 7. waitForScriptToFinish: If the packaged exe should wait for the starting script to finish before starting.
+| Key name                | Value type | Required? | Default  | Description
+|-------------------------|------------|-----------|----------|---------|
+| scriptPath              | string     | Yes       | N/A      | The path to the script including the name and extension.  The Path starts from the root directory of the application.
+| scriptArguments         | string     | No        | empty    | Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
+| runInVirtualEnvironment | boolean    | No        | true     | If the script should run in the same virtual environment that the packaged exe runs in.
+| runOnce                 | boolean    | No        | true     | If the script should run once per user, per version.
+| showWindow              | boolean    | No        | false    | If the powershell window is shown.
+| waitForScriptToFinish   | boolean    | No        | true     | If the packaged exe should wait for the starting script to finish before starting.
+| timeout                 | DWORD      | No        | INFINITE | How long the script will be allowed to execute.  If elapsed the script will be stopped.
  
- #### Enabling the app to exit if the starting script encounters an error.
- The scripting change allows users to tell PSF to exit the application if the starting script fails.  To do this, add the pair "stopOnScriptError": true to the application configuration (not the script configuration).
- 
- #### stopOnScriptError can not be true while waitForScriptToFinish is false
- This is an illegal configuration combination and PSF will throw the error ERROR_BAD_CONFIGURATION.
- 
-## Sample configuration
+### Sample configuration
 Here is a sample configuration using two different exes.
 <pre>
     {
@@ -85,7 +95,7 @@ Here is a sample configuration using two different exes.
 	  "startScript":
 	  {
 		"scriptPath": "RunMePlease.ps1",
-		"scriptArguments": "ThisIsMe.txt",
+		"scriptArguments": "\\\"First argument\\\" secondArgument",
 		"runInVirtualEnvironment": true,
 		"showWindow": true,
 		"waitForScriptToFinish": false
@@ -120,6 +130,12 @@ Here is a sample configuration using two different exes.
 }
 </pre>
 
+ ### Enabling the app to exit if the starting script encounters an error.
+ The scripting change allows users to tell PSF to exit the application if the starting script fails.  To do this, add the pair "stopOnScriptError": true to the application configuration (not the script configuration).
+ 
+ ### stopOnScriptError can not be true while waitForScriptToFinish is false
+ This is an illegal configuration combination and PSF will throw the error ERROR_BAD_CONFIGURATION.
+
 ## Fixup Metadata
 Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
  1. Version:  The version of the PSF is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/)
@@ -128,25 +144,6 @@ Each fixup and the PSF Launcher has a metadata file in xml format.  Each file co
  4. WhenToUse: Heuristics on when you should apply the fixup.
 
 Additionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
-
-Submit your own fixup(s) to the community:
-1. Create a private fork for yourself
-2. Make your changes in your private branch
-3. For new files that you are adding include the following Copyright statement.\
-//-------------------------------------------------------------------------------------------------------\
-// Copyright (c) #YOUR NAME#. All rights reserved.\
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.\
-//-------------------------------------------------------------------------------------------------------
-4. Create a pull request into 'fork:Microsoft/MSIX-PackageSupportFramework' 'base:develop'
-
-When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
-
-Here is how you can contribute to the Package Support Framework:
-
-* [Submit bugs](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) and help us verify fixes
-* [Submit pull requests](https://github.com/Microsoft/MSIX-PackageSupportFramework/pulls) for bug fixes and features and discuss existing proposals
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Data/Telemetry
 Telemetry datapoint has been hooked to collect usage data and sends it to Microsoft to help improve our products and services. Read Microsoft's [privacy statement to learn more](https://privacy.microsoft.com/en-US/privacystatement). However, data will be collected only when the PSF binaries are used from [Nuget package](https://www.nuget.org/packages?q=packagesupportframework) 
