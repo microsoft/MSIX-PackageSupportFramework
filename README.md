@@ -44,11 +44,9 @@ Here is how you can contribute to the Package Support Framework:
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Script support
-PSF allows one PowerShell script to be run before an exe runs, and one PowerShell script to be ran after the exe runs.
+Scripts allow IT Pros to customize the app for the user environment dynamically. The scripts typically change registry keys or perform file modifications based on the machine or server configuration.
 
-Scripts allow IT Pros to customize the app for the user environment dynamically. The scripts typically change registry keys or perform file modifications based on the machine or server configuration. 
-
-Each exe defined in the application manifest can have their own scripts.
+Each exe defined in the application manifest can have their own scripts. PSF allows one PowerShell script to be run before an exe runs, and one PowerShell script to be ran after the exe runs.
 
 ### Prerequisite to allow scripts to run
 In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.
@@ -66,7 +64,7 @@ Here are the locations of each executable.
   
 [More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
 
-### Configuration changes
+### How to add script support to PSF
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the packaged exe add a configuration item called "startScript".  To tell PSF to run a script after the packaged exe finishes add a configuration item called "endScript".
 
 #### Script configuration items
@@ -133,7 +131,7 @@ Here is a sample configuration using two different exes.
  ### Enabling the app to exit if the starting script encounters an error.
  The scripting change allows users to tell PSF to exit the application if the starting script fails.  To do this, add the pair "stopOnScriptError": true to the application configuration (not the script configuration).
  
- ### stopOnScriptError can not be true while waitForScriptToFinish is false
+ ### The combination of `stopOnScriptError: true` and `waitForScriptToFinish: false` is not supported
  This is an illegal configuration combination and PSF will throw the error ERROR_BAD_CONFIGURATION.
 
 ## Fixup Metadata
