@@ -64,7 +64,7 @@ Here are the locations of each executable.
   
 [More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
 
-### How to add script support to PSF
+### How to enable scripts to run with PSF
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the packaged exe add a configuration item called "startScript".  To tell PSF to run a script after the packaged exe finishes add a configuration item called "endScript".
 
 #### Script configuration items
