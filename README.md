@@ -80,7 +80,6 @@ The following are the configuration items available for the scripts.  The ending
 | waitForScriptToFinish   | boolean    | No        | true     | If the packaged exe should wait for the starting script to finish before starting.
 | timeout                 | DWORD      | No        | INFINITE | How long the script will be allowed to execute.  If elapsed the script will be stopped.
 
- 
 ### Sample configuration
 Here is a sample configuration using two different exes.
 <pre>
@@ -90,7 +89,7 @@ Here is a sample configuration using two different exes.
       "id": "Sample",
       "executable": "Sample.exe",
       "workingDirectory": "",
-	  "stopOnScriptError": false,
+      "stopOnScriptError": false,
 	  "startScript":
 	  {
 		"scriptPath": "RunMePlease.ps1",
@@ -102,8 +101,7 @@ Here is a sample configuration using two different exes.
 	  "endScript":
 	  {
 		"scriptPath": "RunMeAfter.ps1",
-		"scriptArguments": "ThisIsMe.txt",
-		"runOnce": false
+		"scriptArguments": "ThisIsMe.txt"
 	  }
     },
 	{
@@ -119,7 +117,8 @@ Here is a sample configuration using two different exes.
 	  "endScript":
 	  {
 		"scriptPath": "CPPEnd.ps1",
-		"scriptArguments": "ThisIsMe.txt"
+		"scriptArguments": "ThisIsMe.txt",
+    "runOnce": false
 	  }
     }
   ],
