@@ -79,6 +79,7 @@ The following are the configuration items available for the scripts.  The ending
 | showWindow              | boolean    | No        | false    | If the powershell window is shown.
 | waitForScriptToFinish   | boolean    | No        | true     | If the packaged exe should wait for the starting script to finish before starting.
 | timeout                 | DWORD      | No        | INFINITE | How long the script will be allowed to execute.  If elapsed the script will be stopped.
+
  
 ### Sample configuration
 Here is a sample configuration using two different exes.

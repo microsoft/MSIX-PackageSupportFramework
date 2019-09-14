@@ -478,8 +478,8 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept
 PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept
 {
     auto application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
-    auto mon = application->try_get("startScript");
 
+    auto mon = application->try_get("startScript");
     if (mon)
     {
         auto& monObj = mon->as_object();
