@@ -1,16 +1,32 @@
 # Package Support Framework
-This project provides tools, libraries, documentation and samples for creating app-compat fixups to enable classic Win32 applications to be distributed and executed as packaged apps.
+This project provides tools, libraries, documentation and samples for creating app-compat fixups to enable classic Win32 applications to be distributed and executed as MSIX packaged apps.
+
+Here are some common examples where you can find the PSF useful:
+	1. Your app can't find some .dlls when launched, you may need to set your current working directory.
+	You can learn about the required current working directory in the original shortcut before you converted to MSIX.
+	2. The app writes into the install folder. You will typically see it by "Access Denied" errors in 
+	[Process Monitor] (https://docs.microsoft.com/en-us/sysinternals/downloads/procmon) 
+	3. Your app needs to pass parameters to the executable on launch.
+	You can learn more about how to identify compatability issues [here] (https://docs.microsoft.com/en-us/windows/msix/psf/package-support-framework#identify-packaged-application-compatibility-issues)
+	And about the available configurations [here] or in the Documention section below (https://github.com/microsoft/MSIX-PackageSupportFramework/tree/master/PsfLauncher)
+
+We are looking for your feedback, please file any issues or feedback in the [Issues section] (https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) or in our [tech community] (https://techcommunity.microsoft.com/t5/Package-Support-Framework/bd-p/Package-Support)
 
 ## Documentation
-Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/porting/package-support-framework), it will walk you through the main PSF workflows and provides the key documentation.
+Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/porting/package-support-framework), it will walk you through the main PSF workflows and provides the key documentation. Check out the [PSF scripts support] (https://docs.microsoft.com/en-us/windows/msix/psf/run-scripts-with-package-support-framework) that we recently added to our framework, it provides great flexibility to yuour packages.
 
 See also:
 * [Package Support Framework package layout](layout.md)
 * [Package Support Framework Nuget package install](https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
 * [Instructions for authoring your own shim dll](Authoring.md)
+* [Instructions for authoring your own shim dll](Authoring.md)
 
 ## [License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE)
 Code licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE).
+
+## Get the pre-built PSF Binaries
+Download the PSF binaries from [Nuget.org] (https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
+Treat it just as a .zip file, rename the suffix to .zip and unzip it, you will find the required binaries in the /bin folder. (we are planning to make it easier going forward and locate the binaries directly on GitHub, hold tight😊)
 
 ## Branch structure
 Package Support Framework adopts a development and master branching style.
@@ -42,97 +58,6 @@ Here is how you can contribute to the Package Support Framework:
 * [Submit pull requests](https://github.com/Microsoft/MSIX-PackageSupportFramework/pulls) for bug fixes and features and discuss existing proposals
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-## Script support
-Scripts allow IT Pros to customize the app for the user environment dynamically. The scripts typically change registry keys or perform file modifications based on the machine or server configuration.
-
-Each exe defined in the application manifest can have their own scripts. PSF allows one PowerShell script to be run before an exe runs, and one PowerShell script to be ran after the exe runs.
-
-### Prerequisite to allow scripts to run
-In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.
-
-Run the one of the two following powershell commands to set the execution policy: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned` or `Set-ExecutionPolicy -ExecutionPolicy Unrestricted` depending if you want the execution policy to be remoteSigned or unrestricted.
-
-The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.  Make sure to open each version of powershell and run the command shown above.
-
-Here are the locations of each executable.
-* If on a 64-bit computer
-  * 64-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
-  * 32-bit: %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
-* If on a 32-bit computer
-  * 32-bit: %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
-  
-[More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
-
-### How to enable scripts to run with PSF
-In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the packaged exe add a configuration item called "startScript".  To tell PSF to run a script after the packaged exe finishes add a configuration item called "endScript".
-
-#### Script configuration items
-The following are the configuration items available for the scripts.  The ending script ignores the following configuration items: waitForScriptToFinish, and stopOnScriptError.
-
-| Key name                | Value type | Required? | Default  | Description
-|-------------------------|------------|-----------|----------|---------|
-| scriptPath              | string     | Yes       | N/A      | The path to the script including the name and extension.  The Path starts from the root directory of the application.
-| scriptArguments         | string     | No        | empty    | Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
-| runInVirtualEnvironment | boolean    | No        | true     | If the script should run in the same virtual environment that the packaged exe runs in.
-| runOnce                 | boolean    | No        | true     | If the script should run once per user, per version.
-| showWindow              | boolean    | No        | false    | If the powershell window is shown.
-| waitForScriptToFinish   | boolean    | No        | true     | If the packaged exe should wait for the starting script to finish before starting.
-| timeout                 | DWORD      | No        | INFINITE | How long the script will be allowed to execute.  If elapsed the script will be stopped.
-
-### Sample configuration
-Here is a sample configuration using two different exes.
-<pre>
-    {
-  "applications": [
-    {
-      "id": "Sample",
-      "executable": "Sample.exe",
-      "workingDirectory": "",
-      "stopOnScriptError": false,
-	  "startScript":
-	  {
-		"scriptPath": "RunMePlease.ps1",
-		"scriptArguments": "\\\"First argument\\\" secondArgument",
-		"runInVirtualEnvironment": true,
-		"showWindow": true,
-		"waitForScriptToFinish": false
-	  },
-	  "endScript":
-	  {
-		"scriptPath": "RunMeAfter.ps1",
-		"scriptArguments": "ThisIsMe.txt"
-	  }
-    },
-	{
-      "id": "CPPSample",
-      "executable": "CPPSample.exe",
-      "workingDirectory": "",
-	  "startScript":
-	  {
-		"scriptPath": "CPPStart.ps1",
-		"scriptArguments": "ThisIsMe.txt",
-		"runInVirtualEnvironment": true
-	  },
-	  "endScript":
-	  {
-		"scriptPath": "CPPEnd.ps1",
-		"scriptArguments": "ThisIsMe.txt",
-    "runOnce": false
-	  }
-    }
-  ],
-  "processes": [
-    ...(taken out for brevity)
-  ]
-}
-</pre>
-
- ### Enabling the app to exit if the starting script encounters an error.
- The scripting change allows users to tell PSF to exit the application if the starting script fails.  To do this, add the pair "stopOnScriptError": true to the application configuration (not the script configuration).
- 
- ### The combination of `stopOnScriptError: true` and `waitForScriptToFinish: false` is not supported
- This is an illegal configuration combination and PSF will throw the error ERROR_BAD_CONFIGURATION.
 
 ## Fixup Metadata
 Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
