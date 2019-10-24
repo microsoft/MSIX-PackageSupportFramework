@@ -75,8 +75,8 @@ NTSTATUS __stdcall NtCreateFileFixup(
             eaLength);
     }
 
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtCreateFileImpl(
         fileHandle,
@@ -90,16 +90,16 @@ NTSTATUS __stdcall NtCreateFileFixup(
         createOptions,
         eaBuffer,
         eaLength);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_ntstatus(result);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretObjectAttributes(objectAttributes);
@@ -143,9 +143,9 @@ NTSTATUS __stdcall NtCreateFileFixup(
             {
                 Log("NtCreateFile event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtCreateFile:\n");
@@ -177,7 +177,7 @@ NTSTATUS __stdcall NtCreateFileFixup(
             {
                 Log("NtCreateFile logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -198,20 +198,20 @@ NTSTATUS __stdcall NtOpenFileFixup(
         return NtOpenFileImpl(fileHandle, desiredAccess, objectAttributes, ioStatusBlock, shareAccess, openOptions);
     }
 
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenFileImpl(fileHandle, desiredAccess, objectAttributes, ioStatusBlock, shareAccess, openOptions);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretObjectAttributes(objectAttributes);
@@ -253,9 +253,9 @@ NTSTATUS __stdcall NtOpenFileFixup(
             {
                 Log("NtOpenFile event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtOpenFile:\n");
@@ -285,7 +285,7 @@ NTSTATUS __stdcall NtOpenFileFixup(
             {
                 Log("NtOpenFile logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -303,20 +303,20 @@ NTSTATUS __stdcall NtCreateDirectoryObjectFixup(
     _In_ ACCESS_MASK desiredAccess,
     _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtCreateDirectoryObjectImpl(directoryHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretObjectAttributes(objectAttributes);
@@ -344,9 +344,9 @@ NTSTATUS __stdcall NtCreateDirectoryObjectFixup(
             {
                 Log("NtCreateDirectory event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtCreateDirectoryObject:\n");
@@ -363,7 +363,7 @@ NTSTATUS __stdcall NtCreateDirectoryObjectFixup(
             {
                 Log("NtCreateDirectory logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -381,20 +381,20 @@ NTSTATUS __stdcall NtOpenDirectoryObjectFixup(
     _In_ ACCESS_MASK desiredAccess,
     _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenDirectoryObjectImpl(directoryHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretObjectAttributes(objectAttributes);
@@ -422,9 +422,9 @@ NTSTATUS __stdcall NtOpenDirectoryObjectFixup(
             {
                 Log("NtOpenDirectoryObject event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtOpenDirectoryObject:\n");
@@ -441,7 +441,7 @@ NTSTATUS __stdcall NtOpenDirectoryObjectFixup(
             {
                 Log("NtOpenDirectoryObject logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -467,20 +467,20 @@ NTSTATUS __stdcall NtQueryDirectoryObjectFixup(
     _Inout_ PULONG context,
     _Out_opt_ PULONG returnLength)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtQueryDirectoryObjectImpl(directoryHandle, buffer, length, returnSingleEntry, restartScan, context, returnLength);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretAsHex("Handle", directoryHandle);
@@ -532,9 +532,9 @@ NTSTATUS __stdcall NtQueryDirectoryObjectFixup(
             {
                 Log("NtQueryDirectoryObject event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtQueryDirectoryObject:\n");
@@ -574,7 +574,7 @@ NTSTATUS __stdcall NtQueryDirectoryObjectFixup(
             {
                 Log("NtQueryDirectoryObject logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -592,20 +592,20 @@ NTSTATUS __stdcall NtOpenSymbolicLinkObjectFixup(
     _In_ ACCESS_MASK desiredAccess,
     _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenSymbolicLinkObjectImpl(linkHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretObjectAttributes(objectAttributes);
@@ -633,9 +633,9 @@ NTSTATUS __stdcall NtOpenSymbolicLinkObjectFixup(
             {
                 Log("NtOpenSymbolicLinkObject event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtOpenSymbolicLinkObject:\n");
@@ -652,7 +652,7 @@ NTSTATUS __stdcall NtOpenSymbolicLinkObjectFixup(
             {
                 Log("NtOpenSymbolicLinkObject logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -670,20 +670,20 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObjectFixup(
     _Inout_ PUNICODE_STRING linkTarget,
     _Out_opt_ PULONG returnedLength)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtQuerySymbolicLinkObjectImpl(linkHandle, linkTarget, returnedLength);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::filesystem, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretAsHex("LinkHandle", linkHandle);
@@ -715,9 +715,9 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObjectFixup(
             {
                 Log("NtQuerySymbolicLinkObject event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtQuerySymbolicLinkObject:\n");
@@ -740,7 +740,7 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObjectFixup(
             {
                 Log("NtQuerySymbolicLinkObject logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -766,20 +766,20 @@ NTSTATUS __stdcall NtCreateKeyFixup(
     _In_ ULONG createOptions,
     _Out_ PULONG disposition)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtCreateKeyImpl(keyHandle, desiredAccess, objectAttributes, titleIndex, objectClass, createOptions, disposition);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretUnicodeString("Class", objectClass);
@@ -809,9 +809,9 @@ NTSTATUS __stdcall NtCreateKeyFixup(
             {
                 Log("NTCreateKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtCreateKey:\n");
@@ -834,7 +834,7 @@ NTSTATUS __stdcall NtCreateKeyFixup(
             {
                 Log("NTCreateKey logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -846,20 +846,20 @@ NTSTATUS WINAPI NtOpenKey(_Out_ PHANDLE KeyHandle, _In_ ACCESS_MASK DesiredAcces
 auto NtOpenKeyImpl = WINTERNL_FUNCTION(NtOpenKey);
 NTSTATUS __stdcall NtOpenKeyFixup(_Out_ PHANDLE keyHandle, _In_ ACCESS_MASK desiredAccess, _In_ POBJECT_ATTRIBUTES objectAttributes)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenKeyImpl(keyHandle, desiredAccess, objectAttributes);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretObjectAttributes(objectAttributes);
@@ -887,9 +887,9 @@ NTSTATUS __stdcall NtOpenKeyFixup(_Out_ PHANDLE keyHandle, _In_ ACCESS_MASK desi
             {
                 Log("NTOpenKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtOpenKey:\n");
@@ -906,7 +906,7 @@ NTSTATUS __stdcall NtOpenKeyFixup(_Out_ PHANDLE keyHandle, _In_ ACCESS_MASK desi
             {
                 Log("NTOpenKey logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -926,20 +926,20 @@ NTSTATUS __stdcall NtOpenKeyExFixup(
     _In_ POBJECT_ATTRIBUTES objectAttributes,
     _In_ ULONG openOptions)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtOpenKeyExImpl(keyHandle, desiredAccess, objectAttributes, openOptions);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretObjectAttributes(objectAttributes);
@@ -968,9 +968,9 @@ NTSTATUS __stdcall NtOpenKeyExFixup(
             {
                 Log("NtOpenKeyEx event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtOpenKey:\n");
@@ -988,7 +988,7 @@ NTSTATUS __stdcall NtOpenKeyExFixup(
             {
                 Log("NtOpenKeyEx logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -1012,20 +1012,20 @@ NTSTATUS __stdcall NtSetValueKeyFixup(
     _In_ PVOID data,
     _In_ ULONG dataSize)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = NtSetValueKeyImpl(keyHandle, valueName, titleIndex, type, data, dataSize);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretAsHex("Handle", keyHandle);
@@ -1051,9 +1051,9 @@ NTSTATUS __stdcall NtSetValueKeyFixup(
             {
                 Log("NtSetValueKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtSetValueKey:\n");
@@ -1072,7 +1072,7 @@ NTSTATUS __stdcall NtSetValueKeyFixup(
             {
                 Log("NtSetValueKey logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -1088,20 +1088,20 @@ NTSTATUS __stdcall NtQueryValueKeyFixup(
     _In_ ULONG length,
     _Out_ PULONG resultLength)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = impl::NtQueryValueKey(keyHandle, valueName, keyValueInformationClass, keyValueInformation, length, resultLength);
 
     auto functionResult = from_ntstatus(result);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretAsHex("Handle", keyHandle);
@@ -1195,9 +1195,9 @@ NTSTATUS __stdcall NtQueryValueKeyFixup(
             {
                 Log("NtQueryValueKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("NtQueryValueKey:\n");
@@ -1279,7 +1279,7 @@ NTSTATUS __stdcall NtQueryValueKeyFixup(
             {
                 Log("NtQueryValueKey logging failure");
             }
-	    }
+        }
     }
 
     return result;

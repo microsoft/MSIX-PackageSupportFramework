@@ -28,54 +28,54 @@ void LogKeyPath(HKEY key, const char* msg = "Key")
 }
 std::string InterpretKeyPath(HKEY key, const char* msg = "Key")
 {
-	std::string sret = "";
-	ULONG size;
-	auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
-	if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
-	{
-		auto buffer = std::make_unique<std::uint8_t[]>(size+2);
-		if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
-		{
+    std::string sret = "";
+    ULONG size;
+    auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
+    if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
+    {
+        auto buffer = std::make_unique<std::uint8_t[]>(size+2);
+        if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
+        {
             buffer[size] = 0x0;
             buffer[size + 1] = 0x0;  // Add string termination character
-			auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-			sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);
-		}
-		else
-			sret = "InterpretKeyPath failure2";
-	}
-	else if (status == STATUS_INVALID_HANDLE)
-	{
-		if (key == HKEY_LOCAL_MACHINE)
-			sret += msg + InterpretStringA(" HKEY_LOCAL_MACHINE");
-		else if (key == HKEY_CURRENT_USER)
-			sret = msg + InterpretStringA(" HKEY_CURRENT_USER");
-		else if (key == HKEY_CLASSES_ROOT)
-			sret = msg + InterpretStringA(" HKEY_CLASSES_ROOT");
-	}
-	else
-		sret = "InterpretKeyPath failure1" + InterpretAsHex("status",(DWORD)status);
-	return sret;
+            auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
+            sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);
+        }
+        else
+            sret = "InterpretKeyPath failure2";
+    }
+    else if (status == STATUS_INVALID_HANDLE)
+    {
+        if (key == HKEY_LOCAL_MACHINE)
+            sret += msg + InterpretStringA(" HKEY_LOCAL_MACHINE");
+        else if (key == HKEY_CURRENT_USER)
+            sret = msg + InterpretStringA(" HKEY_CURRENT_USER");
+        else if (key == HKEY_CLASSES_ROOT)
+            sret = msg + InterpretStringA(" HKEY_CLASSES_ROOT");
+    }
+    else
+        sret = "InterpretKeyPath failure1" + InterpretAsHex("status",(DWORD)status);
+    return sret;
 }
 
 auto RegCreateKeyImpl = psf::detoured_string_function(&::RegCreateKeyA, &::RegCreateKeyW);
 template <typename CharT>
 LSTATUS __stdcall RegCreateKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _Out_ PHKEY resultKey)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegCreateKeyImpl(key, subKey, resultKey);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -105,9 +105,9 @@ LSTATUS __stdcall RegCreateKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey,
             {
                 Log("RegCreateKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegCreateKey:\n");
@@ -124,7 +124,7 @@ LSTATUS __stdcall RegCreateKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey,
             {
                 Log("RegCreateKey logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -144,20 +144,20 @@ LSTATUS __stdcall RegCreateKeyExFixup(
     _Out_ PHKEY resultKey,
     _Out_opt_ LPDWORD disposition)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -192,9 +192,9 @@ LSTATUS __stdcall RegCreateKeyExFixup(
             {
                 Log("RegCreateKeyEx event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegCreateKeyEx:\n");
@@ -218,7 +218,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
             {
                 Log("RegCreateKeyEx logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -229,20 +229,20 @@ auto RegOpenKeyImpl = psf::detoured_string_function(&::RegOpenKeyA, &::RegOpenKe
 template <typename CharT>
 LSTATUS __stdcall RegOpenKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _Out_ PHKEY resultKey)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegOpenKeyImpl(key, subKey, resultKey);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -275,9 +275,9 @@ LSTATUS __stdcall RegOpenKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _
             {
                 Log("RegOpenKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegOpenKey:\n");
@@ -294,7 +294,7 @@ LSTATUS __stdcall RegOpenKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _
             {
                 Log("RegOpenKey logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -310,20 +310,20 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     _In_ REGSAM samDesired,
     _Out_ PHKEY resultKey)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegOpenKeyExImpl(key, subKey, options, samDesired, resultKey);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = ""; 
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = ""; 
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -359,9 +359,9 @@ LSTATUS __stdcall RegOpenKeyExFixup(
             {
                 Log("RegOpenKeyEx event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegOpenKeyEx:\n");
@@ -380,7 +380,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
             {
                 Log("RegOpenKeyEx logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -398,24 +398,24 @@ LSTATUS __stdcall RegGetValueFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *data) PVOID data,
     _Inout_opt_ LPDWORD dataSize)
 {
-	DWORD lclType = 0;
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);    		auto entry = LogFunctionEntry();
+    DWORD lclType = 0;
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);    		auto entry = LogFunctionEntry();
 
     auto result = RegGetValueImpl(key, subKey, value, flags, type, data, dataSize);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
-	if (type)
-		*type = lclType;
+    if (type)
+        *type = lclType;
 
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -452,9 +452,9 @@ LSTATUS __stdcall RegGetValueFixup(
             {
                 Log("RegGetValue event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegGetValue:\n");
@@ -478,7 +478,7 @@ LSTATUS __stdcall RegGetValueFixup(
             {
                 Log("RegGetValue logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -493,20 +493,20 @@ LSTATUS __stdcall RegQueryValueFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *dataSize) CharT* data,
     _Inout_opt_ PLONG dataSize)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegQueryValueImpl(key, subKey, data, dataSize);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -534,9 +534,9 @@ LSTATUS __stdcall RegQueryValueFixup(
             {
                 Log("RegQueryValue event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegQueryValue:\n");
@@ -557,7 +557,7 @@ LSTATUS __stdcall RegQueryValueFixup(
             {
                 Log("RegQueryValue logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -574,20 +574,20 @@ LSTATUS __stdcall RegQueryValueExFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *dataSize) LPBYTE data,
     _When_(data == NULL, _Out_opt_) _When_(data != NULL, _Inout_opt_) LPDWORD dataSize)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegQueryValueExImpl(key, valueName, reserved, type, data, dataSize);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -619,9 +619,9 @@ LSTATUS __stdcall RegQueryValueExFixup(
             {
                 Log("RegOpenValueEx event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegQueryValueEx:\n");
@@ -643,7 +643,7 @@ LSTATUS __stdcall RegQueryValueExFixup(
             {
                 Log("RegOpenValueEx logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -660,20 +660,20 @@ LSTATUS __stdcall RegSetKeyValueFixup(
     _In_reads_bytes_opt_(dataSize) LPCVOID data,
     _In_ DWORD dataSize)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegSetKeyValueImpl(key, subKey, valueName, type, data, dataSize);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -705,9 +705,9 @@ LSTATUS __stdcall RegSetKeyValueFixup(
             {
                 Log("RegSetKeyValue event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegSetKeyValue:\n");
@@ -727,7 +727,7 @@ LSTATUS __stdcall RegSetKeyValueFixup(
             {
                 Log("RegSetKeyValue logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -743,20 +743,20 @@ LSTATUS __stdcall RegSetValueFixup(
     _In_reads_bytes_opt_(dataSize) const CharT* data,
     _In_ DWORD dataSize)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegSetValueImpl(key, subKey, type, data, dataSize);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -785,9 +785,9 @@ LSTATUS __stdcall RegSetValueFixup(
             {
                 Log("RegSetValue event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegSetValue:\n");
@@ -806,7 +806,7 @@ LSTATUS __stdcall RegSetValueFixup(
             {
                 Log("RegSetValue logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -823,20 +823,20 @@ LSTATUS __stdcall RegSetValueExFixup(
     _In_reads_bytes_opt_(dataSize) CONST BYTE* data,
     _In_ DWORD dataSize)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegSetValueExImpl(key, valueName, reserved, type, data, dataSize);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -865,9 +865,9 @@ LSTATUS __stdcall RegSetValueExFixup(
             {
                 Log("RegSetValueEx event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegSetValueEx:\n");
@@ -886,7 +886,7 @@ LSTATUS __stdcall RegSetValueExFixup(
             {
                 Log("RegSetValueEx logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -897,20 +897,20 @@ auto RegDeleteKeyImpl = psf::detoured_string_function(&::RegDeleteKeyA, &::RegDe
 template <typename CharT>
 LSTATUS __stdcall RegDeleteKeyFixup(_In_ HKEY key, _In_ const CharT* subKey)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegDeleteKeyImpl(key, subKey);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -936,9 +936,9 @@ LSTATUS __stdcall RegDeleteKeyFixup(_In_ HKEY key, _In_ const CharT* subKey)
             {
                 Log("RegDeleteKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegDeleteKey:\n");
@@ -955,7 +955,7 @@ LSTATUS __stdcall RegDeleteKeyFixup(_In_ HKEY key, _In_ const CharT* subKey)
             {
                 Log("RegDeleteKey logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -970,20 +970,20 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
     _In_ REGSAM samDesired,
     _Reserved_ DWORD reserved)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
-	auto entry = LogFunctionEntry();
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
+    auto entry = LogFunctionEntry();
     auto result = RegDeleteKeyExImpl(key, subKey, samDesired, reserved);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -1010,9 +1010,9 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
             {
                 Log("RegDeleteKeyEx event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegDeleteKeyEx:\n");
@@ -1030,7 +1030,7 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
             {
                 Log("RegDeleteKeyEx logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -1041,20 +1041,20 @@ auto RegDeleteKeyValueImpl = psf::detoured_string_function(&::RegDeleteKeyValueA
 template <typename CharT>
 LSTATUS __stdcall RegDeleteKeyValueFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _In_opt_ const CharT* valueName)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegDeleteKeyValueImpl(key, subKey, valueName);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -1082,9 +1082,9 @@ LSTATUS __stdcall RegDeleteKeyValueFixup(_In_ HKEY key, _In_opt_ const CharT* su
             {
                 Log("RegDeleteKeyValue event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegDeleteKeyValue:\n");
@@ -1102,7 +1102,7 @@ LSTATUS __stdcall RegDeleteKeyValueFixup(_In_ HKEY key, _In_opt_ const CharT* su
             {
                 Log("RegDeleteKeyValue logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -1113,20 +1113,20 @@ auto RegDeleteValueImpl = psf::detoured_string_function(&::RegDeleteValueA, &::R
 template <typename CharT>
 LSTATUS __stdcall RegDeleteValueFixup(_In_ HKEY key, _In_opt_ const CharT* valueName)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegDeleteValueImpl(key, valueName);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -1152,9 +1152,9 @@ LSTATUS __stdcall RegDeleteValueFixup(_In_ HKEY key, _In_opt_ const CharT* value
             {
                 Log("RegDeleteValue event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegDeleteValue:\n");
@@ -1171,7 +1171,7 @@ LSTATUS __stdcall RegDeleteValueFixup(_In_ HKEY key, _In_opt_ const CharT* value
             {
                 Log("RegDeleteValue logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -1182,20 +1182,20 @@ auto RegDeleteTreeImpl = psf::detoured_string_function(&::RegDeleteTreeA, &::Reg
 template <typename CharT>
 LSTATUS __stdcall RegDeleteTreeFixup(_In_ HKEY key, _In_opt_ const CharT* subKey)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegDeleteTreeImpl(key, subKey);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -1221,9 +1221,9 @@ LSTATUS __stdcall RegDeleteTreeFixup(_In_ HKEY key, _In_opt_ const CharT* subKey
             {
                 Log("RegDeleteTree event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegDeleteTree:\n");
@@ -1240,7 +1240,7 @@ LSTATUS __stdcall RegDeleteTreeFixup(_In_ HKEY key, _In_opt_ const CharT* subKey
             {
                 Log("RegDeleteTree logging failure");
             }
-    	}
+        }
     }
 
     return result;
@@ -1251,20 +1251,20 @@ auto RegCopyTreeImpl = psf::detoured_string_function(&::RegCopyTreeA, &::RegCopy
 template <typename CharT>
 LSTATUS __stdcall RegCopyTreeFixup(_In_ HKEY keySrc, _In_opt_ const CharT* subKey, _In_ HKEY keyDest)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegCopyTreeImpl(keySrc, subKey, keyDest);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(keySrc);
@@ -1292,9 +1292,9 @@ LSTATUS __stdcall RegCopyTreeFixup(_In_ HKEY keySrc, _In_opt_ const CharT* subKe
             {
                 Log("RegCopyTree event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegCopyTree:\n");
@@ -1312,7 +1312,7 @@ LSTATUS __stdcall RegCopyTreeFixup(_In_ HKEY keySrc, _In_opt_ const CharT* subKe
             {
                 Log("RegCopyTree logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -1327,20 +1327,20 @@ LSTATUS __stdcall RegEnumKeyFixup(
     _Out_writes_opt_(nameLength) CharT* name,
     _In_ DWORD nameLength)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegEnumKeyImpl(key, index, name, nameLength);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -1370,9 +1370,9 @@ LSTATUS __stdcall RegEnumKeyFixup(
             {
                 Log("RegEnumKey event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegEnumKey:\n");
@@ -1393,7 +1393,7 @@ LSTATUS __stdcall RegEnumKeyFixup(
             {
                 Log("RegEnumKey logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -1412,24 +1412,24 @@ LSTATUS __stdcall RegEnumKeyExFixup(
     _Inout_opt_ LPDWORD classNameLength,
     _Out_opt_ PFILETIME lastWriteTime)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegEnumKeyExImpl(key, index, name, nameLength, reserved, className, classNameLength, lastWriteTime);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
 
-			inputs = InterpretKeyPath(key);
-			inputs += " (" + InterpretAsHex("", key) + ")";
-			inputs += "\n" + InterpretAsHex("Index", index);
+            inputs = InterpretKeyPath(key);
+            inputs += " (" + InterpretAsHex("", key) + ")";
+            inputs += "\n" + InterpretAsHex("Index", index);
             try
             {
                 results = InterpretReturn(functionResult, result).c_str();
@@ -1457,9 +1457,9 @@ LSTATUS __stdcall RegEnumKeyExFixup(
             {
                 Log("RegEnumKeyEx event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegEnumKeyEx:\n");
@@ -1481,7 +1481,7 @@ LSTATUS __stdcall RegEnumKeyExFixup(
             {
                 Log("RegEnumKeyEx logging failure");
             }
-	    }
+        }
     }
 
     return result;
@@ -1500,20 +1500,20 @@ LSTATUS __stdcall RegEnumValueFixup(
     _Out_writes_bytes_to_opt_(*dataSize, *dataSize) __out_data_source(REGISTRY) LPBYTE data,
     _Inout_opt_ LPDWORD dataSize)
 {
-	LARGE_INTEGER TickStart, TickEnd;
-	QueryPerformanceCounter(&TickStart);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
     auto result = RegEnumValueImpl(key, index, valueName, valueNameLength, reserved, type, data, dataSize);
-	QueryPerformanceCounter(&TickEnd);
+    QueryPerformanceCounter(&TickEnd);
 
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
-		if (output_method == trace_method::eventlog)
-		{
-			std::string inputs = "";
-			std::string outputs = "";
-			std::string results = "";
+        if (output_method == trace_method::eventlog)
+        {
+            std::string inputs = "";
+            std::string outputs = "";
+            std::string results = "";
             try
             {
                 inputs = InterpretKeyPath(key);
@@ -1550,9 +1550,9 @@ LSTATUS __stdcall RegEnumValueFixup(
             {
                 Log("RegEnumValue event logging failure");
             }
-		}
-		else
-		{
+        }
+        else
+        {
             try
             {
                 Log("RegEnumValue:\n");
@@ -1575,7 +1575,7 @@ LSTATUS __stdcall RegEnumValueFixup(
             {
                 Log("RegEnumValue logging failure");
             }
-	    }
+        }
     }
 
     return result;
