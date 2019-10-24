@@ -124,6 +124,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     {        
         CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
         error = GetAndLaunchMonitor(*monitor, packageRoot, cmdShow, dirStr);
+        error = {};
     }
 
     if (!error.IsThereAnError())
@@ -150,6 +151,10 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         {
             error = StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
         }
+    }
+    else
+    {
+        Log("Launch aborted due to prior error.");
     }
 
     //Launch the end PowerShell script if we are using one.
