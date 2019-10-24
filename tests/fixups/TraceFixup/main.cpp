@@ -188,6 +188,7 @@ void Log_ETW_PostMsgW(const wchar_t* s)
 
 }
 
+
 // Tear down the ETW Provider
 void Log_ETW_UnRegister()
 {

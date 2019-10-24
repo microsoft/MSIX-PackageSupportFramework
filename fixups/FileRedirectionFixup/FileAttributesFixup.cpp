@@ -14,7 +14,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-            Log("GetFileAttributesFixup for %ls", fileName);
+            Log(L"GetFileAttributesFixup for %ls", fileName);
 
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
@@ -31,13 +31,13 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         if (wcslen(PackageVersion.c_str()) >= 0)
                         {
                             attributes = impl::GetFileAttributes(PackageVersion.c_str());
-                            Log("GetFileAttributes: uncopied ADL/ADR case");                       
+                            Log(L"GetFileAttributes: uncopied ADL/ADR case");                       
                         }
                     }
                     else
                     {
                         attributes = impl::GetFileAttributes(fileName);
-                        Log("GetFileAttributes: other not yet redirected case");
+                        Log(L"GetFileAttributes: other not yet redirected case");
                     }
                 }
                 if (attributes != INVALID_FILE_ATTRIBUTES)
@@ -52,7 +52,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         attributes &= ~FILE_ATTRIBUTE_READONLY;
                     }
                 }
-                Log("GetFileAttributes: ShouldRedirect att=%d", attributes);
+                Log(L"GetFileAttributes: ShouldRedirect att=%d", attributes);
                 return attributes;
             }
         }
@@ -77,7 +77,7 @@ BOOL __stdcall GetFileAttributesExFixup(
     {
         if (guard)
         {
-            Log("GetFileAttributesExFixup for %ls", fileName);
+            Log(L"GetFileAttributesExFixup for %ls", fileName);
 
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
@@ -94,13 +94,13 @@ BOOL __stdcall GetFileAttributesExFixup(
                         if (wcslen(PackageVersion.c_str()) >= 0)
                         {
                             retval = impl::GetFileAttributesEx(PackageVersion.c_str(), infoLevelId, fileInformation);
-                            Log("GetFileAttributesEx: uncopied ADL/ADR case");
+                            Log(L"GetFileAttributesEx: uncopied ADL/ADR case");
                         }
                     }
                     else
                     {
                         retval = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
-                        Log("GetFileAttributesEx: uncopied other case");
+                        Log(L"GetFileAttributesEx: uncopied other case");
                     }
                 }
                 if (retval != 0)
@@ -123,11 +123,11 @@ BOOL __stdcall GetFileAttributesExFixup(
                 }
                 if (retval != 0)
                 {
-                    Log("GetFileAttributesEx: ShouldRedirect retval=%d att=%d", retval, ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes);
+                    Log(L"GetFileAttributesEx: ShouldRedirect retval=%d att=%d", retval, ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes);
                 }
                 else
                 {
-                    Log("GetFileAttributesEx: ShouldRedirect retval=%d", retval);
+                    Log(L"GetFileAttributesEx: ShouldRedirect retval=%d", retval);
                 }
                 return retval;
             }
@@ -150,7 +150,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     {
         if (guard)
         {
-            Log("SetFileAttributesFixup for %ls", fileName);
+            Log(L"SetFileAttributesFixup for %ls", fileName);
 
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)

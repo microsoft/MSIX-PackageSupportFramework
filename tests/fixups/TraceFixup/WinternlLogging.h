@@ -374,7 +374,7 @@ inline std::string InterpretDirectoryAccessInternal(ACCESS_MASK access, const ch
 inline void LogUnicodeString(const char* msg, const PUNICODE_STRING string)
 {
     Log("\t%s=", msg);
-    if (string->Buffer)
+    if (string  && string->Buffer )
     {
         Log("%.*ls", string->Length / 2, string->Buffer);
     }
@@ -385,7 +385,7 @@ inline std::string InterpretUnicodeString(const char* msg, const PUNICODE_STRING
 {
 	std::ostringstream olog;
 	
-	if (string->Buffer)
+	if (string && string->Buffer )
 		//olog << msg << "=" << string->Buffer; 
 	    olog << InterpretCountedString(msg, string->Buffer, string->Length / 2);
 	else
@@ -415,9 +415,11 @@ inline bool TryGetKeyPath(HANDLE key, std::wstring& result)
     if (auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
         (status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
     {
-        auto buffer = std::make_unique<std::uint8_t[]>(size);
+        auto buffer = std::make_unique<std::uint8_t[]>(size+2);
         if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
         {
+            buffer[size] = 0x0;
+            buffer[size + 1] = 0x0;  // Add string termination character
             auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
             result.assign(info->Name, info->NameLength / 2);
         }

@@ -98,25 +98,33 @@ inline void Log(const wchar_t* fmt, ...)
     }
     else // trace_method::output_debug_string
     {
-        std::wstring str;
-        str.resize(256);
-        while (true)
+        try
         {
             va_list args;
             va_start(args, fmt);
-            auto count = std::vswprintf(str.data(), str.size() + 1, fmt, args);
+
+            std::wstring wstr;
+            wstr.resize(256);
+            std::size_t count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args);
             va_end(args);
+            assert(count >= 0);
 
-            if (count >= 0)
+            if (count > wstr.size())
             {
-                str.resize(count);
-                break;
+                wstr.resize(count);
+                va_list args2;
+                va_start(args2, fmt);
+                count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
+                va_end(args2);
+                assert(count >= 0);
             }
-
-            str.resize(str.size() * 2);
+            wstr.resize(count);
+            ::OutputDebugStringW(wstr.c_str());
         }
-
-        ::OutputDebugStringW(str.c_str());
+        catch (...)
+        {
+            ::OutputDebugStringA("Exception in wide Log()");
+        }
     }
 
 }
@@ -484,7 +492,7 @@ inline std::string InterpretLZError(INT err)
             reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
             &moduleHandle)) \
         { \
-            Log(L"\tCalling Module=%ls\n", psf::get_module_path(moduleHandle).c_str()); \
+            Log("\tCalling Module=%ls\n", psf::get_module_path(moduleHandle).c_str()); \
         } \
     }
 
@@ -2774,6 +2782,7 @@ inline std::string InterpretRegKeyType(DWORD type, const char* msg = "Type")
 template <typename CharT>
 inline void LogRegValue(DWORD type, const void* data, std::size_t dataSize, const char* msg = "Data")
 {
+    int counter = 0;
     switch (type)
     {
     case REG_SZ:
@@ -2813,7 +2822,14 @@ inline void LogRegValue(DWORD type, const void* data, std::size_t dataSize, cons
         Log("\t%s=", msg);
         for (auto ptr = reinterpret_cast<const unsigned char*>(data); dataSize--; ++ptr)
         {
-            Log("%02X", *ptr);
+            if (++counter < 16)
+            {
+                Log("%02X", *ptr);
+            }
+            else if (counter == 16)
+            {
+                Log("...");
+            }                
         }
         Log("\n");
         break;

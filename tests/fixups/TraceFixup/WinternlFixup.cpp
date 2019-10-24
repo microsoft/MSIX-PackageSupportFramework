@@ -100,71 +100,84 @@ NTSTATUS __stdcall NtCreateFileFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretObjectAttributes(objectAttributes);
 
-			inputs =  InterpretObjectAttributes(objectAttributes);
+                inputs += "\n" + InterpretFileCreateOptions(createOptions);
+                if (createOptions & FILE_DIRECTORY_FILE)
+                {
+                    inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
+                }
+                else if (createOptions & FILE_NON_DIRECTORY_FILE)
+                {
+                    inputs += "\n" + InterpretFileAccess(desiredAccess);
+                }
+                else
+                {
+                    inputs += "\n" + InterpretGenericAccess(desiredAccess);
+                }
+                outputs = InterpretFileAttributes(fileAttributes, "File Attributes");
+                outputs += "\n" + InterpretShareMode(shareAccess);
+                outputs += "\n" + InterpretCreationDispositionInternal(createDisposition);
 
-			inputs += "\n" + InterpretFileCreateOptions(createOptions);
-			if (createOptions & FILE_DIRECTORY_FILE)
-			{
-				inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
-			}
-			else if (createOptions & FILE_NON_DIRECTORY_FILE)
-			{
-				inputs += "\n" + InterpretFileAccess(desiredAccess);
-			}
-			else
-			{
-				inputs += "\n" + InterpretGenericAccess(desiredAccess);
-			}
-			outputs =  InterpretFileAttributes(fileAttributes, "File Attributes");
-			outputs += "\n" + InterpretShareMode(shareAccess);
-			outputs += "\n" + InterpretCreationDispositionInternal(createDisposition);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += "\n" + InterpretNTStatus(result);
+                }
+                else
+                {
+                    outputs += "\n" + InterpretAsHex("Handle", fileHandle);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += "\n" + InterpretNTStatus(result);
-			}
-			else
-			{
-				outputs += "\n" + InterpretAsHex("Handle", fileHandle);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtCreateFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtCreateFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtCreateFile event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtCreateFile:\n");
-        LogObjectAttributes(objectAttributes);
-        if (createOptions & FILE_DIRECTORY_FILE)
-        {
-            LogDirectoryAccess(desiredAccess);
-        }
-        else if (createOptions & FILE_NON_DIRECTORY_FILE)
-        {
-            LogFileAccess(desiredAccess);
-        }
-        else
-        {
-            LogGenericAccess(desiredAccess);
-        }
-        LogFileAttributes(fileAttributes, "File Attributes");
-        LogShareMode(shareAccess);
-        LogCreationDispositionInternal(createDisposition);
-        LogFileCreateOptions(createOptions);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtCreateFile:\n");
+                LogObjectAttributes(objectAttributes);
+                if (createOptions & FILE_DIRECTORY_FILE)
+                {
+                    LogDirectoryAccess(desiredAccess);
+                }
+                else if (createOptions & FILE_NON_DIRECTORY_FILE)
+                {
+                    LogFileAccess(desiredAccess);
+                }
+                else
+                {
+                    LogGenericAccess(desiredAccess);
+                }
+                LogFileAttributes(fileAttributes, "File Attributes");
+                LogShareMode(shareAccess);
+                LogCreationDispositionInternal(createDisposition);
+                LogFileCreateOptions(createOptions);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NtCreateFile logging failure");
+            }
+    	}
     }
 
     return result;
@@ -199,67 +212,80 @@ NTSTATUS __stdcall NtOpenFileFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretObjectAttributes(objectAttributes);
 
-			inputs = InterpretObjectAttributes(objectAttributes);
+                if (openOptions & FILE_DIRECTORY_FILE)
+                {
+                    inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
+                }
+                else if (openOptions & FILE_NON_DIRECTORY_FILE)
+                {
+                    inputs += "\n" + InterpretFileAccess(desiredAccess);
+                }
+                else
+                {
+                    inputs += "\n" + InterpretGenericAccess(desiredAccess);
+                }
+                outputs = InterpretShareMode(shareAccess);
+                outputs += "\n" + InterpretFileCreateOptions(openOptions);
 
-			if (openOptions & FILE_DIRECTORY_FILE)
-			{
-				inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
-			}
-			else if (openOptions & FILE_NON_DIRECTORY_FILE)
-			{
-				inputs += "\n" + InterpretFileAccess(desiredAccess);
-			}
-			else
-			{
-				inputs += "\n" + InterpretGenericAccess(desiredAccess);
-			}
-			outputs  =        InterpretShareMode(shareAccess);
-			outputs += "\n" + InterpretFileCreateOptions(openOptions);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += "\n" + InterpretNTStatus(result);
+                }
+                else
+                {
+                    outputs += "\n" + InterpretAsHex("Handle", fileHandle);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += "\n" + InterpretNTStatus(result);
-			}
-			else
-			{
-				outputs += "\n" + InterpretAsHex("Handle", fileHandle);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtOpenFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtOpenFile", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtOpenFile event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtOpenFile:\n");
-        LogObjectAttributes(objectAttributes);
-        if (openOptions & FILE_DIRECTORY_FILE)
-        {
-            LogDirectoryAccess(desiredAccess);
-        }
-        else if (openOptions & FILE_NON_DIRECTORY_FILE)
-        {
-            LogFileAccess(desiredAccess);
-        }
-        else
-        {
-            LogGenericAccess(desiredAccess);
-        }
-        LogShareMode(shareAccess);
-        LogFileCreateOptions(openOptions);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtOpenFile:\n");
+                LogObjectAttributes(objectAttributes);
+                if (openOptions & FILE_DIRECTORY_FILE)
+                {
+                    LogDirectoryAccess(desiredAccess);
+                }
+                else if (openOptions & FILE_NON_DIRECTORY_FILE)
+                {
+                    LogFileAccess(desiredAccess);
+                }
+                else
+                {
+                    LogGenericAccess(desiredAccess);
+                }
+                LogShareMode(shareAccess);
+                LogFileCreateOptions(openOptions);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NtOpenFile logging failure");
+            }
+    	}
     }
 
     return result;
@@ -291,40 +317,53 @@ NTSTATUS __stdcall NtCreateDirectoryObjectFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretObjectAttributes(objectAttributes);
+                inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
 
-			inputs = InterpretObjectAttributes(objectAttributes);
-			inputs += "\n" + InterpretDirectoryAccess(desiredAccess);
-			
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretNTStatus(result);
-			}
-			else
-			{
-				outputs +=  InterpretAsHex("Handle", directoryHandle);
-			}
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
+                else
+                {
+                    outputs += InterpretAsHex("Handle", directoryHandle);
+                }
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			Log_ETW_PostMsgOperationA("NtCreateDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtCreateDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtCreateDirectory event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtCreateDirectoryObject:\n");
-        LogObjectAttributes(objectAttributes);
-        LogDirectoryAccess(desiredAccess);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtCreateDirectoryObject:\n");
+                LogObjectAttributes(objectAttributes);
+                LogDirectoryAccess(desiredAccess);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NtCreateDirectory logging failure");
+            }
+    	}
     }
 
     return result;
@@ -356,40 +395,53 @@ NTSTATUS __stdcall NtOpenDirectoryObjectFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretObjectAttributes(objectAttributes);
+                inputs += "\n" + InterpretDirectoryAccessInternal(desiredAccess);
 
-			inputs = InterpretObjectAttributes(objectAttributes);
-			inputs += "\n" + InterpretDirectoryAccessInternal(desiredAccess);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
+                else
+                {
+                    outputs += InterpretAsHex("Handle", directoryHandle);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretNTStatus(result);
-			}
-			else
-			{
-				outputs +=  InterpretAsHex("Handle", directoryHandle);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtOpenDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtOpenDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtOpenDirectoryObject event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtOpenDirectoryObject:\n");
-        LogObjectAttributes(objectAttributes);
-        LogDirectoryAccessInternal(desiredAccess);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtOpenDirectoryObject:\n");
+                LogObjectAttributes(objectAttributes);
+                LogDirectoryAccessInternal(desiredAccess);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NtOpenDirectoryObject logging failure");
+            }
+    	}
     }
 
     return result;
@@ -429,87 +481,100 @@ NTSTATUS __stdcall NtQueryDirectoryObjectFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretAsHex("Handle", directoryHandle);
+                inputs += "\n" + InterpretBool("Return Single Entry", returnSingleEntry);
+                inputs += "\n" + InterpretBool("Restart Scan", restartScan);
 
-			inputs =  InterpretAsHex("Handle", directoryHandle);
-			inputs += "\n" +	InterpretBool("Return Single Entry",returnSingleEntry);
-			inputs += "\n" + InterpretBool("Restart Scan", restartScan);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
+                else
+                {
+                    struct OBJECT_DIRECTORY_INFORMATION
+                    {
+                        UNICODE_STRING Name;
+                        UNICODE_STRING TypeName;
+                    };
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretNTStatus(result);
-			}
-			else
-			{
-				struct OBJECT_DIRECTORY_INFORMATION
-				{
-					UNICODE_STRING Name;
-					UNICODE_STRING TypeName;
-				};
+                    std::ostringstream sout2;
+                    sout2 << "Result(s):";
+                    auto info = reinterpret_cast<const OBJECT_DIRECTORY_INFORMATION*>(buffer);
+                    for (std::size_t i = 0; info[i].Name.Length || info[i].TypeName.Length; ++i)
+                    {
+                        sout2 << "\tBuffer[" << std::setw(length) << i;
+                        sout2 << "]:";
+                        if (info[i].Name.Length)
+                        {
+                            sout2 << InterpretCountedString(" Name", info[i].Name.Buffer, info[i].Name.Length / 2);
+                        }
+                        if (info[i].TypeName.Length)
+                        {
+                            sout2 << InterpretCountedString(" tTypeName", info[i].TypeName.Buffer, info[i].TypeName.Length / 2);
+                        }
+                        sout2 << "\n";
+                    }
+                    outputs += "\n" + sout2.str();
+                }
 
-				std::ostringstream sout2;
-				sout2 << "Result(s):";
-				auto info = reinterpret_cast<const OBJECT_DIRECTORY_INFORMATION*>(buffer);
-				for (std::size_t i = 0; info[i].Name.Length || info[i].TypeName.Length; ++i)
-				{
-					sout2 << "\tBuffer[" << std::setw(length) << i;
-					sout2 << "]:";
-					if (info[i].Name.Length)
-					{
-						sout2 << InterpretCountedString(" Name", info[i].Name.Buffer, info[i].Name.Length/2);
-					}
-					if (info[i].TypeName.Length)
-					{
-						sout2 << InterpretCountedString(" tTypeName", info[i].TypeName.Buffer, info[i].TypeName.Length / 2);
-					}
-					sout2 << "\n";
-				}
-				outputs += "\n" + sout2.str();
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtQueryDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtQueryDirectoryObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtQueryDirectoryObject event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtQueryDirectoryObject:\n");
-        LogBool("Return Single Entry", returnSingleEntry);
-        LogBool("Restart Scan", restartScan);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        else if (buffer)
-        {
-            // NOTE: Only documented
-            struct OBJECT_DIRECTORY_INFORMATION
+            try
             {
-                UNICODE_STRING Name;
-                UNICODE_STRING TypeName;
-            };
+                Log("NtQueryDirectoryObject:\n");
+                LogBool("Return Single Entry", returnSingleEntry);
+                LogBool("Restart Scan", restartScan);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                else if (buffer)
+                {
+                    // NOTE: Only documented
+                    struct OBJECT_DIRECTORY_INFORMATION
+                    {
+                        UNICODE_STRING Name;
+                        UNICODE_STRING TypeName;
+                    };
 
-            auto info = reinterpret_cast<const OBJECT_DIRECTORY_INFORMATION*>(buffer);
-            for (std::size_t i = 0; info[i].Name.Length || info[i].TypeName.Length; ++i)
-            {
-                Log("\tBuffer[%d]:\n", i);
-                if (info[i].Name.Length)
-                {
-                    Log("\t\tName=%.*ls\n", info[i].Name.Length / 2, info[i].Name.Buffer);
+                    auto info = reinterpret_cast<const OBJECT_DIRECTORY_INFORMATION*>(buffer);
+                    for (std::size_t i = 0; info[i].Name.Length || info[i].TypeName.Length; ++i)
+                    {
+                        Log("\tBuffer[%d]:\n", i);
+                        if (info[i].Name.Length)
+                        {
+                            Log("\t\tName=%.*ls\n", info[i].Name.Length / 2, info[i].Name.Buffer);
+                        }
+                        if (info[i].TypeName.Length)
+                        {
+                            Log("\t\tTypeName=%.*ls\n", info[i].TypeName.Length / 2, info[i].TypeName.Buffer);
+                        }
+                    }
                 }
-                if (info[i].TypeName.Length)
-                {
-                    Log("\t\tTypeName=%.*ls\n", info[i].TypeName.Length / 2, info[i].TypeName.Buffer);
-                }
+                LogCallingModule();
             }
-        }
-        LogCallingModule();
-	}
+            catch (...)
+            {
+                Log("NtQueryDirectoryObject logging failure");
+            }
+	    }
     }
 
     return result;
@@ -541,40 +606,53 @@ NTSTATUS __stdcall NtOpenSymbolicLinkObjectFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretObjectAttributes(objectAttributes);
+                inputs += "\n" + InterpretGenericAccess(desiredAccess);
 
-			inputs = InterpretObjectAttributes(objectAttributes);
-			inputs += "\n" + InterpretGenericAccess(desiredAccess);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
+                else
+                {
+                    outputs += InterpretAsHex("LinkHandle", linkHandle);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretNTStatus(result);
-			}
-			else
-			{
-				outputs += InterpretAsHex("LinkHandle", linkHandle);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtOpenSymbolicLinkObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtOpenSymbolicLinkObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtOpenSymbolicLinkObject event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtOpenSymbolicLinkObject:\n");
-        LogObjectAttributes(objectAttributes);
-        LogGenericAccess(desiredAccess);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtOpenSymbolicLinkObject:\n");
+                LogObjectAttributes(objectAttributes);
+                LogGenericAccess(desiredAccess);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NtOpenSymbolicLinkObject logging failure");
+            }
+    	}
     }
 
     return result;
@@ -606,50 +684,63 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObjectFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretAsHex("LinkHandle", linkHandle);
+                inputs += "\n" + InterpretUnicodeString("LinkTarget", linkTarget);
 
-			inputs = InterpretAsHex("LinkHandle", linkHandle);
-			inputs += "\n" + InterpretUnicodeString("LinkTarget", linkTarget);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                    if (returnedLength && (result == STATUS_BUFFER_TOO_SMALL))
+                    {
+                        outputs += InterpretAsHex("\nRequired Length", *returnedLength);
+                    }
+                }
+                else
+                {
+                    outputs += InterpretUnicodeString("Target", linkTarget);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretNTStatus(result);
-				if (returnedLength && (result == STATUS_BUFFER_TOO_SMALL))
-				{
-					outputs += InterpretAsHex("\nRequired Length", *returnedLength);
-				}
-			}
-			else
-			{
-				outputs +=  InterpretUnicodeString("Target", linkTarget);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtQuerySymbolicLinkObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtQuerySymbolicLinkObject", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtQuerySymbolicLinkObject event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtQuerySymbolicLinkObject:\n");
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-            if (returnedLength && (result == STATUS_BUFFER_TOO_SMALL))
+            try
             {
-                Log("\tRequired Length=%d\n", *returnedLength);
+                Log("NtQuerySymbolicLinkObject:\n");
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                    if (returnedLength && (result == STATUS_BUFFER_TOO_SMALL))
+                    {
+                        Log("\tRequired Length=%d\n", *returnedLength);
+                    }
+                }
+                else
+                {
+                    LogUnicodeString("Target", linkTarget);
+                }
+                LogCallingModule();
             }
-        }
-        else
-        {
-            LogUnicodeString("Target", linkTarget);
-        }
-        LogCallingModule();
-	}
+            catch (...)
+            {
+                Log("NtQuerySymbolicLinkObject logging failure");
+            }
+	    }
     }
 
     return result;
@@ -662,7 +753,7 @@ NTSTATUS WINAPI NtCreateKey(
     _In_ ACCESS_MASK DesiredAccess,
     _In_ POBJECT_ATTRIBUTES ObjectAttributes,
     _In_ ULONG TitleIndex,
-    _In_ PUNICODE_STRING Class,
+    _In_ PUNICODE_STRING objectClass,
     _In_ ULONG CreateOptions,
     _Out_ PULONG Disposition);
 auto NtCreateKeyImpl = WINTERNL_FUNCTION(NtCreateKey);
@@ -689,48 +780,61 @@ NTSTATUS __stdcall NtCreateKeyFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretUnicodeString("Class", objectClass);
+                inputs += "\n" + InterpretObjectAttributes(objectAttributes);
+                inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
+                inputs += "\n" + InterpretRegKeyFlags(createOptions);
 
-			inputs = InterpretUnicodeString("Class", objectClass); 
-			inputs += "\n" + InterpretObjectAttributes(objectAttributes);
-			inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
-			inputs += "\n" + InterpretRegKeyFlags(createOptions);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
+                else if (disposition)
+                {
+                    outputs += InterpretRegKeyDisposition(*disposition);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretNTStatus(result);				
-			}
-			else if (disposition)
-			{
-				outputs +=  InterpretRegKeyDisposition(*disposition);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtCreateKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtCreateKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NTCreateKey event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtCreateKey:\n");
-        LogObjectAttributes(objectAttributes);
-        LogRegKeyAccess(desiredAccess);
-        LogUnicodeString("Class", objectClass);
-        LogRegKeyFlags(createOptions);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        else if (disposition)
-        {
-            LogRegKeyDisposition(*disposition);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtCreateKey:\n");
+                LogObjectAttributes(objectAttributes);
+                LogRegKeyAccess(desiredAccess);
+                LogUnicodeString("Class", objectClass);
+                LogRegKeyFlags(createOptions);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                else if (disposition)
+                {
+                    LogRegKeyDisposition(*disposition);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NTCreateKey logging failure");
+            }
+	    }
     }
 
     return result;
@@ -756,40 +860,53 @@ NTSTATUS __stdcall NtOpenKeyFixup(_Out_ PHANDLE keyHandle, _In_ ACCESS_MASK desi
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretObjectAttributes(objectAttributes);
+                inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
 
-			inputs = InterpretObjectAttributes(objectAttributes);
-			inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
+                else
+                {
+                    outputs += InterpretAsHex("Handle", keyHandle);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretNTStatus(result);
-			}
-			else 
-			{
-				outputs += InterpretAsHex("Handle", keyHandle);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtOpenKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtOpenKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NTOpenKey event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtOpenKey:\n");
-        LogObjectAttributes(objectAttributes);
-        LogRegKeyAccess(desiredAccess);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtOpenKey:\n");
+                LogObjectAttributes(objectAttributes);
+                LogRegKeyAccess(desiredAccess);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NTOpenKey logging failure");
+            }
+	    }
     }
 
     return result;
@@ -823,42 +940,55 @@ NTSTATUS __stdcall NtOpenKeyExFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretObjectAttributes(objectAttributes);
+                inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
+                inputs += "\n" + InterpretRegKeyFlags(openOptions);
 
-			inputs = InterpretObjectAttributes(objectAttributes);
-			inputs += "\n" + InterpretRegKeyAccess(desiredAccess);
-			inputs += "\n" + InterpretRegKeyFlags(openOptions);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
+                else
+                {
+                    outputs += InterpretAsHex("Handle", keyHandle);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretNTStatus(result);
-			}
-			else
-			{
-				outputs += InterpretAsHex("Handle", keyHandle);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtOpenKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtOpenKeyEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtOpenKeyEx event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtOpenKey:\n");
-        LogObjectAttributes(objectAttributes);
-        LogRegKeyAccess(desiredAccess);
-        LogRegKeyFlags(openOptions);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtOpenKey:\n");
+                LogObjectAttributes(objectAttributes);
+                LogRegKeyAccess(desiredAccess);
+                LogRegKeyFlags(openOptions);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NtOpenKeyEx logging failure");
+            }
+	    }
     }
 
     return result;
@@ -896,40 +1026,53 @@ NTSTATUS __stdcall NtSetValueKeyFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretAsHex("Handle", keyHandle);
+                inputs += "\n" + InterpretUnicodeString("Value Name", valueName);
+                inputs += "\n" + InterpretRegKeyType(type);
+                inputs += "\n" + InterpretRegValueA<char>(type, data, dataSize);
 
-			inputs = InterpretAsHex("Handle", keyHandle); 
-			inputs += "\n" + InterpretUnicodeString("Value Name", valueName); 
-			inputs += "\n" + InterpretRegKeyType(type);
-			inputs += "\n" + InterpretRegValueA<char>(type, data, dataSize);
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                }
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs += InterpretNTStatus(result);
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtSetValueKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtSetValueKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtSetValueKey event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtSetValueKey:\n");
-        // TODO: Translate keyHandle to a name?
-        LogUnicodeString("Value Name", valueName);
-        LogRegKeyType(type);
-        LogRegValue<wchar_t>(type, data, dataSize);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-        }
-        LogCallingModule();
-	}
+            try
+            {
+                Log("NtSetValueKey:\n");
+                // TODO: Translate keyHandle to a name?
+                LogUnicodeString("Value Name", valueName);
+                LogRegKeyType(type);
+                LogRegValue<wchar_t>(type, data, dataSize);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogNTStatus(result);
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("NtSetValueKey logging failure");
+            }
+    	}
     }
 
     return result;
@@ -959,171 +1102,184 @@ NTSTATUS __stdcall NtQueryValueKeyFixup(
 			std::string inputs = "";
 			std::string outputs = "";
 			std::string results = "";
+            try
+            {
+                inputs = InterpretAsHex("Handle", keyHandle);
+                inputs += "\n" + InterpretUnicodeString("Value Name", valueName);
+                inputs += "\nKeyValueInformationClass" + InterpretKeyValueInformationClass(keyValueInformationClass);
+                inputs += "(" + InterpretAsHex("", (DWORD)keyValueInformationClass) + ")";
 
-			inputs = InterpretAsHex("Handle", keyHandle);
-			inputs += "\n" + InterpretUnicodeString("Value Name", valueName);
-			inputs += "\nKeyValueInformationClass" + InterpretKeyValueInformationClass(keyValueInformationClass);
-			inputs += "(" + InterpretAsHex("", (DWORD)keyValueInformationClass) + ")";
+                results = InterpretReturnNT(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretNTStatus(result);
+                    if ((result == STATUS_BUFFER_OVERFLOW) || (result == STATUS_BUFFER_TOO_SMALL))
+                    {
+                        outputs += "\n" + InterpretAsHex("Required Length", *resultLength);
+                    }
+                }
+                else
+                {
+                    auto align64 = [](auto ptr)
+                    {
+                        auto ptrValue = reinterpret_cast<std::uintptr_t>(ptr);
+                        ptrValue += 63;
+                        ptrValue &= ~0x3F;
+                        return reinterpret_cast<decltype(ptr)>(ptr);
+                    };
 
-			results = InterpretReturnNT(functionResult, result).c_str();
-			if (function_failed(functionResult))
-			{
-				outputs +=  InterpretNTStatus(result);
-				if ((result == STATUS_BUFFER_OVERFLOW) || (result == STATUS_BUFFER_TOO_SMALL))
-				{
-					outputs += "\n" + InterpretAsHex("Required Length", *resultLength);
-				}
-			}
-			else
-			{
-				auto align64 = [](auto ptr)
-				{
-					auto ptrValue = reinterpret_cast<std::uintptr_t>(ptr);
-					ptrValue += 63;
-					ptrValue &= ~0x3F;
-					return reinterpret_cast<decltype(ptr)>(ptr);
-				};
+                    std::wstring_view name;
+                    ULONG type = 0;
+                    const void* data = nullptr;
+                    std::size_t dataSize = 0;
 
-				std::wstring_view name;
-				ULONG type = 0;
-				const void* data = nullptr;
-				std::size_t dataSize = 0;
+                    switch (keyValueInformationClass)
+                    {
+                    case winternl::KeyValueBasicInformation:
+                    {
+                        auto info = reinterpret_cast<const winternl::KEY_VALUE_BASIC_INFORMATION*>(keyValueInformation);
+                        name = { info->Name, info->NameLength / 2 };
+                        type = info->Type;
+                    } break;
 
-				switch (keyValueInformationClass)
-				{
-				case winternl::KeyValueBasicInformation:
-				{
-					auto info = reinterpret_cast<const winternl::KEY_VALUE_BASIC_INFORMATION*>(keyValueInformation);
-					name = { info->Name, info->NameLength / 2 };
-					type = info->Type;
-				} break;
+                    case winternl::KeyValueFullInformation:
+                    case winternl::KeyValueFullInformationAlign64:
+                    {
+                        auto info = reinterpret_cast<const winternl::KEY_VALUE_FULL_INFORMATION*>(keyValueInformation);
+                        if (keyValueInformationClass == winternl::KeyValueFullInformationAlign64)
+                        {
+                            info = align64(info);
+                        }
+                        name = { info->Name, info->NameLength / 2 };
+                        type = info->Type;
+                        data = reinterpret_cast<const void*>(reinterpret_cast<std::uintptr_t>(info) + info->DataOffset);
+                        dataSize = info->DataLength;
+                    } break;
 
-				case winternl::KeyValueFullInformation:
-				case winternl::KeyValueFullInformationAlign64:
-				{
-					auto info = reinterpret_cast<const winternl::KEY_VALUE_FULL_INFORMATION*>(keyValueInformation);
-					if (keyValueInformationClass == winternl::KeyValueFullInformationAlign64)
-					{
-						info = align64(info);
-					}
-					name = { info->Name, info->NameLength / 2 };
-					type = info->Type;
-					data = reinterpret_cast<const void*>(reinterpret_cast<std::uintptr_t>(info) + info->DataOffset);
-					dataSize = info->DataLength;
-				} break;
+                    case winternl::KeyValuePartialInformation:
+                    case winternl::KeyValuePartialInformationAlign64:
+                    {
+                        auto info = reinterpret_cast<const winternl::KEY_VALUE_PARTIAL_INFORMATION*>(keyValueInformation);
+                        if (keyValueInformationClass == winternl::KeyValuePartialInformationAlign64)
+                        {
+                            info = align64(info);
+                        }
+                        type = info->Type;
+                        data = info->Data;
+                        dataSize = info->DataLength;
+                    } break;
 
-				case winternl::KeyValuePartialInformation:
-				case winternl::KeyValuePartialInformationAlign64:
-				{
-					auto info = reinterpret_cast<const winternl::KEY_VALUE_PARTIAL_INFORMATION*>(keyValueInformation);
-					if (keyValueInformationClass == winternl::KeyValuePartialInformationAlign64)
-					{
-						info = align64(info);
-					}
-					type = info->Type;
-					data = info->Data;
-					dataSize = info->DataLength;
-				} break;
+                    default: // Invalid or undocumented
+                        break;
+                    }
 
-				default: // Invalid or undocumented
-					break;
-				}
+                    if (!name.empty())
+                        outputs += InterpretCountedString("Name", name.data(), name.length()) + "\n";
+                    outputs += InterpretRegKeyType(type);
+                    if (data)
+                    {
+                        outputs += "\n" + InterpretRegValueA<wchar_t>(type, data, dataSize);
 
-				if (!name.empty()) 
-					outputs +=  InterpretCountedString("Name", name.data(), name.length()) + "\n";
-				outputs += InterpretRegKeyType(type);
-				if (data)
-				{
-					outputs += "\n" + InterpretRegValueA<wchar_t>(type, data, dataSize); 
+                    }
+                }
 
-				}
-			}
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
 
-			std::ostringstream sout;
-			InterpretCallingModulePart1()
-				sout << InterpretCallingModulePart2()
-				InterpretCallingModulePart3()
-				std::string cm = sout.str();
-
-			Log_ETW_PostMsgOperationA("NtQueryValueKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                Log_ETW_PostMsgOperationA("NtQueryValueKey", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("NtQueryValueKey event logging failure");
+            }
 		}
 		else
 		{
-        Log("NtQueryValueKey:\n");
-        LogUnicodeString("Value Name", valueName);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogNTStatus(result);
-            if ((result == STATUS_BUFFER_OVERFLOW) || (result == STATUS_BUFFER_TOO_SMALL))
+            try
             {
-                Log("\tRequired Length=%d\n", *resultLength);
-            }
-        }
-        else
-        {
-            auto align64 = [](auto ptr)
-            {
-                auto ptrValue = reinterpret_cast<std::uintptr_t>(ptr);
-                ptrValue += 63;
-                ptrValue &= ~0x3F;
-                return reinterpret_cast<decltype(ptr)>(ptr);
-            };
-
-            std::wstring_view name;
-            ULONG type = 0;
-            const void* data = nullptr;
-            std::size_t dataSize = 0;
-
-            switch (keyValueInformationClass)
-            {
-            case winternl::KeyValueBasicInformation:
-            {
-                auto info = reinterpret_cast<const winternl::KEY_VALUE_BASIC_INFORMATION*>(keyValueInformation);
-                name = { info->Name, info->NameLength / 2 };
-                type = info->Type;
-            } break;
-
-            case winternl::KeyValueFullInformation:
-            case winternl::KeyValueFullInformationAlign64:
-            {
-                auto info = reinterpret_cast<const winternl::KEY_VALUE_FULL_INFORMATION*>(keyValueInformation);
-                if (keyValueInformationClass == winternl::KeyValueFullInformationAlign64)
+                Log("NtQueryValueKey:\n");
+                LogUnicodeString("Value Name", valueName);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
                 {
-                    info = align64(info);
+                    LogNTStatus(result);
+                    if ((result == STATUS_BUFFER_OVERFLOW) || (result == STATUS_BUFFER_TOO_SMALL))
+                    {
+                        Log("\tRequired Length=%d\n", *resultLength);
+                    }
                 }
-                name = { info->Name, info->NameLength / 2 };
-                type = info->Type;
-                data = reinterpret_cast<const void*>(reinterpret_cast<std::uintptr_t>(info) + info->DataOffset);
-                dataSize = info->DataLength;
-            } break;
-
-            case winternl::KeyValuePartialInformation:
-            case winternl::KeyValuePartialInformationAlign64:
-            {
-                auto info = reinterpret_cast<const winternl::KEY_VALUE_PARTIAL_INFORMATION*>(keyValueInformation);
-                if (keyValueInformationClass == winternl::KeyValuePartialInformationAlign64)
+                else
                 {
-                    info = align64(info);
+                    auto align64 = [](auto ptr)
+                    {
+                        auto ptrValue = reinterpret_cast<std::uintptr_t>(ptr);
+                        ptrValue += 63;
+                        ptrValue &= ~0x3F;
+                        return reinterpret_cast<decltype(ptr)>(ptr);
+                    };
+
+                    std::wstring_view name;
+                    ULONG type = 0;
+                    const void* data = nullptr;
+                    std::size_t dataSize = 0;
+
+                    switch (keyValueInformationClass)
+                    {
+                    case winternl::KeyValueBasicInformation:
+                    {
+                        auto info = reinterpret_cast<const winternl::KEY_VALUE_BASIC_INFORMATION*>(keyValueInformation);
+                        name = { info->Name, info->NameLength / 2 };
+                        type = info->Type;
+                    } break;
+
+                    case winternl::KeyValueFullInformation:
+                    case winternl::KeyValueFullInformationAlign64:
+                    {
+                        auto info = reinterpret_cast<const winternl::KEY_VALUE_FULL_INFORMATION*>(keyValueInformation);
+                        if (keyValueInformationClass == winternl::KeyValueFullInformationAlign64)
+                        {
+                            info = align64(info);
+                        }
+                        name = { info->Name, info->NameLength / 2 };
+                        type = info->Type;
+                        data = reinterpret_cast<const void*>(reinterpret_cast<std::uintptr_t>(info) + info->DataOffset);
+                        dataSize = info->DataLength;
+                    } break;
+
+                    case winternl::KeyValuePartialInformation:
+                    case winternl::KeyValuePartialInformationAlign64:
+                    {
+                        auto info = reinterpret_cast<const winternl::KEY_VALUE_PARTIAL_INFORMATION*>(keyValueInformation);
+                        if (keyValueInformationClass == winternl::KeyValuePartialInformationAlign64)
+                        {
+                            info = align64(info);
+                        }
+                        type = info->Type;
+                        data = info->Data;
+                        dataSize = info->DataLength;
+                    } break;
+
+                    default: // Invalid or undocumented
+                        break;
+                    }
+
+                    if (!name.empty()) LogCountedString("Name", name.data(), name.length());
+                    LogRegKeyType(type);
+                    if (data)
+                    {
+                        LogRegValue<wchar_t>(type, data, dataSize);
+                    }
                 }
-                type = info->Type;
-                data = info->Data;
-                dataSize = info->DataLength;
-            } break;
-
-            default: // Invalid or undocumented
-                break;
+                LogCallingModule();
             }
-
-            if (!name.empty()) LogCountedString("Name", name.data(), name.length());
-            LogRegKeyType(type);
-            if (data)
+            catch (...)
             {
-                LogRegValue<wchar_t>(type, data, dataSize);
+                Log("NtQueryValueKey logging failure");
             }
-        }
-        LogCallingModule();
-	}
+	    }
     }
 
     return result;

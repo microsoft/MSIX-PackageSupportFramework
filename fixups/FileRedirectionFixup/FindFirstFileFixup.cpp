@@ -96,12 +96,12 @@ HANDLE __stdcall FindFirstFileExFixup(
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-        Log("FindFirstFileExFixup for %ls", fileName);
+        Log(L"FindFirstFileExFixup for %ls", fileName);
 
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
 
-    Log("FindFirstFileEx with %s", fileName);
+    Log(L"FindFirstFileEx with %s", fileName);
 
     // Split the input into directory and pattern
     auto path = widen(fileName, CP_ACP);
@@ -139,7 +139,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         result->redirect_path.push_back(L'\\');
     }
 
-    Log("FindFirstFile redirected to %ls", result->redirect_path.c_str());
+    Log(L"FindFirstFile redirected to %ls", result->redirect_path.c_str());
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
     [[maybe_unused]] auto wideData = reinterpret_cast<WIN32_FIND_DATAW*>(findFileData);
@@ -170,13 +170,13 @@ HANDLE __stdcall FindFirstFileExFixup(
             // No need to copy since we wrote directly into the output buffer
             assert(findData == wideData);
         }
-        Log("FindFirstFile redirected (from redirected): had results");
+        Log(L"FindFirstFile redirected (from redirected): had results");
     }
     else
     {
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         result->redirect_path.clear();
-        Log("FindFirstFile redirected (from redirected): no results");
+        Log(L"FindFirstFile redirected (from redirected): no results");
     }
 
     findData = (result->find_handles[0] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
@@ -185,11 +185,11 @@ HANDLE __stdcall FindFirstFileExFixup(
     result->find_handles[1].reset(impl::FindFirstFileEx(path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
     if (result->find_handles[1])
     {
-        Log("FindFirstFile (from redirected): had results");
+        Log(L"FindFirstFile (from redirected): had results");
     }
     else
     {
-        Log("FindFirstFile (from redirected): no results");
+        Log(L"FindFirstFile (from redirected): no results");
     }
     if (!result->find_handles[0])
     {
@@ -219,7 +219,7 @@ HANDLE __stdcall FindFirstFileExFixup(
                 // No need to copy since we wrote directly into the output buffer
                 assert(findData == wideData);
             }
-            Log("FindFirstFile (from redirected): had results");
+            Log(L"FindFirstFile (from redirected): had results");
         }
     }
 
@@ -248,7 +248,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-        Log("FindNextFileFixup for %ls", findFile);
+        Log(L"FindNextFileFixup for %ls", findFile);
 
         return impl::FindNextFile(findFile, findFileData);
     }
@@ -362,7 +362,7 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-        Log("FindCloseFixup");
+        Log(L"FindCloseFixup");
 
         return impl::FindClose(findHandle);
     }

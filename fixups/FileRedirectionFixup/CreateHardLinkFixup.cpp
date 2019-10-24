@@ -17,7 +17,7 @@ BOOL __stdcall CreateHardLinkFixup(
     {
         if (guard)
         {
-            Log("CopyHardLinkFixup for %ls  %ls", fileName, existingFileName);
+            Log(L"CopyHardLinkFixup for %ls  %ls", fileName, existingFileName);
 
             // NOTE: We need to copy-on-read the existing file since the application may want to open the hard-link file
             //       for write in the future. As for the link file, we currently _don't_ copy-on-read it due to the fact
