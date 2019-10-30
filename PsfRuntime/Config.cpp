@@ -332,7 +332,7 @@ void LoadConfig()
         g_ApplicationUserModelId = psf::current_application_user_model_id();
         g_ApplicationId = psf::application_id_from_application_user_model_id(g_ApplicationUserModelId);
         g_PackageRootPath = psf::current_package_path();
-		g_FinalPackageRootPath = psf::get_final_path_name(g_PackageRootPath);
+        g_FinalPackageRootPath = psf::get_final_path_name(g_PackageRootPath);
         g_CurrentExecutable = psf::current_executable_path();
 
         LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
@@ -435,19 +435,23 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
     {
         auto& appObj = app.as_object();
         auto appId = appObj.get("id").as_string().wstring();
-    if (verbose)
-    {
-            LogCountedStringW("Compare against json id", appId.data(), appId.length());
+      
+        if (verbose)
+        {
+                LogCountedStringW("Compare against json id", appId.data(), appId.length());
         }
-    if (iwstring_view(appId.data(), appId.length()) == applicationId)
+      
+        if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {
             return &appObj;
         }
     }
+  
     if (verbose)
     {
         Log("\tNo Matches");
     }
+  
     return nullptr;
 }
 catch (...)
@@ -460,46 +464,45 @@ PSFAPI const psf::json_object* __stdcall PSFQueryCurrentAppLaunchConfig(bool ver
     return PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), verbose);
 }
 
-PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig_try() noexcept try
-{
-    const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(),false);
-    auto& mon = application->get("monitor").as_object();
-    auto& monObj = mon.as_object();
-
-    return &monObj;
-}
-catch (...)
-{
-    return nullptr;
-}
 PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept
 {
-    return PSFQueryAppMonitorConfig_try();
-}
-
-PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept try
-{
     const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
-    auto& mon = application->get("startScript").as_object();
-    auto& monObj = mon.as_object();
+    auto mon = application->try_get("monitor");
 
-    return &monObj;
-}
-catch (...)
-{
+    if (mon)
+    {
+        auto& monObj = mon->as_object();
+        return &monObj;
+    }
+
     return nullptr;
 }
 
-PSFAPI const psf::json_object* __stdcall PSFQueryEndScriptInfo() noexcept try
+PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept
 {
-    const psf::json_object* application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
-    auto& mon = application->get("endScript").as_object();
-    auto& monObj = mon.as_object();
+    auto application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
 
-    return &monObj;
+    auto mon = application->try_get("startScript");
+    if (mon)
+    {
+        auto& monObj = mon->as_object();
+        return &monObj;
+    }
+    
+    return nullptr;
 }
-catch (...)
+
+PSFAPI const psf::json_object* __stdcall PSFQueryEndScriptInfo() noexcept
 {
+    auto application = PSFQueryAppLaunchConfig(g_ApplicationId.c_str(), false);
+    auto mon = application->try_get("endScript");
+
+    if (mon)
+    {
+        auto& monObj = mon->as_object();
+        return &monObj;
+    }
+
     return nullptr;
 }
 
