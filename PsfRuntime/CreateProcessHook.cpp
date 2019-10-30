@@ -150,21 +150,36 @@ BOOL WINAPI CreateProcessFixup(
     fixupPath(finalPackagePath);
     fixupPath(exePath);
 
+    Log("\tPossible injection to process %ls %d.\n",exePath.data(), processInformation->dwProcessId);
     if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
         ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
     {
+        Log("\tInject %ls into PID=%d", psf::runtime_dll_name, processInformation->dwProcessId);
         // The target executable is in the package, so we _do_ want to fixup it
         static const auto pathToPsfRuntime = (PackageRootPath() / psf::runtime_dll_name).string();
         PCSTR targetDll = pathToPsfRuntime.c_str();
+        if (!std::filesystem::exists(targetDll))
+        {
+            // Possibly the dll is in the folder with the exe and not at the package root.
+            Log("\t%s not found at package root, try target folder.", targetDll);
+            size_t trimcount = exePath.length() - exePath.rfind(L"\\");
+            iwstring_view justPath = exePath;
+            justPath.remove_suffix(trimcount);
+            std::filesystem::path pathToExeRuntime = justPath;
+            pathToExeRuntime = pathToExeRuntime / psf::runtime_dll_name;
+            targetDll = pathToExeRuntime.string().c_str();
+        }
+        Log("\tAttempting injection using %s", targetDll);
         if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDll, 1))
         {
+            Log("\t%s not found at target folder, try PsfRunDll.", targetDll);
             // We failed to detour the created process. Assume that it the failure was due to an architecture mis-match
             // and try the launch using PsfRunDll
             if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDll, CreateProcessWithPsfRunDll))
             {
                 // Could not detour the target process, so return failure
                 auto err = ::GetLastError();
-                Log("\tUnable to inject %ls into PID=%d err=0x%x\n",  psf::runtime_dll_name, processInformation->dwProcessId, err);
+                Log("\tUnable to inject %ls into PID=%d err=0x%x\n", psf::runtime_dll_name, processInformation->dwProcessId, err);
                 ::TerminateProcess(processInformation->hProcess, ~0u);
                 ::CloseHandle(processInformation->hProcess);
                 ::CloseHandle(processInformation->hThread);
@@ -174,7 +189,7 @@ BOOL WINAPI CreateProcessFixup(
             }
         }
     }
-	Log("\tInject %ls into PID=%d\n", psf::runtime_dll_name, processInformation->dwProcessId);
+	Log("\tInjected %ls into PID=%d\n", psf::runtime_dll_name, processInformation->dwProcessId);
 
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {
