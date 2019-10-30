@@ -43,7 +43,8 @@ namespace PsfMonitor
         private BackgroundWorker eventbgw = null;
         private BackgroundWorker kerneleventbgw = null;
         public TraceEventSession myTraceEventSession = null;
-        public Provider etwprovider = new Provider("Microsoft-Windows-PSFTrace",  new Guid(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
+        //public Provider etwprovider = new Provider("Microsoft-Windows-PSFTrace",  new Guid(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
+        public Provider etwprovider = new Provider("Microsoft.Windows.PSFRuntime", new Guid(0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1));
         public int EventCounter = 1;
         public bool EventTraceProviderEnablementResultCode, EventTraceProviderSourceResultCode;
         public int LastSearchIndex = -1;

@@ -336,6 +336,7 @@ void LoadConfig()
         g_CurrentExecutable = psf::current_executable_path();
 
         LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
+        LogCountedStringW("g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
         LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
         LogCountedStringW("g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
         LogString("g_PackageRootPath", g_PackageRootPath.c_str());
@@ -434,21 +435,23 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
     {
         auto& appObj = app.as_object();
         auto appId = appObj.get("id").as_string().wstring();
-        
+      
         if (verbose)
         {
-            LogCountedStringW("Compare against json id", appId.data(), appId.length());
+                LogCountedStringW("Compare against json id", appId.data(), appId.length());
         }
-        
+      
         if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {
             return &appObj;
         }
     }
+  
     if (verbose)
     {
         Log("\tNo Matches");
     }
+  
     return nullptr;
 }
 catch (...)

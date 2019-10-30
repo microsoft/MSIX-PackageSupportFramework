@@ -14,6 +14,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     {
         if (guard)
         {
+            Log(L"MoveFileFixup for %ls  %ls", existingFileName, newFileName);
+
             // NOTE: MoveFile needs delete access to the existing file, but since we won't have delete access to the
             //       file if it is in the package, we copy-on-read it here. This is slightly wasteful since we're
             //       copying it only for it to immediately get deleted, but that's simpler than trying to roll our own
@@ -21,8 +23,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             //       well. Additionally, we don't copy-on-read the destination file for the same reason we don't do the
             //       same for CopyFile: we give the application the benefit of the doubt that they previously tried to
             //       delete the file if it exists in the package path.
-            auto [redirectExisting, existingRedirectPath] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
-            auto [redirectDest, destRedirectPath] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectExisting, existingRedirectPath, shouldReadonlSource] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
+            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectExisting || redirectDest)
             {
                 return impl::MoveFile(
@@ -51,10 +53,12 @@ BOOL __stdcall MoveFileExFixup(
     {
         if (guard)
         {
+            Log(L"MoveFileExFixup for %ls  %ls", existingFileName, newFileName);
+
             // See note in MoveFile for commentary on copy-on-read functionality (though we could do better by checking
             // flags for MOVEFILE_REPLACE_EXISTING)
-            auto [redirectExisting, existingRedirectPath] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
-            auto [redirectDest, destRedirectPath] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectExisting, existingRedirectPath, shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
+            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectExisting || redirectDest)
             {
                 return impl::MoveFileEx(
