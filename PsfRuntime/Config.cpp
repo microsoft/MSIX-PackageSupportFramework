@@ -262,13 +262,15 @@ FILE* find_json(std::filesystem::path basefolder)
     WIN32_FIND_DATA FindFileData;
     HANDLE hFind;
 
+#if _DEBUG
     Log("Searching for config in folder: %ls", basefolder.c_str());
+#endif
 
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
     fRet = _wfopen((basefolder / L"config.json").c_str(), L"rb, ccs=UTF-8");
     if (fRet)
     {
-        Log("Found at %ls", (basefolder / L"config.json").c_str());
+        Log("Found config at %ls", (basefolder / L"config.json").c_str());
         return fRet;
     }
     // If not found, enumerate subdirectories recursively until found.

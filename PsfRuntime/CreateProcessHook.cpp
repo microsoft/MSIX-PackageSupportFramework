@@ -150,26 +150,32 @@ BOOL WINAPI CreateProcessFixup(
     fixupPath(finalPackagePath);
     fixupPath(exePath);
 
+#if _DEBUG
     Log("\tPossible injection to process %ls %d.\n",exePath.data(), processInformation->dwProcessId);
+#endif
     if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
         ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
     {
+#if _DEBUG
         Log("\tInject %ls into PID=%d", psf::runtime_dll_name, processInformation->dwProcessId);
+#endif
         // The target executable is in the package, so we _do_ want to fixup it
+
         static const auto pathToPsfRuntime = (PackageRootPath() / psf::runtime_dll_name).string();
         PCSTR targetDll = pathToPsfRuntime.c_str();
         if (!std::filesystem::exists(targetDll))
         {
             // Possibly the dll is in the folder with the exe and not at the package root.
             Log("\t%s not found at package root, try target folder.", targetDll);
-            size_t trimcount = exePath.length() - exePath.rfind(L"\\");
-            iwstring_view justPath = exePath;
-            justPath.remove_suffix(trimcount);
-            std::filesystem::path pathToExeRuntime = justPath;
-            pathToExeRuntime = pathToExeRuntime / psf::runtime_dll_name;
-            targetDll = pathToExeRuntime.string().c_str();
+
+            std::filesystem::path altPathToExeRuntime = exePath.data();
+            static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / psf::runtime_dll_name).string();
+            targetDll = altPathToPsfRuntime.c_str();           
+#if _DEBUG
+            Log("\talt target filename is now %s", altPathToPsfRuntime.c_str());
+#endif
         }
-        Log("\tAttempting injection using %s", targetDll);
+        Log("\tAttempt injection into %d using %s", processInformation->dwProcessId, targetDll);
         if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDll, 1))
         {
             Log("\t%s not found at target folder, try PsfRunDll.", targetDll);
