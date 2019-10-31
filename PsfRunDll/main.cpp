@@ -12,7 +12,7 @@
 
 using EntryPointProc = void (CALLBACK *)(HWND, HINSTANCE, LPSTR, int);
 
-int __stdcall WinMain(HINSTANCE, HINSTANCE, PSTR cmdLine, int cmdShow)
+int __stdcall WinMain(_In_ HINSTANCE, _In_ HINSTANCE, _In_opt_ PSTR cmdLine, _In_ int cmdShow)
 {
     // RUNDLL.EXE <dllname>,<entrypoint> <optional arguments>
     auto dllPath = cmdLine;

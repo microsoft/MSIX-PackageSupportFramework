@@ -19,8 +19,17 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ErrorInformation.h">
+    <ClInclude Include="PsfPowershellScriptRunner.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="StartProcessHelper.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="StartingScriptWrapper.ps1" />
   </ItemGroup>
 </Project>

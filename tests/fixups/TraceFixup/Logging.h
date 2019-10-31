@@ -524,19 +524,19 @@ inline std::string InterpretLZError(INT err)
 // unless someone has a better idea.
 //inline std::string InterpretCallingModule(const char *msg = "Calling Module=")
 //{
-//	std::ostringstream sout;
-//	if (trace_calling_module)
-//	{
-//		HMODULE moduleHandle;
-//		if (::GetModuleHandleExW(
-//			GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-//			reinterpret_cast<const wchar_t*>(_ReturnAddress()),
-//			&moduleHandle))
-//		{
-//			sout << msg << psf::get_module_path(moduleHandle).generic_string();
-//		}
-//	}
-//	return sout.str();
+//    std::ostringstream sout;
+//    if (trace_calling_module)
+//    {
+//        HMODULE moduleHandle;
+//        if (::GetModuleHandleExW(
+//            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+//            reinterpret_cast<const wchar_t*>(_ReturnAddress()),
+//            &moduleHandle))
+//        {
+//            sout << msg << psf::get_module_path(moduleHandle).generic_string();
+//        }
+//    }
+//    return sout.str();
 //}
 
 // RAII type to acquire/release the output lock that also tracks/exposes whether or not the function result should be logged

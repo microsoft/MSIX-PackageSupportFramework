@@ -32,6 +32,9 @@
 	<Content Include="SayWithArgument.ps1">
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	</Content>
+	<Content Include="StartingScriptWrapper.ps1">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
     <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
