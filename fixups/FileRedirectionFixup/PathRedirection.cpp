@@ -30,6 +30,7 @@ std::filesystem::path g_packageRootPath;
 std::filesystem::path g_packageVfsRootPath;
 std::filesystem::path g_redirectRootPath;
 std::filesystem::path g_writablePackageRootPath;
+std::filesystem::path g_finalPackageRootPath;
 
 struct vfs_folder_mapping
 {
@@ -53,6 +54,9 @@ void InitializePaths()
     g_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
 
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
+
+	auto finalPackageRootPath = std::wstring(::PSFQueryFinalPackageRootPath());
+	g_finalPackageRootPath = psf::remove_trailing_path_separators(finalPackageRootPath);
     
     // Ensure that the redirected root path exists
     g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)";
@@ -245,6 +249,7 @@ void Log(const wchar_t* fmt, ...)
         wstr.resize(count);
 #if _DEBUG
         ::OutputDebugStringW(wstr.c_str());
+		::OutputDebugStringW(L"\n");
 #endif
     }
     catch (...)
@@ -807,7 +812,19 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
         Log(L"case: target in package.");
         Log(L"      destinationTargetBase:     %ls", destinationTargetBase.c_str());
         Log(L"      g_writablePackageRootPath: %ls", g_writablePackageRootPath.c_str());
-        auto lengthPackageRootPath =  g_packageRootPath.native().length();
+
+		size_t lengthPackageRootPath = 0;
+		auto pathType = psf::path_type(deVirtualizedFullPath.c_str());
+
+		if (pathType == psf::dos_path_type::drive_absolute)
+		{
+			lengthPackageRootPath = g_packageRootPath.native().length();
+		}
+		else
+		{
+			lengthPackageRootPath = g_finalPackageRootPath.native().length();
+		}
+
         if (_wcsicmp(destinationTargetBase.c_str(), g_writablePackageRootPath.c_str()) == 0)
         {
             Log(L"subcase: redirect to default.");
