@@ -36,6 +36,7 @@ PSFAPI const wchar_t* __stdcall PSFQueryPackageFullName() noexcept;
 PSFAPI const wchar_t* __stdcall PSFQueryApplicationUserModelId() noexcept;
 PSFAPI const wchar_t* __stdcall PSFQueryApplicationId() noexcept;
 PSFAPI const wchar_t* __stdcall PSFQueryPackageRootPath() noexcept;
+PSFAPI const wchar_t* __stdcall PSFQueryFinalPackageRootPath() noexcept;
 
 PSFAPI const psf::json_value* __stdcall PSFQueryConfigRoot() noexcept;
 
