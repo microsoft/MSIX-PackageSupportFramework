@@ -43,6 +43,11 @@ Here is how you can contribute to the Package Support Framework:
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+### Testing your changes.
+Before making a pull request please run the regression tests to make sure your changes did not break existing behavior.
+
+Please head to the tests solution and follow the instructions inside readme.md.
+
 ## Script support
 Scripts allow IT Pros to customize the app for the user environment dynamically. The scripts typically change registry keys or perform file modifications based on the machine or server configuration.
 

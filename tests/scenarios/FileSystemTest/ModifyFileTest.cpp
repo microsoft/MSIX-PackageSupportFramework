@@ -135,7 +135,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     static const char* const second_modify_contents = "You are reading the second write to the redirected file";
     static const char* const unexpected_contents = "This is text that you shouldn't be reading!";
 
-    auto performTest = [&](const std::function<HANDLE(LPCWSTR, DWORD)>& createFunc, const std::filesystem::path& packagePath, const std::filesystem::path& path) -> int
+    auto performTest = [&](const std::function<HANDLE(LPCWSTR, DWORD)>& createFunc, const std::filesystem::path& packagePath) -> int
     {
         // Clean up the redirected path so that existing files don't impact this test
         clean_redirection_path();
@@ -143,7 +143,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         auto result = modifyFile(createFunc, OPEN_ALWAYS, packagePath / filename, initial_contents, first_modify_contents);
         if (result) return result;
 
-        result = modifyFile(createFunc, OPEN_EXISTING, path / filename, first_modify_contents, second_modify_contents);
+        result = modifyFile(createFunc, OPEN_EXISTING, packagePath / filename, first_modify_contents, second_modify_contents);
         if (result) return result;
 
         result = modifyFile(createFunc, OPEN_EXISTING, packagePath / filename, second_modify_contents, unexpected_contents);
@@ -166,23 +166,21 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     };
 
     // Test with full paths
-    auto result = performTest(CreateFileFunc, mapping.package_path, mapping.path);
+    auto result = performTest(CreateFileFunc, mapping.package_path);
     if (result) return result;
 
-    result = performTest(CreateFile2Func, mapping.package_path, mapping.path);
+    result = performTest(CreateFile2Func, mapping.package_path);
     if (result) return result;
 
     // Test with relative paths
     result = performTest(
         CreateFileFunc,
-        mapping.package_path.lexically_relative(std::filesystem::current_path()),
-        mapping.path.lexically_relative(std::filesystem::current_path()));
+        mapping.package_path.lexically_relative(std::filesystem::current_path()));
     if (result) return result;
 
     result = performTest(
         CreateFile2Func,
-        mapping.package_path.lexically_relative(std::filesystem::current_path()),
-        mapping.path.lexically_relative(std::filesystem::current_path()));
+        mapping.package_path.lexically_relative(std::filesystem::current_path()));
     if (result) return result;
 
     // Test with paths containing forward slashes
@@ -190,10 +188,10 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     auto path = mapping.path.native();
     std::replace(packagePath.begin(), packagePath.end(), L'\\', L'/');
     std::replace(path.begin(), path.end(), L'\\', L'/');
-    result = performTest(CreateFileFunc, packagePath, path);
+    result = performTest(CreateFileFunc, packagePath);
     if (result) return result;
 
-    result = performTest(CreateFile2Func, packagePath, path);
+    result = performTest(CreateFile2Func, packagePath);
     if (result) return result;
 
     // Test with root-local device paths
@@ -201,10 +199,10 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     {
         packagePath = LR"(\\?\)"s + mapping.package_path.native();
         path = LR"(\\?\)"s + mapping.path.native();
-        result = performTest(CreateFileFunc, packagePath, path);
+        result = performTest(CreateFileFunc, packagePath);
         if (result) return result;
 
-        result = performTest(CreateFile2Func, packagePath, path);
+        result = performTest(CreateFile2Func, packagePath);
         if (result) return result;
     }
 

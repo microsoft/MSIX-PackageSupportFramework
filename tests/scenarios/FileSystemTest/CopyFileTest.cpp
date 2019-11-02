@@ -50,6 +50,7 @@ static int DoCopyFileTest(
 	trace_messages(L"   Using function: ", info_color, copyFnName, new_line);
 
 	// The initial copy should succeed, even when 'failIfExists' is true
+	write_entire_file(from.c_str(), expectedContents);
 	if (!copyFn(from.c_str(), to.c_str(), true))
 	{
 		return trace_last_error(L"Initial copy of the file failed");

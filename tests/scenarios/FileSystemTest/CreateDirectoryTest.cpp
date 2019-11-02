@@ -39,6 +39,7 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
     }
 
     clean_redirection_path();
+	write_entire_file(L"TèƨƭTè₥ƥℓáƭè\\file.txt", "Testing text");
     trace_message(L"Now calling with CreateDirectoryEx...\n");
     if (::CreateDirectoryExW(L"TèƨƭTè₥ƥℓáƭè", path.c_str(), nullptr))
     {
