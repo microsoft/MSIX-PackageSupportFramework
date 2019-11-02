@@ -76,25 +76,6 @@ static int EnumerateFilesTest(const vfs_mapping& mapping)
             return ERROR_SUCCESS;
         };
 
-		//COmmenting the rest out since writing to the known path and the package path
-		//results in different redirected paths.
-        result = createFile(path, L"á.txt"sv);
-        if (result) return result;
-        result = createFile(packagePath, L"β.txt"sv);
-        if (result) return result;
-
-        // We should find both of these files enumerating either directory
-        auto newFiles = doEnumerate(path, result);
-        if (result) return result;
-        auto newPackageFiles = doEnumerate(packagePath, result);
-        if (result) return result;
-
-        if (!std::includes(newFiles.begin(), newFiles.end(), newPackageFiles.begin(), newPackageFiles.end()))
-        {
-            trace_message(L"ERROR: Found files did not match!\n", error_color);
-            return ERROR_ASSERTION_FAILURE;
-        }
-
         return ERROR_SUCCESS;
     };
 

@@ -13,11 +13,11 @@
 static int DoFileEnumerationTest()
 {
     clean_redirection_path();
-
     trace_messages(L"Enumerating the txt files under: ", info_color, g_testPath.native(), new_line);
 
     // First, create a new file so that FindNextFile actually does something
     write_entire_file((g_testPath / L"other.txt").c_str(), "This is just a dummy file");
+	write_entire_file((g_testPath / L"file.txt").c_str(), "This is just a dummy file");
 
     WIN32_FIND_DATAW data;
     auto findHandle = ::FindFirstFileW((g_testPath / L"*.txt").c_str(), &data);
