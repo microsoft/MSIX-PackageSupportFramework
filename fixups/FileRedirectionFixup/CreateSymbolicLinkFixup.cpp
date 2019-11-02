@@ -17,8 +17,10 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     {
         if (guard)
         {
-            auto [redirectLink, redirectPath] = ShouldRedirect(symlinkFileName, redirect_flags::ensure_directory_structure);
-            auto [redirectTarget, redirectTargetPath] = ShouldRedirect(targetFileName, redirect_flags::copy_on_read);
+            Log(L"CreateSymbolicLinkFixup for %ls  %ls", symlinkFileName, targetFileName);
+
+            auto [redirectLink, redirectPath, shoudReadonlySource] = ShouldRedirect(symlinkFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectTarget, redirectTargetPath, shoudReadonlyDest] = ShouldRedirect(targetFileName, redirect_flags::copy_on_read);
             if (redirectLink || redirectTarget)
             {
                 // NOTE: If the target is a directory, then ideally we would recursively copy its contents to its

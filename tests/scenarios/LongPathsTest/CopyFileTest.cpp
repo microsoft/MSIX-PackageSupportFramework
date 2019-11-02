@@ -14,7 +14,7 @@ static int DoCopyFileTest()
     auto copyPath = g_testPath / L"copy.txt";
     trace_messages(L"Copying from: ", info_color, g_testFilePath.native(), new_line);
     trace_messages(L"          to: ", info_color, copyPath.native(), new_line);
-
+	write_entire_file(g_testFilePath.c_str(), g_expectedFileContents);
     if (!::CopyFileW(g_testFilePath.c_str(), copyPath.c_str(), false))
     {
         return trace_last_error(L"CopyFile failed");

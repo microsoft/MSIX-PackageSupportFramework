@@ -17,14 +17,16 @@ BOOL __stdcall CreateHardLinkFixup(
     {
         if (guard)
         {
+            Log(L"CopyHardLinkFixup for %ls  %ls", fileName, existingFileName);
+
             // NOTE: We need to copy-on-read the existing file since the application may want to open the hard-link file
             //       for write in the future. As for the link file, we currently _don't_ copy-on-read it due to the fact
             //       that we don't handle file deletions as robustly as we could and CreateHardLink will fail if the
             //       link file already exists. I.e. we're giving the application the benefit of the doubt that, if they
             //       are trying to create a hard-link with the same path as a file inside the package, they had
             //       previously attempted to delete that file.
-            auto [redirectLink, redirectPath] = ShouldRedirect(fileName, redirect_flags::ensure_directory_structure);
-            auto [redirectTarget, redirectTargetPath] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
+            auto [redirectLink, redirectPath, shouldReadonlySource] = ShouldRedirect(fileName, redirect_flags::ensure_directory_structure);
+            auto [redirectTarget, redirectTargetPath, shouldReadonlyDest] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
             if (redirectLink || redirectTarget)
             {
                 return impl::CreateHardLink(

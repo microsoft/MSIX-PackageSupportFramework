@@ -83,34 +83,47 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-
-            inputs = "File Name=" + InterpretStringA(libFileName);
-
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs +=  InterpretLastError();
+                inputs = "File Name=" + InterpretStringA(libFileName);
+
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("LoadLibrary", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout << InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("LoadLibrary", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            catch (...)
+            {
+                Log("LoadLibrary event logging failure");
+            }
         }
         else
         {
-        Log("LoadLibrary:\n");
-        LogString("File Name", libFileName);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogLastError();
+            try
+            {
+                Log("LoadLibrary:\n");
+                LogString("File Name", libFileName);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogLastError();
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("LoadLibrary logging failure");
+            }
         }
-        LogCallingModule();
-    }
     }
 
     return result;
@@ -135,35 +148,48 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-
-            inputs = "File Name=" + InterpretStringA(libFileName);
-            inputs += "\n" + InterpretLoadLibraryFlags(flags);
-
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs += InterpretLastError();
+                inputs = "File Name=" + InterpretStringA(libFileName);
+                inputs += "\n" + InterpretLoadLibraryFlags(flags);
+
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("LoadLibraryEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout << InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("LoadLibraryEx", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            catch (...)
+            {
+                Log("LoadLibraryEx event logging failure");
+            }
         }
         else
         {
-        Log("LoadLibraryEx:\n");
-        LogString("File Name", libFileName);
-        LogLoadLibraryFlags(flags);
-        LogFunctionResult(functionResult);
-        if (function_failed(functionResult))
-        {
-            LogLastError();
-        }
-        LogCallingModule();
+            try
+            {
+                Log("LoadLibraryEx:\n");
+                LogString("File Name", libFileName);
+                LogLoadLibraryFlags(flags);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogLastError();
+                }
+                LogCallingModule();
+            }
+            catch (...)
+            {
+                Log("LoadLibraryEx logging failure");
+            }
         }
     }
 
@@ -393,33 +419,46 @@ BOOL __stdcall SetDllDirectoryFixup(_In_opt_ const CharT* pathName)
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-
-            inputs = "Path Name" + InterpretStringA(pathName);
-
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs +=  InterpretLastError();
+                inputs = "Path Name" + InterpretStringA(pathName);
+
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("SetDllDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout <<  InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("SetDllDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            catch (...)
+            {
+                Log("SetDllDirectory event logging failure");
+            }
         }
         else
         {
-            Log("SetDllDirectory:\n");
-            LogString("Path Name", pathName);
-            LogFunctionResult(functionResult);
-            if (function_failed(functionResult))
+            try
             {
-                LogLastError();
+                Log("SetDllDirectory:\n");
+                LogString("Path Name", pathName);
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogLastError();
+                }
+                LogCallingModule();
             }
-            LogCallingModule();
+            catch (...)
+            {
+                Log("SetDllDirectory logging failure");
+            }
         }
     }
 
