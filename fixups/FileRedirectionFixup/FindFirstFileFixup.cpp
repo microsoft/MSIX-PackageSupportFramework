@@ -130,7 +130,15 @@ HANDLE __stdcall FindFirstFileExFixup(
         pattern = path.c_str();
     }
 
-    dir = DeVirtualizePath(std::move(dir));
+    // If you change the below logic, or
+	// you you change what goes into RedirectedPath
+	// you need to mirror all changes to ShouldRedirectImpl
+	// in PathRedirection.cpp
+
+	//Basically, what goes into RedirectedPath here also needs to go into 
+	// RedirectedPath in PathRedirection.cpp
+	dir = NormalizePath(dir.drive_absolute_path);
+	dir = VirtualizePath(std::move(dir));
 
     auto result = std::make_unique<find_data>();
     result->redirect_path = RedirectedPath(dir);

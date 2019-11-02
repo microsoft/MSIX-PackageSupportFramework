@@ -946,6 +946,12 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
     Log(L"\t\tFRF DeVirtualized=%ls", normalizedPath.drive_absolute_path);
 
+	// If you change the below logic, or
+	// you you change what goes into RedirectedPath
+	// you need to mirror all changes in FindFirstFileFixup.cpp
+	
+	// Basically, what goes into RedirectedPath here also needs to go into 
+	// FindFirstFileFixup.cpp
     auto vfspath = NormalizePath(path);
     vfspath = VirtualizePath(std::move(vfspath));
     if (vfspath.drive_absolute_path != NULL)
