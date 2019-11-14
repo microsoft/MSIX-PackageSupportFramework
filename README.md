@@ -5,17 +5,17 @@ Here are some common examples where you can find the PSF useful:
 	1. Your app can't find some .dlls when launched, you may need to set your current working directory.
 	You can learn about the required current working directory in the original shortcut before you converted to MSIX.
 	2. The app writes into the install folder. You will typically see it by "ACCESS DENIED" errors in 
-	[Process Monitor] (https://docs.microsoft.com/en-us/sysinternals/downloads/procmon) 
+	[Process Monitor](https://docs.microsoft.com/en-us/sysinternals/downloads/procmon) 
 	As appears in the following image;
 	![ProcMon Logfile](procmon_logfile.png)
 	3. Your app needs to pass parameters to the executable on launch.
-	You can learn more about how to identify compatability issues [here] (https://docs.microsoft.com/en-us/windows/msix/psf/package-support-framework#identify-packaged-application-compatibility-issues)
-	And about the available configurations [here] or in the Documention section below (https://github.com/microsoft/MSIX-PackageSupportFramework/tree/master/PsfLauncher)
+	You can learn more about how to identify compatability issues [here](https://docs.microsoft.com/en-us/windows/msix/psf/package-support-framework#identify-packaged-application-compatibility-issues)
+	And about the available configurations [here] or in the Documention [section below](https://github.com/microsoft/MSIX-PackageSupportFramework/tree/master/PsfLauncher)
 
-We are looking for your feedback, please file any issues or feedback in the [Issues section] (https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) or in our [tech community] (https://techcommunity.microsoft.com/t5/Package-Support-Framework/bd-p/Package-Support)
+We are looking for your feedback, please file any issues or feedback in the [Issues section](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) or in our [tech community](https://techcommunity.microsoft.com/t5/Package-Support-Framework/bd-p/Package-Support)
 
 ## Documentation
-Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/porting/package-support-framework), it will walk you through the main PSF workflows and provides the key documentation. Check out the [PSF scripts support] (https://docs.microsoft.com/en-us/windows/msix/psf/run-scripts-with-package-support-framework) that we recently added to our framework, it provides great flexibility to your packages.
+Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/porting/package-support-framework), it will walk you through the main PSF workflows and provides the key documentation. Check out the [PSF scripts support](https://docs.microsoft.com/en-us/windows/msix/psf/run-scripts-with-package-support-framework) that we recently added to our framework, it provides great flexibility to your packages.
 
 See also:
 * [Package Support Framework package layout](layout.md)
@@ -27,7 +27,7 @@ See also:
 Code licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE).
 
 ## Get the pre-built PSF Binaries
-Download the PSF binaries from [Nuget.org] (https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
+Download the PSF binaries from [Nuget.org](https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
 Treat it just as a .zip file, rename the suffix to .zip and unzip it, you will find the required binaries in the /bin folder. (we are planning to make it easier going forward and locate the binaries directly on GitHub, hold tight😊)
 
 ## Branch structure
