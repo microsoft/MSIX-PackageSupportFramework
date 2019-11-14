@@ -4,8 +4,10 @@ This project provides tools, libraries, documentation and samples for creating a
 Here are some common examples where you can find the PSF useful:
 	1. Your app can't find some .dlls when launched, you may need to set your current working directory.
 	You can learn about the required current working directory in the original shortcut before you converted to MSIX.
-	2. The app writes into the install folder. You will typically see it by "Access Denied" errors in 
+	2. The app writes into the install folder. You will typically see it by "ACCESS DENIED" errors in 
 	[Process Monitor] (https://docs.microsoft.com/en-us/sysinternals/downloads/procmon) 
+	As appears in the following image;
+	![ProcMon Logfile](procmon_logfile.png)
 	3. Your app needs to pass parameters to the executable on launch.
 	You can learn more about how to identify compatability issues [here] (https://docs.microsoft.com/en-us/windows/msix/psf/package-support-framework#identify-packaged-application-compatibility-issues)
 	And about the available configurations [here] or in the Documention section below (https://github.com/microsoft/MSIX-PackageSupportFramework/tree/master/PsfLauncher)
@@ -13,7 +15,7 @@ Here are some common examples where you can find the PSF useful:
 We are looking for your feedback, please file any issues or feedback in the [Issues section] (https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) or in our [tech community] (https://techcommunity.microsoft.com/t5/Package-Support-Framework/bd-p/Package-Support)
 
 ## Documentation
-Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/porting/package-support-framework), it will walk you through the main PSF workflows and provides the key documentation. Check out the [PSF scripts support] (https://docs.microsoft.com/en-us/windows/msix/psf/run-scripts-with-package-support-framework) that we recently added to our framework, it provides great flexibility to yuour packages.
+Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/porting/package-support-framework), it will walk you through the main PSF workflows and provides the key documentation. Check out the [PSF scripts support] (https://docs.microsoft.com/en-us/windows/msix/psf/run-scripts-with-package-support-framework) that we recently added to our framework, it provides great flexibility to your packages.
 
 See also:
 * [Package Support Framework package layout](layout.md)
