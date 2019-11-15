@@ -8,11 +8,9 @@ Here are some common examples where you can find the PSF useful:<br/>
 	[Process Monitor](https://docs.microsoft.com/en-us/sysinternals/downloads/procmon), 
 	as appears in the following image;
 	![ProcMon Logfile](procmon_logfile.png)
-	3. Your app needs to pass arguments to the executable when launched.You can easily configure it, see details in the [following page](https://github.com/microsoft/MSIX-PackageSupportFramework/tree/master/PsfLauncher).
+	3. Your app needs to pass arguments to the executable when launched. You can easily configure it, see details in the [following page](https://github.com/microsoft/MSIX-PackageSupportFramework/tree/master/PsfLauncher).
 	
-	You can learn more about how to identify compatability issues [here](https://docs.microsoft.com/en-us/windows/msix/psf/package-support-framework#identify-packaged-application-compatibility-issues).
-
-We are looking for your feedback, please file any issues or feedback in the [Issues section](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) or in our [tech community](https://techcommunity.microsoft.com/t5/Package-Support-Framework/bd-p/Package-Support).
+You can learn more about how to identify compatability issues [here](https://docs.microsoft.com/en-us/windows/msix/psf/package-support-framework#identify-packaged-application-compatibility-issues). We are looking for your feedback, please file any issues or feedback in the [Issues section](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) or in our [tech community](https://techcommunity.microsoft.com/t5/Package-Support-Framework/bd-p/Package-Support).
 
 ## Documentation
 Check out our [step by step guide](https://docs.microsoft.com/en-us/windows/uwp/porting/package-support-framework), it will walk you through the main PSF workflows and provides the key documentation. Check out the [PSF scripts support](https://docs.microsoft.com/en-us/windows/msix/psf/run-scripts-with-package-support-framework) that we recently added to our framework, it provides great flexibility to your packages.
