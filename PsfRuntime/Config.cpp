@@ -255,47 +255,6 @@ void LogCountedStringW(const char* name, const wchar_t* value, std::size_t lengt
 
 static const psf::json_object* g_CurrentExeConfig = nullptr;
 
-// Note: Recursive
-FILE* find_json(std::filesystem::path basefolder)
-{
-    FILE* fRet = NULL;
-    WIN32_FIND_DATA FindFileData;
-    HANDLE hFind;
-
-#if _DEBUG
-    Log("Searching for config in folder: %ls", basefolder.c_str());
-#endif
-
-#pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-    fRet = _wfopen((basefolder / L"config.json").c_str(), L"rb, ccs=UTF-8");
-    if (fRet)
-    {
-        Log("Found config at %ls", (basefolder / L"config.json").c_str());
-        return fRet;
-    }
-    // If not found, enumerate subdirectories recursively until found.
-    hFind = FindFirstFile((basefolder / L"*").c_str(), &FindFileData);
-    do
-    {
-        if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) !=  0)
-        {
-            std::wstring name = FindFileData.cFileName;
-            if (name.compare(L".") != 0 &&
-                name.compare(L"..") != 0)
-            {
-                std::filesystem::path next = basefolder / FindFileData.cFileName;
-                fRet = find_json(next);
-                if (fRet)
-                {
-                    FindClose(hFind);
-                    return fRet;
-                }
-            }
-        }
-    } while (FindNextFile(hFind, &FindFileData));
-    FindClose(hFind);
-    return NULL;
-}
 
 void load_json()
 {
@@ -304,7 +263,22 @@ void load_json()
     if (!file)
     {
         Log("Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
-        file = find_json(g_PackageRootPath);
+        ///file = find_json(g_PackageRootPath);
+        for (auto& dentry: std::filesystem::recursive_directory_iterator(g_PackageRootPath))
+        {
+            if (dentry.is_character_file())
+            {
+                if (dentry.path().filename().compare(L"config.json") == 0)
+                {
+#if _DEBUG
+                    Log("Found config at: %ls", dentry.path().c_str());
+#endif
+#pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
+                    file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
+                    break;
+                }
+            }
+        }
     }
     if (!file)
     {
