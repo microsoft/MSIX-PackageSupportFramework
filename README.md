@@ -19,7 +19,7 @@ See these articles for core documentation about using the Package Support Framew
 The following additional resources provide additional information about specific scenarios:
 * [Package Support Framework package layout](layout.md)
 * [Package Support Framework NuGet package install](https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
-* [Instructions for authoring your own shim dll](Authoring.md)
+* [Instructions for authoring your own fixup DLL](Authoring.md)
 
 ## Get the pre-built Package Support Framework binaries
 Download the Package Support Framework binaries from [Nuget.org](https://www.nuget.org/packages/Microsoft.PackageSupportFramework). To extract the binaries, rename the package extension to .zip, unzip the file, and locate the binaries in the /bin folder. In a future release we are planning to make it easier to locate the binaries directly on GitHub.
@@ -36,17 +36,17 @@ The **develop** branch has the latest code. Keep in mind that there might be fea
 ## Fixup metadata
 Each fixup and the PSF Launcher has a metadata file in XML format. Each file contains the following:
 
-* Version: The version of the Package Support Framework is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/).
-* Minimum Windows Platform: The minimum windows version required for the fixup or PSF Launcher.
-* Description: A short description of the fixup.
-* WhenToUse: Heuristics on when you should apply the fixup.
+* `Version`: The version of the Package Support Framework is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/).
+* `MinimumWindowsPlatform`: The minimum windows version required for the fixup or PSF Launcher.
+* `Description`: A short description of the fixup.
+* `WhenToUse`: Heuristics on when you should apply the fixup.
 
 The metadata file schema is provided [here](MetadataSchema.xsd).
 
 ## Data/Telemetry
 The Package Support Framework includes telemetry that collects usage data and sends it to Microsoft to help improve our products and services. Read Microsoft's [privacy statement to learn more](https://privacy.microsoft.com/en-US/privacystatement). However, data will be collected only when both of the following conditions are met:
 
-* The Package Support Framework binaries are used from the [NuGet package](https://www.nuget.org/packages?q=packagesupportframework) on a Windows 10 computer.
+* The Package Support Framework binaries are used from the [NuGet package](https://www.nuget.org/packages/Microsoft.PackageSupportFramework) on a Windows 10 computer.
 * The user has enabled collection of data on the computer.
 
 The NuGet package contains signed binaries and will collect usage data from the computer. Telemetry is not collected when the binaries are built locally by cloning the repo or downloading the binaries directly.
