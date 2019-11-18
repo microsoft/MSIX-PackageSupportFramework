@@ -255,10 +255,31 @@ void LogCountedStringW(const char* name, const wchar_t* value, std::size_t lengt
 
 static const psf::json_object* g_CurrentExeConfig = nullptr;
 
+
 void load_json()
 {
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
     auto file = _wfopen((g_PackageRootPath / L"config.json").c_str(), L"rb, ccs=UTF-8");
+    if (!file)
+    {
+        Log("Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
+        ///file = find_json(g_PackageRootPath);
+        for (auto& dentry: std::filesystem::recursive_directory_iterator(g_PackageRootPath))
+        {
+            if (dentry.is_character_file())
+            {
+                if (dentry.path().filename().compare(L"config.json") == 0)
+                {
+#if _DEBUG
+                    Log("Found config at: %ls", dentry.path().c_str());
+#endif
+#pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
+                    file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
+                    break;
+                }
+            }
+        }
+    }
     if (!file)
     {
         throw std::system_error(errno, std::generic_category(), "config.json could not be opened");
@@ -305,7 +326,7 @@ void load_json()
             if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
             {
                 g_CurrentExeConfig = &obj;
-        LogCountedStringW("Processes config match", exe.data(), exe.length());
+                LogCountedStringW("Processes config match", exe.data(), exe.length());
                 break;
             }
             else if (!g_CurrentExeConfig)
