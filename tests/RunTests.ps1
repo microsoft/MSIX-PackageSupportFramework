@@ -1,6 +1,6 @@
 
 $global:failedTests = 0
-
+#$PSScriptRoot = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pfxPath = "$PSScriptRoot\scenarios\signing\CentennialFixupsTestSigningCertificate.pfx"
 
 function RunTest($Arch, $Config)
@@ -31,7 +31,8 @@ function RunTest($Arch, $Config)
         Add-AppxPackage "$PSScriptRoot\scenarios\Appx\*.appx" | Out-Null
 
         # Finally, execute the actual test. Note that the architecture of the runner doesn't actually matter
-        . x64\Release\TestRunner.exe /onlyPrintSummary
+        #. x64\Release\TestRunner.exe /onlyPrintSummary
+        . x64\Release\TestRunner.exe
         $global:failedTests += $LASTEXITCODE
     }
     finally
