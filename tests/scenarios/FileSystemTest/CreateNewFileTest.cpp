@@ -65,14 +65,14 @@ int CreateFileTest(const vfs_mapping& mapping)
         //       we may hit spurious failures if we try and run the fixed test after the non-fixed test, so try and
         //       delete the file by its path. This is best effort
         ::CloseHandle(file);
-        ::DeleteFileW(path.c_str());
+        BOOL deleteFileResult = ::DeleteFileW(path.c_str());
 
         if (!expectSuccess)
         {
             trace_message(L"ERROR: Expected a failure of ERROR_FILE_NOT_FOUND\n", error_color);
             return ERROR_ASSERTION_FAILURE;
         }
-        else if (::GetLastError())
+        else if (!deleteFileResult)
         {
             return trace_last_error(L"Creating a new file should produce no error");
         }
