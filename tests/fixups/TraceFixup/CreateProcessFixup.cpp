@@ -38,66 +38,80 @@ BOOL __stdcall CreateProcessFixup(
     {
         if (output_method == trace_method::eventlog)
         {
-            std::string inputs = "Application Name=" + InterpretStringA(applicationName) +
-                "\nCommand Line=" + InterpretStringA(commandLine);
-            std::string outputs = "Working Directory=" + InterpretStringA(currentDirectory)
-                + "\nInheritHandles-" + bool_to_string(inheritHandles)
-                + "\n" + InterpretProcessCreationFlags(creationFlags);
-            std::string results = "";
-            if (processAttributes)
-                outputs += "ProcessAttributes present.\n"; // cheap way out for now.
-            if (environment)
+            try
             {
-                outputs += "Environment:\n";
-                for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
+                std::string inputs = "Application Name=" + InterpretStringA(applicationName)
+                    + "\nCommand Line=" + InterpretStringA(commandLine);
+                std::string outputs = "Working Directory=" + InterpretStringA(currentDirectory)
+                    + "\nInheritHandles-" + bool_to_string(inheritHandles)
+                    + "\n" + InterpretProcessCreationFlags(creationFlags);
+                std::string results = "";
+                if (processAttributes)
+                    outputs += "ProcessAttributes present.\n"; // cheap way out for now.
+                if (environment)
                 {
-                    outputs += "\t" + InterpretStringA(ptr) + "\n";
+                    outputs += "Environment:\n";
+                    for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
+                    {
+                        outputs += "\t" + InterpretStringA(ptr) + "\n";
+                    }
                 }
-            }
 
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("CreateProcess", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
             {
-                outputs +=  InterpretLastError();
+                Log("CreateProces event logging failure");
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout << InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("CreateProcess", inputs.c_str(), results.c_str() , outputs.c_str(),cm.c_str(), TickStart, TickEnd);
         }
         else
         {
-            Log("CreateProcess:\n");
-            if (applicationName) LogString("Application Name", applicationName);
-            if (commandLine) LogString("Command Line", commandLine);
-            if (currentDirectory) LogString("Working Directory", currentDirectory);
-            LogBool("Inherit Handles", inheritHandles);
-            LogProcessCreationFlags(creationFlags);
-            if (environment)
+            try
             {
-                Log("\tEnvironment:\n");
-                for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
+                Log("CreateProcess:\n");
+                if (applicationName) LogString("Application Name", applicationName);
+                if (commandLine) LogString("Command Line", commandLine);
+                if (currentDirectory) LogString("Working Directory", currentDirectory);
+                LogBool("Inherit Handles", inheritHandles);
+                LogProcessCreationFlags(creationFlags);
+                if (environment)
                 {
-                    if constexpr (psf::is_ansi<CharT>)
+                    Log("\tEnvironment:\n");
+                    for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
                     {
-                        Log("\t\t%s\n", ptr);
-                    }
-                    else
-                    {
-                        Log("\t\t%ls\n", ptr);
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            Log("\t\t%s\n", ptr);
+                        }
+                        else
+                        {
+                            Log("\t\t%ls\n", ptr);
+                        }
                     }
                 }
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogLastError();
+                }
+                LogCallingModule();
             }
-            LogFunctionResult(functionResult);
-            if (function_failed(functionResult))
+            catch (...)
             {
-                LogLastError();
+                Log("CreateProces logging failure");
             }
-            LogCallingModule();
         }
     }
 
@@ -132,70 +146,84 @@ BOOL __stdcall CreateProcessAsUserFixup(
     {
         if (output_method == trace_method::eventlog)
         {
-            std::string inputs = "Application Name=" + InterpretStringA(applicationName) +
-                "\nCommand Line=" + InterpretStringA(commandLine);
-            std::string outputs = "Working Directory=" + InterpretStringA(currentDirectory)
+            try
+            {
+                std::string inputs = "Application Name=" + InterpretStringA(applicationName) +
+                    "\nCommand Line=" + InterpretStringA(commandLine);
+                std::string outputs = "Working Directory=" + InterpretStringA(currentDirectory)
                     + "\nInheritHandles-" + bool_to_string(inheritHandles)
                     + "\n" + InterpretProcessCreationFlags(creationFlags);
-            std::string results = "";
-            if (processAttributes)
-                outputs += "\nProcessAttributes present."; // cheap way out for now.
-            if (environment)
-            {
-                outputs += "\nEnvironment:";
-                for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
+                std::string results = "";
+                if (processAttributes)
+                    outputs += "\nProcessAttributes present."; // cheap way out for now.
+                if (environment)
                 {
-                    outputs += "\n\t" + InterpretStringA(ptr);
+                    outputs += "\nEnvironment:";
+                    for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
+                    {
+                        outputs += "\n\t" + InterpretStringA(ptr);
+                    }
                 }
-            }
-            std::ostringstream sout1;
-            sout1 << "\nToken=0x" << std::uppercase << std::setfill('0') << std::setw(16) << std::hex << token;
-            outputs += sout1.str();
+                std::ostringstream sout1;
+                sout1 << "\nToken=0x" << std::uppercase << std::setfill('0') << std::setw(16) << std::hex << token;
+                outputs += sout1.str();
 
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += "\n" + InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("CreateProcessAsUser", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
             {
-                outputs += "\n" + InterpretLastError();
+                Log("CreateProcesAsUser event logging failure");
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout << InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("CreateProcessAsUser", inputs.c_str(), results.c_str(), outputs.c_str(),cm.c_str(), TickStart, TickEnd);
         }
         else
         {
-            Log("CreateProcessAsUser:\n");
-            if (applicationName) LogString("Application Name", applicationName);
-            if (commandLine) LogString("Command Line", commandLine);
-            if (currentDirectory) LogString("Working Directory", currentDirectory);
-            Log("\tToken=%p\n", token);
-            LogBool("Inherit Handles", inheritHandles);
-            LogProcessCreationFlags(creationFlags);
-            if (environment)
+            try
             {
-                Log("\tEnvironment:\n");
-                for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
+                Log("CreateProcessAsUser:\n");
+                if (applicationName) LogString("Application Name", applicationName);
+                if (commandLine) LogString("Command Line", commandLine);
+                if (currentDirectory) LogString("Working Directory", currentDirectory);
+                Log("\tToken=%p\n", token);
+                LogBool("Inherit Handles", inheritHandles);
+                LogProcessCreationFlags(creationFlags);
+                if (environment)
                 {
-                    if constexpr (psf::is_ansi<CharT>)
+                    Log("\tEnvironment:\n");
+                    for (auto ptr = reinterpret_cast<const CharT*>(environment); *ptr; ptr += std::char_traits<CharT>::length(ptr) + 1)
                     {
-                        Log("\t\t%s\n", ptr);
-                    }
-                    else
-                    {
-                        Log("\t\t%ls\n", ptr);
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            Log("\t\t%s\n", ptr);
+                        }
+                        else
+                        {
+                            Log("\t\t%ls\n", ptr);
+                        }
                     }
                 }
+                LogFunctionResult(functionResult);
+                if (function_failed(functionResult))
+                {
+                    LogLastError();
+                }
+                LogCallingModule();
             }
-            LogFunctionResult(functionResult);
-            if (function_failed(functionResult))
+            catch (...)
             {
-                LogLastError();
+                Log("CreateProcesAsUser logging failure");
             }
-            LogCallingModule();
         }
     }
 
