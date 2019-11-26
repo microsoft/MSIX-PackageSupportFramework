@@ -1,0 +1,39 @@
+{
+  "applications": [
+    {
+      "id": "ScriptingSampleOne",
+      "executable": "PSFScriptingSample.exe",
+      "startScript": {
+        "scriptPath": "SpinUpSampleOne.ps1",
+		"showWindow":true
+      },
+      "endScript": {
+          "scriptPath":  "CleaningUp.ps1",
+		  "showWindow":true,
+		  "runOnce":false
+      }
+    },
+    {
+      "id": "ScriptingSampleTwo",
+      "executable": "PSFScriptingSample.exe",
+      "startScript": {
+        "scriptPath": "SpinUpSampleTwo.ps1",
+        "runOnce": false,
+		"showWindow":true
+      },
+      "endScript": {
+        "scriptPath": "CleaningUp.ps1",
+		"showWindow":true,
+		"runOnce":false
+      }
+    }
+  ],
+  "processes": [
+    {
+      "executable": "PSFScriptingSample*"
+    },
+    {
+      "executable": ".*"
+    }
+  ]
+}

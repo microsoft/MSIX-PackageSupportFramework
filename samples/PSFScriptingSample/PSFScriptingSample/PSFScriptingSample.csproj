@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="15.0">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{345429D7-D4CA-404D-BB70-D3FE8FDF45B2}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>PSFScriptingSample</RootNamespace>
+    <AssemblyName>PSFScriptingSample</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SpinUpSampleOne.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SpinUpSampleTwo.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="CleaningUp.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="AppxManifest.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Assets\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="PSFScriptingSample_TemporaryKey.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <!-- Remove all PSF items-->
+  <Target Name="RemoveCopiedPSFItems" AfterTargets="AfterBuild">
+    <ItemGroup>
+      <FilesToClean Include="bin\release\*.lib; bin\release\*.dll; bin\release\PsfLauncher*.exe; bin\release\PsfRunDLL*.exe; bin\release\AppxManifest.xml; bin\release\*.msix; bin\release\*.appx" />
+    </ItemGroup>
+    <Delete Files="@(FilesToClean)" />
+  </Target>
+  <Choose>
+    <When Condition="'$(Platform)'=='x86'">
+	      <ItemGroup>
+        <PSFToCopy Include="..\..\..\Win32\Release\*.exe;..\..\..\Win32\Release\*.lib;..\..\..\Win32\Release\*.dll;..\..\..\Win32\Release\*.ps1;..\..\..\Win32\Release\*.pdb" />
+      </ItemGroup>
+	  </When>
+    <When Condition="'$(Platform)'=='x64'">
+      <ItemGroup>
+        <PSFToCopy Include="..\..\..\x64\Release\*.exe;..\..\..\x64\Release\*.lib;..\..\..\x64\Release\*.dll;..\..\..\x64\Release\*.ps1;..\..\..\x64\Release\*.pdb" />
+      </ItemGroup>
+    </When>
+  </Choose>
+  <!-- Copy PSF bin's to bin\release of this project.-->
+  <Target Name="CopyPSF" AfterTargets="RemoveCopiedPSFItems">
+    <Copy SourceFiles="@(PSFToCopy)" DestinationFolder="bin\release" />
+  </Target>
+  <!-- Replace platform placeholder in the appx manifest-->
+  <Target Name="ReplacePlatformPlaceHolder" AfterTargets="CopyPSF">
+    <Exec Command="powershell .\ReplacePlatform.ps1 $(Platform)" />
+  </Target>
+  <Target Name="MakeAndSignMsix" AfterTargets="ReplacePlatformPlaceHolder">
+    <Exec Command="powershell .\MakeAndSignApp.ps1" />
+  </Target>
+  <Target Name="DeployMsix" AfterTargets="MakeAndSignMsix">
+    <Exec Command="powershell Add-Appxpackage bin\release\PSFScriptingSample.msix" />
+  </Target>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="GenerateMSIX.cmd" />
+    <None Include="MakeAndSignApp.ps1" />
+    <None Include="packages.config" />
+    <None Include="ReplacePlatform.ps1" />
+    <None Include="SignMSIX.cmd" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>@echo off
+"$(MSBuildBinPath)\msbuild.exe" $(SolutionDir)..\..\CentennialFixups.sln /p:platform=x86;configuration=release
+"$(MSBuildBinPath)\msbuild.exe" $(SolutionDir)..\..\CentennialFixups.sln /p:platform=x64;configuration=release
+</PreBuildEvent>
+  </PropertyGroup>
+</Project>
