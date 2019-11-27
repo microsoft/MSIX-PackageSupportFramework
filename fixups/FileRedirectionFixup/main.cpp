@@ -43,6 +43,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
+        ::OutputDebugStringA("FileRedirectionFixup attached");
         InitializePaths();
     }
 
