@@ -199,30 +199,37 @@ std::vector<path_redirection_spec> g_redirectionSpecs;
 
 void Log(const char* fmt, ...)
 {
-
-    va_list args;
-    va_start(args, fmt);
-    std::string str;
-    str.resize(256);
-    std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-    assert(count >= 0);
-    va_end(args);
-
-    if (count > str.size())
+    try
     {
-        str.resize(count);
-
-        va_list args2;
-        va_start(args2, fmt);
-        count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
+        va_list args;
+        va_start(args, fmt);
+        std::string str;
+        str.resize(256);
+        std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
         assert(count >= 0);
-        va_end(args2);
-    }
+        va_end(args);
 
-    str.resize(count);
+        if (count > str.size())
+        {
+            str.resize(count);
+
+            va_list args2;
+            va_start(args2, fmt);
+            count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
+            assert(count >= 0);
+            va_end(args2);
+        }
+
+        str.resize(count);
 #if _DEBUG
-    ::OutputDebugStringA(str.c_str());
+        ::OutputDebugStringA(str.c_str());
 #endif
+    }
+    catch (...)
+    {
+        ::OutputDebugStringA("Exception in Log()");
+        ::OutputDebugStringA(fmt);
+    }
 }
 void Log(const wchar_t* fmt, ...)  
 {
@@ -249,12 +256,13 @@ void Log(const wchar_t* fmt, ...)
         wstr.resize(count);
 #if _DEBUG
         ::OutputDebugStringW(wstr.c_str());
-		::OutputDebugStringW(L"\n");
+		//::OutputDebugStringW(L"\n");
 #endif
     }
     catch (...)
     {
         ::OutputDebugStringA("Exception in wide Log()");
+        ::OutputDebugStringW(fmt);
     }
 }
 
@@ -365,7 +373,7 @@ void InitializeConfiguration()
                           g_redirectionSpecs.back().isReadOnly = IsReadOnlyValue;
                         }
                     }
-                    Log(L"\t\tFRF RULE: Path=%ls retarget=%ls", path.c_str(), redirectTargetBaseValue.c_str());
+                    Log("\t\tFRF RULE: Path=%ls retarget=%ls", path.c_str(), redirectTargetBaseValue.c_str());
                 }
             };
 
@@ -809,7 +817,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
  
     if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
-        Log(L"case: target in package.");
+        Log(L"\t\t\tcase: target in package.");
         Log(L"      destinationTargetBase:     %ls", destinationTargetBase.c_str());
         Log(L"      g_writablePackageRootPath: %ls", g_writablePackageRootPath.c_str());
 
@@ -827,7 +835,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 
         if (_wcsicmp(destinationTargetBase.c_str(), g_writablePackageRootPath.c_str()) == 0)
         {
-            Log(L"subcase: redirect to default.");
+            Log(L"\t\t\tsubcase: redirect to default.");
             // PSF defaulted destination target.
             shouldredirectToPackageRoot = true;
             auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
@@ -835,14 +843,14 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
         }
         else
         {
-            Log(L"subcase: redirect specified.");
+            Log(L"\t\t\tsubcase: redirect specified.");
             // PSF configured destination target: probably a home drive.
             relativePath = L"\\PackageCache\\" + psf::current_package_family_name() +  deVirtualizedPath.full_path.substr(lengthPackageRootPath);
         }
     }
     else
     {
-        Log(L"case: target not in package.");
+        Log(L"\t\t\tcase: target not in package.");
         Log(L"      destinationTargetBase: %ls", destinationTargetBase.c_str());
         Log(L"      g_redirectRootPath:    %ls", g_redirectRootPath.c_str());
         // input location was not in package path.
@@ -855,13 +863,13 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
             // To avoid redirecting everything with the current implementation, the configuration spec should be as specific as possible so that we never get here.
         if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
         {
-            Log(L"subcase: redirect to default.");
+            Log(L"\t\t\tsubcase: redirect to default.");
             // PSF defaulted destination target.
             relativePath = L"\\";
         }
         else
         {
-            Log(L"subcase: redirect specified.");
+            Log(L"\t\t\tsubcase: redirect specified.");
             // PSF  configured destination target: probably a home drive.
             relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + + L"\\VFS\\PackageDrive";
         }
@@ -922,8 +930,15 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     {
         return result;
     }
+    if constexpr (psf::is_ansi<CharT>)
+    {
+        Log("\tFRF Should: for: %s", path);
+    }
+    else
+    {
+        Log("\tFRF Should: for: %ls", path);
+    }
 
-    Log(L"\tFRF Should: for %ls", path);
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
     bool c_copy = flag_set(flags, redirect_flags::copy_file);
     bool c_ensure = flag_set(flags, redirect_flags::ensure_directory_structure);
@@ -1001,12 +1016,24 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                     }
                     else
                     {
-                        Log(L"\t\t\tFRF CASE:match, not existing in package.");   // still might want to redirect anyway
-                        destinationTargetBase = redirectSpec.redirect_targetbase;
-                        //result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
-                        result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
+                        Log(L"\t\t\tFRF CASE:match, not existing in package.");
+                        // If the folder above it exists, we might want to redirect anyway?
+                        std::filesystem::path abs = vfspath.drive_absolute_path;
+                        if (impl::PathExists(abs.parent_path().c_str()))
+                        {
+                            Log(L"\t\t\tFRF SUBCASE: parent folder is in package.");
+                            destinationTargetBase = redirectSpec.redirect_targetbase;
+                            //result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
+                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
+                        }
+                        else
+                        {
+                            Log(L"\t\t\tFRF SUBCASE: parent folder is also not in package.");
+                            result.should_redirect = false;
+                        }
                     }
-                    Log(L"\t\tFRF CASE:match to %ls", result.redirect_path.c_str());
+                    if (result.should_redirect)
+                        Log(L"\t\tFRF CASE:match to %ls", result.redirect_path.c_str());
                 }
                 break;
             }
@@ -1077,11 +1104,11 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                     COPY_FILE_FAIL_IF_EXISTS | COPY_FILE_NO_BUFFERING);
                 if (copyResult)
                 {
-                    Log(L"\t\tFRF CopyFile Success %ls %ls", CopySource.c_str(), result.redirect_path.c_str());
+                    Log("\t\tFRF CopyFile Success %ls %ls", CopySource.c_str(), result.redirect_path.c_str());
                 }
                 else
                 {
-                    Log(L"\t\tFRF CopyFile Fail=0x%x %ls %ls", ::GetLastError(), CopySource.c_str(), result.redirect_path.c_str());
+                    Log("\t\tFRF CopyFile Fail=0x%x %ls %ls", ::GetLastError(), CopySource.c_str(), result.redirect_path.c_str());
                     auto err = ::GetLastError();
                     switch (err)
                     {
@@ -1107,9 +1134,9 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             {
                 copyResult = impl::CreateDirectoryEx(CopySource.c_str(), result.redirect_path.c_str(), nullptr);
                 if (copyResult)
-                    Log(L"\t\tFRF CreateDir Success %ls %ls", CopySource.c_str(), result.redirect_path.c_str());
+                    Log("\t\tFRF CreateDir Success %ls %ls", CopySource.c_str(), result.redirect_path.c_str());
                 else
-                    Log(L"\t\tFRF CreateDir Fail=0x%x %ls %ls", ::GetLastError(), CopySource.c_str(), result.redirect_path.c_str());
+                    Log("\t\tFRF CreateDir Fail=0x%x %ls %ls", ::GetLastError(), CopySource.c_str(), result.redirect_path.c_str());
 #if _DEBUG
                 auto err = ::GetLastError();
                 assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND) || (err == ERROR_ALREADY_EXISTS));

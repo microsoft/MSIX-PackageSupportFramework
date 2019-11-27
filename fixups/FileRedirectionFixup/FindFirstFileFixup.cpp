@@ -96,12 +96,26 @@ HANDLE __stdcall FindFirstFileExFixup(
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-        Log(L"FindFirstFileExFixup for %ls", fileName);
+        if constexpr (psf::is_ansi<CharT>)
+        {
+            Log("\tFindFirstFileExFixup: for: %s", fileName);
+        }
+        else
+        {
+            Log("\tFindFirstFileExFixup: for: %ls", fileName);
+        }
 
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
 
-    Log(L"FindFirstFileEx with %s", fileName);
+    if constexpr (psf::is_ansi<CharT>)
+    {
+        Log("\tFindFirstFileEx: for: %s", fileName);
+    }
+    else
+    {
+        Log("\tFindFirstFileEx: for: %ls", fileName);
+    }
 
     // Split the input into directory and pattern
     auto path = widen(fileName, CP_ACP);
