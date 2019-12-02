@@ -14,7 +14,14 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
     {
         if (guard)
         {
-            Log(L"RemoveDirectoryFixup for %ls", pathName);
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                Log("RemoveDirectoryFixup for %s", pathName);
+            }
+            else
+            {
+                Log(L"RemoveDirectoryFixup for %ls", pathName);
+            }
 
             // NOTE: See commentary in DeleteFileFixup for limitations on deleting files/directories
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(pathName, redirect_flags::none);

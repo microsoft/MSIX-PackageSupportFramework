@@ -18,6 +18,14 @@ BOOL __stdcall WritePrivateProfileStringFixup(
     {
         if (guard)
         {
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                Log("WritePrivateProfileStringFixup for %s", fileName);
+            }
+            else
+            {
+                Log(L"WritePrivateProfileStringFixup for %ls", fileName);
+            }
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {

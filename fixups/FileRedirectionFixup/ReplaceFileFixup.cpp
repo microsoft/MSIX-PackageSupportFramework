@@ -20,6 +20,14 @@ BOOL __stdcall ReplaceFileFixup(
     {
         if (guard)
         {
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                Log("ReplaceFileFixup for %s   %s", replacedFileName, replacementFileName);
+            }
+            else
+            {
+                Log(L"ReplaceFileFixup for %ls   %ls", replacedFileName, replacementFileName);
+            }
             Log(L"ReplaceFileFixup for %ls   %ls", replacedFileName, replacementFileName);
 
             // NOTE: ReplaceFile will delete the "replacement file" (the file we're copying from), so therefore we need
