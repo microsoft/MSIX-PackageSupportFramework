@@ -36,6 +36,15 @@
           <runOnce>false</runOnce>
         </startScript>
       </application>
+      <application>
+        <id>PSScriptInVirtual</id>
+        <executable>PowershellScriptTest.exe</executable>
+        <startScript>
+          <scriptPath>SayHello.ps1</scriptPath>
+          <runInVirtualEnvironment>true</runInVirtualEnvironment>
+          <runOnce>false</runOnce>
+        </startScript>
+      </application>
     </applications>
     <processes>
       <process>

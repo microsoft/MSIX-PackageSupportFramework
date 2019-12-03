@@ -15,7 +15,7 @@
             <executable>.*</executable>
             <fixups>
                 <fixup>
-                    <dll>FileRedirectionFixup.dll</dll>
+                    <dll>FileRedirection.dll</dll>
                     <config>
                         <redirectedPaths>
                           <packageRelative>
