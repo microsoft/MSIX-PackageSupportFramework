@@ -93,12 +93,10 @@
                                 "default": "<xsl:value-of select="config/traceLevels/default"/>"
                             }
                         }
-                        <xsl:if test="position()!=last()">
-                            ,
-                        </xsl:if>
                     </xsl:if>
                     <xsl:if test="contains($dllName, 'FileRedirection')">
-                        ,"config":
+                        ,
+                        "config":
                         {
                             "redirectedPaths": {
                                 <xsl:if test="config/redirectedPaths/packageRelative">
@@ -137,6 +135,9 @@
                                         }
                                     </xsl:for-each>
                                     ]
+                                    <xsl:if test="config/redirectedPaths/knownFolders">
+                                        ,
+                                    </xsl:if>
                                 </xsl:if>
                                 <xsl:if test="config/redirectedPaths/knownFolders">
                                     "knownFolders": [
