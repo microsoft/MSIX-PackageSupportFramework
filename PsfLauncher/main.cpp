@@ -159,9 +159,10 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
             Sleep(5000);
         }
 
-        DWORD exitCode{};
-        THROW_LAST_ERROR_IF_MSG(!GetExitCodeProcess(shExInfo.hProcess, &exitCode), "Could not get error for process");
-        THROW_IF_WIN32_ERROR(exitCode);
+        // Should not kill the intended app because the monitor elevated.
+        //DWORD exitCode{};
+        //THROW_LAST_ERROR_IF_MSG(!GetExitCodeProcess(shExInfo.hProcess, &exitCode), "Could not get error for process");
+        //THROW_IF_WIN32_ERROR(exitCode);
     }
     else
     {
