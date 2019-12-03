@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>PSNoScripts</id>
+            <executable>PowershellScriptTest.exe</executable>
+        </application>
+      <application>
+        <id>PSOnlyStart</id>
+        <executable>PowershellScriptTest.exe</executable>
+        <startScript>
+          <scriptPath>SayHello.ps1</scriptPath>
+          <runOnce>false</runOnce>
+        </startScript>
+      </application>
+      <application>
+        <id>PSBothStartingFirst</id>
+        <executable>PowershellScriptTest.exe</executable>
+        <startScript>
+          <scriptPath>SayHello.ps1</scriptPath>
+          <runOnce>false</runOnce>
+        </startScript>
+        <endScript>
+          <scriptPath>SayHi.ps1</scriptPath>
+          <runOnce>false</runOnce>
+        </endScript>
+      </application>
+      <!-- I am omitting PSBothEndingFirst because the xsl file will always put
+      the starting script first in the json configuration-->
+      <application>
+        <id>PSScriptWithArg</id>
+        <executable>PowershellScriptTest.exe</executable>
+        <startScript>
+          <scriptPath>SayWithArgument.ps1</scriptPath>
+          <scriptArguments>Start</scriptArguments>
+          <runOnce>false</runOnce>
+        </startScript>
+      </application>
+      <application>
+        <id>PSScriptInVirtual</id>
+        <executable>PowershellScriptTest.exe</executable>
+        <startScript>
+          <scriptPath>SayHello.ps1</scriptPath>
+          <runInVirtualEnvironment>true</runInVirtualEnvironment>
+          <runOnce>false</runOnce>
+        </startScript>
+      </application>
+    </applications>
+    <processes>
+      <process>
+        <executable>PowershellScriptTest.*</executable>
+      </process>
+      <process>
+        <executable>.*</executable>
+      </process>
+    </processes>
+</configuration>
