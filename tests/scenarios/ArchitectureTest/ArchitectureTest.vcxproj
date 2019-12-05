@@ -32,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppxManifest.xml" />
+    <Xml Include="Config.xml" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
