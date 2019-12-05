@@ -110,4 +110,16 @@ foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
 
 Write-Host "$failedTests tests have failed"
 
+Write-host "Running tests with xml configurations converted to json"
+foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
+{
+    push-location $dir.fullName
+    
+    if(Test-Path Config.json)
+    {
+        Copy-Item Config.json -destination Config.json_bak
+    }
+}
+
+
 Exit $failedTests
