@@ -65,6 +65,9 @@
     <Xml Include="AppxManifest.xml">
       <Filter>pkg</Filter>
     </Xml>
+    <Xml Include="Config.xml">
+      <Filter>pkg</Filter>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <Text Include="FileMapping.txt">
