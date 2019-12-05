@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppxManifest.xml" />
+    <Xml Include="Config.xml" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="FileMapping.txt" />
