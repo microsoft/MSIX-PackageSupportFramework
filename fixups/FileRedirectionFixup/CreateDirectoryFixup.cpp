@@ -14,14 +14,8 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("CreateDirectoryFixup for %s", pathName);
-            }
-            else
-            {
-                Log(L"CreateDirectoryFixup for %ls", pathName);
-            }
+            LogString(L"CreateDirectoryFixup for path", pathName);
+            
             auto [shouldRedirect, redirectPath,shouldReadonlySource] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure);
             if (shouldRedirect)
             {

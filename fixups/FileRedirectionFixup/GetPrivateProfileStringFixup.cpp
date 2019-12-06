@@ -20,14 +20,8 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("GetPrivateProfileStringFixup for %s", fileName);
-            }
-            else
-            {
-                Log(L"GetPrivateProfileStringFixup for %ls", fileName);
-            }
+            LogString(L"GetPrivateProfileStringFixup for fileName", fileName);
+            
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {

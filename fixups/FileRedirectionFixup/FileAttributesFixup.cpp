@@ -14,14 +14,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("GetFileAttributesFixup for %s", fileName);
-            }
-            else
-            {
-                Log(L"GetFileAttributesFixup for %ls", fileName);
-            }
+            LogString(L"GetFileAttributesFixup for fileName", fileName);
 
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
@@ -84,14 +77,7 @@ BOOL __stdcall GetFileAttributesExFixup(
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("GetFileAttributesExFixup for %s", fileName);
-            }
-            else
-            {
-                Log(L"GetFileAttributesExFixup for %ls", fileName);
-            }
+            LogString(L"GetFileAttributesExFixup for fileName", fileName);
 
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence);
             if (shouldRedirect)
@@ -164,14 +150,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("SetFileAttributesFixup for %s", fileName);
-            }
-            else
-            {
-                Log(L"SetFileAttributesFixup for %ls", fileName);
-            }
+            LogString(L"SetFileAttributesFixup for fileName", fileName);
 
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)

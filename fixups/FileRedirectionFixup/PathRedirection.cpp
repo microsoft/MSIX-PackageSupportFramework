@@ -242,7 +242,6 @@ void Log(const wchar_t* fmt, ...)
         wstr.resize(256);
         std::size_t count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args);
         va_end(args);
-        assert(count >= 0);
 
         if (count > wstr.size())
         {
@@ -251,7 +250,6 @@ void Log(const wchar_t* fmt, ...)
             va_start(args2, fmt);
             count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
             va_end(args2);
-            assert(count >= 0);
         }
         wstr.resize(count);
 #if _DEBUG
@@ -264,6 +262,22 @@ void Log(const wchar_t* fmt, ...)
         ::OutputDebugStringA("Exception in wide Log()");
         ::OutputDebugStringW(fmt);
     }
+}
+void LogString(const char* name, const char* value)
+{
+    Log("%s=%s\n", name, value);
+}
+void LogString(const char* name, const wchar_t* value)
+{
+    Log("%s=%ls\n", name, value);
+}
+void LogString(const wchar_t* name, const char* value)
+{
+    Log("%ls=%s\n", name, value);
+}
+void LogString(const wchar_t* name, const wchar_t* value)
+{
+    Log(L"%ls=%ls\n", name, value);
 }
 
 template <typename CharT>
@@ -611,7 +625,7 @@ normalized_path NormalizePathImpl(const CharT* path)
     else
     {
         // GetFullPathName did something odd...
-        Log(L"\t\tFRF Error: Path=%ls unknown", path);
+        LogString(L"\t\tFRF Error: Path unknown", path);
         assert(false);
         return {};
     }
@@ -736,15 +750,15 @@ normalized_path VirtualizePath(normalized_path path)
         auto& mapping = *iter;
         if (path_relative_to(path.full_path.c_str(), mapping.path))
         {
-            Log(L"\t\t\t mapping entry match on path %ls", mapping.path.wstring().c_str());
-            Log(L"\t\t\t package_vfs_relative_path %ls", mapping.package_vfs_relative_path.native().c_str());
+            LogString(L"\t\t\t mapping entry match on path", mapping.path.wstring().c_str());
+            LogString(L"\t\t\t package_vfs_relative_path", mapping.package_vfs_relative_path.native().c_str());
             Log(L"\t\t\t rel length =%d, %d", mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
             auto vfsRelativePath = path.full_path.c_str() + mapping.path.native().length();
             if (psf::is_path_separator(vfsRelativePath[0]))
             {
                 ++vfsRelativePath;
             }
-            Log(L"\t\t\t vfsRelativePath %ls", vfsRelativePath);
+            LogString(L"\t\t\t vfsRelativePath", vfsRelativePath);
             path.full_path = (g_packageVfsRootPath / mapping.package_vfs_relative_path / vfsRelativePath).native();
             path.drive_absolute_path = path.full_path.data();
             return path;
@@ -760,7 +774,7 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
     {
         for (std::size_t pos = 0; pos < relativePath.length(); )
         {
-            Log(L"\t\tCreate dir: %ls", result.c_str());
+            LogString(L"\t\tCreate dir", result.c_str());
             [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
 #if _DEBUG
             auto err = ::GetLastError();
@@ -818,8 +832,8 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
         Log(L"\t\t\tcase: target in package.");
-        Log(L"      destinationTargetBase:     %ls", destinationTargetBase.c_str());
-        Log(L"      g_writablePackageRootPath: %ls", g_writablePackageRootPath.c_str());
+        LogString(L"      destinationTargetBase:     ", destinationTargetBase.c_str());
+        LogString(L"      g_writablePackageRootPath: ", g_writablePackageRootPath.c_str());
 
 		size_t lengthPackageRootPath = 0;
 		auto pathType = psf::path_type(deVirtualizedFullPath.c_str());
@@ -851,8 +865,8 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     else
     {
         Log(L"\t\t\tcase: target not in package.");
-        Log(L"      destinationTargetBase: %ls", destinationTargetBase.c_str());
-        Log(L"      g_redirectRootPath:    %ls", g_redirectRootPath.c_str());
+        LogString(L"      destinationTargetBase: ", destinationTargetBase.c_str());
+        LogString(L"      g_redirectRootPath:    ", g_redirectRootPath.c_str());
         // input location was not in package path.
             // TODO: Currently, this code redirects always.  We probably don't want to do that!
             //       Ideally, we should look closer at the request; the text below is an example of what might be needed.
@@ -888,7 +902,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 
     ////Log(L"\tFRF devirt.full_path %ls", deVirtualizedPath.full_path.c_str());
     ////Log(L"\tFRF devirt.da_path %ls", deVirtualizedPath.drive_absolute_path);
-    Log(L"\tFRF initial basePath=%ls relative=%ls", basePath.c_str(),relativePath.c_str());
+    Log("\tFRF initial basePath=%ls relative=%ls", basePath.c_str(),relativePath.c_str());
 
     // Create folder structure, if needed
     if (impl::PathExists( (basePath +  relativePath).c_str()))
@@ -903,12 +917,12 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
         if (shouldredirectToPackageRoot)
         {
             result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
-            Log(L"\t\tFRF shouldredirectToPackageRoot case returns %ls.", result.c_str());
+            LogString("\t\tFRF shouldredirectToPackageRoot case returns result", result.c_str());
         }
         else
         {
             result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
-            Log(L"\t\tFRF not to PackageRoot case returns %ls.", result.c_str());
+            LogString("\t\tFRF not to PackageRoot case returns result", result.c_str());
         }       
        
     }
@@ -930,14 +944,8 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     {
         return result;
     }
-    if constexpr (psf::is_ansi<CharT>)
-    {
-        Log("\tFRF Should: for: %s", path);
-    }
-    else
-    {
-        Log("\tFRF Should: for: %ls", path);
-    }
+    LogString("\tFRF Should: for path", path);
+    
 
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
     bool c_copy = flag_set(flags, redirect_flags::copy_file);
@@ -955,11 +963,11 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         return result;
     }
 
-    Log(L"\t\tFRF Normalized=%ls", normalizedPath.drive_absolute_path);
+    LogString(L"\t\tFRF Normalized", normalizedPath.drive_absolute_path);
     // To be consistent in where we redirect files, we need to map VFS paths to their non-package-relative equivalent
     normalizedPath = DeVirtualizePath(std::move(normalizedPath));
 
-    Log(L"\t\tFRF DeVirtualized=%ls", normalizedPath.drive_absolute_path);
+    LogString(L"\t\tFRF DeVirtualized", normalizedPath.drive_absolute_path);
 
 	// If you change the below logic, or
 	// you you change what goes into RedirectedPath
@@ -971,16 +979,16 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     vfspath = VirtualizePath(std::move(vfspath));
     if (vfspath.drive_absolute_path != NULL)
     {
-        Log(L"\t\tFRF Virtualized=%ls", vfspath.drive_absolute_path);
+        LogString(L"\t\tFRF Virtualized", vfspath.drive_absolute_path);
     }
 
     // Figure out if this is something we need to redirect
     for (auto& redirectSpec : g_redirectionSpecs)
     {
-        Log(L"\t\tFRF Check against: base:%ls", redirectSpec.base_path.c_str());
+        LogString(L"\t\tFRF Check against: base", redirectSpec.base_path.c_str());
         if (path_relative_to(vfspath.drive_absolute_path, redirectSpec.base_path))
         {
-            Log(L"\t\tFRF In ball park of base %ls", redirectSpec.base_path.c_str());
+            LogString(L"\t\tFRF In ball park of base", redirectSpec.base_path.c_str());
             auto relativePath = vfspath.drive_absolute_path + redirectSpec.base_path.native().length();
             if (psf::is_path_separator(relativePath[0]))
             {
@@ -993,14 +1001,14 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             }
             // Otherwise exact match. Assume an implicit directory separator at the end (e.g. for matches to satisfy the
             // first call to CreateDirectory
-            Log(L"\t\t\tFRF relativePath=%ls",relativePath);
+            LogString(L"\t\t\tFRF relativePath",relativePath);
             if (std::regex_match(relativePath, redirectSpec.pattern))
             {
                 if (redirectSpec.isExclusion)
                 {
                     // The impact on isExclusion is that redirection is not needed.
                     result.should_redirect = false;
-                    Log(L"\t\tFRF CASE:Exclusion for %ls", path);
+                    LogString(L"\t\tFRF CASE:Exclusion for path", path);
                 }
                 else
                 {
@@ -1033,18 +1041,18 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                         }
                     }
                     if (result.should_redirect)
-                        Log(L"\t\tFRF CASE:match to %ls", result.redirect_path.c_str());
+                        LogString(L"\t\tFRF CASE:match on redirect_path", result.redirect_path.c_str());
                 }
                 break;
             }
             else
             {
-                Log(L"\t\tFRF no match on parse %ls", relativePath);
+                LogString(L"\t\tFRF no match on parse relativePath", relativePath);
             }
         }
         else
         {
-            Log(L"\t\tFRF Not in ball park of base %ls", redirectSpec.base_path.c_str());
+            LogString(L"\t\tFRF Not in ball park of base", redirectSpec.base_path.c_str());
         }
     }
 
@@ -1053,7 +1061,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
     if (!result.should_redirect)
     {
-        Log(L"\tFRF no redirect rule for %ls", path);
+        LogString(L"\tFRF no redirect rule for path", path);       
         return result;
     }
 
@@ -1067,7 +1075,8 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         {
             result.should_redirect = false;
             result.redirect_path.clear();
-            Log(L"\tFRF skipped (redirected not present check failed) for %ls", path);
+
+            LogString(L"\tFRF skipped (redirected not present check failed) for path", path);
             return result;
         }
     }
@@ -1148,7 +1157,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     
     Log(L"\t\tFRF post check 7");
     //Log(L"\tFRF Redirect from %ls", path);
-    Log(L"\tFRF Should: Redirect to %ls", result.redirect_path.c_str());
+    LogString(L"\tFRF Should: Redirect to result", result.redirect_path.c_str());
 
     return result;
 }

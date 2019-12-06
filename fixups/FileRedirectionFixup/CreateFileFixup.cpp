@@ -59,14 +59,8 @@ HANDLE __stdcall CreateFileFixup(
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("CreateFileFixup for %s", fileName);
-            }
-            else
-            {
-                Log(L"CreateFileFixup for %ls", fileName);
-            }
+            LogString(L"CreateFileFixup for fileName", fileName);
+            
             // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
             //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
