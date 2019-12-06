@@ -72,11 +72,12 @@ private:
 		DWORD timeout = INFINITE;
 		bool shouldRunOnce = true;
 		int showWindowAction = SW_HIDE;
-		bool runInVirtualEnvironment = true;
 		bool waitForScriptToFinish = true;
 		bool stopOnScriptError = false;
 		std::filesystem::path currentDirectory;
 		bool doesScriptExistInConfig = false;
+		LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr;
+
 	};
 
 	ScriptInformation startingScriptInformation;
@@ -101,7 +102,7 @@ private:
 
 		if (script.waitForScriptToFinish)
 		{
-			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.runInVirtualEnvironment, script.timeout);
+			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
 
 			if (script.stopOnScriptError)
 			{
@@ -111,7 +112,7 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.runInVirtualEnvironment, script.timeout);
+			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, nullptr);
 		}
 	}
 
@@ -123,10 +124,10 @@ private:
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
-		scriptStruct.runInVirtualEnvironment = GetRunInVirtualEnvironment(*scriptInformation);
 		scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
 		scriptStruct.stopOnScriptError = stopOnScriptError;
 		scriptStruct.currentDirectory = currentDirectory;
+		scriptStruct.attributeList = MakeAttributeList();
 
 		//Async script run with a termination on failure is not a supported scenario.
 		//Supporting this scenario would mean force terminating an executing user process
@@ -221,17 +222,6 @@ private:
 		return SW_HIDE;
 	}
 
-	bool GetRunInVirtualEnvironment(const psf::json_object& scriptInformation)
-	{
-		auto runInVirtualEnvironmentJObject = scriptInformation.try_get("runInVirtualEnvironment");
-		if (runInVirtualEnvironmentJObject)
-		{
-			return runInVirtualEnvironmentJObject->as_boolean().get();
-		}
-
-		return true;
-	}
-
 	bool GetWaitForScriptToFinish(const psf::json_object& scriptInformation)
 	{
 		auto waitForStartingScriptToFinishObject = scriptInformation.try_get("waitForScriptToFinish");
@@ -297,5 +287,39 @@ private:
 		}
 
 		return true;
+	}
+
+	LPPROC_THREAD_ATTRIBUTE_LIST MakeAttributeList()
+	{
+		LPPROC_THREAD_ATTRIBUTE_LIST attrbuteList;
+		SIZE_T AttributeListSize{};
+		InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
+		attrbuteList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
+			GetProcessHeap(),
+			0,
+			AttributeListSize
+		);
+
+		THROW_LAST_ERROR_IF_MSG(
+			!InitializeProcThreadAttributeList(
+				attrbuteList,
+				1,
+				0,
+				&AttributeListSize),
+			"Could not initialize the proc thread attribute list.");
+
+		DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
+		THROW_LAST_ERROR_IF_MSG(
+			!UpdateProcThreadAttribute(
+				attrbuteList,
+				0,
+				PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
+				&attribute,
+				sizeof(attribute),
+				nullptr,
+				nullptr),
+			"Could not update Proc thread attribute.");
+
+		return attrbuteList;
 	}
 };
