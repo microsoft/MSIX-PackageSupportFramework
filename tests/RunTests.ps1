@@ -77,6 +77,8 @@ foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
     {
         Copy-Item Config.json -destination Config.json_bak
     }
+    
+    start-process -FilePath ..\..\..\xmlToJsonConverter\msxsl.exe -ArgumentList "config.xml ..\..\..\xmlToJsonConverter\Formal.xsl -o config.json"
 }
 
 
