@@ -92,13 +92,6 @@ int wmain(int argc, const wchar_t** argv)
             result = ERROR_FILE_NOT_FOUND;
         }
     }
-    else if(testType.compare(L"psscriptinvirtual") == 0)
-    {
-        if (!doesHelloExist)
-        {
-            result = ERROR_FILE_NOT_FOUND;
-        }
-    }
 
 
     RemoveFile(localAppDataPath, L"Hello.txt");
