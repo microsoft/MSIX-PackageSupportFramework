@@ -112,7 +112,6 @@ The following are the configuration items available for the scripts.  The ending
 |-------------------------|------------|-----------|----------|---------|
 | scriptPath              | string     | Yes       | N/A      | The path to the script including the name and extension.  The Path starts from the root directory of the application.
 | scriptArguments         | string     | No        | empty    | Space delimited argument list.  The format is the same for a PowerShell script call.  This string gets appended to scriptPath to make a valid PowerShell.exe call.
-| runInVirtualEnvironment | boolean    | No        | true     | If the script should run in the same virtual environment that the packaged exe runs in.
 | runOnce                 | boolean    | No        | true     | If the script should run once per user, per version.
 | showWindow              | boolean    | No        | false    | If the powershell window is shown.
 | waitForScriptToFinish   | boolean    | No        | true     | If the packaged exe should wait for the starting script to finish before starting.
@@ -128,36 +127,34 @@ Here is a sample configuration using two different exes.
       "executable": "Sample.exe",
       "workingDirectory": "",
       "stopOnScriptError": false,
-	  "startScript":
-	  {
-		"scriptPath": "RunMePlease.ps1",
-		"scriptArguments": "\\\"First argument\\\" secondArgument",
-		"runInVirtualEnvironment": true,
-		"showWindow": true,
-		"waitForScriptToFinish": false
-	  },
-	  "endScript":
-	  {
-		"scriptPath": "RunMeAfter.ps1",
-		"scriptArguments": "ThisIsMe.txt"
-	  }
+    "startScript":
+    {
+        "scriptPath": "RunMePlease.ps1",
+        "scriptArguments": "\\\"First argument\\\" secondArgument",
+        "showWindow": true,
+        "waitForScriptToFinish": false
     },
-	{
+    "endScript":
+    {
+        "scriptPath": "RunMeAfter.ps1",
+        "scriptArguments": "ThisIsMe.txt"
+    }
+    },
+    {
       "id": "CPPSample",
       "executable": "CPPSample.exe",
       "workingDirectory": "",
-	  "startScript":
-	  {
-		"scriptPath": "CPPStart.ps1",
-		"scriptArguments": "ThisIsMe.txt",
-		"runInVirtualEnvironment": true
-	  },
-	  "endScript":
-	  {
-		"scriptPath": "CPPEnd.ps1",
-		"scriptArguments": "ThisIsMe.txt",
+    "startScript":
+    {
+        "scriptPath": "CPPStart.ps1",
+        "scriptArguments": "ThisIsMe.txt"
+    },
+    "endScript":
+    {
+        "scriptPath": "CPPEnd.ps1",
+        "scriptArguments": "ThisIsMe.txt",
     "runOnce": false
-	  }
+    }
     }
   ],
   "processes": [
