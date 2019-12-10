@@ -5,8 +5,6 @@
 //-------------------------------------------------------------------------------------------------------
 
 #include <psf_framework.h>
-
-
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
 

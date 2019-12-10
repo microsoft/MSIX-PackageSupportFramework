@@ -254,7 +254,6 @@ void Log(const wchar_t* fmt, ...)
         wstr.resize(count);
 #if _DEBUG
         ::OutputDebugStringW(wstr.c_str());
-		//::OutputDebugStringW(L"\n");
 #endif
     }
     catch (...)
