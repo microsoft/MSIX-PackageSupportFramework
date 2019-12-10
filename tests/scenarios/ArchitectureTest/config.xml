@@ -8,15 +8,14 @@
         <application>
             <id>Fixed64</id>
             <executable>ArchitectureTest64.exe</executable>
-            <endScript>
-                <scriptPath>TheBestScript.ps1</scriptPath>
-                <scriptArguments>BetterArguments</scriptArguments>
-            </endScript>
         </application>
     </applications>
     <processes>
         <process>
             <executable>PsfLauncher.*</executable>
+        </process>
+        <process>
+            <executable>.*</executable>
             <fixups>
                 <fixup>
                     <dll>MultiByteToWideCharTestFixup.dll</dll>
