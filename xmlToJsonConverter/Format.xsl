@@ -16,6 +16,19 @@
             <xsl:if test="stopOnScriptError">
             ,"stopOnScriptError": "<xsl:value-of select="stopOnScriptError"/>"
             </xsl:if>
+            <xsl:if test="monitor">
+            , "monitor" :
+            {
+                "executable": "<xsl:value-of select="monitor/executable"/>"
+                , "arguments": "<xsl:value-of select="monitor/arguments"/>"
+                <xsl:if test="monitor/asadmin">
+                    , "asadmin": <xsl:value-of select="monitor/asadmin"/>"
+                </xsl:if>
+                <xsl:if test="wait">
+                    ,"wait": "<xsl:value-of select="monitor/wait"/>"
+                </xsl:if>
+            }
+            </xsl:if>
             <xsl:if test="startScript">
                 <xsl:variable name="startScriptHeader" select="startScript" />
                 ,"startScript":
