@@ -45,6 +45,12 @@
     <Xml Include="AppxManifest64.xml">
       <Filter>pkg</Filter>
     </Xml>
+    <Xml Include="Config32.xml">
+      <Filter>pkg</Filter>
+    </Xml>
+    <Xml Include="config64.xml">
+      <Filter>pkg</Filter>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <None Include="config32.json">

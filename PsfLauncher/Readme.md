@@ -60,6 +60,46 @@ A possible `config.json` example that includes fixups would be:
     ]
 }
 ```
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>PsfSample</id>
+            <executable>PSFSampleApp/PrimaryApp.exe</executable>
+            <workingDirectory>PSFSampleApp</workingDirectory>
+        </application>
+    </applications>
+    <processes>
+        <process>
+            <executable>PsfLauncher.*</executable>
+        </process>
+        <process>
+            <executable>PSFSample</executable>
+            <fixups>
+                <fixup>
+                    <dll>FileRedirectionFixup.dll</dll>
+                    <config>
+                        <redirectedPaths>
+                            <packageRelative>
+                                <pathConfig>
+                                    <base>PSFSampleApp/</base>
+                                    <patterns>
+                                        <pattern>
+                                            .*\\/log
+                                        </pattern>
+                                    </patterns>
+                                </pathConfig>
+                            </packageRelative>
+                        </redirectedPaths>
+                    </config>
+                </fixup>
+            </fixups>
+        </process>
+    </processes>
+</configuration>
+```
 In this example, the configuration is directing the PsfLauncher to start PsfSample.exe. The CurrentDirectory for that process is set to the folder containing PSFSample.exe.  In the processes section of the example, the json further configures the FileRedirection Fixup to be injected into the PSFSample, and that fixup is configured to perform file redirecton on log files in a particular folder. (See FileRedirectionFixup for additional details and examples on configuring this fixup).
 
 
@@ -121,6 +161,41 @@ A possible `config.json` example that uses the Trace Fixup along with PsfMonitor
         }
         ]
 }
+```
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>PSFLAUNCHERSixFour</id>
+            <executable>PrimaryApp.exe</executable>
+            <arguments>/AddedArg</arguments>
+            <workingDirectory></workingDirectory>
+            <monitor>
+                <executable>PsfMonitor.exe</executable>
+                <arguments></arguments>
+                <asadmin>true</asadmin>
+            </monitor>
+        </application>
+    </applications>
+    <processes>
+        <process>
+            <executable>PrimaryApp$</executable>
+            <fixups>
+                <fixup>
+                    <dll>TraceFixup64.dll</dll>
+                    <config>
+                        <traceMethod>eventLog</traceMethod>
+                        <traceLevels>
+                            <default>always</default>
+                        </traceLevels>
+                    </config>
+                </fixup>
+            </fixups>
+        </process>
+    </processes>
+</configuration>
 ```
 
 In this example, the configuration is directing the PsfLauncher to start PsfMonitor and then the referenced Primary App. PsfMonitor to be run using RunAs (enabling the monitor to also trace at the kernel level), followed by PrimaryApp once the monitoring app is stable. The root folder of the PrimaryApp is used for the CurrentDirectory of the PrimaryApp process.  In the processes section of the example, the json further configures Trace Fixup to be injected into the PrimaryApp, and that is to capture all levels of trace to the event log.

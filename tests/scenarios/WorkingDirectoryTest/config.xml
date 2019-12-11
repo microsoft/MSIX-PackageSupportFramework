@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <applications>
+    <application>
+      <id>Fixed</id>
+      <executable>WorkingDirectoryTest.exe</executable>
+      <workingDirectory>VFS\\ProgramFilesX64\\WorkingDirectoryTest\\</workingDirectory>
+    </application>
+  </applications>
+</configuration>
