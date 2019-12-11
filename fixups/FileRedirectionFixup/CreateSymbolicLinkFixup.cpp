@@ -17,14 +17,8 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("CreateSymbolicLinkFixup for %s %s", symlinkFileName, targetFileName);
-            }
-            else
-            {
-                Log(L"CreateSymbolicLinkFixup for %ls %ls", symlinkFileName, targetFileName);
-            }
+            Log("CreateSymbolicLinkFixup for", symlinkFileName);
+            Log("CreateSymbolicLinkFixup target",  targetFileName);
 
             auto [redirectLink, redirectPath, shoudReadonlySource] = ShouldRedirect(symlinkFileName, redirect_flags::ensure_directory_structure);
             auto [redirectTarget, redirectTargetPath, shoudReadonlyDest] = ShouldRedirect(targetFileName, redirect_flags::copy_on_read);

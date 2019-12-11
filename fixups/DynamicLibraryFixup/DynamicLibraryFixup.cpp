@@ -17,7 +17,7 @@ template <typename CharT>
 HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 {
 #if _DEBUG
-    Log("LoadLibraryFixup called.");
+    LogString("LoadLibraryFixup called for", libFileName);
 #endif
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
@@ -43,12 +43,12 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                 try
                 {
 #if _DEBUG
-                    Log("LoadLibraryFixup testing %ls against %ls", libFileNameW.c_str(), spec.filename.substr(0));
+                    LogString("LoadLibraryFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
                     {
-                        Log("LoadLibraryFixup using %ls", spec.full_filepath.c_str());
+                        LogString("LoadLibraryFixup using", spec.full_filepath.c_str());
                         result = LoadLibraryImpl(spec.full_filepath.c_str());
                         return result;
                     }
@@ -71,7 +71,7 @@ template <typename CharT>
 HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ HANDLE file, _In_ DWORD flags)
 {
 #if _DEBUG
-    Log("LoadLibraryExFixup called.");
+    LogString("LoadLibraryExFixup called on",libFileName);
 #endif
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
@@ -92,12 +92,12 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 {
 #if _DEBUG
                     //Log("LoadLibraryExFixup testing %ls against %ls", libFileNameW.c_str(), spec.full_filepath.native().c_str());
-                    Log("LoadLibraryExFixup testing %ls against %ls", libFileNameW.c_str(), spec.filename.substr(0));
+                    LogString("LoadLibraryExFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
                     {
-                        Log("LoadLibraryExFixup using %ls", spec.full_filepath.c_str());
+                        LogString("LoadLibraryExFixup using", spec.full_filepath.c_str());
                         result = LoadLibraryExImpl(spec.full_filepath.c_str(), file, flags);
                         return result;
                     }

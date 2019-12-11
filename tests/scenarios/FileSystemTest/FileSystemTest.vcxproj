@@ -45,10 +45,6 @@
   <ItemGroup>
     <Text Include="FileMapping.txt" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="attributes.h" />
-    <ClInclude Include="common_paths.h" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{A1C139A4-A5B8-47F8-BA1D-B8923FCB3A11}</ProjectGuid>

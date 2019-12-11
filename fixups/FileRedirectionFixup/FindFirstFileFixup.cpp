@@ -96,12 +96,12 @@ HANDLE __stdcall FindFirstFileExFixup(
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-        LogString("\tFindFirstFileExFixup: for fileName", fileName);
+        LogString(L"\tFindFirstFileExFixup: for fileName", fileName);
 
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
 
-    LogString("\tFindFirstFileEx: for fileName", fileName);
+    LogString(L"\tFindFirstFileEx: for fileName", fileName);
     
 
     // Split the input into directory and pattern
@@ -148,7 +148,8 @@ HANDLE __stdcall FindFirstFileExFixup(
         result->redirect_path.push_back(L'\\');
     }
 
-    LogString(L"FindFirstFile redirected to result", result->redirect_path.c_str());
+    Log(L"FindFirstFile redirected to result");
+    Log(result->redirect_path.c_str());
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
     [[maybe_unused]] auto wideData = reinterpret_cast<WIN32_FIND_DATAW*>(findFileData);

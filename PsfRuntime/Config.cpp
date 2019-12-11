@@ -227,6 +227,7 @@ void Log(const char* fmt, ...)
 
     if (count > str.size())
     {
+        count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
         str.resize(count);
 
         va_list args2;
