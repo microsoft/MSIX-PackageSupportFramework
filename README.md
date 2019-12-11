@@ -81,8 +81,6 @@ Before making a pull request please run the regression tests to make sure your c
 
 Please head to the tests solution and follow the instructions inside readme.md.
 
-
-
 ## Fixup Metadata
 Each fixup and the PSF Launcher has a metadata file in xml format.  Each file contains the following  
  1. Version:  The version of the PSF is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/)
@@ -90,7 +88,14 @@ Each fixup and the PSF Launcher has a metadata file in xml format.  Each file co
  3. Description: Short description of the fixup.
  4. WhenToUse: Heuristics on when you should apply the fixup.
 
-Additionally, we have the XSD for the metadata files.  THe XSD is located in the solution folder.
+Additionally, we have the XSD for the metadata files located in the solutions folder.
+
+## XML configuration files.
+PSF allows you to write the configuration file in either json or xml.  Configuration files written in xml need to be translated to json before psf can use them. 
+
+To convert an xml configuration to json please use msxsl.exe located in the xmlToJsonConverter folder to convert your xml configuration to json.  Here is an example command.
+
+`msxsl.exe [location of your xml file] -format.xsl -o config.json`
 
 ## Data/Telemetry
 Telemetry datapoint has been hooked to collect usage data and sends it to Microsoft to help improve our products and services. Read Microsoft's [privacy statement to learn more](https://privacy.microsoft.com/en-US/privacystatement). However, data will be collected only when the PSF binaries are used from [Nuget package](https://www.nuget.org/packages?q=packagesupportframework) 
