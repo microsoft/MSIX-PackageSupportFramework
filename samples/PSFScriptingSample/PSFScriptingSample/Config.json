@@ -5,12 +5,12 @@
       "executable": "PSFScriptingSample.exe",
       "startScript": {
         "scriptPath": "SpinUpSampleOne.ps1",
-		"showWindow":true
+        "showWindow":true
       },
       "endScript": {
-          "scriptPath":  "CleaningUp.ps1",
-		  "showWindow":true,
-		  "runOnce":false
+        "scriptPath":  "CleaningUp.ps1",
+        "showWindow":true,
+        "runOnce":false
       }
     },
     {
