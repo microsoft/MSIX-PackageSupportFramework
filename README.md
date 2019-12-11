@@ -93,6 +93,8 @@ Additionally, we have the XSD for the metadata files located in the solutions fo
 ## XML configuration files.
 PSF allows you to write the configuration file in either json or xml.  Configuration files written in xml need to be translated to json before psf can use them. 
 
+Because PSF uses json files for the configuration you will need to convert the xml configuration file to json.
+
 To convert an xml configuration to json please use msxsl.exe located in the xmlToJsonConverter folder to convert your xml configuration to json.  Here is an example command.
 
 `msxsl.exe [location of your xml file] -format.xsl -o config.json`
