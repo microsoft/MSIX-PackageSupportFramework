@@ -96,19 +96,76 @@
                 {
                     <xsl:variable name="dllName" select="dll" />
                     "dll": "<xsl:value-of select="dll"/>"
-                    <xsl:if test="contains($dllName, 'TraceFixup')">
-                        ,
-                        "config":
+                    <xsl:if test="contains($dllName, 'WaitForDebuggerFixup')">
+                        , "config" :
                         {
-                            "traceMethod": "<xsl:value-of select="config/traceMethod"/>",
-                            "traceLevels":
-                            {
-                                "default": "<xsl:value-of select="config/traceLevels/default"/>"
-                            }
+                            "enabled": <xsl:value-of select="config/enabled"/>
                         }
-                        <xsl:if test="position()!=last()">
-                            ,
-                        </xsl:if>
+                    </xsl:if>
+                    <xsl:if test="contains($dllName, 'TraceFixup')">
+                        ,"config":
+                        {
+                            <xsl:if test="config/traceMethod">
+                                "traceMethod": "<xsl:value-of select="config/traceMethod"/>"
+                            </xsl:if>
+                            
+                            <xsl:if test="config/traceLevels" >
+                                <xsl:if test="config/traceMethod">
+                                ,
+                                </xsl:if>
+                                "traceLevels":
+                                {
+                                    <xsl:choose>
+                                        <xsl:when test="config/traceLevels/traceLevel/@level='default'">
+                                            "default": "<xsl:value-of select="config/traceLevels/traceLevel"/>"
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:for-each select="config/traceLevels/traceLevel">
+                                                "<xsl:value-of select="@level"/>": "<xsl:value-of select="current()"/>"
+                                                <xsl:if test="position()!=last()">
+                                                    ,
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                }
+                            </xsl:if>
+                            
+                            <xsl:if test="config/breakOn">
+                                , "breakOn":
+                                {
+                                    <xsl:choose>
+                                        <xsl:when test="config/breakOn/break/@level='default'">
+                                            "default": "<xsl:value-of select="config/breakOn/break"/>"
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:for-each select="config/breakOn/break">
+                                                "<xsl:value-of select="@level"/>": "<xsl:value-of select="current()"/>"
+                                                <xsl:if test="position()!=last()">
+                                                    ,
+                                                </xsl:if>
+                                            </xsl:for-each>
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                }
+                            </xsl:if>
+                            
+                            <xsl:if test="config/waitForDebugger">
+                            , "waitForDebugger": <xsl:value-of select="config/waitForDebugger"/>
+                            </xsl:if>
+                            
+                            <xsl:if test="config/traceFunctionEntry">
+                                , "traceFunctionEntry": <xsl:value-of select="config/traceFunctionEntry"/>
+                            </xsl:if>
+                            
+                            <xsl:if test="config/traceCallingModule">
+                                , "traceCallingModule": <xsl:value-of select="config/traceCallingModule"/>
+                            </xsl:if>
+                            
+                            <xsl:if test="config/ignoreDllLoad">
+                                ,"ignoreDllLoad": <xsl:value-of select="config/ignoreDllLoad" />
+                            </xsl:if>
+                        }
                     </xsl:if>
                     <xsl:if test="contains($dllName, 'FileRedirection')">
                         ,"config":
@@ -185,9 +242,9 @@
                         }
                     </xsl:if>
                 }
-                <xsl:if test="position()!=last()">
-                    ,
-                </xsl:if>
+                    <xsl:if test="position()!=last()">
+                        ,
+                    </xsl:if>
                 </xsl:for-each>
                 ]
             </xsl:if>
