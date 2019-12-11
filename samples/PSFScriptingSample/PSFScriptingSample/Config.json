@@ -19,12 +19,12 @@
       "startScript": {
         "scriptPath": "SpinUpSampleTwo.ps1",
         "runOnce": false,
-		"showWindow":true
+        "showWindow":true
       },
       "endScript": {
         "scriptPath": "CleaningUp.ps1",
-		"showWindow":true,
-		"runOnce":false
+        "showWindow":true,
+        "runOnce":false
       }
     }
   ],
