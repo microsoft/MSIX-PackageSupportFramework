@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>Fixed</id>
+            <executable>LongPathsTest.exe</executable>
+        </application>
+    </applications>
+    <processes>
+        <process>
+            <executable>LongPathsTest</executable>
+            <fixups>
+                <fixup>
+                    <dll>FileRedirectionFixup.dll</dll>
+                    <config>
+                      <redirectedPaths>
+                        <packageRelative>
+                          <pathConfig>
+                            <base>VFS\\ProgramFilesX64\\this\\is\\a\\moderately\\long\\path\\and\\will\\turn\\into\\an\\even\\longer\\path\\when\\we\\take\\into\\account\\the\\fact\\that\\it\\will\\have\\the\\package\\path\\appended\\to\\it\\when\\the\\app\\is\\installed\\to\\the\\WindowsApps\\directory</base>
+                            <patterns>
+                              <pattern>.*</pattern>
+                            </patterns>
+                          </pathConfig>
+                        </packageRelative>
+                      </redirectedPaths>
+                    </config>
+                </fixup>
+            </fixups>
+        </process>
+    </processes>
+</configuration>
