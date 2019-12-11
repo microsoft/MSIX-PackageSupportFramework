@@ -211,6 +211,7 @@ void Log(const char* fmt, ...)
 
         if (count > str.size())
         {
+            count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
             str.resize(count);
 
             va_list args2;
@@ -245,6 +246,7 @@ void Log(const wchar_t* fmt, ...)
 
         if (count > wstr.size())
         {
+            count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
             wstr.resize(count);
             va_list args2;
             va_start(args2, fmt);
@@ -268,11 +270,11 @@ void LogString(const char* name, const char* value)
 }
 void LogString(const char* name, const wchar_t* value)
 {
-    Log("%s=%ls\n", name, value);
+    Log(L"%s=%ls\n", name, value);
 }
 void LogString(const wchar_t* name, const char* value)
 {
-    Log("%ls=%s\n", name, value);
+    Log(L"%ls=%s\n", name, value);
 }
 void LogString(const wchar_t* name, const wchar_t* value)
 {
@@ -901,7 +903,8 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 
     ////Log(L"\tFRF devirt.full_path %ls", deVirtualizedPath.full_path.c_str());
     ////Log(L"\tFRF devirt.da_path %ls", deVirtualizedPath.drive_absolute_path);
-    Log("\tFRF initial basePath=%ls relative=%ls", basePath.c_str(),relativePath.c_str());
+    LogString(L"\tFRF initial basePath", basePath.c_str());
+    LogString(L"\tFRF initial relative", relativePath.c_str());
 
     // Create folder structure, if needed
     if (impl::PathExists( (basePath +  relativePath).c_str()))
@@ -916,13 +919,15 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
         if (shouldredirectToPackageRoot)
         {
             result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
-            LogString("\t\tFRF shouldredirectToPackageRoot case returns result", result.c_str());
+            Log(L"\t\tFRF shouldredirectToPackageRoot case returns result");
+            Log(result.c_str());
         }
         else
         {
             result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
-            LogString("\t\tFRF not to PackageRoot case returns result", result.c_str());
-        }       
+            Log(L"\t\tFRF not to PackageRoot case returns result");
+            Log(result.c_str());
+        }
        
     }
     return result;
@@ -943,7 +948,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     {
         return result;
     }
-    LogString("\tFRF Should: for path", path);
+    LogString(L"\tFRF Should: for path", path);
     
 
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
@@ -1035,8 +1040,10 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                         }
                         else
                         {
-                            Log(L"\t\t\tFRF SUBCASE: parent folder is also not in package.");
-                            result.should_redirect = false;
+                            Log(L"\t\t\tFRF SUBCASE: parent folder is also not in package, but since relative should redirect.");
+                            //result.should_redirect = false;
+                            destinationTargetBase = redirectSpec.redirect_targetbase;
+                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
                         }
                     }
                     if (result.should_redirect)
@@ -1112,12 +1119,15 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                     COPY_FILE_FAIL_IF_EXISTS | COPY_FILE_NO_BUFFERING);
                 if (copyResult)
                 {
-                    Log("\t\tFRF CopyFile Success %ls %ls", CopySource.c_str(), result.redirect_path.c_str());
+                    LogString(L"\t\tFRF CopyFile Success From", CopySource.c_str());
+                    LogString(L"\t\tFRF CopyFile Success To",   result.redirect_path.c_str());
                 }
                 else
                 {
-                    Log("\t\tFRF CopyFile Fail=0x%x %ls %ls", ::GetLastError(), CopySource.c_str(), result.redirect_path.c_str());
                     auto err = ::GetLastError();
+                    Log("\t\tFRF CopyFile Fail=0x%x", err);
+                    LogString(L"\t\tFRF CopyFile Fail From", CopySource.c_str());
+                    LogString(L"\t\tFRF CopyFile Fail To", result.redirect_path.c_str());
                     switch (err)
                     {
                     case ERROR_FILE_EXISTS:
@@ -1142,9 +1152,16 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             {
                 copyResult = impl::CreateDirectoryEx(CopySource.c_str(), result.redirect_path.c_str(), nullptr);
                 if (copyResult)
-                    Log("\t\tFRF CreateDir Success %ls %ls", CopySource.c_str(), result.redirect_path.c_str());
+                {
+                    LogString(L"\t\tFRF CreateDir Success From", CopySource.c_str());
+                    LogString(L"\t\tFRF CreateDir Success To", result.redirect_path.c_str());
+                }
                 else
-                    Log("\t\tFRF CreateDir Fail=0x%x %ls %ls", ::GetLastError(), CopySource.c_str(), result.redirect_path.c_str());
+                {
+                    Log("\t\tFRF CreateDir Fail=0x%x", ::GetLastError());
+                    LogString(L"\t\tFRF CreateDir Fail From", CopySource.c_str());
+                    LogString(L"\t\tFRF CreateDir Fail To",   result.redirect_path.c_str());
+                }
 #if _DEBUG
                 auto err = ::GetLastError();
                 assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND) || (err == ERROR_ALREADY_EXISTS));

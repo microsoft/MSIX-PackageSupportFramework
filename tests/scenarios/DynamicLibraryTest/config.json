@@ -1,0 +1,38 @@
+{
+    "applications": [
+        {
+            "id": "Fixed32",
+            "executable": "DynamicLibraryTest.exe"
+        },
+        {
+            "id": "Fixed64",
+            "executable": "DynamicLibraryTest.exe"
+        }
+    ],
+    "processes": [
+        {
+            "executable": "PsfLauncher.*"
+        },
+        {
+            "executable": ".*",
+            "fixups": [
+                {
+                    "dll": "DynamicLibraryFixup.dll",
+          	    "config": {
+            			"forcePackageDllUse": true,
+            			"relativeDllPaths": [
+              			    {
+              			  	"name": "TraceFixup32.dll",
+                			"filepath": "SubDir\\TraceFixup32.dll"
+              			    },
+				    {
+              			  	"name": "TraceFixup64.dll",
+                			"filepath": "SubDir\\TraceFixup64.dll"
+              			    }
+				]
+		    }
+                }
+            ]
+        }
+    ]
+}

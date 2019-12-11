@@ -1,0 +1,14 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\x64\Debug\DynamicLibraryTest.exe" "DynamicLibraryTest.exe"
+
+"..\..\..\x64\Debug\PsfLauncher64.exe" "PsfLauncher.exe"
+"..\..\..\x64\Debug\PsfRuntime64.dll" "PsfRuntime64.dll"
+"..\..\..\x64\Debug\DynamicLibraryFixup64.dll" "DynamicLibraryFixup64.dll"
+
+"..\..\..\x64\Debug\TraceFixup64.dll" "SubDir\TraceFixup64.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

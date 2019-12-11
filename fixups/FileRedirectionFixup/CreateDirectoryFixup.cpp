@@ -43,14 +43,9 @@ BOOL __stdcall CreateDirectoryExFixup(
     {
         if (guard)
         {
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                Log("CreateDirectoryExFixup for %s %s", templateDirectory, newDirectory);
-            }
-            else
-            {
-                Log(L"CreateDirectoryExFixup for %ls %ls", templateDirectory, newDirectory);
-            }
+            LogString(L"CreateDirectoryExFixup for", templateDirectory);
+            LogString(L"CreateDirectoryExFixup to",  newDirectory);
+            
             auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirect(templateDirectory, redirect_flags::check_file_presence);
             auto [redirectDest, redirectDestPath,shouldReadonlyDest] = ShouldRedirect(newDirectory, redirect_flags::ensure_directory_structure);
             if (redirectTemplate || redirectDest)
