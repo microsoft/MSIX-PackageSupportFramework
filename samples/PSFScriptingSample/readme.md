@@ -1,8 +1,8 @@
 # Scripting sample
-This solution contains example scripts and configurations to make an application to see how scripting works in the Package Support Framework.
+This solution shows examples of the scripting capabilities in Package Support Framework. It contains configuration and application samples.
 
 ## How to make the package?
-To make and install the sample application all you need to do is rebuild the solution from inside Visual Studio.  The build system will package the app and install it on your computer.
+Open solution in Visual Studio and build the solution. The build process will package and deploy the test applications to your system.
 
 The applications that are installed are
 
