@@ -133,7 +133,7 @@ For now, consider that it will end up in a destination constructed from the effe
 The value of this parameter is a boolean, and defaults to false when not present.  Specifying this as true allows redirection to locations not managed by the MSIX runtime.  
 This allows for redirection to common locations such as home drives, file shares, and cloud based storage.
 
-# Examples
+# JSON Examples
 To make things simpler to understand, here is a potential example configuration object that is not using the optional parameters:
 
 ```json
@@ -183,6 +183,46 @@ To make things simpler to understand, here is a potential example configuration 
 }
 ```
 
+#XML Example
+Here is the config section of the File Redirection Fixup for xml.
+
+```xml
+<config>
+    <redirectedPaths>
+        <packageRelative>
+            <pathConfig>
+                <base>logs</base>
+                <patterns>
+                    <pattern>.*\\.log</pattern>
+                </patterns>
+            </pathConfig>
+        </packageRelative>
+        <packageDriveRelative>
+            <pathConfig>
+                <base>temp</base>
+                <patterns>
+                    <pattern>.*</pattern>
+                </patterns>
+            </pathConfig>
+        </packageDriveRelative>
+        <knownFolders>
+            <knownFolder>
+                <id>ProgramFilesX64</id>
+                <relativePaths>
+                    <relativePath>
+                        <base>Contoso\\config</base>
+                        <patterns>
+                            <pattern>.*</pattern>
+                        </patterns>
+                    </relativePath>
+                </relativePaths>
+            </knownFolder>
+        </knownFolders>
+    </redirectedPaths>
+</config>
+```
+
+
 In the example above, the configuration is directing the File Redirection Fixup to redirect accesses to files with the `.log` extension under the `logs` folder that is relative to the package installation root. E.g. this would redirect an attempt to create the file `%ProgramFiles%\WindowsApps\Contoso.App_1.0.0.0_x64__wgeqdkkx372wm\logs\startup.log`. Similarly, the second configuration specifies that attempts to access _any_ file under the directory `temp` relative to the package root drive (e.g. `C:\temp\`) would get redirected. Moving on, the next configuration directs the fixup to redirect access to any file under the path created by combining the expansion of `FOLDERID_ProgramFilesX64` with `Contoso\config`. E.g. this would redirect an attempt to create the file `%ProgramFiles%\Contoso\config\foo.txt`. Finally, the last configuration is identical to the above, only it specifies the GUID of `FOLDERID_Documents`. E.g. this would redirect an attempt to create the file `%USERPROFILE%\Documents\MyApplication\settings.json`.
 
 In reality, most applications will only require redirecting access from either (1) the relative package path, or (2) a named known folder.
@@ -228,13 +268,53 @@ ere is a second example:
     }
 }
 ```
-Te read the example, it might help to read from the bottom element up. In this example, we enable:
+To read the example, it might help to read from the bottom element up. In this example, we enable:
 
 > * Most files for copy on write operation, redirecting to a safe place the default LocalAppData folder.
 > * Except for files that were under the configs subfolder of the package. for these:
 > > * Most will be redirected to a safe place in the user's home drive (PackageCache\Packagename).
 > > * Except for certain Windows PE file types
 > > * And except for one named AutoUpdate.ini, which is to remain as read only as provided in the package to prevent the end-user from configuring updates back on.
+
+```xml
+<config>
+    <redirectedPaths>
+        <packageRelative>
+            <pathConfig>
+                <base>configs</base>
+                <patterns>
+                    <pattern>AutoUpdate\\.ini$</pattern>
+                </patterns>
+                <redirectedTargetBase>H:</redirectedTargetBase>
+                <IsReadOnly>true</IsReadOnly>
+            </pathConfig>
+            <pathConfig>
+                <base>configs</base>
+                <patterns>
+                    <pattern>.*\\.[eE][xX][eE]$</pattern>
+                    <pattern>.*\\.[dD][lL][lL]$</patterns>
+                    <pattern>.*\\.[tT][lL][bB]$</pattern>
+                    <pattern>.*\\.[cC][oO][mM]$</pattern>
+                </patterns>
+                <IsExclusion>true</IsExclusion>
+            </pathConfig>
+            <pathConfig>
+                <base>configs</base>
+                <patterns>
+                    <pattern>.*</pattern>
+                <patterns>
+                <redirectTargetBase>H:</redirectTargetBase>
+            </pathConfig>
+            <pathConfig>
+                <base></base>
+                <patterns>
+                    <pattern>.*</pattern>
+                </patterns>
+            </pathConfig>
+        </packageRelative>
+    </redirectedPaths>
+</config>
+```
 
 # Redirected Path Calculations
 Determining whether or not to redirect a path, and determining what that redirected path is, is a multi-step process. 

@@ -14,7 +14,8 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-            Log(L"DeleteFileFixup for %ls", fileName);
+            LogString(L"DeleteFileFixup for fileName", fileName);
+            
 
             // NOTE: This will only delete the redirected file. If the file previously existed in the package path, then
             //       it will remain there and a later attempt to open, etc. the file will succeed. In the future, if

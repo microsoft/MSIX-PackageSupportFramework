@@ -33,8 +33,9 @@ static constexpr const wchar_t* g_applications[] =
     L"PowershellScriptTest_8wekyb3d8bbwe!PSNoScripts",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSOnlyStart",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSBothStartingFirst",
-    L"PowershellScriptTest_8wekyb3d8bbwe!PSBothEndingFirst",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSScriptWithArg"
+    L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed32",
+    L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed64"
 };
 
 bool g_onlyPrintSummary = false;
