@@ -77,7 +77,6 @@ private:
 		std::filesystem::path currentDirectory;
 		bool doesScriptExistInConfig = false;
 		LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr;
-
 	};
 
 	ScriptInformation startingScriptInformation;
@@ -291,10 +290,10 @@ private:
 
 	LPPROC_THREAD_ATTRIBUTE_LIST MakeAttributeList()
 	{
-		LPPROC_THREAD_ATTRIBUTE_LIST attrbuteList;
+		LPPROC_THREAD_ATTRIBUTE_LIST attributeList;
 		SIZE_T AttributeListSize{};
 		InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-		attrbuteList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
+		attributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
 			GetProcessHeap(),
 			0,
 			AttributeListSize
@@ -302,7 +301,7 @@ private:
 
 		THROW_LAST_ERROR_IF_MSG(
 			!InitializeProcThreadAttributeList(
-				attrbuteList,
+				attributeList,
 				1,
 				0,
 				&AttributeListSize),
@@ -311,7 +310,7 @@ private:
 		DWORD attribute = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
 		THROW_LAST_ERROR_IF_MSG(
 			!UpdateProcThreadAttribute(
-				attrbuteList,
+				attributeList,
 				0,
 				PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
 				&attribute,
@@ -320,6 +319,6 @@ private:
 				nullptr),
 			"Could not update Proc thread attribute.");
 
-		return attrbuteList;
+		return attributeList;
 	}
 };

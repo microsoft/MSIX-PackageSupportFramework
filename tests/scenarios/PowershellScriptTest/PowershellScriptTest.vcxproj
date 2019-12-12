@@ -38,6 +38,9 @@
     </Content>
     <Text Include="FileMapping.txt" />
   </ItemGroup>
+    <ItemGroup>
+    <None Include="config.json" />
+  </ItemGroup>
   <ItemGroup>
     <Xml Include="AppxManifest.xml" />
     <Xml Include="config.xml" />

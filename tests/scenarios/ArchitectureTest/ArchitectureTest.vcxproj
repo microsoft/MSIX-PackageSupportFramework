@@ -22,8 +22,10 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="config.json" />
     <None Include="readme.md" />
+  </ItemGroup>
+    <ItemGroup>
+    <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="FileMapping.txt" />
