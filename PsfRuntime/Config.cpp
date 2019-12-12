@@ -227,6 +227,7 @@ void Log(const char* fmt, ...)
 
     if (count > str.size())
     {
+        count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
         str.resize(count);
 
         va_list args2;
@@ -273,6 +274,11 @@ void load_json()
 #if _DEBUG
                     Log("Found config at: %ls", dentry.path().c_str());
 #endif
+            if (dentry.is_regular_file())
+            {
+                if (dentry.path().filename().compare(L"config.json") == 0)
+                {
+                    Log("Found config at: %ls", dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
                     file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
                     break;

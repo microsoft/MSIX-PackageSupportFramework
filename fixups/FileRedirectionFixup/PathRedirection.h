@@ -85,4 +85,8 @@ std::filesystem::path GetPackageVFSPath(const char* fileName);
 
 
 void Log(const char* fmt, ...);
-void Log(const wchar_t* fmt, ...) ;
+void Log(const wchar_t* fmt, ...);
+void LogString(const char* name, const char* value);
+void LogString(const char* name, const wchar_t* value);
+void LogString(const wchar_t* name, const char* value);
+void LogString(const wchar_t* name, const wchar_t* value);

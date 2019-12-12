@@ -18,6 +18,8 @@ BOOL __stdcall WritePrivateProfileStringFixup(
     {
         if (guard)
         {
+            LogString(L"WritePrivateProfileStringFixup for fileName", fileName);
+            
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
