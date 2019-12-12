@@ -28,4 +28,9 @@
       <Filter>pkg</Filter>
     </Text>
   </ItemGroup>
+    <ItemGroup>
+    <None Include="config.json">
+      <Filter>pkg</Filter>
+    </None>
+  </ItemGroup>
 </Project>
