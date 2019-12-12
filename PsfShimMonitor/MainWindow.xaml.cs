@@ -30,6 +30,7 @@ namespace PsfMonitor
     }
 
  
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -43,8 +44,7 @@ namespace PsfMonitor
         private BackgroundWorker eventbgw = null;
         private BackgroundWorker kerneleventbgw = null;
         public TraceEventSession myTraceEventSession = null;
-        //public Provider etwprovider = new Provider("Microsoft-Windows-PSFTrace",  new Guid(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
-        public Provider etwprovider = new Provider("Microsoft.Windows.PSFRuntime", new Guid(0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1));
+        public Provider etwprovider = new Provider("Microsoft-Windows-PSFTrace",  new Guid(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
         public int EventCounter = 1;
         public bool EventTraceProviderEnablementResultCode, EventTraceProviderSourceResultCode;
         public int LastSearchIndex = -1;
@@ -63,6 +63,9 @@ namespace PsfMonitor
 
             ETWTraceInBackground_Start(etwprovider);
             KernelTraceInBackground_Start();
+            ETWTraceInBackground_Start_APPS(ProviderName_APPS);
+            ETWTraceInBackground_Start_SYSTEM(ProviderName_SYSTEM);
+
             Status.Text = "Listening";
             Update_Captured();
             Closing += Dispose;
@@ -593,6 +596,26 @@ namespace PsfMonitor
                     }
                     break;
 
+                case "Application":
+                    if ((bool)cbCatApplicationLog.IsChecked)
+                    {
+                        ei.IsEventCatHidden = false;
+                    }
+                    else
+                    {
+                        ei.IsEventCatHidden = true;
+                    }
+                    break;
+                case "System":
+                    if ((bool)cbCatSystemLog.IsChecked)
+                    {
+                        ei.IsEventCatHidden = false;
+                    }
+                    else
+                    {
+                        ei.IsEventCatHidden = true;
+                    }
+                    break;
                 default:
                     if ((bool)cbCatOther.IsChecked)
                     {
@@ -736,27 +759,43 @@ namespace PsfMonitor
                 int index = 0;
                 foreach (EventItem ei in _FilteredEventItems)
                 {
+                    ei.IsCurrentSearchItem = false;
                     if (search.Length > 0)
                     {
-                        if (ei.Event != null && ei.Event.ToUpper().Contains(search))
+                        if (ei.Event != null)
                         {
-                            ei.IsHighlighted = true;
-                        }
-                        else if (ei.Inputs != null && ei.Inputs.ToUpper().Contains(search))
-                        {
-                            ei.IsHighlighted = true;
-                        }
-                        else if (ei.Result != null && ei.Result.ToUpper().Contains(search))
-                        {
-                            ei.IsHighlighted = true;
-                        }
-                        else if (ei.Outputs != null && ei.Outputs.ToUpper().Contains(search))
-                        {
-                            ei.IsHighlighted = true;
-                        }
-                        else if (ei.Caller != null && ei.Caller.ToUpper().Contains(search))
-                        {
-                            ei.IsHighlighted = true;
+                            if (ei.ProcessID.ToString().Contains(search))
+                            {
+                                ei.IsHighlighted = true;
+                            }
+                            else if (ei.ProcessName.ToUpper().Contains(search))
+                            {
+                                ei.IsHighlighted = true;
+                            }
+                            else if (ei.Event.ToUpper().Contains(search))
+                            {
+                                ei.IsHighlighted = true;
+                            }
+                            else if (ei.Inputs.ToUpper().Contains(search))
+                            {
+                                ei.IsHighlighted = true;
+                            }
+                            else if (ei.Result.ToUpper().Contains(search))
+                            {
+                                ei.IsHighlighted = true;
+                            }
+                            else if (ei.Outputs.ToUpper().Contains(search))
+                            {
+                                ei.IsHighlighted = true;
+                            }
+                            else if (ei.Caller.ToUpper().Contains(search))
+                            {
+                                ei.IsHighlighted = true;
+                            }
+                            else
+                            {
+                                ei.IsHighlighted = false;
+                            }
                         }
                         else
                         {
@@ -775,11 +814,13 @@ namespace PsfMonitor
                             if (newsearch && nextfound == -1)
                             {
                                 nextfound = index;
+                                ei.IsCurrentSearchItem = true;
                                 onfound = totalfound;
                             }
                             else if (!newsearch && nextfound <= LastSearchIndex)
                             {
                                 nextfound = index;
+                                ei.IsCurrentSearchItem = true;
                                 onfound = totalfound;
                             }
                         }

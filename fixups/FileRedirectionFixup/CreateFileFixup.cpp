@@ -59,7 +59,8 @@ HANDLE __stdcall CreateFileFixup(
     {
         if (guard)
         {
-            Log(L"CreateFileFixup for %ls", fileName);
+            LogString(L"CreateFileFixup for fileName", fileName);
+            
             // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
             //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
@@ -76,7 +77,7 @@ HANDLE __stdcall CreateFileFixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                Log(L"\tFRF CreateFile COA from ADL to %ls", redirectPath.c_str());
+                                LogString(L"\tFRF CreateFile COA from ADL to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }
@@ -93,7 +94,7 @@ HANDLE __stdcall CreateFileFixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                Log(L"\tFRF CreateFile COA from ADR to %ls", redirectPath.c_str());
+                                LogString(L"\tFRF CreateFile COA from ADR to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }
@@ -131,7 +132,7 @@ HANDLE __stdcall CreateFile2Fixup(
     {
         if (guard)
         {
-            Log(L"CreateFile2Fixup for %ls", fileName);
+            LogString(L"CreateFile2Fixup for", fileName);
             // FUTURE: See comment in CreateFileFixup about using 'creationDisposition' to choose a potentially better
             //         redirect flags value
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
@@ -148,7 +149,7 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                Log(L"\tFRF CreateFile2 COA from ADL to %ls", redirectPath.c_str());
+                                LogString(L"\tFRF CreateFile2 COA from ADL to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }
@@ -165,7 +166,7 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                Log(L"\tFRF CreateFile2 COA from ADR to %ls", redirectPath.c_str());
+                                LogString(L"\tFRF CreateFile2 COA from ADR to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }

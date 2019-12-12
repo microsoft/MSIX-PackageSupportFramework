@@ -175,6 +175,27 @@ BOOL WINAPI CreateProcessFixup(
             Log("\talt target filename is now %s", altPathToPsfRuntime.c_str());
 #endif
         }
+
+        if (!std::filesystem::exists(targetDll))
+        {
+#if _DEBUG
+            Log("\tNot present there either, try elsewhere in package.");
+#endif
+            // The child process might also be in another package folder, so look elsewhere in the package.
+            for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
+            {
+                if (dentry.path().filename().compare(psf::runtime_dll_name) == 0)
+                {
+                    static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
+#if _DEBUG
+                    Log("\tFound match as %ls", dentry.path().c_str());
+#endif
+                    targetDll = altDirPathToPsfRuntime.c_str();
+                    break;
+                }
+            }
+        }
+
         Log("\tAttempt injection into %d using %s", processInformation->dwProcessId, targetDll);
         if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDll, 1))
         {

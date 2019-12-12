@@ -151,6 +151,21 @@
                             </MenuItem.Header>
                         </MenuItem>
 
+                        <HeaderedContentControl Header="Standard EventLog Filters" Margin="-25,0,0,0" />
+                        <Separator/>
+                        <MenuItem Name="miApplicationLog"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatApplicationLog" Content="Application Log" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Name="miSystemLog"  >
+                            <MenuItem.Header>
+                                <CheckBox Name="cbCatSystemLog" Content="System Log" IsThreeState="False"
+                                          Checked="Cb_Event_Checked_or_Unchecked" Unchecked="Cb_Event_Checked_or_Unchecked" IsChecked="True"/>
+                            </MenuItem.Header>
+                        </MenuItem>
+
                         <HeaderedContentControl Header="Other EventType Filters"  Margin="-25,0,0,0" />
                         <Separator/>
                         <MenuItem Name="miOther" >
@@ -217,6 +232,12 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsHidden}" Value="False">
                             <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsCurrentSearchItem}" Value="True">
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsCurrentSearchItem}" Value="False">
+                            <Setter Property="FontWeight" Value="Normal"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
