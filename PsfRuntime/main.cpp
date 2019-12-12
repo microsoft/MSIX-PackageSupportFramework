@@ -72,6 +72,30 @@ void load_fixups()
 
                     if (!fixup.module_handle)
                     {
+#if _DEBUG
+                        Log("\tfixup not found at root of package, look elsewhere %ls.", path.filename().c_str());
+#endif
+                        // just try to find it elsewhere as it isn't at the root
+                        for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
+                        {
+                            if (dentry.path().filename().compare(path.filename().c_str()) == 0)
+                            {
+                                fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
+                                if (fixup.module_handle)
+                                {
+#if _DEBUG
+                                    Log("\tfixup found at . %ls", dentry.path().c_str());
+#endif                            
+                                    path = dentry.path();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+
+                    if (!fixup.module_handle)
+                    {
                         auto message = narrow(path.c_str());
                         throw_last_error(message.c_str());
                     }
@@ -137,16 +161,23 @@ catch (...)
 void attach()
 {
     LoadConfig();
-
+#if _DEBUG
+    Log("PsfRuntime after load config");
+#endif
     // Restore the contents of the in memory import table that DetourCreateProcessWithDll* modified
     ::DetourRestoreAfterWith();
 
     auto transaction = detours::transaction();
     check_win32(::DetourUpdateThread(::GetCurrentThread()));
 
+#if _DEBUG
+    Log("PsfRuntime before attach all");
+#endif
     // Call DetourAttach for all APIs that PsfRuntime detours
     psf::attach_all();
-
+#if _DEBUG
+    Log("PsfRuntime after attach all");
+#endif
     // We can't call LoadLibrary in DllMain, so hook the application's entry point and do initialization then
     ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
     if (!ApplicationEntryPoint)
@@ -156,6 +187,9 @@ void attach()
     check_win32(::DetourAttach(reinterpret_cast<void**>(&ApplicationEntryPoint), FixupEntryPoint));
 
     transaction.commit();
+#if _DEBUG
+    Log("PsfRuntime after transaction commit");
+#endif
 }
 
 void detach()

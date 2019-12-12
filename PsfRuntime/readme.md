@@ -19,6 +19,19 @@ As mentioned above, one of the major responsibilities that the PSF Runtime has i
 }
 ```
 
+```xml
+<processes>
+    <process>
+        <executable>ContosoApp</executable>
+        <fixups>
+            <fixup>
+                <dll>ContosoFixup.dll</dll>
+            </fixup>
+        </fixups>
+    </process>
+</processes>
+```
+
 The PSF Runtime will load `ContosoFixup.dll` if the current executable name matches the regular expression `"ContosoApp"` (i.e. it must be an exact match for this example). Note that this pattern is missing the `".exe"` suffix. This is done because periods in regular expressions must be escaped, which in JSON requires a double back-slash to do so (i.e. `"name\\.exe"`), which complicates the configuration and harms readability.
 
 When enumerating the list of fixup dll names, PSF Runtime will make two attempts to load the dll, each made relative to the package root:

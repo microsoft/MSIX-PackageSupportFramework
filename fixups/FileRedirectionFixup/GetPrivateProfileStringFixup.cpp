@@ -20,6 +20,8 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     {
         if (guard)
         {
+            LogString(L"GetPrivateProfileStringFixup for fileName", fileName);
+            
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {

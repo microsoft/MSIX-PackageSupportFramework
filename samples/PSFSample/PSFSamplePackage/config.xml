@@ -1,0 +1,36 @@
+{
+  "applications": [
+    {
+      "id": "PSFSample",
+      "executable": "PSFSampleApp/PSFSample.exe",
+      "workingDirectory": "PSFSampleApp"
+    }
+  ],
+  "processes": [
+    {
+      "executable": ".*",
+      "fixups": [ { "dll": "PSFSampleFixups.dll" } ]
+    }
+  ]
+}
+
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>PSFSample</id>
+            <executable>PSFSampleApp/PSFSample.exe</executable>
+            <workingDirectory>PSFSampleApp</workingDirectory>
+        </application>
+    </applications>
+    <processes>
+        <process>
+            <executable>.*</executable>
+            <fixups>
+                <fixup>
+                    <dll>PSFSampleFixups.dll</dll>
+                </fixup>
+            </fixups>
+        </process>
+    </processes>
+</configuration>

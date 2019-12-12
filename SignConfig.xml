@@ -7,13 +7,15 @@
     <file src="__INPATHROOT__\Win32\Release\FileRedirectionFixup32.dll" signType="400" dest="__OUTPATHROOT__\Win32\Release\FileRedirectionFixup32.dll" />
     <file src="__INPATHROOT__\Win32\Release\TraceFixup32.dll" signType="400" dest="__OUTPATHROOT__\Win32\Release\TraceFixup32.dll" />
     <file src="__INPATHROOT__\Win32\Release\WaitForDebuggerFixup32.dll" signType="400" dest="__OUTPATHROOT__\Win32\Release\WaitForDebuggerFixup32.dll" />
+    <file src="__INPATHROOT__\Win32\Release\DynamicLibraryFixup32.dll" signType="400" dest="__OUTPATHROOT__\Win32\Release\DynamicLibraryFixup32.dll" />
     <file src="__INPATHROOT__\x64\Release\PsfLauncher64.exe" signType="400" dest="__OUTPATHROOT__\x64\Release\PsfLauncher64.exe" />
     <file src="__INPATHROOT__\x64\Release\PsfRunDll64.exe" signType="400" dest="__OUTPATHROOT__\x64\Release\PsfRunDll64.exe" />
     <file src="__INPATHROOT__\x64\Release\PsfRuntime64.dll" signType="400" dest="__OUTPATHROOT__\x64\Release\PsfRuntime64.dll" />
     <file src="__INPATHROOT__\x64\Release\FileRedirectionFixup64.dll" signType="400" dest="__OUTPATHROOT__\x64\Release\FileRedirectionFixup64.dll" />
     <file src="__INPATHROOT__\x64\Release\TraceFixup64.dll" signType="400" dest="__OUTPATHROOT__\x64\Release\TraceFixup64.dll" />
     <file src="__INPATHROOT__\x64\Release\WaitForDebuggerFixup64.dll" signType="400" dest="__OUTPATHROOT__\x64\Release\WaitForDebuggerFixup64.dll" />
-    <file src="__INPATHROOT__\AnyCPU\Release\PsfMonitor.exe" signType="400" dest="__OUTPATHROOT__\Win32\Release\PsfMonitor.exe" />
-    <file src="__INPATHROOT__\AnyCPU\Release\PsfMonitor.exe" signType="400" dest="__OUTPATHROOT__\x64\Release\PsfMonitor.exe" />
+    <file src="__INPATHROOT__\Win32\Release\DynamicLibraryFixup64.dll" signType="400" dest="__OUTPATHROOT__\Win32\Release\DynamicLibraryFixup64.dll" />
+    <file src="__INPATHROOT__\Win32\Release\PsfMonitorX86.exe" signType="400" dest="__OUTPATHROOT__\Win32\Release\PsfMonitorX86.exe" />
+    <file src="__INPATHROOT__\x64\Release\PsfMonitorX64.exe" signType="400" dest="__OUTPATHROOT__\x64\Release\PsfMonitorX64.exe" />
   </job>
 </SignConfigXML>
