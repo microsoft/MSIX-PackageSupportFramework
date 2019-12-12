@@ -165,7 +165,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
     else
     {
-        StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
+		THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
     }
 }
 
