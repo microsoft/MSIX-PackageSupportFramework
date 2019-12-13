@@ -59,13 +59,13 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
-	auto currentDirectory = (packageRoot / dirStr);
+    auto currentDirectory = (packageRoot / dirStr);
 
-	PsfPowershellScriptRunner powershellScriptRunner;
-	powershellScriptRunner.Initialize(appConfig, currentDirectory);
+    PsfPowershellScriptRunner powershellScriptRunner;
+    powershellScriptRunner.Initialize(appConfig, currentDirectory);
 
     // Launch the starting PowerShell script if we are using one.
-	powershellScriptRunner.RunStartingScript();
+    powershellScriptRunner.RunStartingScript();
 
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -83,7 +83,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-		THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
+        THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
     }
     else
     {
@@ -91,7 +91,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     }
 
     // Launch the end PowerShell script if we are using one.
-	powershellScriptRunner.RunEndingScript();
+    powershellScriptRunner.RunEndingScript();
 
     return 0;
 }
@@ -166,7 +166,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
     else
     {
-		THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
+        THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
     }
 }
 
