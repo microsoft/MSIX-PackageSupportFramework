@@ -1,7 +1,6 @@
 #pragma once
 #include "psf_runtime.h"
 #include "StartProcessHelper.h"
-#include <VersionHelpers.h>
 #include <wil\resource.h>
 
 #ifndef SW_SHOW
