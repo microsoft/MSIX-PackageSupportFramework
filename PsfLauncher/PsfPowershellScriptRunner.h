@@ -5,11 +5,11 @@
 #include <wil\resource.h>
 
 #ifndef SW_SHOW
-#define SW_SHOW 5
+    #define SW_SHOW 5
 #endif
 
 #ifndef SW_HIDE
-#define SW_HIDE 0
+    #define SW_HIDE 0
 #endif
 
 class PsfPowershellScriptRunner
