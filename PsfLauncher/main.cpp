@@ -37,6 +37,7 @@ void LogApplicationAndProcessesCollection();
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
 void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
+bool IsCurrentOSRS2OrGreater();
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
@@ -64,20 +65,13 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     PsfPowershellScriptRunner powershellScriptRunner;
 
-    //If RS2 or above.
-    //Version information came from https://docs.microsoft.com/en-us/windows/release-information/
-    //The logic of this function is weird.  IsWindowsVersionOrGreater returns true if
-    // 1. RS1 is equal to the OS PSF is running on, or
-    // 2. RS1 is greater than the version PSF is running on.
-    bool isRS1 = IsWindowsVersionOrGreater(14393, 10, 0);
-    if (!isRS1)
+    if (IsCurrentOSRS2OrGreater())
     {
         powershellScriptRunner.Initialize(appConfig, currentDirectory);
 
         // Launch the starting PowerShell script if we are using one.
         powershellScriptRunner.RunStartingScript();
     }
-
 
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -102,7 +96,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
     }
 
-    if (!isRS1)
+    if (IsCurrentOSRS2OrGreater())
     {
         // Launch the end PowerShell script if we are using one.
         powershellScriptRunner.RunEndingScript();
@@ -242,4 +236,14 @@ void LogApplicationAndProcessesCollection()
             }
         }
     }
+}
+
+bool IsCurrentOSRS2OrGreater()
+{
+    OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, {0}, 0, 0 };
+    DWORDLONG        const dwlConditionMask = VerSetConditionMask(
+        0, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+    osvi.dwBuildNumber = 15063;
+
+    return VerifyVersionInfoW(&osvi, VER_BUILDNUMBER, dwlConditionMask);
 }
