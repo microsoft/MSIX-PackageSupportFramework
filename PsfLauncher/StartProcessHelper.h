@@ -27,26 +27,52 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
 
 	startupInfoEx.lpAttributeList = attributeList;
 
-	PROCESS_INFORMATION processInfo{};
-	RETURN_LAST_ERROR_IF_MSG(
-		!::CreateProcessW(
-			applicationName,
-			commandLine,
-			nullptr, nullptr, // Process/ThreadAttributes
-			true, // InheritHandles
-			EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
-			nullptr, // Environment
-			currentDirectory,
-			(LPSTARTUPINFO)&startupInfoEx,
-			&processInfo),
-		"ERROR: Failed to create a process for %ws",
-		applicationName);
+    if (startupInfoEx.lpAttributeList != nullptr)
+    {
+        PROCESS_INFORMATION processInfo{};
+        RETURN_LAST_ERROR_IF_MSG(
+            !::CreateProcessW(
+                applicationName,
+                commandLine,
+                nullptr, nullptr, // Process/ThreadAttributes
+                false, // InheritHandles
+                EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
+                nullptr, // Environment
+                currentDirectory,
+                (LPSTARTUPINFO)&startupInfoEx,
+                &processInfo),
+            "ERROR: Failed to create a process for %ws",
+            applicationName);
 
-	RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
-	DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
-	RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
-	CloseHandle(processInfo.hProcess);
-	CloseHandle(processInfo.hThread);
+        RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
+        DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
+        RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
+        CloseHandle(processInfo.hProcess);
+        CloseHandle(processInfo.hThread);
+    }
+    else
+    {
+        PROCESS_INFORMATION processInfo{};
+        RETURN_LAST_ERROR_IF_MSG(
+            !::CreateProcessW(
+                applicationName,
+                commandLine,
+                nullptr, nullptr, // Process/ThreadAttributes
+                true, // InheritHandles
+                EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
+                nullptr, // Environment
+                currentDirectory,
+                (LPSTARTUPINFO)&startupInfoEx,
+                &processInfo),
+            "ERROR: Failed to create a process for %ws",
+            applicationName);
+
+        RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
+        DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
+        RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
+        CloseHandle(processInfo.hProcess);
+        CloseHandle(processInfo.hThread);
+    }
 
 	return ERROR_SUCCESS;
 }
