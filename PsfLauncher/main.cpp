@@ -63,6 +63,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto currentDirectory = (packageRoot / dirStr);
 
     PsfPowershellScriptRunner powershellScriptRunner;
+
     //If RS2 or above.
     //Version information came from https://docs.microsoft.com/en-us/windows/release-information/
     //The logic of this function is weird.  IsWindowsVersionOrGreater returns true if
