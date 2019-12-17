@@ -45,6 +45,7 @@ int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_
     return launcher_main(args, cmdShow);
 }
 
+
 int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
     Log("\tIn Launcher_main()");
@@ -62,10 +63,20 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto currentDirectory = (packageRoot / dirStr);
 
     PsfPowershellScriptRunner powershellScriptRunner;
-    powershellScriptRunner.Initialize(appConfig, currentDirectory);
+    //If RS2 or above.
+    //Version information came from https://docs.microsoft.com/en-us/windows/release-information/
+    //The logic of this function is weird.  IsWindowsVersionOrGreater returns true if
+    // 1. RS1 is equal to the OS PSF is running on, or
+    // 2. RS1 is greater than the version PSF is running on.
+    bool isRS1 = IsWindowsVersionOrGreater(14393, 10, 0);
+    if (!isRS1)
+    {
+        powershellScriptRunner.Initialize(appConfig, currentDirectory);
 
-    // Launch the starting PowerShell script if we are using one.
-    powershellScriptRunner.RunStartingScript();
+        // Launch the starting PowerShell script if we are using one.
+        powershellScriptRunner.RunStartingScript();
+    }
+
 
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -90,8 +101,11 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
     }
 
-    // Launch the end PowerShell script if we are using one.
-    powershellScriptRunner.RunEndingScript();
+    if (!isRS1)
+    {
+        // Launch the end PowerShell script if we are using one.
+        powershellScriptRunner.RunEndingScript();
+    }
 
     return 0;
 }
