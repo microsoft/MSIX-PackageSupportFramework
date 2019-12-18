@@ -89,7 +89,7 @@ RunTest "x64" "Release"
 RunTest "x86" "Debug"
 RunTest "x86" "Release"
 
-Write-host "Removing generate json files"
+Write-host "Removing generated json files"
 foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
 {
     if (Test-Path "$($dir.FullName)\FileMapping.txt")
