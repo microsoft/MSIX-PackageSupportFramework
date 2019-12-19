@@ -265,24 +265,34 @@ void load_json()
     {
         Log("Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
         ///file = find_json(g_PackageRootPath);
-        for (auto& dentry: std::filesystem::recursive_directory_iterator(g_PackageRootPath))
+        for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
         {
-            if (dentry.is_regular_file())
+            if (dentry.is_character_file())
             {
                 if (dentry.path().filename().compare(L"config.json") == 0)
                 {
+#if _DEBUG
                     Log("Found config at: %ls", dentry.path().c_str());
+#endif
+                    if (dentry.is_regular_file())
+                    {
+                        if (dentry.path().filename().compare(L"config.json") == 0)
+                        {
+                            Log("Found config at: %ls", dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-                    file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
-                    break;
+                            file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
+                            break;
+                        }
+                    }
                 }
+            }
+            if (!file)
+            {
+                throw std::system_error(errno, std::generic_category(), "config.json could not be opened");
             }
         }
     }
-    if (!file)
-    {
-        throw std::system_error(errno, std::generic_category(), "config.json could not be opened");
-    }
+
 
     char buffer[2048];
     rapidjson::FileReadStream stream(file, buffer, std::size(buffer));
@@ -455,23 +465,23 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
     {
         auto& appObj = app.as_object();
         auto appId = appObj.get("id").as_string().wstring();
-      
+
         if (verbose)
         {
-                LogCountedStringW("Compare against json id", appId.data(), appId.length());
+            LogCountedStringW("Compare against json id", appId.data(), appId.length());
         }
-      
+
         if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {
             return &appObj;
         }
     }
-  
+
     if (verbose)
     {
         Log("\tNo Matches");
     }
-  
+
     return nullptr;
 }
 catch (...)
@@ -508,7 +518,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryStartScriptInfo() noexcept
         auto& monObj = mon->as_object();
         return &monObj;
     }
-    
+
     return nullptr;
 }
 

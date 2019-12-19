@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>Fixed</id>
+            <executable>CompositionTest.exe</executable>
+        </application>
+    </applications>
+    <processes>
+      <process>
+        <executable>PsfLauncher.*</executable>
+      </process>
+      <process>
+        <executable>.*</executable>
+            <fixups>
+                <fixup>
+                    <dll>MultiByteToWideCharTestFixup.dll</dll>
+                </fixup>
+              <fixup>
+                <dll>CompositionTestFixup.dll</dll>
+              </fixup>
+            </fixups>
+        </process>
+    </processes>
+</configuration>

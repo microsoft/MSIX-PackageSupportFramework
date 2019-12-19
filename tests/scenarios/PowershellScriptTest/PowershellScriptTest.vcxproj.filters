@@ -11,7 +11,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
-    <None Include="SayHello.ps1" />
+    <None Include="config.json">
+      <Filter>pkg</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -22,10 +24,18 @@
     <Xml Include="AppxManifest.xml">
       <Filter>pkg</Filter>
     </Xml>
+    <Xml Include="config.xml">
+      <Filter>pkg</Filter>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <Text Include="FileMapping.txt">
       <Filter>pkg</Filter>
     </Text>
+  </ItemGroup>
+    <ItemGroup>
+    <None Include="config.json">
+      <Filter>pkg</Filter>
+    </None>
   </ItemGroup>
 </Project>
