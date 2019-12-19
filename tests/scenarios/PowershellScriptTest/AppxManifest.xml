@@ -46,13 +46,6 @@
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-		<Application Id="PSBothEndingFirst" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
-			<uap:VisualElements BackgroundColor="transparent"
-							DisplayName="PS Both Ending Script First"
-							Square150x150Logo="Assets\Logo150x150.png"
-							Square44x44Logo="Assets\Logo44x44.png"
-							Description="No description entered" />
-		</Application>
 		<Application Id="PSScriptWithArg" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
 			<uap:VisualElements BackgroundColor="transparent"
 							DisplayName="PS Starting script with argument"
