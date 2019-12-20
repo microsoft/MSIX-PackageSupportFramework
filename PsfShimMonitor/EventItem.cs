@@ -25,6 +25,7 @@ namespace PsfMonitor
         private string _Caller = "";
         private Int64 _Start = 0;
         private Int64 _End = 0;
+        
 
         // View Data
         private bool _IsResultHidden = false;
@@ -33,6 +34,7 @@ namespace PsfMonitor
         private bool _IsProcessIDHidden = false;
 
         private bool _IsHighlighted = false;
+        private bool _IsCurrentSearchItem = false;
 
         private string _EventIsResultClass = "Normal";
 
@@ -73,6 +75,8 @@ namespace PsfMonitor
             }
         }
         public bool IsHighlighted { get { return _IsHighlighted; } set { _IsHighlighted = value; } }
+
+        public bool IsCurrentSearchItem {  get { return _IsCurrentSearchItem; } set { _IsCurrentSearchItem = value; } }
 
         public string EventIsResultClass { get { return _EventIsResultClass; } set { _EventIsResultClass = value; } }
 

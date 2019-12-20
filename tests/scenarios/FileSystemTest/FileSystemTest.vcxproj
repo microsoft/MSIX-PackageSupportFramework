@@ -40,13 +40,10 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppxManifest.xml" />
+    <Xml Include="Config.xml" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="FileMapping.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="attributes.h" />
-    <ClInclude Include="common_paths.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -57,7 +54,7 @@
     <SubSystem>Console</SubSystem>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-    <Import Project="$(MSBuildThisFileDirectory)\..\..\Common.Tests.props" />
+  <Import Project="$(MSBuildThisFileDirectory)\..\..\Common.Tests.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />

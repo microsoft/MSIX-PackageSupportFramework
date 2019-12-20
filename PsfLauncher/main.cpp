@@ -37,6 +37,7 @@ void LogApplicationAndProcessesCollection();
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
 void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
+bool IsCurrentOSRS2OrGreater();
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
@@ -44,6 +45,7 @@ int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_
 {
     return launcher_main(args, cmdShow);
 }
+
 
 int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
@@ -59,13 +61,17 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
-	auto currentDirectory = (packageRoot / dirStr);
+    auto currentDirectory = (packageRoot / dirStr);
 
-	PsfPowershellScriptRunner powershellScriptRunner;
-	powershellScriptRunner.Initialize(appConfig, currentDirectory);
+    PsfPowershellScriptRunner powershellScriptRunner;
 
-    // Launch the starting PowerShell script if we are using one.
-	powershellScriptRunner.RunStartingScript();
+    if (IsCurrentOSRS2OrGreater())
+    {
+        powershellScriptRunner.Initialize(appConfig, currentDirectory);
+
+        // Launch the starting PowerShell script if we are using one.
+        powershellScriptRunner.RunStartingScript();
+    }
 
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -83,15 +89,18 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
     }
     else
     {
         StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
     }
 
-    // Launch the end PowerShell script if we are using one.
-	powershellScriptRunner.RunEndingScript();
+    if (IsCurrentOSRS2OrGreater())
+    {
+        // Launch the end PowerShell script if we are using one.
+        powershellScriptRunner.RunEndingScript();
+    }
 
     return 0;
 }
@@ -159,13 +168,14 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
             Sleep(5000);
         }
 
-        DWORD exitCode{};
-        THROW_LAST_ERROR_IF_MSG(!GetExitCodeProcess(shExInfo.hProcess, &exitCode), "Could not get error for process");
-        THROW_IF_WIN32_ERROR(exitCode);
+        // Should not kill the intended app because the monitor elevated.
+        //DWORD exitCode{};
+        //THROW_LAST_ERROR_IF_MSG(!GetExitCodeProcess(shExInfo.hProcess, &exitCode), "Could not get error for process");
+        //THROW_IF_WIN32_ERROR(exitCode);
     }
     else
     {
-        StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
     }
 }
 
@@ -226,4 +236,14 @@ void LogApplicationAndProcessesCollection()
             }
         }
     }
+}
+
+bool IsCurrentOSRS2OrGreater()
+{
+    OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, {0}, 0, 0 };
+    DWORDLONG        const dwlConditionMask = VerSetConditionMask(
+        0, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+    osvi.dwBuildNumber = 15063;
+
+    return VerifyVersionInfoW(&osvi, VER_BUILDNUMBER, dwlConditionMask);
 }

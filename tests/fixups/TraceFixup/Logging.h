@@ -72,6 +72,7 @@ inline void Log(const char* fmt, ...)
 
         if (count > str.size())
         {
+            count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
             str.resize(count);
 
             va_list args2;
@@ -111,6 +112,7 @@ inline void Log(const wchar_t* fmt, ...)
 
             if (count > wstr.size())
             {
+                count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
                 wstr.resize(count);
                 va_list args2;
                 va_start(args2, fmt);

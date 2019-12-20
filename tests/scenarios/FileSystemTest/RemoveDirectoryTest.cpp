@@ -65,9 +65,19 @@ int RemoveDirectoryTests()
         {
             return trace_last_error(L"Failed to create test directory");
         }
-        else if (!write_entire_file(L"TèƨƭÐïřèçƭôř¥/file.txt", "This file's presence will cause RemoveDirectory to fail"))
+        else
         {
-            return trace_last_error(L"Failed to create file");
+            if (!std::filesystem::exists(L"TèƨƭÐïřèçƭôř¥"))
+            {
+                return trace_last_error(L"Failed to create test directory without returned error");
+            }
+            else
+            {
+                if (!write_entire_file(L"TèƨƭÐïřèçƭôř¥/file.txt", "This file's presence will cause RemoveDirectory to fail"))
+                {
+                    return trace_last_error(L"Failed to create file");
+                }
+            }
         }
 
         return DoRemoveDirectoryTest(L"TèƨƭÐïřèçƭôř¥", false);

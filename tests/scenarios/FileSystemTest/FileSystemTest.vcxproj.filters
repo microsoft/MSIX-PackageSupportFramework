@@ -7,9 +7,6 @@
     <Filter Include="pkg">
       <UniqueIdentifier>{203525a1-992e-49e4-918d-f089d01e7888}</UniqueIdentifier>
     </Filter>
-    <Filter Include="inc">
-      <UniqueIdentifier>{e52f01ab-69d9-4034-a22c-a7872367cf60}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -65,18 +62,13 @@
     <Xml Include="AppxManifest.xml">
       <Filter>pkg</Filter>
     </Xml>
+    <Xml Include="Config.xml">
+      <Filter>pkg</Filter>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <Text Include="FileMapping.txt">
       <Filter>pkg</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="common_paths.h">
-      <Filter>inc</Filter>
-    </ClInclude>
-    <ClInclude Include="attributes.h">
-      <Filter>inc</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

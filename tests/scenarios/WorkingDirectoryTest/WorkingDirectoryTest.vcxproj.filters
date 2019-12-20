@@ -17,6 +17,9 @@
     <Xml Include="AppxManifest.xml">
       <Filter>pkg</Filter>
     </Xml>
+    <Xml Include="config.xml">
+      <Filter>pkg</Filter>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json">

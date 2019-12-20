@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>ScriptingSampleOne</id>
+            <executable>PSFScriptingSample.exe</executable>
+            <startScript>
+                <scriptPath>SpinUpSampleOne.ps1</scriptPath>
+                <showWindow>true</showWindow>
+            </startScript>
+            <endScript>
+                <scriptPath>CleaningUp.ps1</scriptPath>
+                <showWindow>true</showWindow>
+                <runOnce>false</runOnce>
+            </endScript>
+        </application>
+        <application>
+            <id>ScriptingSampleTwo</id>
+            <executable>PSFScriptingSample.exe</executable>
+            <startScript>
+                <scriptPath>SpinUpSampleTwo.ps1</scriptPath>
+                <runOnce>false</runOnce>
+                <showWindow>true</showWindow>
+            </startScript>
+            <endScript>
+                <scriptPath>CleaningUp.ps1</scriptPath>
+                <showWindow>true</showWindow>
+                <runOnce>false</runOnce>
+            </endScript>
+        </application>
+    </applications>
+    <processes>
+        <process>
+            <executable>PSFScriptingSample*</executable>
+        </process>
+        <process>
+            <executable>.*</executable>
+        </process>
+    </processes>
+</configuration>
