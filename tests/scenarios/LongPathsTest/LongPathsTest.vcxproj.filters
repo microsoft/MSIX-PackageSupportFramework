@@ -45,7 +45,7 @@
     <Xml Include="AppxManifest64.xml">
       <Filter>pkg</Filter>
     </Xml>
-    <Xml Include="Config32.xml">
+    <Xml Include="config32.xml">
       <Filter>pkg</Filter>
     </Xml>
     <Xml Include="config64.xml">
