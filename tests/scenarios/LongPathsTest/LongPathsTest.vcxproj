@@ -34,7 +34,7 @@
   <ItemGroup>
     <Xml Include="AppxManifest32.xml" />
     <Xml Include="AppxManifest64.xml" />
-    <Xml Include="Config32.xml" />
+    <Xml Include="config32.xml" />
     <Xml Include="config64.xml" />
   </ItemGroup>
   <ItemGroup>
