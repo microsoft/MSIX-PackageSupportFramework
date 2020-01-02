@@ -23,6 +23,7 @@
 #include <psf_utils.h>
 #include <stringapiset.h>
 #include <utilities.h>
+#include <wil\resource.h>
 
 #include "Config.h"
 #include "JsonConfig.h"
@@ -264,14 +265,13 @@ void load_json()
     if (!file)
     {
         Log("Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
-        ///file = find_json(g_PackageRootPath);
         for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
         {
             if (dentry.is_character_file())
             {
                 if (dentry.path().filename().compare(L"config.json") == 0)
                 {
-#if _DEBUG
+#ifndef NDEBUG
                     Log("Found config at: %ls", dentry.path().c_str());
 #endif
                     if (dentry.is_regular_file())
@@ -280,15 +280,11 @@ void load_json()
                         {
                             Log("Found config at: %ls", dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-                            file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
+                            THROW_IF_FAILED(file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8"));
                             break;
                         }
                     }
                 }
-            }
-            if (!file)
-            {
-                throw std::system_error(errno, std::generic_category(), "config.json could not be opened");
             }
         }
     }
