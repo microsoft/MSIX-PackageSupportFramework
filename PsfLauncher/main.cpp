@@ -46,7 +46,6 @@ int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_
     return launcher_main(args, cmdShow);
 }
 
-
 int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
     Log("\tIn Launcher_main()");
@@ -241,8 +240,7 @@ void LogApplicationAndProcessesCollection()
 bool IsCurrentOSRS2OrGreater()
 {
     OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, {0}, 0, 0 };
-    DWORDLONG        const dwlConditionMask = VerSetConditionMask(
-        0, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+    DWORDLONG const dwlConditionMask = VerSetConditionMask(0, VER_BUILDNUMBER, VER_GREATER_EQUAL);
     osvi.dwBuildNumber = 15063;
 
     return VerifyVersionInfoW(&osvi, VER_BUILDNUMBER, dwlConditionMask);
