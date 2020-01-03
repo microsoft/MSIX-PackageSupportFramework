@@ -293,13 +293,11 @@ private:
         LPPROC_THREAD_ATTRIBUTE_LIST attributeList;
         SIZE_T AttributeListSize{};
 
-
         InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
         attributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
             GetProcessHeap(),
             0,
-            AttributeListSize
-        );
+            AttributeListSize);
 
         THROW_LAST_ERROR_IF_MSG(
             !InitializeProcThreadAttributeList(

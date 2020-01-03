@@ -91,7 +91,7 @@ Each fixup and the PSF Launcher has a metadata file in xml format.  Each file co
 Additionally, we have the XSD for the metadata files located in the solutions folder.
 
 ## Scripts
-Scripting support is allowed on RS2 and higher builds of windows.  If PSf is ran on RS1 scripts will not execute even if they are specified in the configuration file.
+Scripting support is allowed on RS2 and higher builds of windows.  If PSf is executed on RS1, scripts will not execute even if they are specified in the configuration file.
 
 ## XML configuration files.
 PSF allows you to write the configuration file in either json or xml.  Configuration files written in xml need to be translated to json before psf can use them. 
