@@ -280,7 +280,8 @@ void load_json()
                         {
                             Log("Found config at: %ls", dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-                            THROW_IF_FAILED(file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8"));
+                            file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
+                            THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_OPEN_FAILED), !file);
                             break;
                         }
                     }
