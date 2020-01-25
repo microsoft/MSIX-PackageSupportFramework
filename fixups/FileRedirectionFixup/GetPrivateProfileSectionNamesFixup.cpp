@@ -8,8 +8,7 @@
 #include "PathRedirection.h"
 
 template <typename CharT>
-DWORD __stdcall GetPrivateProfileSectionFixup(
-    _In_opt_ const CharT* appName,
+DWORD __stdcall GetPrivateProfileSectionNamesFixup(
     _Out_writes_to_opt_(stringSize, return +1) CharT* string,
     _In_ DWORD stringLength,
     _In_opt_ const CharT* fileName) noexcept
@@ -19,15 +18,14 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
     {
         if (guard)
         {
-            LogString(L"GetPrivateProfileSectionFixup for fileName", fileName);
-            auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+            LogString(L"GetPrivateProfileSectionNamesFixup for fileName", fileName);
+            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
                 if constexpr (psf::is_ansi<CharT>)
                 {
                     auto wideString = std::make_unique<wchar_t[]>(stringLength);
-                    auto realRetValue = impl::GetPrivateProfileSectionW(widen_argument(appName).c_str(), wideString.get(),
-                        stringLength, redirectPath.c_str());
+                    auto realRetValue = impl::GetPrivateProfileSectionNamesW( wideString.get(), stringLength, redirectPath.c_str());
 
                     if (_doserrno != ENOENT)
                     {
@@ -37,7 +35,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                 }
                 else
                 {
-                    return impl::GetPrivateProfileSectionW(appName, string, stringLength, redirectPath.c_str());
+                    return impl::GetPrivateProfileSectionNamesW(string, stringLength, redirectPath.c_str());
                 }
             }
         }
@@ -47,6 +45,6 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::GetPrivateProfileSection(appName, string, stringLength, fileName);
+    return impl::GetPrivateProfileSectionNames(string, stringLength, fileName);
 }
-DECLARE_STRING_FIXUP(impl::GetPrivateProfileSection, GetPrivateProfileSectionFixup);
+DECLARE_STRING_FIXUP(impl::GetPrivateProfileSectionNames, GetPrivateProfileSectionNamesFixup);
