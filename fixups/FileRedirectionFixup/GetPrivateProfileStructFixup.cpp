@@ -8,7 +8,7 @@
 #include "PathRedirection.h"
 
 template <typename CharT>
-DWORD __stdcall GetPrivateProfileStructFixup(
+BOOL __stdcall GetPrivateProfileStructFixup(
     _In_opt_ const CharT* sectionName,
     _In_opt_ const CharT* key,
     _Out_writes_to_opt_(uSizeStruct, return) LPVOID structArea,
@@ -26,13 +26,12 @@ DWORD __stdcall GetPrivateProfileStructFixup(
             {
                 if constexpr (psf::is_ansi<CharT>)
                 {
-                    auto wideString = std::make_unique<wchar_t[]>(stringLength);
-                    return impl::GetPrivateProfileSectionW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), 
+                    return impl::GetPrivateProfileStructW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), 
                                                                         structArea, uSizeStruct, redirectPath.c_str());
                 }
                 else
                 {
-                    return impl::GetPrivateProfileSectionW(sectionName, key, structArea, uSizeStruct, redirectPath.c_str());
+                    return impl::GetPrivateProfileStructW(sectionName, key, structArea, uSizeStruct, redirectPath.c_str());
                 }
             }
         }

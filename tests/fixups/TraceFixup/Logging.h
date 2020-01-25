@@ -186,6 +186,22 @@ inline std::string InterpretAsHex(const char* name, DWORD value)
     sout << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << value;
     return sout.str();
 }
+inline std::string InterpretAsHex(const char* name, UINT value)
+{
+    std::ostringstream sout;
+    if (strlen(name) > 0)
+        sout << name << "=";
+    sout << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << value;
+    return sout.str();
+}
+inline std::string InterpretAsHex(const char* name, INT value)
+{
+    std::ostringstream sout;
+    if (strlen(name) > 0)
+        sout << name << "=";
+    sout << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << value;
+    return sout.str();
+}
 inline std::string InterpretAsHex(const char* name, ULONGLONG value)
 {
     std::ostringstream sout;

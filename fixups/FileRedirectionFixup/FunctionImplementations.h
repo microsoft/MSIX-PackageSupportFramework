@@ -41,6 +41,7 @@ namespace impl
 
     inline auto GetFileAttributes = psf::detoured_string_function(&::GetFileAttributesA, &::GetFileAttributesW);
     inline auto GetFileAttributesEx = psf::detoured_string_function(&::GetFileAttributesExA, &::GetFileAttributesExW);
+    inline auto GetPrivateProfileInt = psf::detoured_string_function(&::GetPrivateProfileIntA, &::GetPrivateProfileIntW);
     inline auto GetPrivateProfileSection = psf::detoured_string_function(&::GetPrivateProfileSectionA, &::GetPrivateProfileSectionW);
     inline auto GetPrivateProfileSectionNames = psf::detoured_string_function(&::GetPrivateProfileSectionNamesA, &::GetPrivateProfileSectionNamesW);
     inline auto GetPrivateProfileString = psf::detoured_string_function(&::GetPrivateProfileStringA, &::GetPrivateProfileStringW);

@@ -8,7 +8,7 @@
 #include "PathRedirection.h"
 
 template <typename CharT>
-DWORD __stdcall GetPrivateProfileIntFixup(
+UINT __stdcall GetPrivateProfileIntFixup(
     _In_opt_ const CharT* sectionName,
     _In_opt_ const CharT* key,
     _In_opt_ const INT nDefault,
@@ -25,7 +25,6 @@ DWORD __stdcall GetPrivateProfileIntFixup(
             {
                 if constexpr (psf::is_ansi<CharT>)
                 {
-                    auto wideString = std::make_unique<wchar_t[]>(stringLength);
                     return impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, redirectPath.c_str());
                 }
                 else
