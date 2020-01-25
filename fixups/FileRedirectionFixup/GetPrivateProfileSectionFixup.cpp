@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------------
-// Copyright (C) Tim Mangan, TMurgent Technologies, LLP. All rights reserved.
+// Copyright (C) Rafael Rivera, Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
