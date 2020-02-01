@@ -181,17 +181,25 @@ BOOL WINAPI CreateProcessFixup(
 #if _DEBUG
             Log("\tNot present there either, try elsewhere in package.");
 #endif
+            // If not in those two locations, must check everywhere in package.
             // The child process might also be in another package folder, so look elsewhere in the package.
             for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
             {
-                if (dentry.path().filename().compare(psf::runtime_dll_name) == 0)
+                try
                 {
-                    static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
+                    if (dentry.path().filename().compare(psf::runtime_dll_name) == 0)
+                    {
+                        static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
 #if _DEBUG
-                    Log("\tFound match as %ls", dentry.path().c_str());
+                        Log("\tFound match as %ls", dentry.path().c_str());
 #endif
-                    targetDll = altDirPathToPsfRuntime.c_str();
-                    break;
+                        targetDll = altDirPathToPsfRuntime.c_str();
+                        break;
+                    }
+                }
+                catch (...)
+                {
+                    Log("Non-fatal error enumerating directories while looking for PsfRuntime.");
                 }
             }
         }

@@ -264,17 +264,31 @@ void load_json()
     if (!file)
     {
         Log("Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
-        ///file = find_json(g_PackageRootPath);
-        for (auto& dentry: std::filesystem::recursive_directory_iterator(g_PackageRootPath))
-        {
-            if (dentry.is_regular_file())
-            {
-                if (dentry.path().filename().compare(L"config.json") == 0)
-                {
-                    Log("Found config at: %ls", dentry.path().c_str());
+        ///Check folder with application, then everyhwere in package if needed
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
-                    file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
-                    break;
+        file = _wfopen((g_CurrentExecutable.parent_path() / L"config.json").c_str(), L"rb, ccs=UTF-8");
+        if (!file)
+        {
+            Log("Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PackageRootPath.c_str());
+            // If not in those two locations, must check everywhere in package.
+            for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
+            {
+                try
+                {
+                    if (dentry.is_regular_file())
+                    {
+                        if (dentry.path().filename().compare(L"config.json") == 0)
+                        {
+                            Log("Found config at: %ls", dentry.path().c_str());
+#pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
+                            file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
+                            break;
+                        }
+                    }
+                }
+                catch (...)
+                {
+                    Log("Non-fatal error enumerating directories while looking for config.json.");
                 }
             }
         }

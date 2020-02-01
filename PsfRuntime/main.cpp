@@ -78,17 +78,31 @@ void load_fixups()
                         // just try to find it elsewhere as it isn't at the root
                         for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
                         {
-                            if (dentry.path().filename().compare(path.filename().c_str()) == 0)
+                            try 
                             {
-                                fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
-                                if (fixup.module_handle)
+                                if (dentry.path().filename().compare(path.filename().c_str()) == 0)
                                 {
+                                    fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
+                                    if (!fixup.module_handle)
+                                    {
+                                        auto d2 = dentry.path();
+                                        d2.replace_extension();
+                                        d2.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
+                                        fixup.module_handle = ::LoadLibraryW(d2.c_str());
+                                    }
+                                    if (fixup.module_handle)
+                                    {
 #if _DEBUG
-                                    Log("\tfixup found at . %ls", dentry.path().c_str());
+                                        Log("\tfixup found at . %ls", dentry.path().c_str());
 #endif                            
-                                    path = dentry.path();
-                                    break;
+                                        path = dentry.path();
+                                        break;
+                                    }
                                 }
+                            }
+                            catch (...)
+                            {
+                                Log("Non-fatal error enumerating directories while looking for fixup.");
                             }
                         }
                     }
