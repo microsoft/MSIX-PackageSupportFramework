@@ -101,15 +101,16 @@ HANDLE __stdcall FindFirstFileExFixup(
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
 
-    LogString(L"\tFindFirstFileEx: for fileName", fileName);
-    
 
     // Split the input into directory and pattern
     auto path = widen(fileName, CP_ACP);
+    LogString(L"\tFindFirstFileEx: for fileName", path.c_str());
+
     normalized_path dir;
     const wchar_t* pattern = nullptr;
     if (auto dirPos = path.find_last_of(LR"(\/)"); dirPos != std::wstring::npos)
     {
+        Log("\tFileFirstFileEx: has slash");
         // Special case for single separator at beginning of the path "/foo.txt"
         if (dirPos == 0)
         {
@@ -127,10 +128,11 @@ HANDLE __stdcall FindFirstFileExFixup(
     }
     else
     {
+        Log("\tFileFirstFileEx: no slash");
         dir = NormalizePath(L".");
         pattern = path.c_str();
     }
-
+    
     // If you change the below logic, or
 	// you you change what goes into RedirectedPath
 	// you need to mirror all changes to ShouldRedirectImpl
@@ -180,13 +182,13 @@ HANDLE __stdcall FindFirstFileExFixup(
             // No need to copy since we wrote directly into the output buffer
             assert(findData == wideData);
         }
-        Log(L"FindFirstFile redirected (from redirected): had results");
+        Log(L"FindFirstFile[0] redirected (from redirected): had results");
     }
     else
     {
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         result->redirect_path.clear();
-        Log(L"FindFirstFile redirected (from redirected): no results");
+        Log(L"FindFirstFile[0] redirected (from redirected): no results");
     }
 
     findData = (result->find_handles[0] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
@@ -195,11 +197,11 @@ HANDLE __stdcall FindFirstFileExFixup(
     result->find_handles[1].reset(impl::FindFirstFileEx(path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
     if (result->find_handles[1])
     {
-        Log(L"FindFirstFile (from redirected): had results");
+        Log(L"FindFirstFile[1] (from redirected): had results");
     }
     else
     {
-        Log(L"FindFirstFile (from redirected): no results");
+        Log(L"FindFirstFile[1] (from redirected): no results");
     }
     if (!result->find_handles[0])
     {
@@ -209,6 +211,7 @@ HANDLE __stdcall FindFirstFileExFixup(
             // if it indicates that the redirected directory structure exists
             if (initialFindError == ERROR_FILE_NOT_FOUND)
             {
+                Log(L"FindFirstFile error 0x%x", initialFindError);
                 ::SetLastError(initialFindError);
             }
 
@@ -220,6 +223,7 @@ HANDLE __stdcall FindFirstFileExFixup(
             {
                 if (copy_find_data(*findData, *ansiData))
                 {
+                    Log(L"FindFirstFile error set by caller");
                     // NOTE: Last error set by caller
                     return INVALID_HANDLE_VALUE;
                 }
@@ -263,6 +267,8 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
         return impl::FindNextFile(findFile, findFileData);
     }
 
+    Log(L"FindNextFileFixup.");
+    
     if (findFile == INVALID_HANDLE_VALUE)
     {
         ::SetLastError(ERROR_INVALID_PARAMETER);
@@ -274,6 +280,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     {
         if (data->redirect_path.empty())
         {
+            Log(L"FindNextFile returns false.");
             return false;
         }
 
@@ -293,6 +300,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
 
         auto result = impl::PathExists(data->redirect_path.c_str());
         data->redirect_path.resize(revertSize);
+        Log(L"FindNextFile returns %ls", data->redirect_path.c_str());
         return result;
     };
 
@@ -300,6 +308,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     {
         if (impl::FindNextFile(data->find_handles[0].get(), findFileData))
         {
+            Log(L"FindNextFile[0] returns TRUE.");
             return TRUE;
         }
         else if (::GetLastError() == ERROR_NO_MORE_FILES)
@@ -307,6 +316,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             data->find_handles[0].reset();
             if (!data->find_handles[1])
             {
+                Log(L"FindNextFile[0] returns FALSE with ERROR_NO_MORE_FILES.");
                 // NOTE: Last error scribbled over by closing find_handles[0]
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 return FALSE;
@@ -316,17 +326,20 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             {
                 if (copy_find_data(data->cached_data, *findFileData))
                 {
+                    Log(L"FindNextFile[0] returns FALSE with lase error set by caller");
                     // NOTE: Last error set by caller
                     return FALSE;
                 }
 
+                LogString(L"FindNextFile[0] returns TRUE with file %ls", data->cached_data.cFileName);
                 ::SetLastError(ERROR_SUCCESS);
                 return TRUE;
             }
         }
         else
         {
-            // Error due to something other than reaching the end
+            // Error due to something other than reaching the end 
+            Log(L"FindNextFile[0] returns FALSE");
             return FALSE;
         }
     }
@@ -338,6 +351,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             // Skip the file if it exists in the redirected path
             if (!redirectedFileExists(findFileData->cFileName))
             {
+                LogString(L"FindNextFile[1] returns TRUE with %ls", findFileData->cFileName);
                 ::SetLastError(ERROR_SUCCESS);
                 return TRUE;
             }
@@ -345,12 +359,14 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
         }
         else if (::GetLastError() == ERROR_NO_MORE_FILES)
         {
+            Log(L"FindNextFile[1] returns FALSE with ERROR_NO_MORE_FILES_FOUND.");
             data->find_handles[1].reset();
             ::SetLastError(ERROR_NO_MORE_FILES);
             return FALSE;
         }
         else
         {
+            Log(L"FindNextFile[1] returns FALSE");
             // Error due to something other than reaching the end
             return FALSE;
         }

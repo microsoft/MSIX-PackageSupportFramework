@@ -266,19 +266,25 @@ void Log(const wchar_t* fmt, ...)
 }
 void LogString(const char* name, const char* value)
 {
-    Log("%s=%s\n", name, value);
+    Log("SL%s=%s\n", name, value);
 }
 void LogString(const char* name, const wchar_t* value)
 {
-    Log(L"%s=%ls\n", name, value);
+    Log(L"SS%s=%ls\n", name, value);
 }
 void LogString(const wchar_t* name, const char* value)
 {
-    Log(L"%ls=%s\n", name, value);
+    if ((value != NULL && value[1] != 0x0))
+        Log(L"LS%ls=%s\n", name, value);
+    else
+        Log(L"LsL%ls=%ls", name, (wchar_t*)value);
 }
 void LogString(const wchar_t* name, const wchar_t* value)
 {
-    Log(L"%ls=%ls\n", name, value);
+    if ((value != NULL && ((char*)value)[1] == 0x0))
+        Log(L"LL%ls=%ls\n", name, value);
+    else
+        Log(L"LlS%ls=%s", name, (char*)value);
 }
 
 template <typename CharT>
@@ -866,39 +872,48 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     else
     {
         Log(L"\t\t\tcase: target not in package.");
-        LogString(L"      destinationTargetBase: ", destinationTargetBase.c_str());
-        LogString(L"      g_redirectRootPath:    ", g_redirectRootPath.c_str());
-        // input location was not in package path.
-            // TODO: Currently, this code redirects always.  We probably don't want to do that!
-            //       Ideally, we should look closer at the request; the text below is an example of what might be needed.
-            //       If the user asked for a native path and we aren't VFSing close to that path, and it's just a read, we probably shouldn't redirect.
-            //       But let's say it was a write, then probably still don't redirect and let the chips fall where they may.
-            //       But if we have a VFS folder in the package (such as VFS\AppDataCommon\Vendor) with files and the app tries to add a new file using native pathing, then we probably want to redirect.
-            //       There are probably more situations to consider.
-            // To avoid redirecting everything with the current implementation, the configuration spec should be as specific as possible so that we never get here.
-        if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+        if ( _wcsicmp(deVirtualizedPath.full_path.substr(0,2).c_str(), L"\\\\")==0)
         {
-            Log(L"\t\t\tsubcase: redirect to default.");
-            // PSF defaulted destination target.
-            relativePath = L"\\";
+            // Clearly we should never redirect files from a share
+            Log("RedirectedPath: File share case should not be redirected ever.");
+            return deVirtualizedPath.full_path;
         }
         else
         {
-            Log(L"\t\t\tsubcase: redirect specified.");
-            // PSF  configured destination target: probably a home drive.
-            relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + + L"\\VFS\\PackageDrive";
+            // input location was not in package path.
+                 // TODO: Currently, this code redirects always.  We probably don't want to do that!
+                 //       Ideally, we should look closer at the request; the text below is an example of what might be needed.
+                 //       If the user asked for a native path and we aren't VFSing close to that path, and it's just a read, we probably shouldn't redirect.
+                 //       But let's say it was a write, then probably still don't redirect and let the chips fall where they may.
+                 //       But if we have a VFS folder in the package (such as VFS\AppDataCommon\Vendor) with files and the app tries to add a new file using native pathing, then we probably want to redirect.
+                 //       There are probably more situations to consider.
+                 // To avoid redirecting everything with the current implementation, the configuration spec should be as specific as possible so that we never get here.
+            LogString(L"      destinationTargetBase: ", destinationTargetBase.c_str());
+            LogString(L"      g_redirectRootPath:    ", g_redirectRootPath.c_str());
+            if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+            {
+                Log(L"\t\t\tsubcase: redirect to default.");
+                // PSF defaulted destination target.
+                relativePath = L"\\";
+            }
+            else
+            {
+                Log(L"\t\t\tsubcase: redirect specified.");
+                // PSF  configured destination target: probably a home drive.
+                relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + +L"\\VFS\\PackageDrive";
+            }
+
+            // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
+            // similar to what's done for UNC paths
+            assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
+            relativePath.push_back(L'\\');
+            relativePath.push_back(deVirtualizedPath.drive_absolute_path[0]);
+            relativePath.push_back('$');
+            auto remainingLength = wcslen(deVirtualizedPath.drive_absolute_path);
+            remainingLength -= 2;
+
+            relativePath.append(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
         }
-
-        // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
-        // similar to what's done for UNC paths
-        assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
-        relativePath.push_back(L'\\');
-        relativePath.push_back(deVirtualizedPath.drive_absolute_path[0]);
-        relativePath.push_back('$');
-        auto remainingLength = wcslen(deVirtualizedPath.drive_absolute_path);
-        remainingLength -= 2;
-
-        relativePath.append(deVirtualizedPath.drive_absolute_path + 2, remainingLength); 
     }
 
     ////Log(L"\tFRF devirt.full_path %ls", deVirtualizedPath.full_path.c_str());
@@ -948,7 +963,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     {
         return result;
     }
-    LogString(L"\tFRF Should: for path", path);
+    LogString(L"\tFRF Should: for path", widen(path).c_str());
     
 
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);

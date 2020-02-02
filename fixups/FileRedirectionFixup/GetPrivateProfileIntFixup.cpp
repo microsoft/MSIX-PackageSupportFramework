@@ -19,17 +19,32 @@ UINT __stdcall GetPrivateProfileIntFixup(
     {
         if (guard)
         {
-            LogString(L"GetPrivateProfileIntFixup for fileName", fileName);
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                LogString(L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
+                LogString(L" Section", widen_argument(sectionName).c_str());
+                LogString(L" Key", widen_argument(key).c_str());
+            }
+            else
+            {
+                LogString(L"GetPrivateProfileIntFixup for fileName", fileName);
+                LogString(L" Section", sectionName);
+                LogString(L" Key", key);
+            }
             auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
             if (shouldRedirect)
             {
                 if constexpr (psf::is_ansi<CharT>)
                 {
-                    return impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, redirectPath.c_str());
+                    UINT retval =  impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, redirectPath.c_str());
+                    Log(L" Returned uint: %d ", retval);
+                    return retval;
                 }
                 else
                 {
-                    return impl::GetPrivateProfileIntW(sectionName, key, nDefault, redirectPath.c_str());
+                    UINT retval = impl::GetPrivateProfileIntW(sectionName, key, nDefault, redirectPath.c_str());
+                    Log(L" Returned uint: %d ", retval);
+                    return retval;
                 }
             }
         }

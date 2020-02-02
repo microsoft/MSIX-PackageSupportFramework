@@ -59,7 +59,7 @@ HANDLE __stdcall CreateFileFixup(
     {
         if (guard)
         {
-            LogString(L"CreateFileFixup for fileName", fileName);
+            LogString(L"CreateFileFixup for fileName", widen(fileName, CP_ACP).c_str());
             
             // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
             //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
@@ -132,7 +132,7 @@ HANDLE __stdcall CreateFile2Fixup(
     {
         if (guard)
         {
-            LogString(L"CreateFile2Fixup for", fileName);
+            Log(L"CreateFile2Fixup for %ls", widen(fileName, CP_ACP).c_str());
             // FUTURE: See comment in CreateFileFixup about using 'creationDisposition' to choose a potentially better
             //         redirect flags value
             auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
