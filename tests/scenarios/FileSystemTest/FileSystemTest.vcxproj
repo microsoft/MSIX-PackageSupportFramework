@@ -31,6 +31,7 @@
     <ClCompile Include="ModifyFileTest.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MoveFileTest.cpp" />
+    <ClCompile Include="PrivateProfileTest.cpp" />
     <ClCompile Include="RemoveDirectoryTest.cpp" />
     <ClCompile Include="ReplaceFileTest.cpp" />
   </ItemGroup>
