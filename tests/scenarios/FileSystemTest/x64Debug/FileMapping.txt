@@ -31,4 +31,4 @@
 "file.txt" "Tèƨƭ\ß\file.txt"
 "file.txt" "Tèƨƭ\Ç\file.txt"
 
-"file.ini" "TèƨƭFïℓè.ini"
+"file.ini" "TestFile.ini"
