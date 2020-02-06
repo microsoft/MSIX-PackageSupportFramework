@@ -126,9 +126,9 @@ int wmain(int argc, const wchar_t** argv)
     {
         // The number of file mappings is different in 32-bit vs 64-bit
 #if !_M_IX86
-        test_initialize("File System Tests", 85);
+        test_initialize("File System Tests", 83);
 #else
-        test_initialize("File System Tests", 76);
+        test_initialize("File System Tests", 74);
 #endif
 
         InitializeFolderMappings();
