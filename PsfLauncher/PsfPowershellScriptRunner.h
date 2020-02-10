@@ -56,6 +56,13 @@ public:
 	//RunStartingScript should return an error only if stopOnScriptError is true
 	void RunStartingScript()
 	{
+		LogString("StartingScript commandString",this->startingScriptInformation.commandString.c_str());
+		LogString("StartingScript currentDirectory", this->startingScriptInformation.currentDirectory.c_str());
+		if (this->startingScriptInformation.waitForScriptToFinish)
+			Log("StartingScript waitForScriptToFinish=true");
+		else
+			Log("StartingScript waitForScriptToFinish=false");
+
 		RunScript(this->startingScriptInformation);
 	}
 

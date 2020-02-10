@@ -44,6 +44,7 @@ DWORD inline ConvertToReadOnlyAccess(DWORD desiredAccess)
 }
 
 
+
 template <typename CharT>
 HANDLE __stdcall CreateFileFixup(
     _In_ const CharT* fileName,
@@ -59,15 +60,18 @@ HANDLE __stdcall CreateFileFixup(
     {
         if (guard)
         {
-            LogString(L"CreateFileFixup for fileName", widen(fileName, CP_ACP).c_str());
+            DWORD CreateFileInstance = ++g_FileIntceptInstance;
+
+            LogString(CreateFileInstance, L"CreateFileFixup for fileName", widen(fileName, CP_ACP).c_str());
             
             // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
             //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
-            auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+            auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read, CreateFileInstance);
             if (shouldRedirect)
             {
                 if (IsUnderUserAppDataLocal(fileName))
                 {
+                    Log(L"[%d]Under LocalAppData", CreateFileInstance);
                     // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                     std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
                     if (wcslen(PackageVersion.c_str()) >= 0)
@@ -77,7 +81,7 @@ HANDLE __stdcall CreateFileFixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                LogString(L"\tFRF CreateFile COA from ADL to", redirectPath.c_str());
+                                LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADL to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }
@@ -85,6 +89,7 @@ HANDLE __stdcall CreateFileFixup(
                 }
                 else if (IsUnderUserAppDataRoaming(fileName))
                 {
+                    Log(L"[%d]Under AppData(roaming)", CreateFileInstance);
                     // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                     std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
                     if (wcslen(PackageVersion.c_str()) >= 0)
@@ -94,7 +99,7 @@ HANDLE __stdcall CreateFileFixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                LogString(L"\tFRF CreateFile COA from ADR to", redirectPath.c_str());
+                                LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADR to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }
@@ -132,14 +137,17 @@ HANDLE __stdcall CreateFile2Fixup(
     {
         if (guard)
         {
-            Log(L"CreateFile2Fixup for %ls", widen(fileName, CP_ACP).c_str());
+            DWORD CreateFile2Instance = ++g_FileIntceptInstance;
+
+            Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, widen(fileName, CP_ACP).c_str());
             // FUTURE: See comment in CreateFileFixup about using 'creationDisposition' to choose a potentially better
             //         redirect flags value
-            auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+            auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read, CreateFile2Instance);
             if (shouldRedirect)
             {
                 if (IsUnderUserAppDataLocal(fileName))
                 {
+                    Log(L"[%d]Under LocalAppData", CreateFile2Instance);
                     // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                     std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
                     if (wcslen(PackageVersion.c_str()) >= 0)
@@ -149,7 +157,7 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                LogString(L"\tFRF CreateFile2 COA from ADL to", redirectPath.c_str());
+                                LogString(CreateFile2Instance,L"\tFRF CreateFile2 COA from ADL to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }
@@ -157,6 +165,7 @@ HANDLE __stdcall CreateFile2Fixup(
                 }
                 else if (IsUnderUserAppDataRoaming(fileName))
                 {
+                    Log(L"[%d]Under AppData(roaming)", CreateFile2Instance);
                     // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                     std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
                     if (wcslen(PackageVersion.c_str()) >= 0)
@@ -166,7 +175,7 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (!impl::PathExists(redirectPath.c_str()))
                             {
                                 // Need to copy now
-                                LogString(L"\tFRF CreateFile2 COA from ADR to", redirectPath.c_str());
+                                LogString(CreateFile2Instance,L"\tFRF CreateFile2 COA from ADR to", redirectPath.c_str());
                                 impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                             }
                         }

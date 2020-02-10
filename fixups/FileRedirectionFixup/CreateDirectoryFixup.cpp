@@ -14,9 +14,10 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
     {
         if (guard)
         {
-            LogString(L"CreateDirectoryFixup for path", pathName);
+            DWORD CreateDirectoryInstance = ++g_FileIntceptInstance;
+            LogString(CreateDirectoryInstance,L"CreateDirectoryFixup for path", pathName);
             
-            auto [shouldRedirect, redirectPath,shouldReadonlySource] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure);
+            auto [shouldRedirect, redirectPath,shouldReadonlySource] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
             if (shouldRedirect)
             {
                 return impl::CreateDirectory(redirectPath.c_str(), securityAttributes);
@@ -43,11 +44,13 @@ BOOL __stdcall CreateDirectoryExFixup(
     {
         if (guard)
         {
-            LogString(L"CreateDirectoryExFixup for", templateDirectory);
-            LogString(L"CreateDirectoryExFixup to",  newDirectory);
+            DWORD CreateDirectoryExInstance = ++g_FileIntceptInstance;
+
+            LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup for", templateDirectory);
+            LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup to",  newDirectory);
             
-            auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirect(templateDirectory, redirect_flags::check_file_presence);
-            auto [redirectDest, redirectDestPath,shouldReadonlyDest] = ShouldRedirect(newDirectory, redirect_flags::ensure_directory_structure);
+            auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirect(templateDirectory, redirect_flags::check_file_presence, CreateDirectoryExInstance);
+            auto [redirectDest, redirectDestPath,shouldReadonlyDest] = ShouldRedirect(newDirectory, redirect_flags::ensure_directory_structure, CreateDirectoryExInstance);
             if (redirectTemplate || redirectDest)
             {
                 return impl::CreateDirectoryEx(

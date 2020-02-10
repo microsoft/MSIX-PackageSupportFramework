@@ -63,6 +63,7 @@ int ReplaceFileTests();
 int CreateDirectoryTests();
 int RemoveDirectoryTests();
 int EnumerateDirectoriesTests();
+int PrivateProfileTests();
 
 int run()
 {
@@ -106,6 +107,10 @@ int run()
     result = result ? result : testResult;
 
     testResult = EnumerateDirectoriesTests();
+    result = result ? result : testResult;
+
+
+    testResult = PrivateProfileTests();
     result = result ? result : testResult;
 
     return result;

@@ -13,14 +13,14 @@
 #include "Config.h"
 
 //////// Need to undefine Preprocessor definition for NONAMELESSUNION on this .cpp file only for this to work
-
 #include <TraceLoggingProvider.h>
 #include "Telemetry.h"
 
 #include "Logging.h"
 
 // This handles event logging via ETW
-
+// NOTE: The provider name and GUID must be kept in sync with PsfShimMonitor/MainWindow.xaml.cs
+//       The format of the provider name uses dots here and dashes in C#.
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
