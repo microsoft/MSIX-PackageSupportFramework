@@ -124,14 +124,13 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     {
         std::wstring fullargs = (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args); 
         LogString("Process Launch: ", fullargs.data());
-        LogString("Process Launch: ", fullargs.data());
         StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
     else if (check_suffix_if(exeName, L".cmd"_isv) ||
              check_suffix_if(exeName, L".bat"_isv)    )
     {
         // These don't work through shell launch, so patch it up here.
-        std::wstring fullargs = (L"cmd.exe \\c  \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
+        std::wstring fullargs = (L"cmd.exe /c \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
         LogString("Process Launch via CMD: ", fullargs.data());
         StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
