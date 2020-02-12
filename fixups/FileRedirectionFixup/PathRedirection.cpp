@@ -1154,7 +1154,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     // Figure out if this is something we need to redirect
     for (auto& redirectSpec : g_redirectionSpecs)
     {
-        LogString(inst, L"\t\tFRF Check against: base", redirectSpec.base_path.c_str());
+        //LogString(inst, L"\t\tFRF Check against: base", redirectSpec.base_path.c_str());
         if (path_relative_to(vfspath.drive_absolute_path, redirectSpec.base_path))
         {
             LogString(inst, L"\t\tFRF In ball park of base", redirectSpec.base_path.c_str());
@@ -1256,7 +1256,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
     if (flag_set(flags, redirect_flags::copy_file))
     {
-        Log(L"[%d]\t\tFRF post check 4",inst);
+        Log(L"[%d]\t\tFRF copy_file flag is set",inst);
         [[maybe_unused]] BOOL copyResult = false;
         if (impl::PathExists(result.redirect_path.c_str()))
         {
@@ -1273,7 +1273,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
             auto attr = impl::GetFileAttributes(CopySource.c_str()); //normalizedPath.drive_absolute_path);
             Log(L"[%d]\t\tFRF source %ls attributes=0x%x", inst, CopySource.c_str(), attr);
-            if (attr != 0xffffffff)
+            if (attr != INVALID_FILE_ATTRIBUTES)
             {
                 if ((attr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY)
                 {
@@ -1343,11 +1343,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                 Log(L"[%d]FRF there is no package file to be copied to %ls.", inst, result.redirect_path.c_str());
             }
         }
-        Log(L"[%d]\t\tFRF post check 5",inst);
     }
-    
-    Log(L"[%d]\t\tFRF post check 6",inst);
-    //Log(L"\tFRF Redirect from %ls", path);
     LogString(inst, L"\tFRF Should: Redirect to result", result.redirect_path.c_str());
 
     return result;

@@ -78,21 +78,74 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Launch underlying application.
     auto exeName = appConfig->get("executable").as_string().wide();
     auto exePath = packageRoot / exeName;
-    auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+#if _DEBUGBUTNOTNEEDED
+    try
+    {
+        switch (exeArgs->type())
+        {
+        case psf::json_type::string:
+                Log("Args is string type");
+                break;
+        case psf::json_type::array:
+            Log("Args is array type");
+            break;
+        case psf::json_type::object:
+            Log("Args is object type");
+            break;
+        case psf::json_type::null:
+            Log("Args is null type");
+            break;
+        default:
+            Log("Args is OTHER type");
+            break;
+        }
+        auto foo = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+        LogString("foo",foo);
+    }
+    catch (...)
+    {
+        Log("We are going to crash on arguments!");
+    }
+#endif
+    std::wstring exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+    
+    //Allow for a substitution in the arguments for a new pseudo variable %PackageRoot% so that arguments can point to files
+    //inside the package using a syntax relative to the package root rather than rely on VFS pathing which can't kick in yet.
+    std::wstring::size_type pos = 0u;
+    std::wstring var2rep = L"%MsixPackageRoot%";
+    std::wstring repargs = packageRoot.c_str();
+    while ((pos = exeArgString.find(var2rep, pos)) != std::string::npos) {
+        exeArgString.replace(pos, var2rep.length(), repargs);
+        pos += repargs.length();
+    }
 
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        std::wstring fullargs = (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args); 
+        LogString("Process Launch: ", fullargs.data());
+        LogString("Process Launch: ", fullargs.data());
+        StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+    }
+    else if (check_suffix_if(exeName, L".cmd"_isv) ||
+             check_suffix_if(exeName, L".bat"_isv)    )
+    {
+        // These don't work through shell launch, so patch it up here.
+        std::wstring fullargs = (L"cmd.exe \\c  \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
+        LogString("Process Launch via CMD: ", fullargs.data());
+        StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
     }
     else
     {
-        StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
+        LogString("Shell Launch", exeName);
+        LogString("   Arguments", exeArgString.c_str());
+        StartWithShellExecute(packageRoot, exeName, exeArgString.c_str(), dirStr, cmdShow);
     }
 
+    Log("Process Launch Ready to run any end scripts.");
     // Launch the end PowerShell script if we are using one.
 	powershellScriptRunner.RunEndingScript();
-
+    Log("Process Launch complete.");
     return 0;
 }
 catch (...)
