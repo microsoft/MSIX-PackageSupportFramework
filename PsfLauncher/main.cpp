@@ -35,6 +35,7 @@ using namespace std::literals;
 // Forward declarations
 void LogApplicationAndProcessesCollection();
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
+bool LaunchViaCreateProcessInContainer(const std::wstring app, const std::wstring fullCmd, const std::wstring dir, bool cmdShow);
 void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 
@@ -78,35 +79,6 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Launch underlying application.
     auto exeName = appConfig->get("executable").as_string().wide();
     auto exePath = packageRoot / exeName;
-#if _DEBUGBUTNOTNEEDED
-    try
-    {
-        switch (exeArgs->type())
-        {
-        case psf::json_type::string:
-                Log("Args is string type");
-                break;
-        case psf::json_type::array:
-            Log("Args is array type");
-            break;
-        case psf::json_type::object:
-            Log("Args is object type");
-            break;
-        case psf::json_type::null:
-            Log("Args is null type");
-            break;
-        default:
-            Log("Args is OTHER type");
-            break;
-        }
-        auto foo = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
-        LogString("foo",foo);
-    }
-    catch (...)
-    {
-        Log("We are going to crash on arguments!");
-    }
-#endif
     std::wstring exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     
     //Allow for a substitution in the arguments for a new pseudo variable %PackageRoot% so that arguments can point to files
@@ -130,9 +102,28 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
              check_suffix_if(exeName, L".bat"_isv)    )
     {
         // These don't work through shell launch, so patch it up here.
-        std::wstring fullargs = (L"cmd.exe /c \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
-        LogString("Process Launch via CMD: ", fullargs.data());
-        StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        std::wstring cmdexe = L"cmd.exe";
+        std::wstring cmdargs = (L"cmd.exe /c \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
+        bool UsedCreateProcess = false;
+        UsedCreateProcess = LaunchViaCreateProcessInContainer(cmdexe, cmdargs, (packageRoot / dirStr), cmdShow);
+        if (!UsedCreateProcess)
+        {
+            LogString("Process Launch via CMD: ", repargs.data());
+            StartProcess(cmdexe.c_str(), cmdargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        }
+    }
+    else if (check_suffix_if(exeName, L".ps1"_isv))
+    {
+        // These don't work through shell launch, so patch it up here.
+        std::wstring cmdexe = L"powershell.exe";
+        std::wstring cmdargs = (L"powershell.exe -executionpolicy ByPass -file \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
+        bool UsedCreateProcess = false;
+        UsedCreateProcess = LaunchViaCreateProcessInContainer(cmdexe, cmdargs, (packageRoot / dirStr), cmdShow);
+        if (!UsedCreateProcess)
+        {
+            LogString("Process Launch via powershell: ", repargs.data());
+            StartProcess(cmdexe.c_str(), cmdargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        }
     }
     else
     {
@@ -151,6 +142,105 @@ catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     return win32_from_caught_exception();
+}
+
+bool LaunchViaCreateProcessInContainer(std::wstring app, std::wstring fullCmd, std::wstring dir, bool cmdShow)
+{
+    // An attempt is made to get the new process to run inside the container.
+    // Currently the attempt launches outside the container, but unless the script
+    // needed access to container registry, for example, should be OK.  
+    // Perhaps this can get more attention at a later time.
+
+    bool bRet = false;
+    Log("CreateProcess needed:");
+    DWORD ProtectionLevel = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE; // PROTECTION_LEVEL_SAME;
+    SIZE_T AttributeListSize;
+    PROCESS_INFORMATION ProcessInformation = { 0 };
+    STARTUPINFOEXW StartupInfoEx = { 0 };
+    StartupInfoEx.StartupInfo.cb = sizeof(StartupInfoEx);
+    InitializeProcThreadAttributeList(NULL, 1, 0, &AttributeListSize);
+    StartupInfoEx.lpAttributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(GetProcessHeap(), 0, AttributeListSize);
+    if (InitializeProcThreadAttributeList(StartupInfoEx.lpAttributeList, 1, 0, &AttributeListSize) == FALSE)
+    {
+        Log("Unable to initialize thread attribute list for CreateProcess.");
+    }
+    else
+    {
+        if (UpdateProcThreadAttribute(StartupInfoEx.lpAttributeList, 0,
+            PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY, //PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL,
+            &ProtectionLevel, sizeof(ProtectionLevel),
+            NULL, NULL) == FALSE)
+        {
+            Log("Unable to update thread attribute list for CreateProcess.");
+        }
+        else
+        {
+            DWORD CreationFlag = EXTENDED_STARTUPINFO_PRESENT; // EXTENDED_STARTUPINFO_PRESENT | CREATE_PROTECTED_PROCESS;
+            if (!cmdShow)
+                CreationFlag |= CREATE_NO_WINDOW;
+#ifdef UseCreateProcess
+            // This is what the script runner is doing
+            LogString("CreateProcess used for CMD: ", fullCmd.data());
+            if (CreateProcessW(app.c_str(),
+                fullCmd.data(),
+                NULL,
+                NULL,
+                false,
+                CreationFlag,
+                NULL,
+                dir.c_str(),
+                (LPSTARTUPINFOW)&StartupInfoEx,
+                &ProcessInformation) == TRUE)
+            {
+                bRet = true;
+                WaitForSingleObject(ProcessInformation.hProcess, INFINITE);
+            }
+            else
+            {
+                Log("CreateProcess failure.");
+            }
+#else
+            // This was suggested as a replacement
+            LogString("CreateProcessAsUser used for CMD: ", fullCmd.data());
+            HANDLE pHnd = GetCurrentProcess();
+            if (pHnd != NULL)
+            {
+                HANDLE pToken;
+                if (OpenProcessToken(pHnd, TOKEN_ALL_ACCESS, &pToken))
+                {
+                    if (CreateProcessAsUserW(pToken,
+                        app.c_str(),
+                        fullCmd.data(),
+                        NULL,
+                        NULL,
+                        false,
+                        CreationFlag,
+                        NULL,
+                        dir.c_str(),
+                        (LPSTARTUPINFOW)&StartupInfoEx,
+                        &ProcessInformation) == TRUE)
+                    {
+                        bRet = true;
+                        WaitForSingleObject(ProcessInformation.hProcess, INFINITE);
+                    }
+                    else
+                    {
+                        Log("CreateProcessAsUserW failure.");
+                    }
+                }
+                else
+                {
+                    Log("OpenProcessToken failure.");
+                }
+            }
+            else
+            {
+                Log("GetCurrentProcess failure.");
+            }
+#endif
+        }
+    }
+    return bRet;
 }
 
 void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
