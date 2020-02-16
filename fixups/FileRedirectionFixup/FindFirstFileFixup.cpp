@@ -41,9 +41,8 @@ struct find_data
     // path does not exist/match any existing files at the start of the enumeration, for a slight optimization
     std::wstring redirect_path;
     std::wstring package_vfs_path;
-#if _DEBUG
     std::wstring requested_path;
-#endif
+
     // The first value is the find handle for the "redirected path" (typically to the user's profile). 
     // The second value is for a "package VFS" location equivalent to the requested information when native AppData and LocalAppdata are used in the request.
     // The third is the find handle for the non-redirected path as asked for by the app.
@@ -169,10 +168,8 @@ HANDLE __stdcall FindFirstFileExFixup(
     dir = VirtualizePath(std::move(dir), FindFirstFileExInstance);
 
     auto result = std::make_unique<find_data>();
-#if _DEBUG
-    result->requested_path = path.c_str();
-#endif
 
+    result->requested_path = path.c_str();
     result->redirect_path = RedirectedPath(dir,false, FindFirstFileExInstance);
     if (result->redirect_path.back() != L'\\')
     {
@@ -252,6 +249,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         }
         else
         {
+            result->package_vfs_path.clear();
             Log(L"[%d]FindFirstFile[1] (from vfs_path): no results", FindFirstFileExInstance);
         }
         if (!result->find_handles[0])
@@ -275,13 +273,14 @@ HANDLE __stdcall FindFirstFileExFixup(
 
     //
     // Open the non-redirected find handle
-    result->find_handles[2].reset(impl::FindFirstFileEx(path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
+    result->find_handles[2].reset(impl::FindFirstFileEx(result->requested_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
     if (result->find_handles[2])
     {
         Log(L"[%d]FindFirstFile[2] (from origial): had results", FindFirstFileExInstance);
     }
     else
     {
+        result->requested_path.clear();
         Log(L"[%d]FindFirstFile[2] (from original): no results", FindFirstFileExInstance);
     }
     if (!result->find_handles[0] &&
@@ -339,6 +338,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 }
 DECLARE_STRING_FIXUP(impl::FindFirstFile, FindFirstFileFixup);
 
+
 template <typename CharT>
 BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try
 {
@@ -362,8 +362,10 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     }
 
     auto data = reinterpret_cast<find_data*>(findFile);
-#if _DEBUG
-    Log(L"[%d]FindNextFileFixup is against %ls", FindNextFileInstance, data->requested_path.c_str());
+#if !_DEBUG
+    Log(L"[%d]FindNextFileFixup is against redir  =%ls", FindNextFileInstance, data->redirect_path.c_str());
+    Log(L"[%d]FindNextFileFixup is against pkgVfs =%ls", FindNextFileInstance, data->package_vfs_path.c_str());
+    Log(L"[%d]FindNextFileFixup is against request=%ls", FindNextFileInstance, data->requested_path.c_str());
 #endif
 
     auto redirectedFileExists = [&](auto filename)
@@ -395,7 +397,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     };
     auto vfspathFileExists = [&](auto filename)
     {
-        if (data->redirect_path.empty())
+        if (data->package_vfs_path.empty())
         {
             Log(L"[%d]FindNextFile vfspathFileExists returns false.", FindNextFileInstance);
             return false;
@@ -421,108 +423,116 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
         return result;
     };
 
-
-    if (data->find_handles[0])
+    if (!data->redirect_path.empty())
     {
-        Log(L"[%d]FindNextFile[0] to be checked.", FindNextFileInstance);
-        if (impl::FindNextFile(data->find_handles[0].get(), findFileData))
+        if (data->find_handles[0])
         {
-            Log(L"[%d]FindNextFile[0] returns TRUE: %ls", FindNextFileInstance, data->cached_data.cFileName);
-            return TRUE;
-        }
-        else if (::GetLastError() == ERROR_NO_MORE_FILES)
-        {
-            Log(L"[%d]FindNextFile[0] had FALSE with ERROR_NO_MORE_FILES.", FindNextFileInstance);
-            data->find_handles[0].reset();
-
-            if (!data->find_handles[1])
+            Log(L"[%d]FindNextFile[0] to be checked.", FindNextFileInstance);
+            if (impl::FindNextFile(data->find_handles[0].get(), findFileData))
             {
-                Log(L"[%d]FindNextFile[1] not in use.", FindNextFileInstance);
-                if (!data->find_handles[2])
-                {
-                    Log(L"[%d]FindNextFile[2] not in use, so return ERROR_NO_MORE_FILES.", FindNextFileInstance);
-                    // NOTE: Last error scribbled over by closing find_handles[0]
-                    ::SetLastError(ERROR_NO_MORE_FILES);
-                    return FALSE;
-                }
-                // else check[1]
-            }
-
-            if (!redirectedFileExists(data->cached_data.cFileName))
-            {
-                if (copy_find_data(data->cached_data, *findFileData))
-                {
-                    Log(L"[%d]FindNextFile[0] returns FALSE with last error set by caller", FindNextFileInstance);
-                    // NOTE: Last error set by caller
-                    return FALSE;
-                }
-
-                LogString(FindNextFileInstance, L"FindNextFile[0] returns TRUE with ERROR_SUCCESS and file %ls", data->cached_data.cFileName);
-                ::SetLastError(ERROR_SUCCESS);
+                Log(L"[%d]FindNextFile[0] returns TRUE: %ls", FindNextFileInstance, data->cached_data.cFileName);
                 return TRUE;
             }
-        }
-        else
-        {
-            // Error due to something other than reaching the end 
-            Log(L"[%d]FindNextFile[0] returns FALSE", FindNextFileInstance);
-            return FALSE;
+            else if (::GetLastError() == ERROR_NO_MORE_FILES)
+            {
+                Log(L"[%d]FindNextFile[0] had FALSE with ERROR_NO_MORE_FILES.", FindNextFileInstance);
+                data->find_handles[0].reset();
+
+                if (data->package_vfs_path.empty() || !data->find_handles[1])
+                {
+                    Log(L"[%d]FindNextFile[1] not in use.", FindNextFileInstance);
+                    if (data->requested_path.empty() || !data->find_handles[2])
+                    {
+                        Log(L"[%d]FindNextFile[2] not in use, so return ERROR_NO_MORE_FILES.", FindNextFileInstance);
+                        // NOTE: Last error scribbled over by closing find_handles[0]
+                        ::SetLastError(ERROR_NO_MORE_FILES);
+                        return FALSE;
+                    }
+                    // else check[1]
+                }
+
+                if (!redirectedFileExists(data->cached_data.cFileName))
+                {
+                    if (copy_find_data(data->cached_data, *findFileData))
+                    {
+                        Log(L"[%d]FindNextFile[0] returns FALSE with last error set by caller", FindNextFileInstance);
+                        // NOTE: Last error set by caller
+                        return FALSE;
+                    }
+
+                    LogString(FindNextFileInstance, L"FindNextFile[0] returns TRUE with ERROR_SUCCESS and file %ls", data->cached_data.cFileName);
+                    ::SetLastError(ERROR_SUCCESS);
+                    return TRUE;
+                }
+            }
+            else
+            {
+                // Error due to something other than reaching the end 
+                Log(L"[%d]FindNextFile[0] returns FALSE", FindNextFileInstance);
+                return FALSE;
+            }
         }
     }
 
-    while (data->find_handles[1])
+    if (!data->package_vfs_path.empty())
     {
-        if (impl::FindNextFile(data->find_handles[1].get(), findFileData))
+        while (data->find_handles[1])
         {
-            // Skip the file if it exists in the redirected path
-            if (!redirectedFileExists(findFileData->cFileName))
+            if (impl::FindNextFile(data->find_handles[1].get(), findFileData))
             {
-                LogString(FindNextFileInstance, L"FindNextFile[1] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
-                ::SetLastError(ERROR_SUCCESS);
-                return TRUE;
+                // Skip the file if it exists in the redirected path
+                if (!redirectedFileExists(findFileData->cFileName))
+                {
+                    LogString(FindNextFileInstance, L"FindNextFile[1] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
+                    ::SetLastError(ERROR_SUCCESS);
+                    return TRUE;
+                }
+                // Otherwise, skip this file and check the next one
             }
-            // Otherwise, skip this file and check the next one
-        }
-        else if (::GetLastError() == ERROR_NO_MORE_FILES)
-        {
-            Log(L"[%d]FindNextFile[1] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
-            data->find_handles[1].reset();
-            // now check [2]
-        }
-        else
-        {
-            Log(L"[%d]FindNextFile[1] returns FALSE", FindNextFileInstance);
-            // Error due to something other than reaching the end
-            return FALSE;
+            else if (::GetLastError() == ERROR_NO_MORE_FILES)
+            {
+                Log(L"[%d]FindNextFile[1] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
+                data->find_handles[1].reset();
+                // now check [2]
+            }
+            else
+            {
+                Log(L"[%d]FindNextFile[1] returns FALSE", FindNextFileInstance);
+                // Error due to something other than reaching the end
+                return FALSE;
+            }
         }
     }
 
-    while (data->find_handles[2])
+    if (!data->requested_path.empty())
     {
-        if (impl::FindNextFile(data->find_handles[2].get(), findFileData))
+        while (data->find_handles[2])
         {
-            // Skip the file if it exists in the redirected path
-            if (!redirectedFileExists(findFileData->cFileName) &&
-                !vfspathFileExists(findFileData->cFileName))
+            if (impl::FindNextFile(data->find_handles[2].get(), findFileData))
             {
-                LogString(FindNextFileInstance, L"FindNextFile[1] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
-                ::SetLastError(ERROR_SUCCESS);
-                return TRUE;
+                // Skip the file if it exists in the redirected path
+                if (!redirectedFileExists(findFileData->cFileName) &&
+                    !vfspathFileExists(findFileData->cFileName))
+                {
+                    LogString(FindNextFileInstance, L"FindNextFile[2] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
+                    ::SetLastError(ERROR_SUCCESS);
+                    return TRUE;
+                }
+                // Otherwise, skip this file and check the next one
             }
-            // Otherwise, skip this file and check the next one
-        }
-        else if (::GetLastError() == ERROR_NO_MORE_FILES)
-        {
-            Log(L"[%d]FindNextFile[2] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
-            data->find_handles[1].reset();
-            ::SetLastError(ERROR_NO_MORE_FILES);
-            return FALSE;
-        }
-        else
-        {
-            Log(L"[%d]FindNextFile[2] returns FALSE", FindNextFileInstance);
-            // Error due to something other than reaching the end
-            return FALSE;
+            else if (::GetLastError() == ERROR_NO_MORE_FILES)
+            {
+                Log(L"[%d]FindNextFile[2] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
+                data->find_handles[1].reset();
+                ::SetLastError(ERROR_NO_MORE_FILES);
+                return FALSE;
+            }
+            else
+            {
+                Log(L"[%d]FindNextFile[2] returns FALSE", FindNextFileInstance);
+                // Error due to something other than reaching the end
+                return FALSE;
+            }
         }
     }
     // We ran out of data either on a previous call, or by ignoring files that have been redirected

@@ -19,33 +19,41 @@ UINT __stdcall GetPrivateProfileIntFixup(
     {
         if (guard)
         {
+            DWORD GetPrivateProfileIntInstance = ++g_FileIntceptInstance;
             if constexpr (psf::is_ansi<CharT>)
             {
-                LogString(L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
-                LogString(L" Section", widen_argument(sectionName).c_str());
-                LogString(L" Key", widen_argument(key).c_str());
+                LogString(GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
+                LogString(GetPrivateProfileIntInstance,L" Section", widen_argument(sectionName).c_str());
+                LogString(GetPrivateProfileIntInstance,L" Key", widen_argument(key).c_str());
             }
             else
             {
-                LogString(L"GetPrivateProfileIntFixup for fileName", fileName);
-                LogString(L" Section", sectionName);
-                LogString(L" Key", key);
+                LogString(GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", fileName);
+                LogString(GetPrivateProfileIntInstance,L" Section", sectionName);
+                LogString(GetPrivateProfileIntInstance,L" Key", key);
             }
-            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
-            if (shouldRedirect)
+            if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                if constexpr (psf::is_ansi<CharT>)
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                if (shouldRedirect)
                 {
-                    UINT retval =  impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, redirectPath.c_str());
-                    Log(L" Returned uint: %d ", retval);
-                    return retval;
+                    if constexpr (psf::is_ansi<CharT>)
+                    {
+                        UINT retval = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, redirectPath.c_str());
+                        Log(L" [%d]Returned uint: %d ", GetPrivateProfileIntInstance, retval);
+                        return retval;
+                    }
+                    else
+                    {
+                        UINT retval = impl::GetPrivateProfileIntW(sectionName, key, nDefault, redirectPath.c_str());
+                        Log(L" [%d]Returned uint: %d ", GetPrivateProfileIntInstance,retval);
+                        return retval;
+                    }
                 }
-                else
-                {
-                    UINT retval = impl::GetPrivateProfileIntW(sectionName, key, nDefault, redirectPath.c_str());
-                    Log(L" Returned uint: %d ", retval);
-                    return retval;
-                }
+            }
+            else
+            {
+                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileIntInstance);
             }
         }
     }

@@ -18,25 +18,33 @@ DWORD __stdcall GetPrivateProfileSectionNamesFixup(
     {
         if (guard)
         {
-            LogString(L"GetPrivateProfileSectionNamesFixup for fileName", fileName);
-            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
-            if (shouldRedirect)
+            DWORD GetPrivateProfileSectionNamesInstance = ++g_FileIntceptInstance;
+            LogString(GetPrivateProfileSectionNamesInstance,L"GetPrivateProfileSectionNamesFixup for fileName", widen(fileName, CP_ACP).c_str());
+            if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                if constexpr (psf::is_ansi<CharT>)
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                if (shouldRedirect)
                 {
-                    auto wideString = std::make_unique<wchar_t[]>(stringLength);
-                    auto realRetValue = impl::GetPrivateProfileSectionNamesW( wideString.get(), stringLength, redirectPath.c_str());
-
-                    if (_doserrno != ENOENT)
+                    if constexpr (psf::is_ansi<CharT>)
                     {
-                        ::WideCharToMultiByte(CP_ACP, 0, wideString.get(), stringLength, string, stringLength, nullptr, nullptr);
-                        return realRetValue;
+                        auto wideString = std::make_unique<wchar_t[]>(stringLength);
+                        auto realRetValue = impl::GetPrivateProfileSectionNamesW(wideString.get(), stringLength, redirectPath.c_str());
+
+                        if (_doserrno != ENOENT)
+                        {
+                            ::WideCharToMultiByte(CP_ACP, 0, wideString.get(), stringLength, string, stringLength, nullptr, nullptr);
+                            return realRetValue;
+                        }
+                    }
+                    else
+                    {
+                        return impl::GetPrivateProfileSectionNamesW(string, stringLength, redirectPath.c_str());
                     }
                 }
-                else
-                {
-                    return impl::GetPrivateProfileSectionNamesW(string, stringLength, redirectPath.c_str());
-                }
+            }
+            else
+            {
+                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileSectionNamesInstance);
             }
         }
     }

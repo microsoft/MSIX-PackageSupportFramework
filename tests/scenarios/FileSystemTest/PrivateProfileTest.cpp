@@ -18,7 +18,8 @@ int PrivateProfileTests()
 	int result = ERROR_SUCCESS;
     int testResult;
 	auto packageFilePath = g_packageRootPath / g_packageFileName;
-	auto otherFilePath = g_packageRootPath / L"TèƨƭFïℓè.ini";
+	auto otherFilePathIntl = g_packageRootPath / L"TèƨƭFïℓè.ini";
+    auto otherFilePath = g_packageRootPath / L"TestIniFile.ini";
 
     std::wstring badValue = L"BadValue";
     std::wstring updatedValue = L"UpdatedValue";
@@ -47,7 +48,7 @@ int PrivateProfileTests()
 	    test_end(testResult);
 
 	    test_begin("GetPrivateProfileSection From Package Test");
-        rLen = GetPrivateProfileSection(L"Section1",buffer, testLen, otherFilePath.c_str());
+        rLen = GetPrivateProfileSection(L"Section1",buffer, testLen, otherFilePath.native().c_str());
         if (rLen > 0)
         {
             testResult = ERROR_SUCCESS;
@@ -60,7 +61,7 @@ int PrivateProfileTests()
 	    test_end(testResult);
 
 
-	    test_begin("GetPrivateProfileStringg From Package Test");
+	    test_begin("GetPrivateProfileString From Package Test");
         rLen = GetPrivateProfileString(L"Section1", L"ItemString", badValue.c_str(), buffer, testLen, otherFilePath.c_str());
         if (rLen > 0)
         {
@@ -93,8 +94,8 @@ int PrivateProfileTests()
 
  
 
-        test_begin("WritePrivateProfileString to Package(Redirected) Test");
-        rLen = WritePrivateProfileString(L"Section1", L"ItemString", updatedValue.c_str(), otherFilePath.c_str());
+        test_begin("WritePrivateProfileString to Package(Intl) Test");
+        rLen = WritePrivateProfileString(L"Section1", L"ItemString", updatedValue.c_str(), otherFilePathIntl.native().c_str());
         if (rLen > 0)
         {
             testResult = ERROR_SUCCESS;
@@ -108,8 +109,8 @@ int PrivateProfileTests()
 
 
 
-        test_begin("GetPrivateProfileString From Redirection Test");
-        rLen = GetPrivateProfileString(L"Section1", L"ItemString", badValue.c_str(), buffer, testLen, otherFilePath.c_str());
+        test_begin("GetPrivateProfileString From Redirection (Intl) Test");
+        rLen = GetPrivateProfileString(L"Section1", L"ItemString", badValue.c_str(), buffer, testLen, otherFilePathIntl.native().c_str());
         if (rLen > 0)
         {
             if (_wcsicmp(updatedValue.c_str(), buffer) == 0)

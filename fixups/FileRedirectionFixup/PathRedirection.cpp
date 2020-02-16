@@ -328,6 +328,24 @@ bool IsUnderUserAppDataLocal(_In_ const char* fileName)
     return IsUnderUserAppDataLocalImpl(fileName);
 }
 
+
+template <typename CharT>
+bool IsUnderUserAppDataLocalPackagesImpl(_In_ const CharT* fileName)
+{
+    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+        return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
+    return path_relative_to(fileName, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
+}
+bool IsUnderUserAppDataLocalPackages(_In_ const wchar_t* fileName)
+{
+    return IsUnderUserAppDataLocalPackagesImpl(fileName);
+}
+bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName)
+{
+    return IsUnderUserAppDataLocalPackagesImpl(fileName);
+}
+
 template <typename CharT>
 bool IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
 {

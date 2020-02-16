@@ -17,10 +17,17 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             DWORD CreateDirectoryInstance = ++g_FileIntceptInstance;
             LogString(CreateDirectoryInstance,L"CreateDirectoryFixup for path", pathName);
             
-            auto [shouldRedirect, redirectPath,shouldReadonlySource] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
-            if (shouldRedirect)
+            if (!IsUnderUserAppDataLocalPackages(pathName))
             {
-                return impl::CreateDirectory(redirectPath.c_str(), securityAttributes);
+                auto [shouldRedirect, redirectPath, shouldReadonlySource] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
+                if (shouldRedirect)
+                {
+                    return impl::CreateDirectory(redirectPath.c_str(), securityAttributes);
+                }
+            }
+            else
+            {
+                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", CreateDirectoryInstance);
             }
         }
     }

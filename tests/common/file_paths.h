@@ -14,12 +14,13 @@
 
 inline void clean_redirection_path_helper(std::filesystem::path redirectRoot)
 {
-	std::error_code ec;
+	std::error_code ec;    
 	std::filesystem::remove_all(redirectRoot, ec);
 	if (ec)
 	{
 		trace_message(L"WARNING: Failed to clean the redirected path. Future tests may be impacted by this...\n", warning_color);
 		trace_messages(warning_color, L"WARNING: ", ec.message(), new_line);
+        trace_messages(warning_color, L"Path was:", redirectRoot.c_str(), new_line);
 	}
 	else
 	{

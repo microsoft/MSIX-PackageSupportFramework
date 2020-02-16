@@ -73,8 +73,10 @@ bool path_relative_to(const char* path, const std::filesystem::path& basePath);
 
 // Determines if the path of the filename falls under the user's appdata local or roaming folders.
 bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName);
+bool IsUnderUserAppDataLocalPackages(_In_ const wchar_t* fileName);
 bool IsUnderUserAppDataRoaming(_In_ const wchar_t* fileName);
 bool IsUnderUserAppDataLocal(_In_ const char* fileName);
+bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName);
 bool IsUnderUserAppDataRoaming(_In_ const char* fileName);
 
 // Return path to existing package VFS file (or NULL if not present)
