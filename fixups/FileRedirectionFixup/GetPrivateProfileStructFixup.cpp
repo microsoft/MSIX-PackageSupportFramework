@@ -22,25 +22,32 @@ BOOL __stdcall GetPrivateProfileStructFixup(
         {
             DWORD GetPrivateProfileStructInstance = ++g_FileIntceptInstance;
             LogString(GetPrivateProfileStructInstance,L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
-            if (!IsUnderUserAppDataLocalPackages(fileName))
+            if (fileName != NULL)
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
-                if (shouldRedirect)
+                if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    if constexpr (psf::is_ansi<CharT>)
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    if (shouldRedirect)
                     {
-                        return impl::GetPrivateProfileStructW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(),
-                            structArea, uSizeStruct, redirectPath.c_str());
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            return impl::GetPrivateProfileStructW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(),
+                                structArea, uSizeStruct, redirectPath.c_str());
+                        }
+                        else
+                        {
+                            return impl::GetPrivateProfileStructW(sectionName, key, structArea, uSizeStruct, redirectPath.c_str());
+                        }
                     }
-                    else
-                    {
-                        return impl::GetPrivateProfileStructW(sectionName, key, structArea, uSizeStruct, redirectPath.c_str());
-                    }
+                }
+                else
+                {
+                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStructInstance);
                 }
             }
             else
             {
-                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStructInstance);
+                Log(L"[%d]null fileName, don't redirect", GetPrivateProfileStructInstance);
             }
         }
     }

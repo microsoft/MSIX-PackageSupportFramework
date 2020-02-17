@@ -33,37 +33,44 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                 LogString(GetPrivateProfileStringInstance,L" Section", appName);
                 LogString(GetPrivateProfileStringInstance,L" Key", keyName);
             }
-            if (!IsUnderUserAppDataLocalPackages(fileName))
+            if (fileName != NULL)
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
-                if (shouldRedirect)
+                if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    if constexpr (psf::is_ansi<CharT>)
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    if (shouldRedirect)
                     {
-                        auto wideString = std::make_unique<wchar_t[]>(stringLength);
-                        auto realRetValue = impl::GetPrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                            widen_argument(defaultString).c_str(), wideString.get(), stringLength, redirectPath.c_str());
-
-                        if (_doserrno != ENOENT)
+                        if constexpr (psf::is_ansi<CharT>)
                         {
-                            ::WideCharToMultiByte(CP_ACP, 0, wideString.get(), stringLength, string, stringLength, nullptr, nullptr);
-                            Log(L"[%d] Returned length=0x%x", GetPrivateProfileStringInstance,realRetValue);
-                            LogString(GetPrivateProfileStringInstance,L" Returned string converted", string);
-                            LogString(GetPrivateProfileStringInstance,L" Returned string notconverted", wideString.get());
+                            auto wideString = std::make_unique<wchar_t[]>(stringLength);
+                            auto realRetValue = impl::GetPrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
+                                widen_argument(defaultString).c_str(), wideString.get(), stringLength, redirectPath.c_str());
+
+                            if (_doserrno != ENOENT)
+                            {
+                                ::WideCharToMultiByte(CP_ACP, 0, wideString.get(), stringLength, string, stringLength, nullptr, nullptr);
+                                Log(L"[%d] Returned length=0x%x", GetPrivateProfileStringInstance, realRetValue);
+                                LogString(GetPrivateProfileStringInstance, L" Returned string converted", string);
+                                LogString(GetPrivateProfileStringInstance, L" Returned string notconverted", wideString.get());
+                                return realRetValue;
+                            }
+                        }
+                        else
+                        {
+                            auto realRetValue = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, redirectPath.c_str());
+                            LogString(GetPrivateProfileStringInstance, L" Returned string", string);
                             return realRetValue;
                         }
                     }
-                    else
-                    {
-                        auto realRetValue = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, redirectPath.c_str());
-                        LogString(GetPrivateProfileStringInstance,L" Returned string", string);
-                        return realRetValue;
-                    }
+                }
+                else
+                {
+                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStringInstance);
                 }
             }
             else
             {
-                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStringInstance);
+                Log(L"[%d]null fileName, don't redirect", GetPrivateProfileStringInstance);
             }
         }
     }

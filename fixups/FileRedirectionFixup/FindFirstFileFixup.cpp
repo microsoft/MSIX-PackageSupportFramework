@@ -523,7 +523,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
                 Log(L"[%d]FindNextFile[2] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
-                data->find_handles[1].reset();
+                data->find_handles[2].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 return FALSE;
             }

@@ -31,11 +31,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         {
                             // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                             std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
-                            if (wcslen(PackageVersion.c_str()) >= 0)
+                            if (wcslen(PackageVersion.c_str()) > 0)
                             {
-                                Log(L"[%d]GetFileAttributes: uncopied ADL/ADR case", GetFileAttributesInstance);
+                                Log(L"[%d]GetFileAttributes: uncopied ADL/ADR case %ls", GetFileAttributesInstance,PackageVersion.c_str());
                                 attributes = impl::GetFileAttributes(PackageVersion.c_str());
-                                if (attributes != INVALID_FILE_ATTRIBUTES)
+                                if (attributes == INVALID_FILE_ATTRIBUTES)
                                 {
                                     Log(L"[%d]GetFileAttributes: fall back to original request location.", GetFileAttributesInstance);
                                     attributes = impl::GetFileAttributes(fileName);
@@ -48,7 +48,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             attributes = impl::GetFileAttributes(fileName);
                         }
                     }
-                    if (attributes != INVALID_FILE_ATTRIBUTES)
+                    else if (attributes != INVALID_FILE_ATTRIBUTES)
                     {
                         if (shouldReadonly)
                         {
@@ -107,9 +107,9 @@ BOOL __stdcall GetFileAttributesExFixup(
                         {
                             // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                             std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
-                            if (wcslen(PackageVersion.c_str()) >= 0)
+                            if (wcslen(PackageVersion.c_str()) > 0)
                             {
-                                Log(L"[%d]GetFileAttributesEx: uncopied ADL/ADR case", GetFileAttributesExInstance);
+                                Log(L"[%d]GetFileAttributesEx: uncopied ADL/ADR case %ls", GetFileAttributesExInstance,PackageVersion.c_str());
                                 retval = impl::GetFileAttributesEx(PackageVersion.c_str(), infoLevelId, fileInformation);
                                 if (retval == 0)
                                 {
@@ -124,7 +124,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                             retval = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
                         }
                     }
-                    if (retval != 0)
+                    else if (retval != 0)
                     {
                         if (shouldReadonly)
                         {

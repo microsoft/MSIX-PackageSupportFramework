@@ -14,8 +14,9 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     {
         if (guard)
         {
-            LogString(L"MoveFileFixup From", existingFileName);
-            LogString(L"MoveFileFixup To",   newFileName);
+            DWORD MoveFileInstance = ++g_FileIntceptInstance;
+            LogString(MoveFileInstance,L"MoveFileFixup From", existingFileName);
+            LogString(MoveFileInstance,L"MoveFileFixup To",   newFileName);
 
             // NOTE: MoveFile needs delete access to the existing file, but since we won't have delete access to the
             //       file if it is in the package, we copy-on-read it here. This is slightly wasteful since we're
@@ -54,8 +55,9 @@ BOOL __stdcall MoveFileExFixup(
     {
         if (guard)
         {
-            Log("MoveFileExFixup From", existingFileName);
-            Log("MoveFileExFixup To",   newFileName);
+            DWORD MoveFileExInstance = ++g_FileIntceptInstance;
+            LogString(MoveFileExInstance,L"MoveFileExFixup From", existingFileName);
+            LogString(MoveFileExInstance,L"MoveFileExFixup To",   newFileName);
            
 
             // See note in MoveFile for commentary on copy-on-read functionality (though we could do better by checking

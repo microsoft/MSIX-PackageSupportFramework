@@ -21,25 +21,32 @@ BOOL __stdcall WritePrivateProfileStringFixup(
             DWORD WritePrivateProfileStringInstance = ++g_FileIntceptInstance;
             LogString(WritePrivateProfileStringInstance,L"WritePrivateProfileStringFixup for fileName", fileName);
             
-            if (!IsUnderUserAppDataLocalPackages(fileName))
+            if (fileName != NULL)
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
-                if (shouldRedirect)
+                if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    if constexpr (psf::is_ansi<CharT>)
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    if (shouldRedirect)
                     {
-                        return impl::WritePrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                            widen_argument(string).c_str(), redirectPath.c_str());
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            return impl::WritePrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
+                                widen_argument(string).c_str(), redirectPath.c_str());
+                        }
+                        else
+                        {
+                            return impl::WritePrivateProfileString(appName, keyName, string, redirectPath.c_str());
+                        }
                     }
-                    else
-                    {
-                        return impl::WritePrivateProfileString(appName, keyName, string, redirectPath.c_str());
-                    }
+                }
+                else
+                {
+                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", WritePrivateProfileStringInstance);
                 }
             }
             else
             {
-                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", WritePrivateProfileStringInstance);
+                Log(L"[%d]null fileName, don't redirect", WritePrivateProfileStringInstance);
             }
         }
     }

@@ -314,6 +314,8 @@ void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
 template <typename CharT>
 bool IsUnderUserAppDataLocalImpl(_In_ const CharT* fileName)
 {
+    if (fileName == NULL)
+        return false;
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
         return path_relative_to(fileName+4, psf::known_folder(FOLDERID_LocalAppData));
@@ -332,6 +334,8 @@ bool IsUnderUserAppDataLocal(_In_ const char* fileName)
 template <typename CharT>
 bool IsUnderUserAppDataLocalPackagesImpl(_In_ const CharT* fileName)
 {
+    if (fileName == NULL)
+        return false;
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
@@ -349,6 +353,8 @@ bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName)
 template <typename CharT>
 bool IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
 {
+    if (fileName == NULL)
+        return false;
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
@@ -366,28 +372,31 @@ bool IsUnderUserAppDataRoaming(_In_ const char* fileName)
 template <typename CharT>
 std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
 {
-    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
-    if (IsUnderUserAppDataLocal(fileName))
+    if (fileName != NULL)
     {
-        auto lad = psf::known_folder(FOLDERID_LocalAppData);
-        std::filesystem::path foo;
-        if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
-            foo = fileName + 4;
-        else
-            foo = fileName;
-        auto testLad = g_packageVfsRootPath / L"Local AppData" / foo.wstring().substr(wcslen(lad.c_str())+1).c_str();
-        return testLad;
-    }
-    else if (IsUnderUserAppDataRoaming(fileName))
-    {
-        auto rad = psf::known_folder(FOLDERID_RoamingAppData);
-        std::filesystem::path foo;
-        if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
-            foo = fileName + 4;
-        else
-            foo = fileName;
-        auto testRad = g_packageVfsRootPath / L"AppData" / foo.wstring().substr(wcslen(rad.c_str())+1).c_str();
-        return testRad;
+        constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+        if (IsUnderUserAppDataLocal(fileName))
+        {
+            auto lad = psf::known_folder(FOLDERID_LocalAppData);
+            std::filesystem::path foo;
+            if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+                foo = fileName + 4;
+            else
+                foo = fileName;
+            auto testLad = g_packageVfsRootPath / L"Local AppData" / foo.wstring().substr(wcslen(lad.c_str()) + 1).c_str();
+            return testLad;
+        }
+        else if (IsUnderUserAppDataRoaming(fileName))
+        {
+            auto rad = psf::known_folder(FOLDERID_RoamingAppData);
+            std::filesystem::path foo;
+            if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+                foo = fileName + 4;
+            else
+                foo = fileName;
+            auto testRad = g_packageVfsRootPath / L"AppData" / foo.wstring().substr(wcslen(rad.c_str()) + 1).c_str();
+            return testRad;
+        }
     }
     return L"";
 }
