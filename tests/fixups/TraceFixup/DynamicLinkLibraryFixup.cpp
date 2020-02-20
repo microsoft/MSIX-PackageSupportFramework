@@ -27,22 +27,28 @@ DLL_DIRECTORY_COOKIE __stdcall AddDllDirectoryFixup(_In_ PCWSTR newDirectory)
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-            
-            inputs = "Directory=" + InterpretStringA(newDirectory);
-
-            results = InterpretReturn(functionResult, result!=0).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs +=  InterpretLastError();
+                inputs = "Directory=" + InterpretStringA(newDirectory);
+
+                results = InterpretReturn(functionResult, result != 0).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("AddDllDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-            sout << InterpretCallingModulePart2()
-            InterpretCallingModulePart3()
-            std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("AddDllDirectory", inputs.c_str(), results.c_str(), outputs.c_str(),cm.c_str(), TickStart, TickEnd);
+            catch (...)
+            {
+                Log("AddDllDirectoryFixup event logging failure");
+            }
         }
         else
         {
@@ -214,22 +220,28 @@ DWORD __stdcall LoadModuleFixup(_In_ LPCSTR moduleName, _In_ LPVOID parameterBlo
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-
-            inputs = "Module Name=" + InterpretStringA(moduleName);
-
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs +=  InterpretLastError();
+                inputs = "Module Name=" + InterpretStringA(moduleName);
+
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("LoadModule", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd); \
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout <<  InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("LoadModule", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            catch (...)
+            {
+                Log("LoadModuleFixup event logging failure");
+            }
         }
         else
         {
@@ -265,22 +277,28 @@ HMODULE __stdcall LoadPackagedLibraryFixup(_In_ LPCWSTR libFileName, _Reserved_ 
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-
-            inputs = "File Name=" + InterpretStringA(libFileName);
-
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs +=  InterpretLastError();
+                inputs = "File Name=" + InterpretStringA(libFileName);
+
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("LoadPackagedLibrary", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout <<  InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("LoadPackagedLibrary", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            catch (...)
+            {
+                Log("LoadPackagedLibraryFixup event logging failure");
+            }
         }
         else
         {
@@ -316,22 +334,28 @@ BOOL __stdcall RemoveDllDirectoryFixup(_In_ DLL_DIRECTORY_COOKIE cookie)
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-
-            inputs = InterpretAsHex("Cookie", cookie);
-
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs +=  InterpretLastError();
+                inputs = InterpretAsHex("Cookie", cookie);
+
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("RemoveDllDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
             }
-
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout <<  InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-
-            Log_ETW_PostMsgOperationA("RemoveDllDirectory", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            catch (...)
+            {
+                Log("RemoveDllDirectoryFixup event logging failure");
+            }
         }
         else
         {
@@ -367,22 +391,28 @@ BOOL __stdcall SetDefaultDllDirectoriesFixup(_In_ DWORD directoryFlags)
             std::string inputs = "";
             std::string outputs = "";
             std::string results = "";
-
-            inputs = InterpretLoadLibraryFlags(directoryFlags, "Directory Flags");
-
-            results = InterpretReturn(functionResult, result).c_str();
-            if (function_failed(functionResult))
+            try
             {
-                outputs +=  InterpretLastError();
-            }
+                inputs = InterpretLoadLibraryFlags(directoryFlags, "Directory Flags");
 
-            std::ostringstream sout;
-            InterpretCallingModulePart1()
-                sout <<  InterpretCallingModulePart2()
-                InterpretCallingModulePart3()
-                std::string cm = sout.str();
-            
-            Log_ETW_PostMsgOperationA("SetDefaultDllDirectories", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+                results = InterpretReturn(functionResult, result).c_str();
+                if (function_failed(functionResult))
+                {
+                    outputs += InterpretLastError();
+                }
+
+                std::ostringstream sout;
+                InterpretCallingModulePart1()
+                    sout << InterpretCallingModulePart2()
+                    InterpretCallingModulePart3()
+                    std::string cm = sout.str();
+
+                Log_ETW_PostMsgOperationA("SetDefaultDllDirectories", inputs.c_str(), results.c_str(), outputs.c_str(), cm.c_str(), TickStart, TickEnd);
+            }
+            catch (...)
+            {
+                Log("SetDefaultDllDirectoriesFixup event logging failure");
+            }
         }
         else
         {
