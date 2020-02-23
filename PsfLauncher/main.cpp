@@ -63,7 +63,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 	auto currentDirectory = (packageRoot / dirStr);
 
 	PsfPowershellScriptRunner powershellScriptRunner;
-	powershellScriptRunner.Initialize(appConfig, currentDirectory);
+	powershellScriptRunner.Initialize(appConfig, currentDirectory, packageRoot);
 
     // Launch the starting PowerShell script if we are using one.
 	powershellScriptRunner.RunStartingScript();
@@ -81,7 +81,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto exePath = packageRoot / exeName;
     std::wstring exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
     
-    //Allow for a substitution in the arguments for a new pseudo variable %PackageRoot% so that arguments can point to files
+    //Allow for a substitution in the arguments for a new pseudo variable %MsixPackageRoot% so that arguments can point to files
     //inside the package using a syntax relative to the package root rather than rely on VFS pathing which can't kick in yet.
     std::wstring::size_type pos = 0u;
     std::wstring var2rep = L"%MsixPackageRoot%";

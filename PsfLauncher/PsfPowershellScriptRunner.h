@@ -16,7 +16,7 @@ class PsfPowershellScriptRunner
 public:
 	PsfPowershellScriptRunner() = default;
 
-	void Initialize(const psf::json_object* appConfig, const std::filesystem::path& currentDirectory)
+	void Initialize(const psf::json_object* appConfig, const std::filesystem::path& currentDirectory, const std::filesystem::path& packageRootDirectory)
 	{
 		auto startScriptInformationObject = PSFQueryStartScriptInfo();
 		auto endScriptInformationObject = PSFQueryEndScriptInfo();
@@ -36,14 +36,14 @@ public:
 
 		if (startScriptInformationObject)
 		{
-			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory);
+			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory, packageRootDirectory);
 			this->startingScriptInformation.doesScriptExistInConfig = true;
 		}
 
 		if (endScriptInformationObject)
 		{
 			//Ending script ignores stopOnScriptError.  Keep it the default value
-			this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory);
+			this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory, packageRootDirectory);
 			this->endingScriptInformation.doesScriptExistInConfig = true;
 
 			//Ending script ignores this value.  Keep true to make sure
@@ -58,6 +58,10 @@ public:
 	{
 		LogString("StartingScript commandString",this->startingScriptInformation.commandString.c_str());
 		LogString("StartingScript currentDirectory", this->startingScriptInformation.currentDirectory.c_str());
+		if (this->startingScriptInformation.runInVirtualEnvironment)
+			Log("StartingScript runInVirtualEnvironment=true");
+		else
+			Log("StartingScript runInVirtualEnvironment=false");
 		if (this->startingScriptInformation.waitForScriptToFinish)
 			Log("StartingScript waitForScriptToFinish=true");
 		else
@@ -68,6 +72,12 @@ public:
 
 	void RunEndingScript()
 	{
+		LogString("EndingScript commandString", this->endingScriptInformation.commandString.c_str());
+		LogString("EndingScript currentDirectory", this->endingScriptInformation.currentDirectory.c_str());
+		if (this->endingScriptInformation.runInVirtualEnvironment)
+			Log("EndingScript runInVirtualEnvironment=true");
+		else
+			Log("EndingingScript runInVirtualEnvironment=false");
 		RunScript(this->endingScriptInformation);
 	}
 
@@ -83,6 +93,7 @@ private:
 		bool waitForScriptToFinish = true;
 		bool stopOnScriptError = false;
 		std::filesystem::path currentDirectory;
+		std::filesystem::path packageRoot;
 		bool doesScriptExistInConfig = false;
 	};
 
@@ -122,11 +133,11 @@ private:
 		}
 	}
 
-	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::filesystem::path currentDirectory)
+	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, const std::filesystem::path currentDirectory, std::filesystem::path packageRoot)
 	{
 		ScriptInformation scriptStruct;
-		scriptStruct.scriptPath = GetScriptPath(*scriptInformation);
-		scriptStruct.commandString = MakeCommandString(*scriptInformation, scriptStruct.scriptPath);
+		scriptStruct.scriptPath = ReplacePsuedoRootVariable(GetScriptPath(*scriptInformation), packageRoot);
+		scriptStruct.commandString = ReplacePsuedoRootVariable(MakeCommandString(*scriptInformation, scriptStruct.scriptPath), packageRoot);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
@@ -134,6 +145,7 @@ private:
 		scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
 		scriptStruct.stopOnScriptError = stopOnScriptError;
 		scriptStruct.currentDirectory = currentDirectory;
+		scriptStruct.packageRoot = packageRoot;
 
 		//Async script run with a termination on failure is not a supported scenario.
 		//Supporting this scenario would mean force terminating an executing user process
@@ -146,11 +158,78 @@ private:
 		return scriptStruct;
 	}
 
+	std::wstring ReplacePsuedoRootVariable(std::wstring inString, std::filesystem::path packageRoot)
+	{
+		//Allow for a substitution in the strings for a new pseudo variable %MsixPackageRoot% so that arguments can point to files
+		//inside the package using a syntax relative to the package root rather than rely on VFS pathing which can't kick in yet.
+		std::wstring outString = inString;
+		std::wstring::size_type pos = 0u;
+		std::wstring var2rep = L"%MsixPackageRoot%";
+		std::wstring repargs = packageRoot.c_str();
+		while ((pos = outString.find(var2rep, pos)) != std::string::npos) {
+			outString.replace(pos, var2rep.length(), repargs);
+			pos += repargs.length();
+		}
+		return outString;
+	}
+	std::wstring Dequote(std::wstring inString)
+	{
+		// Remove quotation-like marks around edges of a string reference to a file, if present.
+		if (inString.length() > 2)
+		{
+			if (inString[0] == L'\"' && inString[inString.length() - 1] == L'\"')
+			{
+				return inString.substr(1, inString.length() - 2);
+			}
+			if (inString[0] == L'\'' && inString[inString.length() - 1] == L'\'')
+			{
+				return inString.substr(1, inString.length() - 2);
+			}
+			if (inString.length() > 4)
+			{
+				// Check for Powershell style references too
+				if (inString[0] == L'`' && inString[1] == L'\'' && inString[inString.length() - 2] == L'`' && inString[inString.length() - 1] == L'\'')
+				{
+					return inString.substr(2, inString.length() - 4);
+				}
+				if (inString[0] == L'`' && inString[1] == L'\"' && inString[inString.length() - 2] == L'`' && inString[inString.length() - 1] == L'\"')
+				{
+					return inString.substr(2, inString.length() - 4);
+				}
+			}
+		}
+		return inString;
+	}
+	std::wstring EscapeFilename4PowerShell(std::filesystem::path inputPath)
+	{
+		std::wstring outString = inputPath.c_str();
+		std::wstring::size_type pos = 0u;
+		std::wstring var2rep = L" ";
+		std::wstring repargs = L"` ";
+		while ((pos = outString.find(var2rep, pos)) != std::string::npos) {
+			outString.replace(pos, var2rep.length(), repargs);
+			pos += repargs.length();
+		}
+		return outString;
+
+	}
 	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptPath)
 	{
 		std::wstring commandString = L"Powershell.exe -file StartingScriptWrapper.ps1 ";
-		commandString.append(L"\".\\");
-		commandString.append(scriptPath);
+		commandString.append(L"\"");
+
+		
+		const std::filesystem::path dequotedScriptPath = Dequote(scriptPath);
+		std::wstring fixed4PowerShell = EscapeFilename4PowerShell(dequotedScriptPath);
+		if (dequotedScriptPath.is_absolute())
+		{
+			commandString.append(fixed4PowerShell);
+		}
+		else
+		{
+			commandString.append(L".\\");
+			commandString.append(fixed4PowerShell);
+		}
 
 		//Script arguments are optional.
 		auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
@@ -185,17 +264,17 @@ private:
 		return INFINITE;
 	}
 
-	bool DoesScriptExist(const std::wstring& scriptPath, std::filesystem::path currentDirectory)
+	bool DoesScriptExist(const std::wstring& scriptPath, std::filesystem::path packageRoot)
 	{
 		std::filesystem::path powershellScriptPath(scriptPath);
 		bool doesScriptExist = false;
-		//The file might be on a network drive.
+		//The file might be on a network drive or is a full path reference.
 		doesScriptExist = std::filesystem::exists(powershellScriptPath);
 
-		//Check on local computer.
+		//Check on local computer using relative from packageRoot.
 		if (!doesScriptExist)
 		{
-			doesScriptExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
+			doesScriptExist = std::filesystem::exists(packageRoot / powershellScriptPath);
 		}
 
 		return doesScriptExist;
