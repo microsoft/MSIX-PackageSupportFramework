@@ -29,15 +29,21 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectExisting || redirectDest)
             {
-                return impl::MoveFile(
+                BOOL bRet = impl::MoveFile(
                     redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str(),
                     redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                if (bRet)
+                    Log(L"[%d]MoveFile returns true.", MoveFileInstance);
+                else
+                    Log(L"[%d]MoveFile returns false.", MoveFileInstance);
+                return bRet;
             }
         }
     }
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        Log(L"MoveFileFixup Exception detected; fallback.");
     }
 
     return impl::MoveFile(existingFileName, newFileName);
@@ -66,16 +72,22 @@ BOOL __stdcall MoveFileExFixup(
             auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectExisting || redirectDest)
             {
-                return impl::MoveFileEx(
+                BOOL bRet= impl::MoveFileEx(
                     redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str(),
                     redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str(),
                     flags);
+                if (bRet)
+                    Log(L"[%d]MoveFileEx returns true.", MoveFileExInstance);
+                else
+                    Log(L"[%d]MoveFileEx returns false.", MoveFileExInstance);
+                return bRet;
             }
         }
     }
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        Log(L"MoveFileExFixup Exception detected; fallback.");
     }
 
     return impl::MoveFileEx(existingFileName, newFileName, flags);

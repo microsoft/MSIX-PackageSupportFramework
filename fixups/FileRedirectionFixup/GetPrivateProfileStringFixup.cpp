@@ -42,18 +42,14 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
-                            auto wideString = std::make_unique<wchar_t[]>(stringLength);
-                            auto realRetValue = impl::GetPrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                                widen_argument(defaultString).c_str(), wideString.get(), stringLength, redirectPath.c_str());
-
-                            if (_doserrno != ENOENT)
-                            {
-                                ::WideCharToMultiByte(CP_ACP, 0, wideString.get(), stringLength, string, stringLength, nullptr, nullptr);
-                                Log(L"[%d] Returned length=0x%x", GetPrivateProfileStringInstance, realRetValue);
-                                LogString(GetPrivateProfileStringInstance, L" Returned string converted", string);
-                                LogString(GetPrivateProfileStringInstance, L" Returned string notconverted", wideString.get());
-                                return realRetValue;
-                            }
+                            
+                            auto realRetValue = impl::GetPrivateProfileString(appName, keyName,
+                                                                               defaultString, string, stringLength, 
+                                                                               narrow(redirectPath.c_str()).c_str() );
+                            
+                            Log(L"[%d] Ansi Returned length=0x%x", GetPrivateProfileStringInstance, realRetValue);
+                            LogString(GetPrivateProfileStringInstance, " Ansi Returned string", string);
+                            return realRetValue;
                         }
                         else
                         {

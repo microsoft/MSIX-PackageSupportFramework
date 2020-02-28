@@ -103,12 +103,15 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     {
         // These don't work through shell launch, so patch it up here.
         std::wstring cmdexe = L"cmd.exe";
-        std::wstring cmdargs = (L"cmd.exe /c \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
+        if (exePath.is_relative())
+            exePath = packageRoot / dirStr / exePath;
+        std::wstring slashK = L" /k ";
+        std::wstring cmdargs = (cmdexe + slashK + L" \"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
         bool UsedCreateProcess = false;
         UsedCreateProcess = LaunchViaCreateProcessInContainer(cmdexe, cmdargs, (packageRoot / dirStr), cmdShow);
         if (!UsedCreateProcess)
         {
-            LogString("Process Launch via CMD: ", repargs.data());
+            LogString("Process Launch via CMD: ", cmdargs.data());
             StartProcess(cmdexe.c_str(), cmdargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
         }
     }
@@ -121,7 +124,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         UsedCreateProcess = LaunchViaCreateProcessInContainer(cmdexe, cmdargs, (packageRoot / dirStr), cmdShow);
         if (!UsedCreateProcess)
         {
-            LogString("Process Launch via powershell: ", repargs.data());
+            LogString("Process Launch via powershell: ", cmdargs.data());
             StartProcess(cmdexe.c_str(), cmdargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
         }
     }

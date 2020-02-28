@@ -113,8 +113,10 @@ HANDLE __stdcall CreateFileFixup(
                     {
                         redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
                     }
-
-                    return impl::CreateFile(redirectPath.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+                    Log(L"[%d]CreateFile pre create", CreateFileInstance);
+                    HANDLE hRet = impl::CreateFile(redirectPath.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+                    Log(L"[%d]CreateFile post create. Handle=0x%x", CreateFileInstance,hRet);
+                    return hRet;
                 }
             }
             else

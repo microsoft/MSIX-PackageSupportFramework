@@ -2,6 +2,7 @@
 #include "psf_runtime.h"
 #include "StartProcessHelper.h"
 #include <wil\resource.h>
+#include <known_folders.h>
 
 #ifndef SW_SHOW
 	#define SW_SHOW 5
@@ -34,16 +35,18 @@ public:
 			stopOnScriptError = stopOnScriptErrorObject->as_boolean().get();
 		}
 
+		// Note: the following path must be kept in sync with the FileRedirectionFixup PathRedirection.cpp
+		std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
 		if (startScriptInformationObject)
 		{
-			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory, packageRootDirectory);
+			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory, packageRootDirectory, writablePackageRootPath);
 			this->startingScriptInformation.doesScriptExistInConfig = true;
 		}
 
 		if (endScriptInformationObject)
 		{
 			//Ending script ignores stopOnScriptError.  Keep it the default value
-			this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory, packageRootDirectory);
+			this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory, packageRootDirectory, writablePackageRootPath);
 			this->endingScriptInformation.doesScriptExistInConfig = true;
 
 			//Ending script ignores this value.  Keep true to make sure
@@ -133,11 +136,12 @@ private:
 		}
 	}
 
-	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, const std::filesystem::path currentDirectory, std::filesystem::path packageRoot)
+	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, const std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
 	{
+
 		ScriptInformation scriptStruct;
-		scriptStruct.scriptPath = ReplacePsuedoRootVariable(GetScriptPath(*scriptInformation), packageRoot);
-		scriptStruct.commandString = ReplacePsuedoRootVariable(MakeCommandString(*scriptInformation, scriptStruct.scriptPath), packageRoot);
+		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
+		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptStruct.scriptPath), packageRoot, packageWritableRoot);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
@@ -158,18 +162,26 @@ private:
 		return scriptStruct;
 	}
 
-	std::wstring ReplacePsuedoRootVariable(std::wstring inString, std::filesystem::path packageRoot)
+	std::wstring ReplacePsuedoRootVariables(std::wstring inString, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
 	{
 		//Allow for a substitution in the strings for a new pseudo variable %MsixPackageRoot% so that arguments can point to files
 		//inside the package using a syntax relative to the package root rather than rely on VFS pathing which can't kick in yet.
 		std::wstring outString = inString;
-		std::wstring::size_type pos = 0u;
-		std::wstring var2rep = L"%MsixPackageRoot%";
-		std::wstring repargs = packageRoot.c_str();
-		while ((pos = outString.find(var2rep, pos)) != std::string::npos) {
-			outString.replace(pos, var2rep.length(), repargs);
-			pos += repargs.length();
+		std::wstring var2rep1 = L"%MsixPackageRoot%";
+		std::wstring var2rep2 = L"%MsixWritablePackageRoot%";
+		
+		std::wstring::size_type pos1 = 0u;
+		std::wstring repargs1 = packageRoot.c_str();
+		while ((pos1 = outString.find(var2rep1, pos1)) != std::string::npos) {
+			outString.replace(pos1, var2rep1.length(), repargs1);
+			pos1 += repargs1.length();
 		}
+		std::wstring::size_type pos2 = 0u;
+		std::wstring repargs2 = packageWritableRoot.c_str();
+		while ((pos2 = outString.find(var2rep2, pos2)) != std::string::npos) {
+			outString.replace(pos2, var2rep2.length(), repargs2);
+			pos2 += repargs2.length();
+		}		
 		return outString;
 	}
 	std::wstring Dequote(std::wstring inString)
