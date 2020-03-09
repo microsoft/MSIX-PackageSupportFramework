@@ -76,7 +76,6 @@ private:
         bool stopOnScriptError = false;
         std::filesystem::path currentDirectory;
         bool doesScriptExistInConfig = false;
-        LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr;
     };
 
     ScriptInformation startingScriptInformation;
@@ -101,7 +100,7 @@ private:
 
         if (script.waitForScriptToFinish)
         {
-            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, script.attributeList);
+            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
 
             if (script.stopOnScriptError)
             {
@@ -111,7 +110,7 @@ private:
         else
         {
             //We don't want to stop on an error and we want to run async
-            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, script.attributeList);
+            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
         }
     }
 
@@ -126,7 +125,6 @@ private:
         scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
         scriptStruct.stopOnScriptError = stopOnScriptError;
         scriptStruct.currentDirectory = currentDirectory;
-        scriptStruct.attributeList = MakeAttributeList();
 
         //Async script run with a termination on failure is not a supported scenario.
         //Supporting this scenario would mean force terminating an executing user process
@@ -286,39 +284,5 @@ private:
         }
 
         return true;
-    }
-
-    LPPROC_THREAD_ATTRIBUTE_LIST MakeAttributeList()
-    {
-        LPPROC_THREAD_ATTRIBUTE_LIST attributeList;
-        SIZE_T AttributeListSize{};
-
-        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-        attributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
-            GetProcessHeap(),
-            0,
-            AttributeListSize);
-
-        THROW_LAST_ERROR_IF_MSG(
-            !InitializeProcThreadAttributeList(
-                attributeList,
-                1,
-                0,
-                &AttributeListSize),
-            "Could not initialize the proc thread attribute list.");
-
-        DWORD attribute = 0x02;
-        THROW_LAST_ERROR_IF_MSG(
-            !UpdateProcThreadAttribute(
-                attributeList,
-                0,
-                ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
-                &attribute,
-                sizeof(attribute),
-                nullptr,
-                nullptr),
-            "Could not update Proc thread attribute.");
-
-        return attributeList;
     }
 };
