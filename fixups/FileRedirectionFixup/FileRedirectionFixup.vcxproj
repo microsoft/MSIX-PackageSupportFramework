@@ -39,14 +39,19 @@
     <ClCompile Include="DeleteFileFixup.cpp" />
     <ClCompile Include="FileAttributesFixup.cpp" />
     <ClCompile Include="FindFirstFileFixup.cpp" />
+    <ClCompile Include="GetPrivateProfileIntFixup.cpp" />
     <ClCompile Include="GetPrivateProfileSectionFixup.cpp" />
+    <ClCompile Include="GetPrivateProfileSectionNamesFixup.cpp" />
     <ClCompile Include="GetPrivateProfileStringFixup.cpp" />
+    <ClCompile Include="GetPrivateProfileStructFixup.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MoveFileFixup.cpp" />
     <ClCompile Include="PathRedirection.cpp" />
     <ClCompile Include="RemoveDirectoryFixup.cpp" />
     <ClCompile Include="ReplaceFileFixup.cpp" />
+    <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
+    <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="FileRedirectionFixupMetadata.xml" />

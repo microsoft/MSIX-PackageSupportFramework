@@ -62,6 +62,11 @@
     <ClCompile Include="GetPrivateProfileSectionFixup.cpp" />
     <ClCompile Include="GetPrivateProfileStringFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
+    <ClCompile Include="GetPrivateProfileIntFixup.cpp" />
+    <ClCompile Include="GetPrivateProfileSectionNamesFixup.cpp" />
+    <ClCompile Include="GetPrivateProfileStructFixup.cpp" />
+    <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
+    <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="FileRedirectionFixupMetadata.xml" />

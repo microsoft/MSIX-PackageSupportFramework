@@ -51,6 +51,9 @@
     <ClCompile Include="EnumerateDirectoriesTest.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="PrivateProfileTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
