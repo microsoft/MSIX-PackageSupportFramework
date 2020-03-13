@@ -32,6 +32,8 @@ std::filesystem::path g_redirectRootPath;
 std::filesystem::path g_writablePackageRootPath;
 std::filesystem::path g_finalPackageRootPath;
 
+DWORD g_FileIntceptInstance = 0;
+
 struct vfs_folder_mapping
 {
     std::filesystem::path path;
@@ -274,16 +276,49 @@ void LogString(const char* name, const wchar_t* value)
 }
 void LogString(const wchar_t* name, const char* value)
 {
-    Log(L"%ls=%s\n", name, value);
+    if ((value != NULL && value[1] != 0x0))
+        Log(L"%ls=%s\n", name, value);
+    else
+        Log(L"%ls=%ls", name, (wchar_t*)value);
 }
 void LogString(const wchar_t* name, const wchar_t* value)
 {
-    Log(L"%ls=%ls\n", name, value);
+    if ((value != NULL && ((char*)value)[1] == 0x0))
+        Log(L"%ls=%ls\n", name, value);
+    else
+        Log(L"%ls=%s", name, (char*)value);
+}
+void LogString(DWORD inst, const char* name, const char* value)
+{
+    Log("[%d] %s=%s\n", inst, name, value);
+}
+void LogString(DWORD inst, const char* name, const wchar_t* value)
+{
+    Log(L"[%d]%s=%ls\n", inst, name, value);
+}
+void LogString(DWORD inst, const wchar_t* name, const char* value)
+{
+    if ((value != NULL && value[1] != 0x0))
+        Log(L"[%d]%ls=%s\n", inst, name, value);
+    else
+        Log(L"[%d]%ls=%ls", inst, name, (wchar_t*)value);
+}
+void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if ((value != NULL && ((char*)value)[1] == 0x0))
+        Log(L"[%d]%ls=%ls\n", inst, name, value);
+    else
+        Log(L"[%d]%ls=%s", inst, name, (char*)value);
 }
 
 template <typename CharT>
 bool IsUnderUserAppDataLocalImpl(_In_ const CharT* fileName)
 {
+    if (fileName == NULL)
+        return false;
+    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+        return path_relative_to(fileName+4, psf::known_folder(FOLDERID_LocalAppData));
     return path_relative_to(fileName, psf::known_folder(FOLDERID_LocalAppData));
 }
 bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName)
@@ -295,9 +330,34 @@ bool IsUnderUserAppDataLocal(_In_ const char* fileName)
     return IsUnderUserAppDataLocalImpl(fileName);
 }
 
+
+template <typename CharT>
+bool IsUnderUserAppDataLocalPackagesImpl(_In_ const CharT* fileName)
+{
+    if (fileName == NULL)
+        return false;
+    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+        return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
+    return path_relative_to(fileName, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
+}
+bool IsUnderUserAppDataLocalPackages(_In_ const wchar_t* fileName)
+{
+    return IsUnderUserAppDataLocalPackagesImpl(fileName);
+}
+bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName)
+{
+    return IsUnderUserAppDataLocalPackagesImpl(fileName);
+}
+
 template <typename CharT>
 bool IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
 {
+    if (fileName == NULL)
+        return false;
+    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+        return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
     return path_relative_to(fileName, psf::known_folder(FOLDERID_RoamingAppData));
 }
 bool IsUnderUserAppDataRoaming(_In_ const wchar_t* fileName)
@@ -312,19 +372,31 @@ bool IsUnderUserAppDataRoaming(_In_ const char* fileName)
 template <typename CharT>
 std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
 {
-    if (IsUnderUserAppDataLocal(fileName))
+    if (fileName != NULL)
     {
-        auto lad = psf::known_folder(FOLDERID_LocalAppData);
-        std::filesystem::path foo = fileName; 
-        auto testLad = g_packageVfsRootPath / L"Local AppData" / foo.wstring().substr(wcslen(lad.c_str())+1).c_str();
-        return testLad;
-    }
-    else if (IsUnderUserAppDataRoaming(fileName))
-    {
-        auto rad = psf::known_folder(FOLDERID_RoamingAppData);
-        std::filesystem::path foo = fileName;
-        auto testRad = g_packageVfsRootPath / L"AppData" / foo.wstring().substr(wcslen(rad.c_str())+1).c_str();
-        return testRad;
+        constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+        if (IsUnderUserAppDataLocal(fileName))
+        {
+            auto lad = psf::known_folder(FOLDERID_LocalAppData);
+            std::filesystem::path foo;
+            if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+                foo = fileName + 4;
+            else
+                foo = fileName;
+            auto testLad = g_packageVfsRootPath / L"Local AppData" / foo.wstring().substr(wcslen(lad.c_str()) + 1).c_str();
+            return testLad;
+        }
+        else if (IsUnderUserAppDataRoaming(fileName))
+        {
+            auto rad = psf::known_folder(FOLDERID_RoamingAppData);
+            std::filesystem::path foo;
+            if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+                foo = fileName + 4;
+            else
+                foo = fileName;
+            auto testRad = g_packageVfsRootPath / L"AppData" / foo.wstring().substr(wcslen(rad.c_str()) + 1).c_str();
+            return testRad;
+        }
     }
     return L"";
 }
@@ -507,16 +579,24 @@ std::string UrlDecode(std::string str)
             ret += str[i];
         }
         else 
-        {
-            sscanf_s(str.substr(i + 1, 2).c_str(), "%x", &ii);
-            ch = static_cast<char>(ii);
-            ret += ch;
-            i = i + 2;
+        {            
+            if (sscanf_s(str.substr(i + 1, 4).c_str(), "%x", &ii) == 1)
+            {
+                ch = static_cast<char>(ii);
+                ret += ch;
+                if (ii <= 255)
+                    i = i + 2;
+                else
+                    i = i + 4;
+            }
+            else
+            {
+                ret += str[i];
+            }
         }
     }
     return ret;
 }
-
 std::wstring UrlDecode(std::wstring str) 
 {
     std::wstring ret;
@@ -532,10 +612,19 @@ std::wstring UrlDecode(std::wstring str)
         }
         else 
         {
-            swscanf_s(str.substr(i + 1, 2).c_str(), L"%x", &ii);
-            ch = static_cast<char>(ii);
-            ret += ch;
-            i = i + 2;
+            if (swscanf_s(str.substr(i + 1, 4).c_str(), L"%x", &ii) == 1)
+            {
+                ch = static_cast<char>(ii);
+                ret += ch;
+                if (ii <= 255)
+                    i = i + 2;
+                else
+                    i = i + 4;
+            }
+            else
+            {
+                ret += str[i];
+            }
         }
     }
     return ret;
@@ -543,43 +632,109 @@ std::wstring UrlDecode(std::wstring str)
 
 std::string StripFileColonSlash(std::string old_string)
 {
-    size_t found = old_string.find("file:\\",0);
-    if (found != 0)
+    int count = 0;
+    size_t found = old_string.find("file:\\\\",0);
+    if (found == 0)
     {
-        found = old_string.find("file:/", 0);
+        count = 7;
     }
-    if (found != 0)
+    else
     {
-        found = old_string.find("FILE:\\", 0);
-    }
-    if (found != 0)
-    {
-        found = old_string.find("FILE:/", 0);
+        found = old_string.find("file://", 0);
+        if (found == 0)
+        {
+            count = 7;
+        }
+        else
+        {
+            found = old_string.find("FILE:\\\\", 0);
+            if (found == 0)
+            {
+                count = 7;
+            }
+            else
+            {
+                found = old_string.find("FILE://", 0);
+                if (found == 0)
+                {
+                    count = 7;
+                }
+                else
+                {
+                    found = old_string.find("\\\\file\\");
+                    if (found == 0)
+                    {
+                        count = 7;
+                    }
+                    else
+                    {
+                        found = old_string.find("\\\\FILE\\");
+                        if (found == 0)
+                        {
+                            count = 7;
+                        }
+                    }
+                }
+            }
+        }
     }
     if (found == 0)
     {
-        return old_string.substr(6);
+        return old_string.substr(count-1);
     }
     return old_string;
 }
 std::wstring StripFileColonSlash(std::wstring old_string)
 {
-    size_t found = old_string.find(L"file:\\", 0);
-    if (found != 0)
+    int count = 0;
+    size_t found = old_string.find(L"file:\\\\", 0);
+    if (found == 0)
     {
-        found = old_string.find(L"file:/", 0);
+        count = 7;
     }
-    if (found != 0)
+    else
     {
-        found = old_string.find(L"FILE:\\", 0);
-    }
-    if (found != 0)
-    {
-        found = old_string.find(L"FILE:/", 0);
+        found = old_string.find(L"file://", 0);
+        if (found == 0)
+        {
+            count = 7;
+        }
+        else
+        {
+            found = old_string.find(L"FILE:\\\\", 0);
+            if (found == 0)
+            {
+                count = 7;
+            }
+            else
+            {
+                found = old_string.find(L"FILE://", 0);
+                if (found == 0)
+                {
+                    count = 7;
+                }
+                else
+                {
+                    found = old_string.find(L"\\\\file\\");
+                    if (found == 0)
+                    {
+                        count = 7;
+                    }
+                    else
+                    {
+                        found = old_string.find(L"\\\\FILE\\");
+                        if (found == 0)
+                        {
+                            count = 7;
+                        }
+                    }
+                }
+            }
+        }
     }
     if (found == 0)
     {
-        return old_string.substr(6);
+        return old_string.substr(count - 1);
     }
     return old_string;
 }
@@ -626,7 +781,8 @@ normalized_path NormalizePathImpl(const CharT* path)
     else
     {
         // GetFullPathName did something odd...
-        LogString(L"\t\tFRF Error: Path unknown", path);
+        LogString(L"\t\tFRF Error: Path type not supported", path);
+        Log(L"\t\tFRF Error: Path type: 0x%x", pathType);
         assert(false);
         return {};
     }
@@ -638,7 +794,7 @@ normalized_path NormalizePath(const char* path)
 {
     if (path != NULL && path[0] != 0)
     {
-        std::string new_string = path;
+        std::string new_string = UrlDecode(path);       // replaces things like %3a with :
         if (IsColonColonGuid(path))
         {
             Log(L"Guid: avoidance");
@@ -653,13 +809,13 @@ normalized_path NormalizePath(const char* path)
             npath.full_path = widen(new_string);
             return npath;
         }      
-        new_string = UrlDecode(path);       // replaces things like %3a with :
-        new_string = StripFileColonSlash(new_string);        // removes file:\\ from start of path if present
+        new_string = StripFileColonSlash(new_string);        // removes "file:\\" from start of path if present
         return NormalizePathImpl(new_string.c_str());
     }
     else
     {
-        return NormalizePathImpl(".");
+        //return NormalizePathImpl(L".");
+        return NormalizePathImpl(std::filesystem::current_path().c_str());
     }
 }
 
@@ -683,12 +839,13 @@ normalized_path NormalizePath(const wchar_t* path)
             return npath;
         }        
         new_wstring = UrlDecode(path);                      // replaces things like %3a with :
-        new_wstring = StripFileColonSlash(new_wstring);     // removes file:\\ from start of path if present
+        new_wstring = StripFileColonSlash(new_wstring);     // removes "file:\\" from start of path if present
         return NormalizePathImpl(new_wstring.c_str());
     }
     else
     {
-        return NormalizePathImpl(L".");
+        //return NormalizePathImpl(L".");
+        return NormalizePathImpl(std::filesystem::current_path().c_str());
     }
 }
 
@@ -736,46 +893,71 @@ normalized_path DeVirtualizePath(normalized_path path)
 // If the input path is a physical path outside of the package (e.g. "C:\Windows\System32\foo.txt"),
 // this returns what the package VFS equivalent would be (e.g "C:\Program Files\WindowsApps\Packagename\VFS\SystemX64\foo.txt");
 // NOTE: Does not check if package has this virtualized path.
-normalized_path VirtualizePath(normalized_path path)
+normalized_path VirtualizePath(normalized_path path, DWORD impl)
 {
-    //Log(L"\t\tVirtualizePath: Input drive_absolute_path %ls", path.drive_absolute_path);
+    Log(L"[%d]\t\tVirtualizePath: Input drive_absolute_path %ls", impl, path.drive_absolute_path);
+    Log(L"[%d]\t\tVirtualizePath: Input full_path %ls", impl, path.full_path.c_str());
 
-    if (path.drive_absolute_path && path_relative_to(path.drive_absolute_path, g_packageRootPath))
+    if (path.drive_absolute_path != NULL && path_relative_to(path.drive_absolute_path, g_packageRootPath))
     {
-        Log(L"\t\tVirtualizePath: output same as input, is in package");
+        Log(L"[%d]\t\tVirtualizePath: output same as input, is in package",impl);
         return path;
     }
     
-    for (std::vector<vfs_folder_mapping>::reverse_iterator iter = g_vfsFolderMappings.rbegin();   iter != g_vfsFolderMappings.rend(); ++iter)
+    if (path.drive_absolute_path != NULL)
     {
-        auto& mapping = *iter;
-        if (path_relative_to(path.full_path.c_str(), mapping.path))
+        for (std::vector<vfs_folder_mapping>::reverse_iterator iter = g_vfsFolderMappings.rbegin(); iter != g_vfsFolderMappings.rend(); ++iter)
         {
-            LogString(L"\t\t\t mapping entry match on path", mapping.path.wstring().c_str());
-            LogString(L"\t\t\t package_vfs_relative_path", mapping.package_vfs_relative_path.native().c_str());
-            Log(L"\t\t\t rel length =%d, %d", mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
-            auto vfsRelativePath = path.full_path.c_str() + mapping.path.native().length();
-            if (psf::is_path_separator(vfsRelativePath[0]))
+            auto& mapping = *iter;
+            if (path_relative_to(path.drive_absolute_path, mapping.path))
             {
-                ++vfsRelativePath;
+                LogString(impl, L"\t\t\t mapping entry match on path", mapping.path.wstring().c_str());
+                LogString(impl, L"\t\t\t package_vfs_relative_path", mapping.package_vfs_relative_path.native().c_str());
+                Log(L"[%d]\t\t\t rel length =%d, %d", impl, mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
+                auto vfsRelativePath = path.drive_absolute_path + mapping.path.native().length();
+                if (psf::is_path_separator(vfsRelativePath[0]))
+                {
+                    ++vfsRelativePath;
+                }
+                LogString(impl, L"\t\t\t VfsRelativePath", vfsRelativePath);
+                path.full_path = (g_packageVfsRootPath / mapping.package_vfs_relative_path / vfsRelativePath).native();
+                path.drive_absolute_path = path.full_path.data();
+                return path;
             }
-            LogString(L"\t\t\t vfsRelativePath", vfsRelativePath);
-            path.full_path = (g_packageVfsRootPath / mapping.package_vfs_relative_path / vfsRelativePath).native();
-            path.drive_absolute_path = path.full_path.data();
-            return path;
+            else if (path_relative_to(path.full_path.c_str(), mapping.path))
+            {
+                LogString(impl, L"\t\t\t mapping entry match on path", mapping.path.wstring().c_str());
+                LogString(impl, L"\t\t\t package_vfs_relative_path", mapping.package_vfs_relative_path.native().c_str());
+                Log(L"[%d]\t\t\t rel length =%d, %d", impl, mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
+                auto vfsRelativePath = path.full_path.c_str() + mapping.path.native().length();
+                if (psf::is_path_separator(vfsRelativePath[0]))
+                {
+                    ++vfsRelativePath;
+                }
+                LogString(impl, L"\t\t\t vfsRelativePath", vfsRelativePath);
+                path.full_path = (g_packageVfsRootPath / mapping.package_vfs_relative_path / vfsRelativePath).native();
+                path.drive_absolute_path = path.full_path.data();
+                return path;
+            }
         }
     }
-    Log(L"\t\tVirtualizePath: output same as input, no match.");
+    else
+    {
+        // file is not on system drive
+        Log(L"[%d]\t\tVirtualizePath: output same as input, not on system drive.", impl);
+        return path;
+    }
+    Log(L"[%d]\t\tVirtualizePath: output same as input, no match.",impl);
     return path;
 }
 
-std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureDirectoryStructure, std::wstring result)
+std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureDirectoryStructure, std::wstring result, DWORD inst=0)
 {
     if (ensureDirectoryStructure)
     {
         for (std::size_t pos = 0; pos < relativePath.length(); )
         {
-            LogString(L"\t\tCreate dir", result.c_str());
+            LogString(inst,L"\t\tGenerateRedirectedPath: Create dir", result.c_str());
             [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
 #if _DEBUG
             auto err = ::GetLastError();
@@ -806,7 +988,7 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
 /// <param name="deVirtualizedPath">The original path from the app</param>
 /// <param name="ensureDirectoryStructure">If true, the deVirtualizedPath will be appended to the allowed write location</param>
 /// <returns>The new absolute path.</returns>
-std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure, std::filesystem::path destinationTargetBase)
+std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure, std::filesystem::path destinationTargetBase, DWORD inst)
 {
     std::wstring result;
     std::wstring basePath;
@@ -832,9 +1014,9 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
  
     if (deVirtualizedFullPath.find(g_packageRootPath) != std::wstring::npos)
     {
-        Log(L"\t\t\tcase: target in package.");
-        LogString(L"      destinationTargetBase:     ", destinationTargetBase.c_str());
-        LogString(L"      g_writablePackageRootPath: ", g_writablePackageRootPath.c_str());
+        Log(L"[%d]\t\t\tcase: target in package.",inst);
+        LogString(inst,L"      destinationTargetBase:     ", destinationTargetBase.c_str());
+        LogString(inst,L"      g_writablePackageRootPath: ", g_writablePackageRootPath.c_str());
 
 		size_t lengthPackageRootPath = 0;
 		auto pathType = psf::path_type(deVirtualizedFullPath.c_str());
@@ -850,7 +1032,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 
         if (_wcsicmp(destinationTargetBase.c_str(), g_writablePackageRootPath.c_str()) == 0)
         {
-            Log(L"\t\t\tsubcase: redirect to default.");
+            Log(L"[%d]\t\t\tsubcase: redirect to default.",inst);
             // PSF defaulted destination target.
             shouldredirectToPackageRoot = true;
             auto stringToTurnIntoAStringView = deVirtualizedPath.full_path.substr(lengthPackageRootPath);
@@ -858,59 +1040,69 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
         }
         else
         {
-            Log(L"\t\t\tsubcase: redirect specified.");
+            Log(L"[%d]\t\t\tsubcase: redirect specified.",inst);
             // PSF configured destination target: probably a home drive.
             relativePath = L"\\PackageCache\\" + psf::current_package_family_name() +  deVirtualizedPath.full_path.substr(lengthPackageRootPath);
         }
     }
     else
     {
-        Log(L"\t\t\tcase: target not in package.");
-        LogString(L"      destinationTargetBase: ", destinationTargetBase.c_str());
-        LogString(L"      g_redirectRootPath:    ", g_redirectRootPath.c_str());
-        // input location was not in package path.
-            // TODO: Currently, this code redirects always.  We probably don't want to do that!
-            //       Ideally, we should look closer at the request; the text below is an example of what might be needed.
-            //       If the user asked for a native path and we aren't VFSing close to that path, and it's just a read, we probably shouldn't redirect.
-            //       But let's say it was a write, then probably still don't redirect and let the chips fall where they may.
-            //       But if we have a VFS folder in the package (such as VFS\AppDataCommon\Vendor) with files and the app tries to add a new file using native pathing, then we probably want to redirect.
-            //       There are probably more situations to consider.
-            // To avoid redirecting everything with the current implementation, the configuration spec should be as specific as possible so that we never get here.
-        if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+        Log(L"[%d]\t\t\tcase: target not in package.",inst);
+        if ( _wcsicmp(deVirtualizedPath.full_path.substr(0,2).c_str(), L"\\\\")==0)
         {
-            Log(L"\t\t\tsubcase: redirect to default.");
-            // PSF defaulted destination target.
-            relativePath = L"\\";
+            // Clearly we should never redirect files from a share
+            Log("[%d]RedirectedPath: File share case should not be redirected ever.",inst);
+            return deVirtualizedPath.full_path;
         }
         else
         {
-            Log(L"\t\t\tsubcase: redirect specified.");
-            // PSF  configured destination target: probably a home drive.
-            relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + + L"\\VFS\\PackageDrive";
+            // input location was not in package path.
+                 // TODO: Currently, this code redirects always.  We probably don't want to do that!
+                 //       Ideally, we should look closer at the request; the text below is an example of what might be needed.
+                 //       If the user asked for a native path and we aren't VFSing close to that path, and it's just a read, we probably shouldn't redirect.
+                 //       But let's say it was a write, then probably still don't redirect and let the chips fall where they may.
+                 //       But if we have a VFS folder in the package (such as VFS\AppDataCommon\Vendor) with files and the app tries to add a new file using native pathing, then we probably want to redirect.
+                 //       There are probably more situations to consider.
+                 // To avoid redirecting everything with the current implementation, the configuration spec should be as specific as possible so that we never get here.
+            LogString(inst,L"      destinationTargetBase: ", destinationTargetBase.c_str());
+            LogString(inst,L"      g_redirectRootPath:    ", g_redirectRootPath.c_str());
+            if (_wcsicmp(destinationTargetBase.c_str(), g_redirectRootPath.c_str()) == 0)
+            {
+                Log(L"[%d]\t\t\tsubcase: redirect to default.",inst);
+                // PSF defaulted destination target.
+                relativePath = L"\\";
+            }
+            else
+            {
+                Log(L"[%d]\t\t\tsubcase: redirect specified.",inst);
+                // PSF  configured destination target: probably a home drive.
+                relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + +L"\\VFS\\PackageDrive";
+            }
+
+            // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
+            // similar to what's done for UNC paths
+            ///// Note: assert here is normal it ignore for FindFileEx with file input "*" case which becomes a different type.
+            assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
+            relativePath.push_back(L'\\');
+            relativePath.push_back(deVirtualizedPath.drive_absolute_path[0]);
+            relativePath.push_back('$');
+            auto remainingLength = wcslen(deVirtualizedPath.drive_absolute_path);
+            remainingLength -= 2;
+
+            relativePath.append(deVirtualizedPath.drive_absolute_path + 2, remainingLength);
         }
-
-        // NTFS doesn't allow colons in filenames, so simplest thing is to just substitute something in; use a dollar sign
-        // similar to what's done for UNC paths
-        assert(psf::path_type(deVirtualizedPath.drive_absolute_path) == psf::dos_path_type::drive_absolute);
-        relativePath.push_back(L'\\');
-        relativePath.push_back(deVirtualizedPath.drive_absolute_path[0]);
-        relativePath.push_back('$');
-        auto remainingLength = wcslen(deVirtualizedPath.drive_absolute_path);
-        remainingLength -= 2;
-
-        relativePath.append(deVirtualizedPath.drive_absolute_path + 2, remainingLength); 
     }
 
     ////Log(L"\tFRF devirt.full_path %ls", deVirtualizedPath.full_path.c_str());
     ////Log(L"\tFRF devirt.da_path %ls", deVirtualizedPath.drive_absolute_path);
-    LogString(L"\tFRF initial basePath", basePath.c_str());
-    LogString(L"\tFRF initial relative", relativePath.c_str());
+    LogString(inst,L"\tFRF initial basePath", basePath.c_str());
+    LogString(inst,L"\tFRF initial relative", relativePath.c_str());
 
     // Create folder structure, if needed
     if (impl::PathExists( (basePath +  relativePath).c_str()))
     {
         result = basePath + relativePath;
-        Log(L"\t\tFRF Found that a copy exists in the redirected area so we skip the folder creation.");
+        Log(L"[%d]\t\tFRF Found that a copy exists in the redirected area so we skip the folder creation.",inst);
     }
     else
     {
@@ -918,14 +1110,14 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
 
         if (shouldredirectToPackageRoot)
         {
-            result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
-            Log(L"\t\tFRF shouldredirectToPackageRoot case returns result");
+            result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath,inst);
+            Log(L"[%d]\t\tFRF shouldredirectToPackageRoot case returns result",inst);
             Log(result.c_str());
         }
         else
         {
-            result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath);
-            Log(L"\t\tFRF not to PackageRoot case returns result");
+            result = GenerateRedirectedPath(relativePath, ensureDirectoryStructure, basePath,inst);
+            Log(L"[%d]\t\tFRF not to PackageRoot case returns result",inst);
             Log(result.c_str());
         }
        
@@ -933,14 +1125,14 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     return result;
 }
 
-std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure)
+std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensureDirectoryStructure,DWORD inst)
 {
     // Only until all code paths use the new version of the interface...
-    return RedirectedPath(deVirtualizedPath, ensureDirectoryStructure, g_writablePackageRootPath.native());
+    return RedirectedPath(deVirtualizedPath, ensureDirectoryStructure, g_writablePackageRootPath.native(), inst);
 }
 
 template <typename CharT>
-static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags flags)
+static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags flags, DWORD inst)
 {
     path_redirect_info result;
 
@@ -948,13 +1140,13 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     {
         return result;
     }
-    LogString(L"\tFRF Should: for path", path);
+    LogString(inst, L"\tFRF Should: for path", widen(path).c_str());
     
 
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
     bool c_copy = flag_set(flags, redirect_flags::copy_file);
     bool c_ensure = flag_set(flags, redirect_flags::ensure_directory_structure);
-    Log(L"\t\tFRF flags  CheckPresense:%d  CopyFile:%d  EnsureDirectory:%d", c_presense, c_copy, c_ensure);
+    Log(L"[%d]\t\tFRF flags  CheckPresense:%d  CopyFile:%d  EnsureDirectory:%d", inst, c_presense, c_copy, c_ensure);
 
     // normalizedPath represents the requested path, redirected to the external system if relevant, or just as requested if not.
     // vfsPath represents this as a package relative path
@@ -967,11 +1159,11 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         return result;
     }
 
-    LogString(L"\t\tFRF Normalized", normalizedPath.drive_absolute_path);
+    LogString(inst, L"\t\tFRF Normalized", normalizedPath.drive_absolute_path);
     // To be consistent in where we redirect files, we need to map VFS paths to their non-package-relative equivalent
     normalizedPath = DeVirtualizePath(std::move(normalizedPath));
 
-    LogString(L"\t\tFRF DeVirtualized", normalizedPath.drive_absolute_path);
+    LogString(inst, L"\t\tFRF DeVirtualized", normalizedPath.drive_absolute_path);
 
 	// If you change the below logic, or
 	// you you change what goes into RedirectedPath
@@ -980,19 +1172,19 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 	// Basically, what goes into RedirectedPath here also needs to go into 
 	// FindFirstFileFixup.cpp
     auto vfspath = NormalizePath(path);
-    vfspath = VirtualizePath(std::move(vfspath));
+    vfspath = VirtualizePath(std::move(vfspath),inst);
     if (vfspath.drive_absolute_path != NULL)
     {
-        LogString(L"\t\tFRF Virtualized", vfspath.drive_absolute_path);
+        LogString(inst, L"\t\tFRF Virtualized", vfspath.drive_absolute_path);
     }
 
     // Figure out if this is something we need to redirect
     for (auto& redirectSpec : g_redirectionSpecs)
     {
-        LogString(L"\t\tFRF Check against: base", redirectSpec.base_path.c_str());
+        //LogString(inst, L"\t\tFRF Check against: base", redirectSpec.base_path.c_str());
         if (path_relative_to(vfspath.drive_absolute_path, redirectSpec.base_path))
         {
-            LogString(L"\t\tFRF In ball park of base", redirectSpec.base_path.c_str());
+            LogString(inst, L"\t\tFRF In ball park of base", redirectSpec.base_path.c_str());
             auto relativePath = vfspath.drive_absolute_path + redirectSpec.base_path.native().length();
             if (psf::is_path_separator(relativePath[0]))
             {
@@ -1005,14 +1197,14 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             }
             // Otherwise exact match. Assume an implicit directory separator at the end (e.g. for matches to satisfy the
             // first call to CreateDirectory
-            LogString(L"\t\t\tFRF relativePath",relativePath);
+            LogString(inst, L"\t\t\tFRF relativePath",relativePath);
             if (std::regex_match(relativePath, redirectSpec.pattern))
             {
                 if (redirectSpec.isExclusion)
                 {
                     // The impact on isExclusion is that redirection is not needed.
                     result.should_redirect = false;
-                    LogString(L"\t\tFRF CASE:Exclusion for path", path);
+                    LogString(inst, L"\t\tFRF CASE:Exclusion for path", path);
                 }
                 else
                 {
@@ -1022,56 +1214,56 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                     // Check if file exists as VFS path in the package
                     if (impl::PathExists(vfspath.drive_absolute_path))
                     {
-                        Log(L"\t\t\tFRF CASE:match, existing in package.");
+                        Log(L"[%d]\t\t\tFRF CASE:match, existing in package.", inst);
                         destinationTargetBase = redirectSpec.redirect_targetbase;
-                        result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
+                        result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase,inst);
                     }
                     else
                     {
-                        Log(L"\t\t\tFRF CASE:match, not existing in package.");
+                        Log(L"[%d]\t\t\tFRF CASE:match, not existing in package.",inst);
                         // If the folder above it exists, we might want to redirect anyway?
                         std::filesystem::path abs = vfspath.drive_absolute_path;
                         if (impl::PathExists(abs.parent_path().c_str()))
                         {
-                            Log(L"\t\t\tFRF SUBCASE: parent folder is in package.");
+                            Log(L"[%d]\t\t\tFRF SUBCASE: parent folder is in package.",inst);
                             destinationTargetBase = redirectSpec.redirect_targetbase;
                             //result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
-                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
+                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase,inst);
                         }
                         else
                         {
-                            Log(L"\t\t\tFRF SUBCASE: parent folder is also not in package, but since relative should redirect.");
+                            Log(L"[%d]\t\t\tFRF SUBCASE: parent folder is also not in package, but since relative should redirect.", inst);
                             //result.should_redirect = false;
                             destinationTargetBase = redirectSpec.redirect_targetbase;
-                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
+                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase,inst);
                         }
                     }
                     if (result.should_redirect)
-                        LogString(L"\t\tFRF CASE:match on redirect_path", result.redirect_path.c_str());
+                        LogString(inst, L"\t\tFRF CASE:match on redirect_path", result.redirect_path.c_str());
                 }
                 break;
             }
             else
             {
-                LogString(L"\t\tFRF no match on parse relativePath", relativePath);
+                LogString(inst, L"\t\tFRF no match on parse relativePath", relativePath);
             }
         }
         else
         {
-            LogString(L"\t\tFRF Not in ball park of base", redirectSpec.base_path.c_str());
+            LogString(inst, L"\t\tFRF Not in ball park of base", redirectSpec.base_path.c_str());
         }
     }
 
-    Log(L"\t\tFRF post check 1");
+    Log(L"[%d]\t\tFRF post check 1",inst);
 
 
     if (!result.should_redirect)
     {
-        LogString(L"\tFRF no redirect rule for path", path);       
+        LogString(inst, L"\tFRF no redirect rule for path", path);
         return result;
     }
 
-    Log(L"\t\tFRF post check 2");
+    Log(L"[%d]\t\tFRF post check 2",inst);
 
     if (flag_set(flags, redirect_flags::check_file_presence))
     {
@@ -1082,20 +1274,20 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             result.should_redirect = false;
             result.redirect_path.clear();
 
-            LogString(L"\tFRF skipped (redirected not present check failed) for path", path);
+            LogString(inst, L"\tFRF skipped (redirected not present check failed) for path", path);
             return result;
         }
     }
 
-    Log(L"\t\tFRF post check 3");
+    Log(L"[%d]\t\tFRF post check 3",inst);
 
     if (flag_set(flags, redirect_flags::copy_file))
     {
-        Log(L"\t\tFRF post check 4");
+        Log(L"[%d]\t\tFRF copy_file flag is set",inst);
         [[maybe_unused]] BOOL copyResult = false;
         if (impl::PathExists(result.redirect_path.c_str()))
         {
-            Log(L"\t\tFRF Found that a copy exists in the redirected area so we skip the folder creation.");
+            Log(L"[%d]\t\tFRF Found that a copy exists in the redirected area so we skip the folder creation.",inst);
         }
         else
         {
@@ -1107,83 +1299,89 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
 
             auto attr = impl::GetFileAttributes(CopySource.c_str()); //normalizedPath.drive_absolute_path);
-            Log(L"\t\tFRF source attributes=0x%x", attr);
-            if ((attr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY)
+            Log(L"[%d]\t\tFRF source %ls attributes=0x%x", inst, CopySource.c_str(), attr);
+            if (attr != INVALID_FILE_ATTRIBUTES)
             {
-                copyResult = impl::CopyFileEx(
-                    CopySource.c_str(), //normalizedPath.drive_absolute_path,
-                    result.redirect_path.c_str(),
-                    nullptr,
-                    nullptr,
-                    nullptr,
-                    COPY_FILE_FAIL_IF_EXISTS | COPY_FILE_NO_BUFFERING);
-                if (copyResult)
+                if ((attr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY)
                 {
-                    LogString(L"\t\tFRF CopyFile Success From", CopySource.c_str());
-                    LogString(L"\t\tFRF CopyFile Success To",   result.redirect_path.c_str());
+                    Log(L"[%d]FRF we have a file to be copied to %ls", inst, result.redirect_path.c_str());
+                    copyResult = impl::CopyFileEx(
+                        CopySource.c_str(), //normalizedPath.drive_absolute_path,
+                        result.redirect_path.c_str(),
+                        nullptr,
+                        nullptr,
+                        nullptr,
+                        COPY_FILE_FAIL_IF_EXISTS | COPY_FILE_NO_BUFFERING);
+                    if (copyResult)
+                    {
+                        LogString(inst, L"\t\tFRF CopyFile Success From", CopySource.c_str());
+                        LogString(inst, L"\t\tFRF CopyFile Success To", result.redirect_path.c_str());
+                    }
+                    else
+                    {
+                        auto err = ::GetLastError();
+                        Log("[%d]\t\tFRF CopyFile Fail=0x%x", inst, err);
+                        LogString(inst, L"\t\tFRF CopyFile Fail From", CopySource.c_str());
+                        LogString(inst, L"\t\tFRF CopyFile Fail To", result.redirect_path.c_str());
+                        switch (err)
+                        {
+                        case ERROR_FILE_EXISTS:
+                            Log(L"[%d]\t\tFRF  was ERROR_FILE_EXISTS", inst);
+                            break;
+                        case ERROR_PATH_NOT_FOUND:
+                            Log(L"[%d]\t\tFRF  was ERROR_PATH_NOT_FOUND", inst);
+                            break;
+                        case ERROR_FILE_NOT_FOUND:
+                            Log(L"[%d]\t\tFRF  was ERROR_FILE_NOT_FOUND", inst);
+                            break;
+                        case ERROR_ALREADY_EXISTS:
+                            Log(L"[%d]\t\tFRF  was ERROR_ALREADY_EXISTS", inst);
+                            break;
+                        default:
+                            Log(L"[%d]\t\tFRF was 0x%x", inst, err);
+                            break;
+                        }
+                    }
                 }
                 else
                 {
-                    auto err = ::GetLastError();
-                    Log("\t\tFRF CopyFile Fail=0x%x", err);
-                    LogString(L"\t\tFRF CopyFile Fail From", CopySource.c_str());
-                    LogString(L"\t\tFRF CopyFile Fail To", result.redirect_path.c_str());
-                    switch (err)
+                    Log(L"[%d]FRF we have a directory to be copied to %ls.", inst, result.redirect_path.c_str());
+                    copyResult = impl::CreateDirectoryEx(CopySource.c_str(), result.redirect_path.c_str(), nullptr);
+                    if (copyResult)
                     {
-                    case ERROR_FILE_EXISTS:
-                        Log(L"\t\tFRF  was ERROR_FILE_EXISTS");
-                        break;
-                    case ERROR_PATH_NOT_FOUND:
-                        Log(L"\t\tFRF  was ERROR_PATH_NOT_FOUND");
-                        break;
-                    case ERROR_FILE_NOT_FOUND:
-                        Log(L"\t\tFRF  was ERROR_FILE_NOT_FOUND");
-                        break;
-                    case ERROR_ALREADY_EXISTS:
-                        Log(L"\t\tFRF  was ERROR_ALREADY_EXISTS");
-                        break;
-                    default:
-                        Log(L"\t\tFRF was 0x%x", err);
-                        break;
+                        LogString(inst, L"\t\tFRF CreateDir Success From", CopySource.c_str());
+                        LogString(inst, L"\t\tFRF CreateDir Success To", result.redirect_path.c_str());
                     }
+                    else
+                    {
+                        Log("[%d]\t\tFRF CreateDir Fail=0x%x", inst, ::GetLastError());
+                        LogString(inst, L"\t\tFRF CreateDir Fail From", CopySource.c_str());
+                        LogString(inst, L"\t\tFRF CreateDir Fail To", result.redirect_path.c_str());
+                    }
+#if _DEBUG
+                    auto err = ::GetLastError();
+                    assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND) || (err == ERROR_ALREADY_EXISTS));
+#endif
                 }
             }
             else
             {
-                copyResult = impl::CreateDirectoryEx(CopySource.c_str(), result.redirect_path.c_str(), nullptr);
-                if (copyResult)
-                {
-                    LogString(L"\t\tFRF CreateDir Success From", CopySource.c_str());
-                    LogString(L"\t\tFRF CreateDir Success To", result.redirect_path.c_str());
-                }
-                else
-                {
-                    Log("\t\tFRF CreateDir Fail=0x%x", ::GetLastError());
-                    LogString(L"\t\tFRF CreateDir Fail From", CopySource.c_str());
-                    LogString(L"\t\tFRF CreateDir Fail To",   result.redirect_path.c_str());
-                }
-#if _DEBUG
-                auto err = ::GetLastError();
-                assert(copyResult || (err == ERROR_FILE_EXISTS) || (err == ERROR_PATH_NOT_FOUND) || (err == ERROR_FILE_NOT_FOUND) || (err == ERROR_ALREADY_EXISTS));
-#endif
+                //There is no source to copy, so we just want to allow it to be created in the redirected area.
+                Log(L"[%d]FRF there is no package file to be copied to %ls.", inst, result.redirect_path.c_str());
             }
         }
-        Log(L"\t\tFRF post check 6");
     }
-    
-    Log(L"\t\tFRF post check 7");
-    //Log(L"\tFRF Redirect from %ls", path);
-    LogString(L"\tFRF Should: Redirect to result", result.redirect_path.c_str());
+    LogString(inst, L"\tFRF Should: Redirect to result", result.redirect_path.c_str());
 
     return result;
 }
 
-path_redirect_info ShouldRedirect(const char* path, redirect_flags flags)
+path_redirect_info ShouldRedirect(const char* path, redirect_flags flags, DWORD inst)
 {
-    return ShouldRedirectImpl(path, flags);
+    return ShouldRedirectImpl(path, flags, inst);
 }
 
-path_redirect_info ShouldRedirect(const wchar_t* path, redirect_flags flags)
+path_redirect_info ShouldRedirect(const wchar_t* path, redirect_flags flags, DWORD inst)
 {
-    return ShouldRedirectImpl(path, flags);
+    return ShouldRedirectImpl(path, flags, inst);
 }

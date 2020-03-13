@@ -40,12 +40,21 @@ struct find_data
     // Redirected path directory so that we can avoid returning duplicate filenames. This value will be empty if the
     // path does not exist/match any existing files at the start of the enumeration, for a slight optimization
     std::wstring redirect_path;
+    std::wstring package_vfs_path;
+    std::wstring requested_path;
 
-    // The first value is the find handle for the redirected path. The second is the find handle for the non-redirected
-    // path. The values are set to INVALID_HANDLE_VALUE as enumeration completes.
-    unique_find_handle find_handles[2];
+    // The first value is the find handle for the "redirected path" (typically to the user's profile). 
+    // The second value is for a "package VFS" location equivalent to the requested information when native AppData and LocalAppdata are used in the request.
+    // The third is the find handle for the non-redirected path as asked for by the app.
+    // The values are set to INVALID_HANDLE_VALUE as enumeration completes.
+    
+    // Note: When the original request was in the path of the package, the second handle is NULL.
+    //       When the original request was a path outside of package path, second handle is NULL if no equivalent VFS exists in package.
+    //       First handle is NULL when redirection has not happened yet.
+    //       We need the second handle only for VFS/AppData and VFS/LocalAppdata in the package because the underlying runtime doesn't layer those folders in when we use %Appdata% and %LocalAppData% for the third handle.
+    unique_find_handle find_handles[3];
 
-    // We need to hold on to the results of FindFirstFile for find_handles[1]
+    // We need to hold on to the results of FindFirstFile for find_handles[1/2] 
     WIN32_FIND_DATAW cached_data;
 };
 
@@ -100,16 +109,19 @@ HANDLE __stdcall FindFirstFileExFixup(
 
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
+    DWORD FindFirstFileExInstance = ++g_FileIntceptInstance;
 
-    LogString(L"\tFindFirstFileEx: for fileName", fileName);
-    
 
     // Split the input into directory and pattern
     auto path = widen(fileName, CP_ACP);
+    LogString(FindFirstFileExInstance,L"\tFindFirstFileEx: for fileName", path.c_str());
+    Log(L"[%d]\tFindFirstFileEx: addtionalFlags=0x%x", FindFirstFileExInstance, additionalFlags);
+
     normalized_path dir;
     const wchar_t* pattern = nullptr;
     if (auto dirPos = path.find_last_of(LR"(\/)"); dirPos != std::wstring::npos)
     {
+        Log("[%d]\tFileFirstFileEx: has slash", FindFirstFileExInstance);
         // Special case for single separator at beginning of the path "/foo.txt"
         if (dirPos == 0)
         {
@@ -127,34 +139,66 @@ HANDLE __stdcall FindFirstFileExFixup(
     }
     else
     {
-        dir = NormalizePath(L".");
+        Log("[%d]\tFileFirstFileEx: no slash, assume cwd based.", FindFirstFileExInstance);
+        // TODO: This is a messy situation and the code I am replacing doen't handle it well and can crash the app later on in PathRedirection.
+        // While FindFirstFileEx is usually passed a regular (unique) filepath in the first parameter, 
+        // it is permissible for the caller to use wildcards to select multiple subfolders or files to be searched.
+        // And if they don't give a full path (we end up here and) we should assume it means the wildcards are relative to the current working directory.
+        // For example, the app I'm looking at puts "*" in this field. This currently causes NormalizePath to return a normailzed path that is type relative but with a null entry for the path.
+        // The right solution might be to first find subfolders matching the path pattern and make individual layered calls on the rest, but that seems too ugly.
+        // Here is the code being replaced, but while it fixes the "*" I'm not comforatble that the replacement is right in all cases, 
+        // so this comment is here to try to explain.
+        //     dir = NormalizePath(L".");
+        //     pattern = path.c_str();
+        std::filesystem::path cwd = std::filesystem::current_path();
+        Log("[%d]\tFileFirstFileEx: swap to cwd: %ls", FindFirstFileExInstance,cwd.c_str());
+        dir = NormalizePath(cwd.c_str()); 
         pattern = path.c_str();
+        Log("[%d]\tFileFirstFileEx: no slash, assumed cwd based type=x%x dap=%ls", FindFirstFileExInstance, psf::path_type(cwd.c_str()),dir.drive_absolute_path);
     }
-
+    
     // If you change the below logic, or
 	// you you change what goes into RedirectedPath
 	// you need to mirror all changes to ShouldRedirectImpl
 	// in PathRedirection.cpp
-
-	//Basically, what goes into RedirectedPath here also needs to go into 
-	// RedirectedPath in PathRedirection.cpp
-	dir = NormalizePath(dir.drive_absolute_path);
-	dir = VirtualizePath(std::move(dir));
+ 
+    //Basically, what goes into RedirectedPath here also needs to go into 
+    // RedirectedPath in PathRedirection.cpp
+    dir = NormalizePath(dir.drive_absolute_path);
+    dir = VirtualizePath(std::move(dir), FindFirstFileExInstance);
 
     auto result = std::make_unique<find_data>();
-    result->redirect_path = RedirectedPath(dir);
+
+    result->requested_path = path.c_str();
+    result->redirect_path = RedirectedPath(dir,false, FindFirstFileExInstance);
     if (result->redirect_path.back() != L'\\')
     {
         result->redirect_path.push_back(L'\\');
     }
-
-    Log(L"FindFirstFile redirected to result");
+    Log(L"[%d]FindFirstFile redirected_path is", FindFirstFileExInstance);
     Log(result->redirect_path.c_str());
+    
+    std::filesystem::path vfspath = GetPackageVFSPath(path.c_str());
+    if (wcslen(vfspath.c_str()) > 0)
+    {
+        result->package_vfs_path = vfspath.c_str();
+        //if (result->package_vfs_path.back() != L'\\')
+        //{
+        //    result->package_vfs_path.push_back(L'\\');
+        //}
+        Log(L"[%d]FindFirstFile package_vfs_path is", FindFirstFileExInstance);
+        Log(result->package_vfs_path.c_str());
+    }
+    else
+    {
+        Log(L"[%d]FindFirstFile package_vfs_path is [empty]", FindFirstFileExInstance);
+    }
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
     [[maybe_unused]] auto wideData = reinterpret_cast<WIN32_FIND_DATAW*>(findFileData);
     WIN32_FIND_DATAW* findData = psf::is_ansi<CharT> ? &result->cached_data : wideData;
 
+    //
     // Open the redirected find handle
     auto revertSize = result->redirect_path.length();
     result->redirect_path += pattern;
@@ -180,35 +224,75 @@ HANDLE __stdcall FindFirstFileExFixup(
             // No need to copy since we wrote directly into the output buffer
             assert(findData == wideData);
         }
-        Log(L"FindFirstFile redirected (from redirected): had results");
+        Log(L"[%d]FindFirstFile[0] redirected (from redirected): had results", FindFirstFileExInstance);
     }
     else
     {
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         result->redirect_path.clear();
-        Log(L"FindFirstFile redirected (from redirected): no results");
+        Log(L"[%d]FindFirstFile[0] redirected (from redirected): no results", FindFirstFileExInstance);
     }
 
     findData = (result->find_handles[0] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
 
-    // Open the non-redirected find handle
-    result->find_handles[1].reset(impl::FindFirstFileEx(path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
-    if (result->find_handles[1])
+    //
+    // Open the package_vfsP_path handle if AppData or LocalAppData (letting the runtime handle other VFSs)
+    if (IsUnderUserAppDataLocal(path.c_str()) || IsUnderUserAppDataRoaming(path.c_str()))
     {
-        Log(L"FindFirstFile (from redirected): had results");
+        ///auto vfspathSize = result->package_vfs_path.length();
+        ///result->package_vfs_path += pattern;
+        result->find_handles[1].reset(impl::FindFirstFileEx(result->package_vfs_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
+        ///result->package_vfs_path.resize(vfspathSize);
+        if (result->find_handles[1])
+        {
+            Log(L"[%d]FindFirstFile[1] (from vfs_path): had results", FindFirstFileExInstance);
+        }
+        else
+        {
+            result->package_vfs_path.clear();
+            Log(L"[%d]FindFirstFile[1] (from vfs_path): no results", FindFirstFileExInstance);
+        }
+        if (!result->find_handles[0])
+        {
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                if (copy_find_data(*findData, *ansiData))
+                {
+                    Log(L"[%d]FindFirstFile error set by caller", FindFirstFileExInstance);
+                    // NOTE: Last error set by caller
+                    return INVALID_HANDLE_VALUE;
+                }
+            }
+            else
+            {
+                // No need to copy since we wrote directly into the output buffer
+                assert(findData == wideData);
+            }
+        }
+    }
+
+    //
+    // Open the non-redirected find handle
+    result->find_handles[2].reset(impl::FindFirstFileEx(result->requested_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
+    if (result->find_handles[2])
+    {
+        Log(L"[%d]FindFirstFile[2] (from origial): had results", FindFirstFileExInstance);
     }
     else
     {
-        Log(L"FindFirstFile (from redirected): no results");
+        result->requested_path.clear();
+        Log(L"[%d]FindFirstFile[2] (from original): no results", FindFirstFileExInstance);
     }
-    if (!result->find_handles[0])
+    if (!result->find_handles[0] &&
+        !result->find_handles[1])
     {
-        if (!result->find_handles[1])
+        if (!result->find_handles[2])
         {
             // Neither path exists. The last error should still be set by FindFirstFileEx, but prefer the initial error
             // if it indicates that the redirected directory structure exists
             if (initialFindError == ERROR_FILE_NOT_FOUND)
             {
+                Log(L"[%d]FindFirstFile error 0x%x", FindFirstFileExInstance, initialFindError);
                 ::SetLastError(initialFindError);
             }
 
@@ -220,6 +304,7 @@ HANDLE __stdcall FindFirstFileExFixup(
             {
                 if (copy_find_data(*findData, *ansiData))
                 {
+                    Log(L"[%d]FindFirstFile error set by caller", FindFirstFileExInstance);
                     // NOTE: Last error set by caller
                     return INVALID_HANDLE_VALUE;
                 }
@@ -229,12 +314,13 @@ HANDLE __stdcall FindFirstFileExFixup(
                 // No need to copy since we wrote directly into the output buffer
                 assert(findData == wideData);
             }
-            Log(L"FindFirstFile (from redirected): had results");
         }
     }
 
+
     ::SetLastError(ERROR_SUCCESS);
     return reinterpret_cast<HANDLE>(result.release());
+
 }
 catch (...)
 {
@@ -252,6 +338,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 }
 DECLARE_STRING_FIXUP(impl::FindFirstFile, FindFirstFileFixup);
 
+
 template <typename CharT>
 BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try
 {
@@ -263,6 +350,11 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
         return impl::FindNextFile(findFile, findFileData);
     }
 
+    DWORD FindNextFileInstance = ++g_FileIntceptInstance;
+
+    Log(L"[%d]FindNextFileFixup.", FindNextFileInstance);
+
+
     if (findFile == INVALID_HANDLE_VALUE)
     {
         ::SetLastError(ERROR_INVALID_PARAMETER);
@@ -270,10 +362,17 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     }
 
     auto data = reinterpret_cast<find_data*>(findFile);
+#if !_DEBUG
+    Log(L"[%d]FindNextFileFixup is against redir  =%ls", FindNextFileInstance, data->redirect_path.c_str());
+    Log(L"[%d]FindNextFileFixup is against pkgVfs =%ls", FindNextFileInstance, data->package_vfs_path.c_str());
+    Log(L"[%d]FindNextFileFixup is against request=%ls", FindNextFileInstance, data->requested_path.c_str());
+#endif
+
     auto redirectedFileExists = [&](auto filename)
     {
         if (data->redirect_path.empty())
         {
+            Log(L"[%d]FindNextFile redirectedFileExists returns false.", FindNextFileInstance);
             return false;
         }
 
@@ -293,72 +392,153 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
 
         auto result = impl::PathExists(data->redirect_path.c_str());
         data->redirect_path.resize(revertSize);
+        Log(L"[%d]FindNextFile redirectedFileExists returns %ls", FindNextFileInstance, data->redirect_path.c_str());
+        return result;
+    };
+    auto vfspathFileExists = [&](auto filename)
+    {
+        if (data->package_vfs_path.empty())
+        {
+            Log(L"[%d]FindNextFile vfspathFileExists returns false.", FindNextFileInstance);
+            return false;
+        }
+
+        auto revertSize = data->package_vfs_path.length();
+
+        // NOTE: 'is_ansi' evaluation not inline due to the bug:
+        //       https://developercommunity.visualstudio.com/content/problem/324366/illegal-indirection-error-when-the-evaluation-of-i.html
+        constexpr bool is_ansi = psf::is_ansi<std::decay_t<decltype(*filename)>>;
+        if constexpr (is_ansi)
+        {
+            data->package_vfs_path += widen(filename);
+        }
+        else
+        {
+            data->package_vfs_path += filename;
+        }
+
+        auto result = impl::PathExists(data->package_vfs_path.c_str());
+        data->package_vfs_path.resize(revertSize);
+        Log(L"[%d]FindNextFile vfspathFileExists returns %ls", FindNextFileInstance, data->package_vfs_path.c_str());
         return result;
     };
 
-    if (data->find_handles[0])
+    if (!data->redirect_path.empty())
     {
-        if (impl::FindNextFile(data->find_handles[0].get(), findFileData))
+        if (data->find_handles[0])
         {
-            return TRUE;
-        }
-        else if (::GetLastError() == ERROR_NO_MORE_FILES)
-        {
-            data->find_handles[0].reset();
-            if (!data->find_handles[1])
+            Log(L"[%d]FindNextFile[0] to be checked.", FindNextFileInstance);
+            if (impl::FindNextFile(data->find_handles[0].get(), findFileData))
             {
-                // NOTE: Last error scribbled over by closing find_handles[0]
+                Log(L"[%d]FindNextFile[0] returns TRUE: %ls", FindNextFileInstance, data->cached_data.cFileName);
+                return TRUE;
+            }
+            else if (::GetLastError() == ERROR_NO_MORE_FILES)
+            {
+                Log(L"[%d]FindNextFile[0] had FALSE with ERROR_NO_MORE_FILES.", FindNextFileInstance);
+                data->find_handles[0].reset();
+
+                if (data->package_vfs_path.empty() || !data->find_handles[1])
+                {
+                    Log(L"[%d]FindNextFile[1] not in use.", FindNextFileInstance);
+                    if (data->requested_path.empty() || !data->find_handles[2])
+                    {
+                        Log(L"[%d]FindNextFile[2] not in use, so return ERROR_NO_MORE_FILES.", FindNextFileInstance);
+                        // NOTE: Last error scribbled over by closing find_handles[0]
+                        ::SetLastError(ERROR_NO_MORE_FILES);
+                        return FALSE;
+                    }
+                    // else check[1]
+                }
+
+                if (!redirectedFileExists(data->cached_data.cFileName))
+                {
+                    if (copy_find_data(data->cached_data, *findFileData))
+                    {
+                        Log(L"[%d]FindNextFile[0] returns FALSE with last error set by caller", FindNextFileInstance);
+                        // NOTE: Last error set by caller
+                        return FALSE;
+                    }
+
+                    LogString(FindNextFileInstance, L"FindNextFile[0] returns TRUE with ERROR_SUCCESS and file %ls", data->cached_data.cFileName);
+                    ::SetLastError(ERROR_SUCCESS);
+                    return TRUE;
+                }
+            }
+            else
+            {
+                // Error due to something other than reaching the end 
+                Log(L"[%d]FindNextFile[0] returns FALSE", FindNextFileInstance);
+                return FALSE;
+            }
+        }
+    }
+
+    if (!data->package_vfs_path.empty())
+    {
+        while (data->find_handles[1])
+        {
+            if (impl::FindNextFile(data->find_handles[1].get(), findFileData))
+            {
+                // Skip the file if it exists in the redirected path
+                if (!redirectedFileExists(findFileData->cFileName))
+                {
+                    LogString(FindNextFileInstance, L"FindNextFile[1] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
+                    ::SetLastError(ERROR_SUCCESS);
+                    return TRUE;
+                }
+                // Otherwise, skip this file and check the next one
+            }
+            else if (::GetLastError() == ERROR_NO_MORE_FILES)
+            {
+                Log(L"[%d]FindNextFile[1] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
+                data->find_handles[1].reset();
+                // now check [2]
+            }
+            else
+            {
+                Log(L"[%d]FindNextFile[1] returns FALSE", FindNextFileInstance);
+                // Error due to something other than reaching the end
+                return FALSE;
+            }
+        }
+    }
+
+    if (!data->requested_path.empty())
+    {
+        while (data->find_handles[2])
+        {
+            if (impl::FindNextFile(data->find_handles[2].get(), findFileData))
+            {
+                // Skip the file if it exists in the redirected path
+                if (!redirectedFileExists(findFileData->cFileName) &&
+                    !vfspathFileExists(findFileData->cFileName))
+                {
+                    LogString(FindNextFileInstance, L"FindNextFile[2] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
+                    ::SetLastError(ERROR_SUCCESS);
+                    return TRUE;
+                }
+                // Otherwise, skip this file and check the next one
+            }
+            else if (::GetLastError() == ERROR_NO_MORE_FILES)
+            {
+                Log(L"[%d]FindNextFile[2] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
+                data->find_handles[2].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 return FALSE;
             }
-
-            if (!redirectedFileExists(data->cached_data.cFileName))
+            else
             {
-                if (copy_find_data(data->cached_data, *findFileData))
-                {
-                    // NOTE: Last error set by caller
-                    return FALSE;
-                }
-
-                ::SetLastError(ERROR_SUCCESS);
-                return TRUE;
+                Log(L"[%d]FindNextFile[2] returns FALSE", FindNextFileInstance);
+                // Error due to something other than reaching the end
+                return FALSE;
             }
         }
-        else
-        {
-            // Error due to something other than reaching the end
-            return FALSE;
-        }
     }
-
-    while (data->find_handles[1])
-    {
-        if (impl::FindNextFile(data->find_handles[1].get(), findFileData))
-        {
-            // Skip the file if it exists in the redirected path
-            if (!redirectedFileExists(findFileData->cFileName))
-            {
-                ::SetLastError(ERROR_SUCCESS);
-                return TRUE;
-            }
-            // Otherwise, skip this file and check the next one
-        }
-        else if (::GetLastError() == ERROR_NO_MORE_FILES)
-        {
-            data->find_handles[1].reset();
-            ::SetLastError(ERROR_NO_MORE_FILES);
-            return FALSE;
-        }
-        else
-        {
-            // Error due to something other than reaching the end
-            return FALSE;
-        }
-    }
-
     // We ran out of data either on a previous call, or by ignoring files that have been redirected
     ::SetLastError(ERROR_NO_MORE_FILES);
     return FALSE;
+
 }
 catch (...)
 {
@@ -376,6 +556,8 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
 
         return impl::FindClose(findHandle);
     }
+
+//    DWORD FindCloseInstance = ++g_FileIntceptInstance;
 
     if (findHandle == INVALID_HANDLE_VALUE)
     {

@@ -142,11 +142,15 @@ inline void LogString(const char* name, const wchar_t* value)
 }
 inline std::string InterpretStringA(const char* value)
 {
-    return value;
+    if (value != NULL)  
+        return value;
+    return "";
 }
 inline std::string InterpretStringA(const wchar_t* value)
 {
-    return narrow(value);
+    if (value != NULL)
+        return narrow(value);
+    return "";
 }
 
 inline void LogCountedString(const char* name, const char* value, std::size_t length)
@@ -156,19 +160,27 @@ inline void LogCountedString(const char* name, const char* value, std::size_t le
 inline std::string InterpretCountedString(const char* name, const char* value, std::size_t length)
 {
     std::ostringstream sout;
-    sout << name << "=" << std::setw(length) << value;
+    if (value != NULL)
+        sout << name << "=" << std::setw(length) << value;
+    else
+        sout << name << "=NULL";
     return sout.str();
 }
 
 inline void LogCountedString(const char* name, const wchar_t* value, std::size_t length)
 {
-    Log("\t%s=%.*ls\n", name, length, value);
+    if (value != NULL)
+        Log("\t%s=%.*ls\n", name, length, value);
+    else
+        Log("\t%s=NULL", name);
 }
 inline std::string InterpretCountedString(const char* name, const wchar_t* value, std::size_t length)
 {
     std::ostringstream sout;
-    //sout << name << "=" << std::setw(length) << value;
-    sout << name << "=" <<  std::setw(length) <<  narrow(value).c_str();
+    if (value != NULL)
+        sout << name << "=" << std::setw(length) << narrow(value).c_str();
+    else
+        sout << name << "=NULL";
     return sout.str();
 }
 

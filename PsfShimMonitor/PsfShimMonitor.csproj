@@ -171,6 +171,9 @@
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent">
       <Version>2.0.49</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent.SupportFiles">
+      <Version>1.0.17</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

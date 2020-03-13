@@ -20,10 +20,11 @@
                             "packageRelative": [
                                 {
                                     "base": "",
-                                    "patterns": [
-                                        ".*\\.txt",
-                                        "Tèƨƭ.*"
-                                    ]
+                                  "patterns": [
+                                    ".*\\.txt",
+                                    ".*\\.ini",
+                                    "Tèƨƭ.*"
+                                  ]
                                 }
                             ],
                             "knownFolders": [
