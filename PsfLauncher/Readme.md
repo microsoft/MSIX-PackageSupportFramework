@@ -125,6 +125,48 @@ A possible `config.json` example that uses the Trace Fixup along with PsfMonitor
 
 In this example, the configuration is directing the PsfLauncher to start PsfMonitor and then the referenced Primary App. PsfMonitor to be run using RunAs (enabling the monitor to also trace at the kernel level), followed by PrimaryApp once the monitoring app is stable. The root folder of the PrimaryApp is used for the CurrentDirectory of the PrimaryApp process.  In the processes section of the example, the json further configures Trace Fixup to be injected into the PrimaryApp, and that is to capture all levels of trace to the event log.
 
+
+
+### Example 3
+This example shows an alternative for the json used in the prior example. This might be used when command line arguments for the target executable include file paths and you want to reference those paths as full path references to their ultimate location in the deployed package.
+
+
+```json
+{
+        "applications": [
+        {
+            "id": "PSFLAUNCHERSixFour",
+            "executable": "PrimaryApp.exe",
+            "arguments": "%MsixPackageRoot%\filename.ext %MsixPackageRoot%\VFS\LocalAppData\Vendor\file.ext"
+            "workingDirectory": "",
+            "monitor": {
+                "executable": "PsfMonitor.exe",
+                "arguments": "",
+                "asadmin": true,
+   	    }
+	}
+  	],
+        "processes": [
+        {
+            "executable": "PrimaryApp$",
+            "fixups": [ 
+            { 
+                "dll": "TraceFixup64.dll",
+                "config": {
+                    "traceMethod": "eventlog",
+                    "traceLevels": {
+                        "default": "always"
+                    }
+                }
+            } 
+            ]
+        }
+        ]
+}
+```
+
+In this example, the pseudo-variable %MsixPackageRoot% would be replaced by the folder path that the package was installed to. This pseudo-variable is only available for string replacement by PsfLauncher in the arguments field. The example shows a reference to a file that was placed at the root of the package and another that will exist using VFS pathing. Note that as long as the LOCALAPPDATA file is the only file required from the package LOCALAPPDATA folder, the use of FileRedirectionFixup would not be mandated.
+
 ### Json Schema
 
 | Array | key | Value |
@@ -135,7 +177,7 @@ In this example, the configuration is directing the PsfLauncher to start PsfMoni
 | applications | workingDirectory | (Optional) A package-relative path to use as the working directory of the application that starts. If you don't set this value, the operating system uses the `System32` directory as the application's working directory. If you supply a value in the form of an empty string, it will use the directory of the referenced executable. |
 | applications | monitor | (Optional) If present, the monitor identifies a secondary program that is to be launched prior to starting the primary application.  A good example might be `PsfMonitor.exe`.  The monitor configuration consists of the following items: |
 | | |   `'executable'` - This is the name of the executable relative to the root of the package. |
-| | |   `'arguments'`  - This is a string containing any command line arguments that the monitor executable requires. |
+| | |   `'arguments'`  - This is a string containing any command line arguments that the monitor executable requires. Any use of the string "%MsixPackageRoot%" in the arguments will be replaced by the a string containing the actual package root folder at runtime. |
 | | |   `'asadmin'` - This is a boolean (0 or 1) indicating if the executable needs to be launched as an admin.  To use this option set to 1, you must also mark the package with the RunAsAdministrator capability.  If the monitor executable has a manifest (internal or external) it is ignored.  If not expressed, this defaults to a 0. |
 | | |   `'wait'` - This is a boolean (0 or 1) indicating if the launcher should wait for the monitor program to exit prior to starting the primary application.  When not set, the launcher will WaitForInputIdle on the monitor before launching the primary application. This option is not normally used for tracing and defaults to 0. |
 | processes | executable | In most cases, this will be the name of the `executable` configured above with the path and file extension removed. |
