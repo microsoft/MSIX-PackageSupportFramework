@@ -223,7 +223,7 @@ private:
 		}
 		return inString;
 	}
-	std::wstring EscapeFilename4PowerShell(std::filesystem::path inputPath)
+	std::wstring EscapeFilenameForPowerShell(std::filesystem::path inputPath)
 	{
 		std::wstring outString = inputPath.c_str();
 		std::wstring::size_type pos = 0u;
@@ -243,7 +243,7 @@ private:
 
 
 		const std::filesystem::path dequotedScriptPath = Dequote(scriptPath);
-		std::wstring fixed4PowerShell = EscapeFilename4PowerShell(dequotedScriptPath);
+		std::wstring fixed4PowerShell = EscapeFilenameForPowerShell(dequotedScriptPath);
 		if (dequotedScriptPath.is_absolute())
 		{
 			commandString.append(fixed4PowerShell);
