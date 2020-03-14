@@ -250,9 +250,13 @@ private:
 		commandString.append(L" -file StartingScriptWrapper.ps1 ");
 		commandString.append(L"\"");
 
+		// ScriptWrapper uses invoke-expression so we need the expression to launch another powershell to run a file with arguments.
+		commandString.append(L"Powershell.exe ");
+		commandString.append(scriptExecutionMode);
+		commandString.append(L" -file ");
 
 		const std::filesystem::path dequotedScriptPath = Dequote(scriptPath);
-		std::wstring fixed4PowerShell = EscapeFilenameForPowerShell(dequotedScriptPath);
+		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
 		if (dequotedScriptPath.is_absolute())
 		{
 			commandString.append(L"\'");
