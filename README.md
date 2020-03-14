@@ -100,7 +100,7 @@ Here are the locations of each executable.
   
 [More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
 
-Some organizations set the execution policy using GroupPolicy, which prevents setting the policy by using Set-ExecutionPolicy. To overcome this you will either have to sign the StartingScriptWrapper.ps1 used to run your script or set the optional stopOnScriptError setting to `'-ByPass'` as shown in the example.
+Some organizations set the execution policy using GroupPolicy, which prevents setting the policy by using Set-ExecutionPolicy. To overcome this you will either have to sign the StartingScriptWrapper.ps1 used to run your script or set the optional stopOnScriptError setting to `'ByPass'` as shown in the example.
 
 ### How to enable scripts to run with PSF
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the packaged exe add a configuration item called "startScript".  To tell PSF to run a script after the packaged exe finishes add a configuration item called "endScript".
@@ -112,7 +112,7 @@ The following are the configuration items available at the application level.
 |-------------------------|------------|-----------|----------|---------|
 | stopOnScriptError       | boolean    | No        | false    | When set to true, an error in the StartScript will prevent the appliction from being started. |
 | scriptExecutionMode     | string     | No        | empty    | May be empty or set an acceptable powershell command line control such as: |
-| | | | |  `'-ByPass'` |
+| | | | |  `'ByPass'` |
 | | | | |  `'-ExecutionPolicy RemoteSigned'` |
 | | | | |  `'-ExecutionPolicy Unrestricted'` |
 | startScript             | object     | No        | empty    | See below. |
@@ -140,7 +140,7 @@ Here is a sample configuration using two different exes.
       "executable": "Sample.exe",
       "workingDirectory": "",
       "stopOnScriptError": false,
-      "scriptExecutionMode": "-ByPass"
+      "scriptExecutionMode": "ByPass"
 	  "startScript":
 	  {
 		"scriptPath": "RunMePlease.ps1",
