@@ -87,11 +87,9 @@ Scripts allow IT Pros to customize the app for the user environment dynamically.
 Each exe defined in the application manifest can have their own scripts. PSF allows one PowerShell script to be run before an exe runs, and one PowerShell script to be ran after the exe runs.
 
 ### Prerequisite to allow scripts to run
-In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned.
+In order to allow scripts to run you need to set the execution policy to unrestricted or RemoteSigned. Because this might be set automatically by GroupPolicy, you may instead choose to supply the appropriate execution policy for the script in the json configuration.
 
-Run the one of the two following powershell commands to set the execution policy: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned` or `Set-ExecutionPolicy -ExecutionPolicy Unrestricted` depending if you want the execution policy to be remoteSigned or unrestricted.
-
-The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.  Make sure to open each version of powershell and run the command shown above.
+If setting the execution policy externally, run the one of the two following powershell commands to set the execution policy: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned` or `Set-ExecutionPolicy -ExecutionPolicy Unrestricted` depending if you want the execution policy to be remoteSigned or unrestricted. The execution policy needs to be set for both the 64-bit powershell executable and the 32-bit powershell executable.  Make sure to open each version of powershell and run the command shown above.
 
 Here are the locations of each executable.
 * If on a 64-bit computer
@@ -102,11 +100,25 @@ Here are the locations of each executable.
   
 [More information about PowerShell Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-6)
 
+Some organizations set the execution policy using GroupPolicy, which prevents setting the policy by using Set-ExecutionPolicy. To overcome this you will either have to sign the StartingScriptWrapper.ps1 used to run your script or set the optional stopOnScriptError setting to `'-ByPass'` as shown in the example.
+
 ### How to enable scripts to run with PSF
 In order to specify what scripts will run for each packaged exe you will need to modify the config.json file.  To tell PSF to run a script before the execution of the packaged exe add a configuration item called "startScript".  To tell PSF to run a script after the packaged exe finishes add a configuration item called "endScript".
 
 #### Script configuration items
-The following are the configuration items available for the scripts.  The ending script ignores the following configuration items: waitForScriptToFinish, and stopOnScriptError.
+The following are the configuration items available at the application level.
+
+| Key name                | Value type | Required? | Default  | Description
+|-------------------------|------------|-----------|----------|---------|
+| stopOnScriptError       | boolean    | No        | false    | When set to true, an error in the StartScript will prevent the appliction from being started. |
+| scriptExecutionMode     | string     | No        | empty    | May be empty or set an acceptable powershell command line control such as: |
+| | | | |  `'-ByPass'` |
+| | | | |  `'-ExecutionPolicy RemoteSigned'` |
+| | | | |  `'-ExecutionPolicy Unrestricted'` |
+| startScript             | object     | No        | empty    | See below. |
+| endScript               | object     | No        | empty    | See below. |
+ 
+The following are the configuration items available for the start and end script objects.  The ending script ignores the following configuration items: waitForScriptToFinish, and stopOnScriptError.
 
 | Key name                | Value type | Required? | Default  | Description
 |-------------------------|------------|-----------|----------|---------|
@@ -128,6 +140,7 @@ Here is a sample configuration using two different exes.
       "executable": "Sample.exe",
       "workingDirectory": "",
       "stopOnScriptError": false,
+      "scriptExecutionMode": "-ByPass"
 	  "startScript":
 	  {
 		"scriptPath": "RunMePlease.ps1",

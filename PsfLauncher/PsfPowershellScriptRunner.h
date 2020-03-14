@@ -35,18 +35,25 @@ public:
 			stopOnScriptError = stopOnScriptErrorObject->as_boolean().get();
 		}
 
+		std::wstring scriptExecutionMode = L"";
+		auto scriptExecutionModeObject = appConfig->try_get("scriptExecutionMode");
+		if (scriptExecutionModeObject)
+		{
+			scriptExecutionMode = scriptExecutionModeObject->as_string().wstring();
+		}
+
 		// Note: the following path must be kept in sync with the FileRedirectionFixup PathRedirection.cpp
 		std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
 		if (startScriptInformationObject)
 		{
-			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
 			this->startingScriptInformation.doesScriptExistInConfig = true;
 		}
 
 		if (endScriptInformationObject)
 		{
 			//Ending script ignores stopOnScriptError.  Keep it the default value
-			this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
 			this->endingScriptInformation.doesScriptExistInConfig = true;
 
 			//Ending script ignores this value.  Keep true to make sure
@@ -147,12 +154,12 @@ private:
 		}
 	}
 
-	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, const std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
+	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, const std::wstring scriptExecutionMode, const std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
 	{
 
 		ScriptInformation scriptStruct;
 		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
-		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptStruct.scriptPath), packageRoot, packageWritableRoot);
+		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath), packageRoot, packageWritableRoot);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
@@ -236,9 +243,11 @@ private:
 		return outString;
 
 	}
-	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptPath)
+	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath)
 	{
-		std::wstring commandString = L"Powershell.exe -file StartingScriptWrapper.ps1 ";
+		std::wstring commandString = L"Powershell.exe ";
+		commandString.append(scriptExecutionMode);
+		commandString.append(L" -file StartingScriptWrapper.ps1 ");
 		commandString.append(L"\"");
 
 
@@ -246,12 +255,16 @@ private:
 		std::wstring fixed4PowerShell = EscapeFilenameForPowerShell(dequotedScriptPath);
 		if (dequotedScriptPath.is_absolute())
 		{
+			commandString.append(L"\'");
 			commandString.append(fixed4PowerShell);
+			commandString.append(L"\'");
 		}
 		else
 		{
+			commandString.append(L"\'");
 			commandString.append(L".\\");
 			commandString.append(fixed4PowerShell);
+			commandString.append(L"\'");
 		}
 
 		//Script arguments are optional.
