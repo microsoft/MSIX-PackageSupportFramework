@@ -112,7 +112,7 @@ The following are the configuration items available at the application level.
 |-------------------------|------------|-----------|----------|---------|
 | stopOnScriptError       | boolean    | No        | false    | When set to true, an error in the StartScript will prevent the appliction from being started. |
 | scriptExecutionMode     | string     | No        | empty    | May be empty or set an acceptable powershell command line control such as: |
-| | | | |  `'ByPass'` |
+| | | | |  `'-ExecutionPolicy ByPass'` |
 | | | | |  `'-ExecutionPolicy RemoteSigned'` |
 | | | | |  `'-ExecutionPolicy Unrestricted'` |
 | startScript             | object     | No        | empty    | See below. |
@@ -140,7 +140,7 @@ Here is a sample configuration using two different exes.
       "executable": "Sample.exe",
       "workingDirectory": "",
       "stopOnScriptError": false,
-      "scriptExecutionMode": "ByPass"
+      "scriptExecutionMode": "-ExecutionPolicy Unresticted"
 	  "startScript":
 	  {
 		"scriptPath": "RunMePlease.ps1",
