@@ -3,12 +3,8 @@
 #include "Logger.h"
 #include <wil\resource.h>
 
-
-
-
 HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
 {
-
     STARTUPINFOEXW startupInfoEx =
     {
         {
