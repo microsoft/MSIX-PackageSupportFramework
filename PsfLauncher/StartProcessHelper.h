@@ -24,13 +24,12 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
         }
     };
 
-    PROCESS_INFORMATION processInfo{};
-
     if (attributeList)
     {
         startupInfoEx.lpAttributeList = attributeList;
     }
 
+    PROCESS_INFORMATION processInfo{};
     RETURN_LAST_ERROR_IF_MSG(
         !::CreateProcessW(
             applicationName,
