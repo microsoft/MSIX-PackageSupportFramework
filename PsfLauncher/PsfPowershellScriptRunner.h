@@ -65,7 +65,6 @@ public:
     }
 
 private:
-
     DWORD createPowershellInsideContainer = 0x02;
 
     struct ScriptInformation
