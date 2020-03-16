@@ -27,6 +27,9 @@
     <ClCompile Include="WinternlFixup.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="PrivateProfileFixup.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logging.h">

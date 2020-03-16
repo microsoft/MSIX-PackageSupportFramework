@@ -3,7 +3,39 @@
 #include "Logger.h"
 #include <wil\resource.h>
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
+
+void MakeAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST &attributeList)
+{
+    SIZE_T AttributeListSize{};
+
+    InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
+    attributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
+        GetProcessHeap(),
+        0,
+        AttributeListSize);
+
+    THROW_LAST_ERROR_IF_MSG(
+        !InitializeProcThreadAttributeList(
+            attributeList,
+            1,
+            0,
+            &AttributeListSize),
+        "Could not initialize the proc thread attribute list.");
+
+    DWORD attribute = 0x02;
+    THROW_LAST_ERROR_IF_MSG(
+        !UpdateProcThreadAttribute(
+            attributeList,
+            0,
+            ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+            &attribute,
+            sizeof(attribute),
+            nullptr,
+            nullptr),
+        "Could not update Proc thread attribute.");
+}
+
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout)
 {
     STARTUPINFOEXW startupInfoEx =
     {

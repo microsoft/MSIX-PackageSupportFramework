@@ -103,7 +103,7 @@ private:
 
         if (script.waitForScriptToFinish)
         {
-            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, script.attributeList);
+            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
 
             if (script.stopOnScriptError)
             {
@@ -113,7 +113,7 @@ private:
         else
         {
             //We don't want to stop on an error and we want to run async
-            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, script.attributeList);
+            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
         }
     }
 

@@ -28,6 +28,7 @@
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="PrivateProfileFixup.cpp" />
     <ClCompile Include="RegistryFixup.cpp" />
     <ClCompile Include="WinternlFixup.cpp" />
   </ItemGroup>
