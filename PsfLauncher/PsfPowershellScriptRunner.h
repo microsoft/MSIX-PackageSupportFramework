@@ -65,6 +65,9 @@ public:
     }
 
 private:
+
+    DWORD createPowershellInsideContainer = 0x02;
+
     struct ScriptInformation
     {
         std::wstring scriptPath;
@@ -76,6 +79,7 @@ private:
         bool stopOnScriptError = false;
         std::filesystem::path currentDirectory;
         bool doesScriptExistInConfig = false;
+        LPPROC_THREAD_ATTRIBUTE_LIST attributeList;
     };
 
     ScriptInformation startingScriptInformation;
@@ -100,7 +104,7 @@ private:
 
         if (script.waitForScriptToFinish)
         {
-            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
+            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, script.attributeList);
 
             if (script.stopOnScriptError)
             {
@@ -110,7 +114,7 @@ private:
         else
         {
             //We don't want to stop on an error and we want to run async
-            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
+            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, script.attributeList);
         }
     }
 
@@ -125,6 +129,11 @@ private:
         scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
         scriptStruct.stopOnScriptError = stopOnScriptError;
         scriptStruct.currentDirectory = currentDirectory;
+
+        LPPROC_THREAD_ATTRIBUTE_LIST attributeList;
+        MakeAttributeList(attributeList);
+
+        scriptStruct.attributeList = attributeList;
 
         //Async script run with a termination on failure is not a supported scenario.
         //Supporting this scenario would mean force terminating an executing user process
@@ -284,5 +293,35 @@ private:
         }
 
         return true;
+    }
+
+    void MakeAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST& attributeList)
+    {
+        SIZE_T AttributeListSize{};
+
+        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
+        attributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
+            GetProcessHeap(),
+            0,
+            AttributeListSize);
+
+        THROW_LAST_ERROR_IF_MSG(
+            !InitializeProcThreadAttributeList(
+                attributeList,
+                1,
+                0,
+                &AttributeListSize),
+            "Could not initialize the proc thread attribute list.");
+
+        THROW_LAST_ERROR_IF_MSG(
+            !UpdateProcThreadAttribute(
+                attributeList,
+                0,
+                ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+                &createPowershellInsideContainer,
+                sizeof(createPowershellInsideContainer),
+                nullptr,
+                nullptr),
+            "Could not update Proc thread attribute.");
     }
 };
