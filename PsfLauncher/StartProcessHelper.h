@@ -111,7 +111,7 @@ void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::p
 		"ERROR: Failed to create detoured shell process");
 
 	THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
-	DWORD exitCode{};
+	DWORD exitCode = ::WaitForSingleObject(shex.hProcess, INFINITE);
 	THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
 	THROW_IF_WIN32_ERROR(exitCode);
 	CloseHandle(shex.hProcess);
