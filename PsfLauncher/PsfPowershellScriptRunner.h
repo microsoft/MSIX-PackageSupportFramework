@@ -1,6 +1,7 @@
 #pragma once
 #include "psf_runtime.h"
 #include "StartProcessHelper.h"
+#include "Globals.h"
 #include <wil\resource.h>
 
 #ifndef SW_SHOW
@@ -79,13 +80,13 @@ private:
         // 2. Any windows Powershell makes will also be in the same container as PSF.
         // This means that powershell, and any windows it makes, will have the same restrictions as PSF.
         DWORD createInContainerAttribute = 0x02;
-        std::unique_ptr<LPPROC_THREAD_ATTRIBUTE_LIST> attributeList;
+        std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
 
     public:
 
         LPPROC_THREAD_ATTRIBUTE_LIST get()
         {
-            return *(attributeList.get());
+            return attributeList.get();
         }
 
         void Initilize()
@@ -93,20 +94,22 @@ private:
             SIZE_T AttributeListSize{};
             InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
 
-            attributeList = 
-                std::make_unique<LPPROC_THREAD_ATTRIBUTE_LIST>((LPPROC_THREAD_ATTRIBUTE_LIST) operator new(AttributeListSize));
+            attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
 
             THROW_LAST_ERROR_IF_MSG(
                 !InitializeProcThreadAttributeList(
-                    *(attributeList.get()),
+                    attributeList.get(),
                     1,
                     0,
                     &AttributeListSize),
                 "Could not initialize the proc thread attribute list.");
 
+            // 18 stands for
+            // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+            // this is the attribute value we want to add
             THROW_LAST_ERROR_IF_MSG(
                 !UpdateProcThreadAttribute(
-                    *(attributeList.get()),
+                    attributeList.get(),
                     0,
                     ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
                     &createInContainerAttribute,
@@ -118,7 +121,7 @@ private:
 
         ~MyProcThreadAttributeList()
         {
-            DeleteProcThreadAttributeList(*(attributeList.get()));
+            DeleteProcThreadAttributeList(attributeList.get());
         }
 
 

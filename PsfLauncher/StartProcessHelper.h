@@ -1,6 +1,7 @@
 #pragma once
 #include <windows.h>
 #include "Logger.h"
+#include "Globals.h"
 #include <wil\resource.h>
 
 
@@ -27,6 +28,7 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     };
 
     PROCESS_INFORMATION processInfo{};
+
     startupInfoEx.lpAttributeList = attributeList;
 
     RETURN_LAST_ERROR_IF_MSG(
