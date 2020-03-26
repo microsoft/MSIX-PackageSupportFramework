@@ -140,16 +140,22 @@ inline void LogString(const char* name, const wchar_t* value)
 {
     Log("\t%s=%ls\n", name, value);
 }
+
 inline std::string InterpretStringA(const char* value)
 {
-    if (value != NULL)  
+    if (value != NULL)
+    {
         return value;
+    }
     return "";
 }
+
 inline std::string InterpretStringA(const wchar_t* value)
 {
     if (value != NULL)
+    {
         return narrow(value);
+    }
     return "";
 }
 
@@ -157,30 +163,44 @@ inline void LogCountedString(const char* name, const char* value, std::size_t le
 {
     Log("\t%s=%.*s\n", name, length, value);
 }
+
 inline std::string InterpretCountedString(const char* name, const char* value, std::size_t length)
 {
     std::ostringstream sout;
     if (value != NULL)
+    {
         sout << name << "=" << std::setw(length) << value;
+    }
     else
+    {
         sout << name << "=NULL";
+    }
     return sout.str();
 }
 
 inline void LogCountedString(const char* name, const wchar_t* value, std::size_t length)
 {
     if (value != NULL)
+    {
         Log("\t%s=%.*ls\n", name, length, value);
+    }
     else
+    {
         Log("\t%s=NULL", name);
+    }
 }
+
 inline std::string InterpretCountedString(const char* name, const wchar_t* value, std::size_t length)
 {
     std::ostringstream sout;
     if (value != NULL)
+    {
         sout << name << "=" << std::setw(length) << narrow(value).c_str();
+    }
     else
+    {
         sout << name << "=NULL";
+    }
     return sout.str();
 }
 
@@ -190,59 +210,81 @@ inline std::string InterpretAsHex(const char* name, WORD value)
     sout2 << name << "=0x" << std::uppercase << std::setfill('0') << std::setw(4) << std::hex << value;
     return sout2.str();
 }
+
 inline std::string InterpretAsHex(const char* name, DWORD value)
 {
     std::ostringstream sout;
     if (strlen(name) > 0)
+    {
         sout << name << "=";
+    }
     sout << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << value;
     return sout.str();
 }
+
 inline std::string InterpretAsHex(const char* name, UINT value)
 {
     std::ostringstream sout;
     if (strlen(name) > 0)
+    {
         sout << name << "=";
+    }
     sout << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << value;
     return sout.str();
 }
+
 inline std::string InterpretAsHex(const char* name, INT value)
 {
     std::ostringstream sout;
     if (strlen(name) > 0)
+    {
         sout << name << "=";
+    }
     sout << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << value;
     return sout.str();
 }
+
 inline std::string InterpretAsHex(const char* name, ULONGLONG value)
 {
     std::ostringstream sout;
     if (strlen(name) > 0)
+    {
         sout << name << "=";
+    }
     sout << "0x" << std::uppercase << std::setfill('0') << std::setw(16) << std::hex << value;
     return sout.str();
 }
+
 inline std::string InterpretAsHex(const char* name, PHANDLE phandle)
 {
     std::ostringstream sout2;
     if (phandle != nullptr && *phandle != nullptr)
-        sout2 << name << "= 0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << static_cast<const UINT* >(*phandle);
+    {
+        sout2 << name << "= 0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << static_cast<const UINT*>(*phandle);
+    }
     else
+    {
         sout2 << name << "= 0x0";
+    }
     return sout2.str();
 }
+
 inline std::string InterpretAsHex(const char* name, HANDLE handle)
 {
     std::ostringstream sout;
     if (strlen(name) > 0)
+    {
         sout << name << "=";
+    }
     if (handle != nullptr)
     {
         //sout << "0x" << std::uppercase << std::setfill('0') << std::setw(16) << std::hex << *reinterpret_cast<const std::int64_t*>(handle);
         sout << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << static_cast<const UINT*>(handle);
     }
     else
+    {
         sout << "0x0";
+    }
     return sout.str();
 }
 
@@ -260,6 +302,7 @@ inline void LogBool(const char* msg, BOOL value)
 {
     Log("\t%s=%s\n", msg, bool_to_string(value));
 }
+
 inline std::string InterpretBool(const char* msg, BOOL value)
 {
     std::ostringstream sout;
@@ -290,12 +333,14 @@ inline const char * InterperetFunctionResult(function_result result)
     }
     return resultMsg;
 }
+
 inline void LogFunctionResult(function_result result, const char* msg = "Result")
 {
     const char* resultMsg = InterperetFunctionResult(result);
 
     Log("\t%s=%s\n", msg, resultMsg);
 }
+
 inline std::string InterpretReturn(function_result functionResult, DWORD resultcode)
 {
     std::string results = InterperetFunctionResult(functionResult);
@@ -305,6 +350,7 @@ inline std::string InterpretReturn(function_result functionResult, DWORD resultc
     results += ")";
     return results;
 }
+
 inline std::string InterpretReturn(function_result functionResult, BOOL bresultcode)
 {
     std::string results = InterperetFunctionResult(functionResult);
@@ -314,27 +360,37 @@ inline std::string InterpretReturn(function_result functionResult, BOOL bresultc
     results += ")";
     return results;
 }
+
 inline std::string InterpretReturn(function_result functionResult, HRESULT hr)
 {
     std::string results = InterperetFunctionResult(functionResult);
 
     results += "\n(";
     if (SUCCEEDED(hr))
+    {
         results += "Success";
+    }
     else if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+    {
         results += InterpretFrom_win32(HRESULT_CODE(hr));
+    }
     results += ")";
     return results;
 }
+
 inline std::string InterpretReturn(function_result functionResult, HANDLE hand)
 {
     std::string results = InterperetFunctionResult(functionResult);
 
     results += "\n(";
     if (hand == INVALID_HANDLE_VALUE)
+    {
         results += "INVALID_HANDLE_VALUE";
-    else 
+    }
+    else
+    {
         results += InterpretFrom_win32(GetLastError());
+    }
     results += ")";
     return results;
 }
@@ -358,6 +414,7 @@ inline void LogWin32Error(DWORD error, const char* msg = "Error")
     auto str = win32_error_description(error);
     Log("\t%s=%d (%s)\n", msg, error, str.c_str());
 }
+
 inline std::string InterpretWin32Error(DWORD error, const char* msg = "Error")
 {
     return InterpretAsHex(msg, error);
@@ -367,6 +424,7 @@ inline void LogLastError(const char* msg = "Last Error")
 {
     LogWin32Error(::GetLastError(), msg);
 }
+
 inline std::string InterpretLastError(const char* msg = "Last Error")
 {
     DWORD err = ::GetLastError();
@@ -415,6 +473,7 @@ inline void LogNTStatus(NTSTATUS status)
     Log("\tStatus=%08X (%.*ls)\n", status, msg.length(), msg.data());
     ::LocalFree(messageBuffer);
 }
+
 inline std::string InterpretNTStatus(NTSTATUS status)
 {
     static auto ntdllModule = ::LoadLibraryW(L"ntdll.dll");
@@ -437,7 +496,9 @@ inline std::string InterpretNTStatus(NTSTATUS status)
         msg.remove_prefix(pos + 1);
         pos = msg.find('}');
         if (pos != std::wstring_view::npos)
-            msg = msg.substr(0, pos-1);
+        {
+            msg = msg.substr(0, pos - 1);
+        }
     }
     if (auto pos2 = msg.find('}'); pos2 != std::wstring_view::npos)  // sometimes there is only the trailer }????
     {
@@ -455,6 +516,7 @@ inline std::string InterpretNTStatus(NTSTATUS status)
     ::LocalFree(messageBuffer);
     return sout.str();
 }
+
 inline std::string InterpretReturnNT(function_result functionResult, NTSTATUS ntresultcode)
 {
     std::string results = InterperetFunctionResult(functionResult);
@@ -504,10 +566,12 @@ inline const char* GetLZError(INT err)
     }
     return msg;
 }
+
 inline void LogLZError(INT err)
 {
     Log("\tLZError=%d (%s)\n", err, GetLZError(err));
 }
+
 inline std::string InterpretLZError(INT err)
 {
     return InterpretAsHex("Error", (DWORD)err) + GetLZError(err);
@@ -605,6 +669,7 @@ private:
     bool m_inhibitOutput;
     bool m_shouldLog;
 };
+
 inline output_lock acquire_output_lock(function_type type, function_result result)
 {
     return output_lock(type, result);
@@ -712,6 +777,7 @@ inline void LogCommonAccess(ACCESS_MASK access, const char*& prefix)
     LogIfFlagSet(access, GENERIC_READ);
     LogIfFlagSet(access, GENERIC_WRITE);
 }
+
 inline std::string InterpretCommonAccess(ACCESS_MASK access, const char*& prefix)
 {
     std::ostringstream sout;
@@ -807,6 +873,7 @@ inline void LogFileAccess(DWORD access, const char* msg = "Access")
 
     Log("\n");
 }
+
 inline std::string InterpretFileAccess(DWORD access, const char* msg = "Access")
 {
     std::ostringstream sout;
@@ -892,6 +959,7 @@ inline void LogDirectoryAccess(DWORD access, const char* msg = "Access")
 
     Log("\n");
 }
+
 inline std::string InterpretDirectoryAccess(DWORD access, const char* msg = "Access")
 {
     std::ostringstream sout;
@@ -978,6 +1046,7 @@ inline void LogPipeAccess(DWORD access, const char* msg = "Access")
 
     Log("\n");
 }
+
 inline std::string InterpretPipeAccess(DWORD access, const char* msg = "Access")
 {
     std::ostringstream sout;
@@ -1046,6 +1115,7 @@ inline void LogRegKeyAccess(DWORD access, const char* msg = "Access")
 
     Log("\n");
 }
+
 inline std::string InterpretRegKeyAccess(DWORD access, const char* msg = "Access")
 {
     std::ostringstream sout;
@@ -1160,6 +1230,7 @@ inline void LogGenericAccess(DWORD access, const char* msg = "Access")
 
     Log("\n");
 }
+
 inline std::string InterpretGenericAccess(DWORD access, const char* msg = "Access")
 {
     std::ostringstream sout;
@@ -1342,6 +1413,7 @@ inline void LogShareMode(DWORD shareMode, const char* msg = "Share")
 
     Log("\n");
 }
+
 inline std::string InterpretShareMode(DWORD shareMode, const char* msg = "Share")
 {
     std::ostringstream sout;
@@ -1383,22 +1455,35 @@ inline void LogCreationDisposition(DWORD creationDisposition, const char* msg = 
     else Log("UNKNOWN");
     Log(")\n");
 }
+
 inline std::string InterpretCreationDisposition(DWORD creationDisposition, const char* msg = "Disposition")
 {
     std::ostringstream sout;
     sout << InterpretAsHex(msg, creationDisposition);
     if (IsFlagEqual(creationDisposition, CREATE_ALWAYS))
+    {
         sout << " (CREATE_ALWAYS)";
+    }
     else if (IsFlagEqual(creationDisposition, CREATE_NEW))
+    {
         sout << " (CREATE_NEW)";
+    }
     else if (IsFlagEqual(creationDisposition, OPEN_ALWAYS))
-        sout << " (OPEN_ALWAYS)"; 
+    {
+        sout << " (OPEN_ALWAYS)";
+    }
     else if (IsFlagEqual(creationDisposition, OPEN_EXISTING))
-        sout << " (OPEN_EXISTING)"; 
+    {
+        sout << " (OPEN_EXISTING)";
+    }
     else if (IsFlagEqual(creationDisposition, TRUNCATE_EXISTING))
-        sout << " (TRUNCATE_EXISTING)"; 
-    else 
+    {
+        sout << " (TRUNCATE_EXISTING)";
+    }
+    else
+    {
         sout << " (UNKNOWN)";
+    }
     return sout.str();
 }
 
@@ -1409,14 +1494,19 @@ inline void LogInfoLevelId(GET_FILEEX_INFO_LEVELS infoLevelId, const char* msg =
     else Log("UNKNOWN");
     Log(")\n");
 }
+
 inline std::string InterpretInfoLevelId(GET_FILEEX_INFO_LEVELS infoLevelId, const char* msg = "Level")
 {
     std::ostringstream sout;
     sout << InterpretAsHex(msg, (DWORD)infoLevelId);
     if (IsFlagSet(infoLevelId, GetFileExInfoStandard))
+    {
         sout << " (GetFileExInfoStandard)";
+    }
     else
+    {
         sout << "UNKNOWN";
+    }
     return sout.str();
 }
 
@@ -1455,6 +1545,7 @@ inline void LogFileAttributes(DWORD attributes, const char* msg = "Attributes")
 
     Log("\n");
 }
+
 inline std::string InterpretFileAttributes(DWORD attributes, const char* msg = "Attributes")
 {
     std::ostringstream sout;
@@ -1611,6 +1702,7 @@ inline void LogFileFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretFileFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -1704,24 +1796,40 @@ inline void LogSQOS(DWORD sqosValue, const char* msg = "Security Quality of Serv
     else Log("UNKNOWN");
     Log(")\n");
 }
+
 inline std::string InterpretSQOS(DWORD sqosValue, const char* msg = "Security Quality of Service")
 {
     std::ostringstream sout;
     sout << InterpretAsHex(msg,sqosValue);
 
     if (IsFlagSet(sqosValue, SECURITY_ANONYMOUS))
+    {
         sout << "SECURITY_ANONYMOUS";
+    }
     else if (IsFlagSet(sqosValue, SECURITY_CONTEXT_TRACKING))
-        sout << "SECURITY_CONTEXT_TRACKING"; 
+    {
+        sout << "SECURITY_CONTEXT_TRACKING";
+    }
     else if (IsFlagSet(sqosValue, SECURITY_DELEGATION))
-        sout << "SECURITY_DELEGATION"; 
+    {
+        sout << "SECURITY_DELEGATION";
+    }
     else if (IsFlagSet(sqosValue, SECURITY_EFFECTIVE_ONLY))
-        sout << "SECURITY_EFFECTIVE_ONLY"; 
+    {
+        sout << "SECURITY_EFFECTIVE_ONLY";
+    }
     else if (IsFlagSet(sqosValue, SECURITY_IDENTIFICATION))
+    {
         sout << "SECURITY_CONTEXT_TRACSECURITY_IDENTIFICATIONKING";
+    }
     else if (IsFlagSet(sqosValue, SECURITY_IMPERSONATION))
+    {
         sout << "SECURITY_IMPERSONATION";
-    else sout << "UNKNOWN"; 
+    }
+    else
+    {
+        sout << "UNKNOWN";
+    }
     sout << ")";
     return sout.str();
 }
@@ -1772,6 +1880,7 @@ inline void LogFileFlagsAndAttributes(DWORD flagsAndAttributes, const char* msg 
 
     Log("\n");
 }
+
 inline  std::string InterpretFileFlagsAndAttributes(DWORD flagsAndAttributes, const char* msg = "Flags and Attributes")
 {
     // NOTE: Some flags and attributes overlap, hence the apparent semi-duplication here. This is intentional and only
@@ -2039,6 +2148,7 @@ inline void LogCopyFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretCopyFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -2123,6 +2233,7 @@ inline void LogSymlinkFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretSymlinkFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -2167,6 +2278,7 @@ inline void LogMoveFileFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretMoveFileFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -2227,6 +2339,7 @@ inline void LogReplaceFileFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretReplaceFileFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -2265,6 +2378,7 @@ inline void LogInfoLevelId(FINDEX_INFO_LEVELS infoLevelId, const char* msg = "In
     else Log("UNKNOWN");
     Log(")\n");
 }
+
 inline std::string InterpretInfoLevelId(FINDEX_INFO_LEVELS infoLevelId, const char* msg = "Info Level Id")
 {
     std::ostringstream sout;
@@ -2295,6 +2409,7 @@ inline void LogSearchOp(FINDEX_SEARCH_OPS searchOp, const char* msg = "Search Op
     else Log("UNKNOWN");
     Log(")\n");
 }
+
 inline std::string InterpretSearchOp(FINDEX_SEARCH_OPS searchOp, const char* msg = "Search Op")
 {
     std::ostringstream sout;
@@ -2334,6 +2449,7 @@ inline void LogFindFirstFileExFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretFindFirstFileExFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -2402,6 +2518,7 @@ inline void LogProcessCreationFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretProcessCreationFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -2588,6 +2705,7 @@ inline void LogRegKeyFlags(DWORD flags, const char* msg = "Options")
 
     Log("\n");
 }
+
 inline std::string InterpretRegKeyFlags(DWORD flags, const char* msg = "Options")
 {
     std::ostringstream sout;
@@ -2640,6 +2758,7 @@ inline void LogRegKeyDisposition(DWORD disposition, const char* msg = "Dispositi
     else Log("UNKNOWN");
     Log(")\n");
 }
+
 inline std::string InterpretRegKeyDisposition(DWORD disposition, const char* msg = "Disposition")
 {
     std::ostringstream sout;
@@ -2652,8 +2771,10 @@ inline std::string InterpretRegKeyDisposition(DWORD disposition, const char* msg
     {
         sout << "REG_OPENED_EXISTING_KEY";
     }
-    else 
+    else
+    {
         sout << "UNKNOWN";
+    }
     return sout.str();
 }
 
@@ -2681,6 +2802,7 @@ inline void LogRegKeyQueryFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretRegKeyQueryFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;
@@ -2772,40 +2894,72 @@ inline void LogRegKeyType(DWORD type, const char* msg = "Type")
     else Log("UNKNOWN");
     Log(")\n");
 }
+
 inline std::string InterpretRegKeyType(DWORD type, const char* msg = "Type")
 {
     std::ostringstream sout;
     sout << InterpretAsHex(msg,type);
 
     if (IsFlagEqual(type, REG_NONE))
+    {
         sout << " (REG_NONE)";
+    }
     else if (IsFlagEqual(type, REG_SZ))
-        sout << " (REG_SZ)"; 
+    {
+        sout << " (REG_SZ)";
+    }
     else if (IsFlagEqual(type, REG_EXPAND_SZ))
-        sout << " (REG_EXPAND_SZ)"; 
+    {
+        sout << " (REG_EXPAND_SZ)";
+    }
     else if (IsFlagEqual(type, REG_BINARY))
-        sout << " (REG_BINARY)"; 
+    {
+        sout << " (REG_BINARY)";
+    }
     else if (IsFlagEqual(type, REG_DWORD))
+    {
         sout << " (REG_DWORD)";
+    }
     else if (IsFlagEqual(type, REG_DWORD_LITTLE_ENDIAN))
-        sout << " (REG_DWORD_LITTLE_ENDIAN)"; 
+    {
+        sout << " (REG_DWORD_LITTLE_ENDIAN)";
+    }
     else if (IsFlagEqual(type, REG_DWORD_BIG_ENDIAN))
+    {
         sout << " (REG_DWORD_BIG_ENDIAN)";
+    }
     else if (IsFlagEqual(type, REG_LINK))
-        sout << " (REG_LINK)"; 
+    {
+        sout << " (REG_LINK)";
+    }
     else if (IsFlagEqual(type, REG_MULTI_SZ))
-        sout << " (REG_MULTI_SZ)"; 
+    {
+        sout << " (REG_MULTI_SZ)";
+    }
     else if (IsFlagEqual(type, REG_RESOURCE_LIST))
-        sout << "REG_RESOURCE_LIST"; 
+    {
+        sout << "REG_RESOURCE_LIST";
+    }
     else if (IsFlagEqual(type, REG_FULL_RESOURCE_DESCRIPTOR))
-        sout << " (REG_FULL_RESOURCE_DESCRIPTOR)"; 
+    {
+        sout << " (REG_FULL_RESOURCE_DESCRIPTOR)";
+    }
     else if (IsFlagEqual(type, REG_RESOURCE_REQUIREMENTS_LIST))
+    {
         sout << " (REG_RESOURCE_REQUIREMENTS_LIST)";
+    }
     else if (IsFlagEqual(type, REG_QWORD))
-        sout << " (REG_QWORD)"; 
+    {
+        sout << " (REG_QWORD)";
+    }
     else if (IsFlagEqual(type, REG_QWORD_LITTLE_ENDIAN))
-        sout << " (REG_QWORD_LITTLE_ENDIAN)"; 
-    else sout << " (UNKNOWN)";
+    {
+        sout << " (REG_QWORD_LITTLE_ENDIAN)";
+    }
+    else
+    {
+        sout << " (UNKNOWN)";
+    }
     return sout.str();
 }
 
@@ -2886,6 +3040,7 @@ inline void LogRegValue(DWORD type, const void* data, std::size_t dataSize, cons
         break;
     }
 }
+
 template <typename CharT>
 inline std::string InterpretRegValueA(DWORD type, const void* data, std::size_t dataSize, const char* msg = "Data")
 {
@@ -2996,6 +3151,7 @@ inline void LogOpenFileStyle(WORD style, const char* msg = "Style")
 
     Log("\n");
 }
+
 inline std::string InterpretOpenFileStyle(WORD style, const char* msg = "Style")
 {
     std::ostringstream sout;
@@ -3121,6 +3277,7 @@ inline void LogLoadLibraryFlags(DWORD flags, const char* msg = "Flags")
 
     Log("\n");
 }
+
 inline std::string InterpretLoadLibraryFlags(DWORD flags, const char* msg = "Flags")
 {
     std::ostringstream sout;

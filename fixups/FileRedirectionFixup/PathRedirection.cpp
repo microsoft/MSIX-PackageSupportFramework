@@ -234,6 +234,7 @@ void Log(const char* fmt, ...)
         ::OutputDebugStringA(fmt);
     }
 }
+
 void Log(const wchar_t* fmt, ...)  
 {
     try
@@ -266,59 +267,87 @@ void Log(const wchar_t* fmt, ...)
         ::OutputDebugStringW(fmt);
     }
 }
+
 void LogString(const char* name, const char* value)
 {
     Log("%s=%s\n", name, value);
 }
+
 void LogString(const char* name, const wchar_t* value)
 {
     Log(L"%s=%ls\n", name, value);
 }
+
 void LogString(const wchar_t* name, const char* value)
 {
     if ((value != NULL && value[1] != 0x0))
+    {
         Log(L"%ls=%s\n", name, value);
+    }
     else
+    {
         Log(L"%ls=%ls", name, (wchar_t*)value);
+    }
 }
+
 void LogString(const wchar_t* name, const wchar_t* value)
 {
     if ((value != NULL && ((char*)value)[1] == 0x0))
+    {
         Log(L"%ls=%ls\n", name, value);
+    }
     else
+    {
         Log(L"%ls=%s", name, (char*)value);
+    }
 }
+
 void LogString(DWORD inst, const char* name, const char* value)
 {
     Log("[%d] %s=%s\n", inst, name, value);
 }
+
 void LogString(DWORD inst, const char* name, const wchar_t* value)
 {
     Log(L"[%d]%s=%ls\n", inst, name, value);
 }
+
 void LogString(DWORD inst, const wchar_t* name, const char* value)
 {
     if ((value != NULL && value[1] != 0x0))
+    {
         Log(L"[%d]%ls=%s\n", inst, name, value);
+    }
     else
+    {
         Log(L"[%d]%ls=%ls", inst, name, (wchar_t*)value);
+    }
 }
+
 void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
 {
     if ((value != NULL && ((char*)value)[1] == 0x0))
+    {
         Log(L"[%d]%ls=%ls\n", inst, name, value);
+    }
     else
+    {
         Log(L"[%d]%ls=%s", inst, name, (char*)value);
+    }
 }
 
 template <typename CharT>
 bool IsUnderUserAppDataLocalImpl(_In_ const CharT* fileName)
 {
     if (fileName == NULL)
+    {
         return false;
+    }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
-        return path_relative_to(fileName+4, psf::known_folder(FOLDERID_LocalAppData));
+    {
+        return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData));
+    }
     return path_relative_to(fileName, psf::known_folder(FOLDERID_LocalAppData));
 }
 bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName)
@@ -335,35 +364,48 @@ template <typename CharT>
 bool IsUnderUserAppDataLocalPackagesImpl(_In_ const CharT* fileName)
 {
     if (fileName == NULL)
+    {
         return false;
+    }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+    {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
+    }
     return path_relative_to(fileName, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
 }
+
 bool IsUnderUserAppDataLocalPackages(_In_ const wchar_t* fileName)
 {
     return IsUnderUserAppDataLocalPackagesImpl(fileName);
 }
+
 bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName)
 {
     return IsUnderUserAppDataLocalPackagesImpl(fileName);
 }
 
+
 template <typename CharT>
 bool IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
 {
     if (fileName == NULL)
+    {
         return false;
+    }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+    {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
+    }
     return path_relative_to(fileName, psf::known_folder(FOLDERID_RoamingAppData));
 }
+
 bool IsUnderUserAppDataRoaming(_In_ const wchar_t* fileName)
 {
     return IsUnderUserAppDataRoamingImpl(fileName);
 }
+
 bool IsUnderUserAppDataRoaming(_In_ const char* fileName)
 {
     return IsUnderUserAppDataRoamingImpl(fileName);
@@ -380,9 +422,13 @@ std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
             auto lad = psf::known_folder(FOLDERID_LocalAppData);
             std::filesystem::path foo;
             if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+            {
                 foo = fileName + 4;
+            }
             else
+            {
                 foo = fileName;
+            }
             auto testLad = g_packageVfsRootPath / L"Local AppData" / foo.wstring().substr(wcslen(lad.c_str()) + 1).c_str();
             return testLad;
         }
@@ -391,19 +437,25 @@ std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
             auto rad = psf::known_folder(FOLDERID_RoamingAppData);
             std::filesystem::path foo;
             if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+            {
                 foo = fileName + 4;
+            }
             else
+            {
                 foo = fileName;
+            }
             auto testRad = g_packageVfsRootPath / L"AppData" / foo.wstring().substr(wcslen(rad.c_str()) + 1).c_str();
             return testRad;
         }
     }
     return L"";
 }
+
 std::filesystem::path GetPackageVFSPath(const wchar_t* fileName)
 {
     return GetPackageVFSPathImpl(fileName);
 }
+
 std::filesystem::path GetPackageVFSPath(const char* fileName)
 {
     return GetPackageVFSPathImpl(fileName);
@@ -508,10 +560,12 @@ bool path_relative_toImpl(const CharT* path, const std::filesystem::path& basePa
 {
     return std::equal(basePath.native().begin(), basePath.native().end(), path, psf::path_compare{});
 }
+
 bool path_relative_to(const wchar_t* path, const std::filesystem::path& basePath)
 {
     return path_relative_toImpl(path, basePath);
 }
+
 bool path_relative_to(const char* path, const std::filesystem::path& basePath)
 {
     return path_relative_toImpl(path, basePath);
@@ -530,6 +584,7 @@ bool IsColonColonGuid(const char *path)
     }
     return false;
 }
+
 bool IsColonColonGuid(const wchar_t *path)
 {
     if (wcslen(path) > 39)
@@ -548,20 +603,29 @@ bool IsBlobColon(const std::string path)
 {
     size_t found = path.find("blob:", 0);
     if (found == 0)
+    {
         return true;
+    }
     found = path.find("BLOB:", 0);
     if (found == 0)
+    {
         return true;
+    }
     return false;
 }
+
 bool IsBlobColon(const std::wstring path)
 {
     size_t found = path.find(L"blob:", 0);
     if (found == 0)
+    {
         return true;
+    }
     found = path.find(L"BLOB:", 0);
     if (found == 0)
+    {
         return true;
+    }
     return false;
 }
 
@@ -585,9 +649,13 @@ std::string UrlDecode(std::string str)
                 ch = static_cast<char>(ii);
                 ret += ch;
                 if (ii <= 255)
+                {
                     i = i + 2;
+                }
                 else
+                {
                     i = i + 4;
+                }
             }
             else
             {
@@ -597,6 +665,7 @@ std::string UrlDecode(std::string str)
     }
     return ret;
 }
+
 std::wstring UrlDecode(std::wstring str) 
 {
     std::wstring ret;
@@ -617,9 +686,13 @@ std::wstring UrlDecode(std::wstring str)
                 ch = static_cast<char>(ii);
                 ret += ch;
                 if (ii <= 255)
+                {
                     i = i + 2;
+                }
                 else
+                {
                     i = i + 4;
+                }
             }
             else
             {
@@ -633,45 +706,47 @@ std::wstring UrlDecode(std::wstring str)
 std::string StripFileColonSlash(std::string old_string)
 {
     int count = 0;
+    int toBeRemovedCount = strlen("file:") + 2;
+
     size_t found = old_string.find("file:\\\\",0);
     if (found == 0)
     {
-        count = 7;
+        count = toBeRemovedCount;
     }
     else
     {
         found = old_string.find("file://", 0);
         if (found == 0)
         {
-            count = 7;
+            count = toBeRemovedCount;
         }
         else
         {
             found = old_string.find("FILE:\\\\", 0);
             if (found == 0)
             {
-                count = 7;
+                count = toBeRemovedCount;
             }
             else
             {
                 found = old_string.find("FILE://", 0);
                 if (found == 0)
                 {
-                    count = 7;
+                    count = toBeRemovedCount;
                 }
                 else
                 {
                     found = old_string.find("\\\\file\\");
                     if (found == 0)
                     {
-                        count = 7;
+                        count = toBeRemovedCount;
                     }
                     else
                     {
                         found = old_string.find("\\\\FILE\\");
                         if (found == 0)
                         {
-                            count = 7;
+                            count = toBeRemovedCount;
                         }
                     }
                 }
@@ -684,6 +759,7 @@ std::string StripFileColonSlash(std::string old_string)
     }
     return old_string;
 }
+
 std::wstring StripFileColonSlash(std::wstring old_string)
 {
     int count = 0;
@@ -982,6 +1058,7 @@ std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureD
 
     return result;
 }
+
 /// <summary>
 /// Figures out the absolute path to redirect to.
 /// </summary>
