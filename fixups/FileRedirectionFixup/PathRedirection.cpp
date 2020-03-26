@@ -629,6 +629,9 @@ bool IsBlobColon(const std::wstring path)
     return false;
 }
 
+// Method to decode a string that includes %xx replacement characters commonly found in URLs with the
+// native equivalent (std::string forrm).
+// Example input: C:\Program%20Files\Vendor%20Name
 std::string UrlDecode(std::string str) 
 {
     std::string ret;
@@ -666,6 +669,9 @@ std::string UrlDecode(std::string str)
     return ret;
 }
 
+// Method to decode a string that includes %xx replacement characters commonly found in URLs with the
+// native equivalent (std::wstring forrm).
+// Example input: C:\Program%20Files\Vendor%20Name
 std::wstring UrlDecode(std::wstring str) 
 {
     std::wstring ret;
