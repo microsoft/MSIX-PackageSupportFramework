@@ -709,116 +709,53 @@ std::wstring UrlDecode(std::wstring str)
     return ret;
 }
 
+// Method to remove certain URI prefixes (std::string form)
+std::string StripAtStart(std::string old_string, const char* toStrip)
+{
+    size_t found = old_string.find(toStrip, 0);
+    if (found == 0)
+    {
+        return old_string.substr(strlen(toStrip));
+    }
+    return old_string;
+}
+
 std::string StripFileColonSlash(std::string old_string)
 {
-    int count = 0;
-    int toBeRemovedCount = strlen("file:") + 2;
+    std::string sRet = old_string;
+    sRet = StripAtStart(sRet, "file:\\\\");
+    sRet = StripAtStart(sRet, "file://");
+    sRet = StripAtStart(sRet, "FILE:\\\\");
+    sRet = StripAtStart(sRet, "FILE://");
+    sRet = StripAtStart(sRet, "\\\\file\\");
+    sRet = StripAtStart(sRet, "\\\\FILE\\");
 
-    size_t found = old_string.find("file:\\\\",0);
+    return sRet;
+}
+
+// Method to remove certain URI prefixes (std::wstring form)
+
+std::wstring StripAtStartW(std::wstring old_string, const wchar_t* toStrip)
+{
+    size_t found = old_string.find(toStrip, 0);
     if (found == 0)
     {
-        count = toBeRemovedCount;
-    }
-    else
-    {
-        found = old_string.find("file://", 0);
-        if (found == 0)
-        {
-            count = toBeRemovedCount;
-        }
-        else
-        {
-            found = old_string.find("FILE:\\\\", 0);
-            if (found == 0)
-            {
-                count = toBeRemovedCount;
-            }
-            else
-            {
-                found = old_string.find("FILE://", 0);
-                if (found == 0)
-                {
-                    count = toBeRemovedCount;
-                }
-                else
-                {
-                    found = old_string.find("\\\\file\\");
-                    if (found == 0)
-                    {
-                        count = toBeRemovedCount;
-                    }
-                    else
-                    {
-                        found = old_string.find("\\\\FILE\\");
-                        if (found == 0)
-                        {
-                            count = toBeRemovedCount;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if (found == 0)
-    {
-        return old_string.substr(count-1);
+        return old_string.substr(wcslen(toStrip));
     }
     return old_string;
 }
 
 std::wstring StripFileColonSlash(std::wstring old_string)
 {
-    int count = 0;
-    size_t found = old_string.find(L"file:\\\\", 0);
-    if (found == 0)
-    {
-        count = 7;
-    }
-    else
-    {
-        found = old_string.find(L"file://", 0);
-        if (found == 0)
-        {
-            count = 7;
-        }
-        else
-        {
-            found = old_string.find(L"FILE:\\\\", 0);
-            if (found == 0)
-            {
-                count = 7;
-            }
-            else
-            {
-                found = old_string.find(L"FILE://", 0);
-                if (found == 0)
-                {
-                    count = 7;
-                }
-                else
-                {
-                    found = old_string.find(L"\\\\file\\");
-                    if (found == 0)
-                    {
-                        count = 7;
-                    }
-                    else
-                    {
-                        found = old_string.find(L"\\\\FILE\\");
-                        if (found == 0)
-                        {
-                            count = 7;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if (found == 0)
-    {
-        return old_string.substr(count - 1);
-    }
-    return old_string;
+    std::wstring sRet = old_string;
+    sRet = StripAtStartW(sRet, L"file:\\\\");
+    sRet = StripAtStartW(sRet, L"file://");
+    sRet = StripAtStartW(sRet, L"FILE:\\\\");
+    sRet = StripAtStartW(sRet, L"FILE://");
+    sRet = StripAtStartW(sRet, L"\\\\file\\");
+    sRet = StripAtStartW(sRet, L"\\\\FILE\\");
+
+    return sRet;
 }
 
 template <typename CharT>
