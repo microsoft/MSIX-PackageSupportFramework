@@ -37,6 +37,7 @@ void LogApplicationAndProcessesCollection();
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
 void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
+bool IsCurrentOSRS2OrGreater();
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
@@ -62,10 +63,14 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto currentDirectory = (packageRoot / dirStr);
 
     PsfPowershellScriptRunner powershellScriptRunner;
-    powershellScriptRunner.Initialize(appConfig, currentDirectory, packageRoot);
 
-    // Launch the starting PowerShell script if we are using one.
-    powershellScriptRunner.RunStartingScript();
+    if (IsCurrentOSRS2OrGreater())
+    {
+        powershellScriptRunner.Initialize(appConfig, currentDirectory);
+
+        // Launch the starting PowerShell script if we are using one.
+        powershellScriptRunner.RunStartingScript();
+    }
 
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
@@ -104,10 +109,14 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         StartWithShellExecute(packageRoot, exeName, exeArgString.c_str(), dirStr, cmdShow);
     }
 
-    Log("Process Launch Ready to run any end scripts.");
-    // Launch the end PowerShell script if we are using one.
-    powershellScriptRunner.RunEndingScript();
-    Log("Process Launch complete.");
+    if (IsCurrentOSRS2OrGreater())
+    {
+       Log("Process Launch Ready to run any end scripts.");
+        // Launch the end PowerShell script if we are using one.
+        powershellScriptRunner.RunEndingScript();
+      Log("Process Launch complete.");
+    }
+
     return 0;
 }
 catch (...)
@@ -181,7 +190,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
     else
     {
-        StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
     }
 }
 
@@ -242,4 +251,13 @@ void LogApplicationAndProcessesCollection()
             }
         }
     }
+}
+
+bool IsCurrentOSRS2OrGreater()
+{
+    OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, {0}, 0, 0 };
+    DWORDLONG const dwlConditionMask = VerSetConditionMask(0, VER_BUILDNUMBER, VER_GREATER_EQUAL);
+    osvi.dwBuildNumber = 15063;
+
+    return VerifyVersionInfoW(&osvi, VER_BUILDNUMBER, dwlConditionMask);
 }

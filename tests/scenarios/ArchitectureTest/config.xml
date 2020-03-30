@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>Fixed32</id>
+            <executable>ArchitectureTest32.exe</executable>
+        </application>
+        <application>
+            <id>Fixed64</id>
+            <executable>ArchitectureTest64.exe</executable>
+        </application>
+    </applications>
+    <processes>
+        <process>
+            <executable>PsfLauncher.*</executable>
+        </process>
+        <process>
+            <executable>.*</executable>
+            <fixups>
+                <fixup>
+                    <dll>MultiByteToWideCharTestFixup.dll</dll>
+                </fixup>
+            </fixups>
+        </process>
+    </processes>
+</configuration>

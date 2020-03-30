@@ -77,8 +77,7 @@ int wmain(int argc, const wchar_t** argv)
             result = ERROR_FILE_NOT_FOUND;
         }
     }
-    else if (testType.compare(L"psbothstartingfirst") == 0 ||
-        testType.compare(L"psbothendingfirst") == 0)
+    else if (testType.compare(L"psbothstartingfirst") == 0)
     {
         if (!doesHelloExist)
         {
@@ -88,13 +87,6 @@ int wmain(int argc, const wchar_t** argv)
     else if (testType.compare(L"psscriptwitharg") == 0)
     {
         if (!doesArgumentExist)
-        {
-            result = ERROR_FILE_NOT_FOUND;
-        }
-    }
-    else if(testType.compare(L"psscriptinvirtual") == 0)
-    {
-        if (!doesHelloExist)
         {
             result = ERROR_FILE_NOT_FOUND;
         }

@@ -203,7 +203,7 @@ BOOL WINAPI CreateProcessFixup(
                 }
             }
         }
-
+      
         Log("\tAttempt injection into %d using %s", processInformation->dwProcessId, targetDll);
         if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDll, 1))
         {

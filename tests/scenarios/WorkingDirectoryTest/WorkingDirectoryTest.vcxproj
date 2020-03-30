@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppxManifest.xml" />
+    <Xml Include="config.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json" />

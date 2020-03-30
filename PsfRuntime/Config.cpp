@@ -23,6 +23,7 @@
 #include <psf_utils.h>
 #include <stringapiset.h>
 #include <utilities.h>
+#include <wil\resource.h>
 
 #include "Config.h"
 #include "JsonConfig.h"
@@ -297,10 +298,7 @@ void load_json()
             }
         }
     }
-    if (!file)
-    {
-        throw std::system_error(errno, std::generic_category(), "config.json could not be opened");
-    }
+
 
     char buffer[2048];
     rapidjson::FileReadStream stream(file, buffer, std::size(buffer));
@@ -484,7 +482,6 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
     {
         auto& appObj = app.as_object();
         auto appId = appObj.get("id").as_string().wstring();
-
 
         if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {

@@ -30,6 +30,21 @@ Since most of this fixup's usefulness comes from identifying what the _applicati
 }
 ```
 
+```xml
+<fixup>
+    <dll>TraceFixup.dll</dll>
+    <config>
+        <traceMethod>eventLog</traceMethod>
+        <traceLevels>
+            <traceLevel level="default">allFailures</traceLevel>
+        </traceLevels>
+        <breakOn>
+            <break level="fileSystem">unexpectedFailures</break>
+        </breakOn>
+    </config>
+</fixup>
+```
+
 ## Configuration
 The fixup can be configured to trace calls in a variety of ways and in a variety of situations via the fixup `config` element inside of `config.json`. This is expected to be an object with the following (optional) values:
 
