@@ -18,7 +18,9 @@ int PrivateProfileTests()
 	int result = ERROR_SUCCESS;
     int testResult;
 	auto packageFilePath = g_packageRootPath / g_packageFileName;
-	auto otherFilePath = g_packageRootPath / L"TestFile.ini";
+	auto otherFilePathIntl = g_packageRootPath / L"TèƨƭFïℓè.ini";
+  auto otherFilePath = g_packageRootPath / L"TestIniFile.ini";
+
 
     std::wstring badValue = L"BadValue";
     std::wstring updatedValue = L"UpdatedValue";
@@ -34,7 +36,8 @@ int PrivateProfileTests()
 
     	// Read from a file in the package path
 	    test_begin("GetPrivateProfileSectionNames From Package Test");
-        rLen = ::GetPrivateProfileSectionNamesW(buffer, testLen, otherFilePath.native().c_str());
+        rLen = GetPrivateProfileSectionNames(buffer, testLen, otherFilePath.c_str());
+
         if (rLen > 0)
         {
             testResult = ERROR_SUCCESS;
@@ -42,14 +45,14 @@ int PrivateProfileTests()
         else
         {
             testResult = GetLastError();
-            trace_message(L"The file requested was:",console::color::gray,false);
-            trace_message(otherFilePath.native().c_str(),console::color::gray,true);
         }
     	result = result ? result : testResult;
 	    test_end(testResult);
 
 	    test_begin("GetPrivateProfileSection From Package Test");
-        rLen = ::GetPrivateProfileSectionW(L"Section1",buffer, testLen, otherFilePath.native().c_str());
+
+        rLen = GetPrivateProfileSection(L"Section1",buffer, testLen, otherFilePath.native().c_str());
+
         if (rLen > 0)
         {
             testResult = ERROR_SUCCESS;
@@ -63,7 +66,8 @@ int PrivateProfileTests()
 
 
 	    test_begin("GetPrivateProfileString From Package Test");
-        rLen = ::GetPrivateProfileStringW(L"Section1", L"ItemString", badValue.c_str(), buffer, testLen, otherFilePath.native().c_str());
+        rLen = GetPrivateProfileString(L"Section1", L"ItemString", badValue.c_str(), buffer, testLen, otherFilePath.c_str());
+
         if (rLen > 0)
         {
             if (_wcsicmp(badValue.c_str(), buffer) == 0)
@@ -79,7 +83,9 @@ int PrivateProfileTests()
 	    test_end(testResult);
 
 	    test_begin("GetPrivateProfileInt From Package Test");
-        int rVal = ::GetPrivateProfileIntW(L"Section1",L"ItemInt", badValueInt , otherFilePath.native().c_str());
+
+        int rVal = GetPrivateProfileInt(L"Section1",L"ItemInt", badValueInt , otherFilePath.c_str());
+
         if (rVal != badValueInt)
         {
             testResult = ERROR_SUCCESS;
@@ -93,7 +99,36 @@ int PrivateProfileTests()
     	result = result ? result : testResult;
 	    test_end(testResult);
 
+        test_begin("WritePrivateProfileString to Package(Intl) Test");
+        rLen = WritePrivateProfileString(L"Section1", L"ItemString", updatedValue.c_str(), otherFilePathIntl.native().c_str());
+        if (rLen > 0)
+        {
+            testResult = ERROR_SUCCESS;
+        }
+        else
+        {
+            testResult = GetLastError();
+        }
+        result = result ? result : testResult;
+        test_end(testResult);
 
+
+
+        test_begin("GetPrivateProfileString From Redirection (Intl) Test");
+        rLen = GetPrivateProfileString(L"Section1", L"ItemString", badValue.c_str(), buffer, testLen, otherFilePathIntl.native().c_str());
+        if (rLen > 0)
+        {
+            if (_wcsicmp(updatedValue.c_str(), buffer) == 0)
+                testResult = ERROR_SUCCESS;
+            else
+                testResult = -1;
+        }
+        else
+        {
+            testResult = GetLastError();
+        }
+        result = result ? result : testResult;
+        test_end(testResult);
         free(buffer);
     }
     return result;

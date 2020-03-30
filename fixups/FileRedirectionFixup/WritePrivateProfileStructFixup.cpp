@@ -19,20 +19,35 @@ BOOL __stdcall WritePrivateProfileStructFixup(
     {
         if (guard)
         {
-            LogString(L"WritePrivateProfileStructFixup for fileName", fileName);
+            DWORD WritePrivateProfileStructInstance = ++g_FileIntceptInstance;
+            LogString(WritePrivateProfileStructInstance,L"WritePrivateProfileStructFixup for fileName", fileName);
 
-            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
-            if (shouldRedirect)
+            if (fileName != NULL)
             {
-                if constexpr (psf::is_ansi<CharT>)
+                if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    return impl::WritePrivateProfileStructW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                                                            structData, uSizeStruct, redirectPath.c_str());
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    if (shouldRedirect)
+                    {
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            return impl::WritePrivateProfileStructW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
+                                structData, uSizeStruct, redirectPath.c_str());
+                        }
+                        else
+                        {
+                            return impl::WritePrivateProfileStructW(appName, keyName, structData, uSizeStruct, redirectPath.c_str());
+                        }
+                    }
                 }
                 else
                 {
-                    return impl::WritePrivateProfileStructW(appName, keyName, structData, uSizeStruct, redirectPath.c_str());
+                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", WritePrivateProfileStructInstance);
                 }
+            }
+            else
+            {
+                Log(L"[%d]null fileName, don't redirect", WritePrivateProfileStructInstance);
             }
         }
     }

@@ -35,7 +35,7 @@ using namespace std::literals;
 // Forward declarations
 void LogApplicationAndProcessesCollection();
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
-void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
+void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 bool IsCurrentOSRS2OrGreater();
 
@@ -75,7 +75,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
     if (monitor != nullptr)
-    {        
+    {
         THROW_IF_FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
         GetAndLaunchMonitor(*monitor, packageRoot, cmdShow, dirStr);
     }
@@ -83,22 +83,38 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Launch underlying application.
     auto exeName = appConfig->get("executable").as_string().wide();
     auto exePath = packageRoot / exeName;
-    auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+    std::wstring exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+
+    //Allow for a substitution in the arguments for a new pseudo variable %MsixPackageRoot% so that arguments can point to files
+    //inside the package using a syntax relative to the package root rather than rely on VFS pathing which can't kick in yet.
+    std::wstring::size_type pos = 0u;
+    std::wstring var2rep = L"%MsixPackageRoot%";
+    std::wstring repargs = packageRoot.c_str();
+    while ((pos = exeArgString.find(var2rep, pos)) != std::string::npos) {
+        exeArgString.replace(pos, var2rep.length(), repargs);
+        pos += repargs.length();
+    }
 
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
+        std::wstring fullargs = (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
+        LogString("Process Launch: ", fullargs.data());
+        StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
     }
     else
     {
-        StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
+        LogString("Shell Launch", exeName);
+        LogString("   Arguments", exeArgString.c_str());
+        StartWithShellExecute(packageRoot, exeName, exeArgString.c_str(), dirStr, cmdShow);
     }
 
     if (IsCurrentOSRS2OrGreater())
     {
+        Log("Process Launch Ready to run any end scripts.");
         // Launch the end PowerShell script if we are using one.
         powershellScriptRunner.RunEndingScript();
+        Log("Process Launch complete.");
     }
 
     return 0;
@@ -109,7 +125,7 @@ catch (...)
     return win32_from_caught_exception();
 }
 
-void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
+void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
 {
     bool asAdmin = false;
     bool wait = false;

@@ -14,23 +14,30 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
     {
         if (guard)
         {
-            LogString(L"RemoveDirectoryFixup for pathName", pathName);
+            DWORD RemoveDirectoryInstance = ++g_FileIntceptInstance;
+            LogString(RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", pathName);
             
-
-            // NOTE: See commentary in DeleteFileFixup for limitations on deleting files/directories
-            auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(pathName, redirect_flags::none);
-            if (shouldRedirect)
+            if (!IsUnderUserAppDataLocalPackages(pathName))
             {
-                if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(pathName))
+                // NOTE: See commentary in DeleteFileFixup for limitations on deleting files/directories
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(pathName, redirect_flags::none);
+                if (shouldRedirect)
                 {
-                    // If the directory does not exist in the redirected location, but does in the non-redirected
-                    // location, then we want to give the "illusion" that the delete succeeded
-                    return TRUE;
+                    if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(pathName))
+                    {
+                        // If the directory does not exist in the redirected location, but does in the non-redirected
+                        // location, then we want to give the "illusion" that the delete succeeded
+                        return TRUE;
+                    }
+                    else
+                    {
+                        return impl::RemoveDirectory(redirectPath.c_str());
+                    }
                 }
-                else
-                {
-                    return impl::RemoveDirectory(redirectPath.c_str());
-                }
+            }
+            else
+            {
+                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", RemoveDirectoryInstance);
             }
         }
     }
