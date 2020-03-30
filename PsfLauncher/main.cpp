@@ -100,7 +100,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     {
         std::wstring fullargs = (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args);
         LogString("Process Launch: ", fullargs.data());
-        StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, false, INFINITE);
+        StartProcess(exePath.c_str(), fullargs.data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
     }
     else
     {
@@ -111,10 +111,10 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     if (IsCurrentOSRS2OrGreater())
     {
-       Log("Process Launch Ready to run any end scripts.");
+        Log("Process Launch Ready to run any end scripts.");
         // Launch the end PowerShell script if we are using one.
         powershellScriptRunner.RunEndingScript();
-      Log("Process Launch complete.");
+        Log("Process Launch complete.");
     }
 
     return 0;
