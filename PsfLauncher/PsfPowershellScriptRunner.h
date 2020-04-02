@@ -39,7 +39,6 @@ public:
         {
             m_StartingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory);
             m_StartingScriptInformation.doesScriptExistInConfig = true;
-            m_AttributeList.Initilize();
         }
 
         if (endScriptInformationObject)
@@ -84,12 +83,7 @@ private:
 
     public:
 
-        LPPROC_THREAD_ATTRIBUTE_LIST get()
-        {
-            return attributeList.get();
-        }
-
-        void Initilize()
+        MyProcThreadAttributeList()
         {
             SIZE_T AttributeListSize{};
             InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
@@ -124,6 +118,10 @@ private:
             DeleteProcThreadAttributeList(attributeList.get());
         }
 
+        LPPROC_THREAD_ATTRIBUTE_LIST get()
+        {
+            return attributeList.get();
+        }
 
     };
 
