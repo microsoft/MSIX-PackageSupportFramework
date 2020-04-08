@@ -35,7 +35,7 @@ void MakeAttributeList(LPPROC_THREAD_ATTRIBUTE_LIST &attributeList)
         "Could not update Proc thread attribute.");
 }
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout)
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow,  DWORD timeout)
 {
 
     STARTUPINFOEXW startupInfoEx =
@@ -85,7 +85,7 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     return ERROR_SUCCESS;
 }
 
-void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow)
+void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow, DWORD timeout)
 {
 	// Non Exe case, use shell launching to pick up local FTA
 	auto nonExePath = packageRoot / exeName;
@@ -107,7 +107,7 @@ void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::p
 		"ERROR: Failed to create detoured shell process");
 
 	THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
-	DWORD exitCode = ::WaitForSingleObject(shex.hProcess, INFINITE);
+	DWORD exitCode = ::WaitForSingleObject(shex.hProcess, timeout);
 	THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
 	THROW_IF_WIN32_ERROR(exitCode);
 	CloseHandle(shex.hProcess);

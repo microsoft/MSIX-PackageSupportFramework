@@ -5,11 +5,11 @@
 #include <known_folders.h>
 
 #ifndef SW_SHOW
-#define SW_SHOW 5
+	#define SW_SHOW 5
 #endif
 
 #ifndef SW_HIDE
-#define SW_HIDE 0
+	#define SW_HIDE 0
 #endif
 
 class PsfPowershellScriptRunner
@@ -36,7 +36,7 @@ public:
 		}
 
 		std::wstring scriptExecutionMode = L"";
-		auto scriptExecutionModeObject = appConfig->try_get("scriptExecutionMode");
+		auto scriptExecutionModeObject = appConfig->try_get("scriptExecutionMode");  // supports options like "-ExecutionPolicy ByPass"
 		if (scriptExecutionModeObject)
 		{
 			scriptExecutionMode = scriptExecutionModeObject->as_string().wstring();
@@ -44,6 +44,7 @@ public:
 
 		// Note: the following path must be kept in sync with the FileRedirectionFixup PathRedirection.cpp
 		std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+
 		if (startScriptInformationObject)
 		{
 			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
@@ -68,14 +69,6 @@ public:
 	{
 		LogString("StartingScript commandString", this->startingScriptInformation.commandString.c_str());
 		LogString("StartingScript currentDirectory", this->startingScriptInformation.currentDirectory.c_str());
-		if (this->startingScriptInformation.runInVirtualEnvironment)
-		{
-			Log("StartingScript runInVirtualEnvironment=true");
-		}
-		else
-		{
-			Log("StartingScript runInVirtualEnvironment=false");
-		}
 		if (this->startingScriptInformation.waitForScriptToFinish)
 		{
 			Log("StartingScript waitForScriptToFinish=true");
@@ -91,14 +84,6 @@ public:
 	{
 		LogString("EndingScript commandString", this->endingScriptInformation.commandString.c_str());
 		LogString("EndingScript currentDirectory", this->endingScriptInformation.currentDirectory.c_str());
-		if (this->endingScriptInformation.runInVirtualEnvironment)
-		{
-			Log("EndingScript runInVirtualEnvironment=true");
-		}
-		else
-		{
-			Log("EndingingScript runInVirtualEnvironment=false");
-		}
 		RunScript(this->endingScriptInformation);
 	}
 
@@ -150,13 +135,12 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
+			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction,  script.timeout);
 		}
 	}
 
-	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, const std::wstring scriptExecutionMode, const std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
+	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
 	{
-
 		ScriptInformation scriptStruct;
 		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
 		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath), packageRoot, packageWritableRoot);
@@ -180,6 +164,7 @@ private:
 		return scriptStruct;
 	}
 
+
 	std::wstring ReplacePsuedoRootVariables(std::wstring inString, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
 	{
 		//Allow for a substitution in the strings for a new pseudo variable %MsixPackageRoot% so that arguments can point to files
@@ -202,6 +187,7 @@ private:
 		}
 		return outString;
 	}
+
 	std::wstring Dequote(std::wstring inString)
 	{
 		// Remove quotation-like marks around edges of a string reference to a file, if present.
@@ -230,6 +216,7 @@ private:
 		}
 		return inString;
 	}
+
 	std::wstring EscapeFilenameForPowerShell(std::filesystem::path inputPath)
 	{
 		std::wstring outString = inputPath.c_str();
@@ -243,6 +230,7 @@ private:
 		return outString;
 
 	}
+
 	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath)
 	{
 		std::wstring commandString = L"Powershell.exe ";
@@ -304,17 +292,17 @@ private:
 		return INFINITE;
 	}
 
-	bool DoesScriptExist(const std::wstring& scriptPath, std::filesystem::path packageRoot)
+	bool DoesScriptExist(const std::wstring& scriptPath, std::filesystem::path currentDirectory)
 	{
 		std::filesystem::path powershellScriptPath(scriptPath);
 		bool doesScriptExist = false;
-		//The file might be on a network drive or is a full path reference.
+		//The file might be on a network drive.
 		doesScriptExist = std::filesystem::exists(powershellScriptPath);
 
-		//Check on local computer using relative from packageRoot.
+		//Check on local computer.
 		if (!doesScriptExist)
 		{
-			doesScriptExist = std::filesystem::exists(packageRoot / powershellScriptPath);
+			doesScriptExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
 		}
 
 		return doesScriptExist;
@@ -392,7 +380,7 @@ private:
 				shouldScriptRun = false;
 			}
 		}
-
+		
 		return S_OK;
 	}
 
