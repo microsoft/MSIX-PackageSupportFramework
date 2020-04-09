@@ -1,6 +1,7 @@
 #pragma once
 #include "psf_runtime.h"
 #include "StartProcessHelper.h"
+#include "Globals.h"
 #include <wil\resource.h>
 
 #ifndef SW_SHOW
@@ -36,35 +37,94 @@ public:
 
         if (startScriptInformationObject)
         {
-            this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory);
-            this->startingScriptInformation.doesScriptExistInConfig = true;
+            m_StartingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory);
+            m_StartingScriptInformation.doesScriptExistInConfig = true;
         }
 
         if (endScriptInformationObject)
         {
             //Ending script ignores stopOnScriptError.  Keep it the default value
-            this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory);
-            this->endingScriptInformation.doesScriptExistInConfig = true;
+            m_EndingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory);
+            m_EndingScriptInformation.doesScriptExistInConfig = true;
 
             //Ending script ignores this value.  Keep true to make sure
             //script runs on the current thread.
-            this->endingScriptInformation.waitForScriptToFinish = true;
-            this->endingScriptInformation.stopOnScriptError = false;
+            m_EndingScriptInformation.waitForScriptToFinish = true;
+            m_EndingScriptInformation.stopOnScriptError = false;
         }
     }
 
     //RunStartingScript should return an error only if stopOnScriptError is true
     void RunStartingScript()
     {
-        RunScript(this->startingScriptInformation);
+        RunScript(m_StartingScriptInformation, m_AttributeList);
     }
 
     void RunEndingScript()
     {
-        RunScript(this->endingScriptInformation);
+        RunScript(m_EndingScriptInformation, m_AttributeList);
     }
 
 private:
+
+    struct MyProcThreadAttributeList
+    {
+    private:
+        // To make sure the attribute value persists we cache it here.
+        // 0x02 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
+        // The documentation can be found here:
+        //https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
+        // This attribute tells PSF to
+        // 1. Create Powershell in the same container as PSF.
+        // 2. Any windows Powershell makes will also be in the same container as PSF.
+        // This means that powershell, and any windows it makes, will have the same restrictions as PSF.
+        DWORD createInContainerAttribute = 0x02;
+        std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
+
+    public:
+
+        MyProcThreadAttributeList()
+        {
+            SIZE_T AttributeListSize{};
+            InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
+
+            attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
+
+            THROW_LAST_ERROR_IF_MSG(
+                !InitializeProcThreadAttributeList(
+                    attributeList.get(),
+                    1,
+                    0,
+                    &AttributeListSize),
+                "Could not initialize the proc thread attribute list.");
+
+            // 18 stands for
+            // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+            // this is the attribute value we want to add
+            THROW_LAST_ERROR_IF_MSG(
+                !UpdateProcThreadAttribute(
+                    attributeList.get(),
+                    0,
+                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+                    &createInContainerAttribute,
+                    sizeof(createInContainerAttribute),
+                    nullptr,
+                    nullptr),
+                "Could not update Proc thread attribute.");
+        }
+
+        ~MyProcThreadAttributeList()
+        {
+            DeleteProcThreadAttributeList(attributeList.get());
+        }
+
+        LPPROC_THREAD_ATTRIBUTE_LIST get()
+        {
+            return attributeList.get();
+        }
+
+    };
+
     struct ScriptInformation
     {
         std::wstring scriptPath;
@@ -78,10 +138,11 @@ private:
         bool doesScriptExistInConfig = false;
     };
 
-    ScriptInformation startingScriptInformation;
-    ScriptInformation endingScriptInformation;
+    ScriptInformation m_StartingScriptInformation;
+    ScriptInformation m_EndingScriptInformation;
+    MyProcThreadAttributeList m_AttributeList;
 
-    void RunScript(ScriptInformation& script)
+    void RunScript(ScriptInformation& script, MyProcThreadAttributeList& attributeList)
     {
         if (!script.doesScriptExistInConfig)
         {
@@ -100,7 +161,7 @@ private:
 
         if (script.waitForScriptToFinish)
         {
-            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
+            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, attributeList.get());
 
             if (script.stopOnScriptError)
             {
@@ -110,7 +171,7 @@ private:
         else
         {
             //We don't want to stop on an error and we want to run async
-            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
+            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, attributeList.get());
         }
     }
 

@@ -40,6 +40,7 @@
     <Xml Include="PSFLauncherMetadata.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Globals.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="PsfPowershellScriptRunner.h" />
     <ClInclude Include="StartProcessHelper.h" />
