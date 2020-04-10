@@ -14,28 +14,36 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-            LogString(L"DeleteFileFixup for fileName", fileName);
+            DWORD DeleteFileInstance = ++g_FileIntceptInstance;
+            LogString(DeleteFileInstance,L"DeleteFileFixup for fileName", fileName);
             
-
-            // NOTE: This will only delete the redirected file. If the file previously existed in the package path, then
-            //       it will remain there and a later attempt to open, etc. the file will succeed. In the future, if
-            //       this proves to be an issue, we could maintain a collection of package files that have been
-            //       "deleted" and then just pretend like they've been deleted. Such a change would be rather large and
-            //       disruptful and probably fairly inefficient as it would impact virtually every code path, so we'll
-            //       put it off for now.
-            auto [shouldRedirect, redirectPath, shoudReadonly] = ShouldRedirect(fileName, redirect_flags::none);
-            if (shouldRedirect)
+            if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(fileName))
+
+                // NOTE: This will only delete the redirected file. If the file previously existed in the package path, then
+                //       it will remain there and a later attempt to open, etc. the file will succeed. In the future, if
+                //       this proves to be an issue, we could maintain a collection of package files that have been
+                //       "deleted" and then just pretend like they've been deleted. Such a change would be rather large and
+                //       disruptful and probably fairly inefficient as it would impact virtually every code path, so we'll
+                //       put it off for now.
+                auto [shouldRedirect, redirectPath, shoudReadonly] = ShouldRedirect(fileName, redirect_flags::none);
+                if (shouldRedirect)
                 {
-                    // If the file does not exist in the redirected location, but does in the non-redirected location,
-                    // then we want to give the "illusion" that the delete succeeded
-                    return TRUE;
+                    if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(fileName))
+                    {
+                        // If the file does not exist in the redirected location, but does in the non-redirected location,
+                        // then we want to give the "illusion" that the delete succeeded
+                        return TRUE;
+                    }
+                    else
+                    {
+                        return impl::DeleteFile(redirectPath.c_str());
+                    }
                 }
-                else
-                {
-                    return impl::DeleteFile(redirectPath.c_str());
-                }
+            }
+            else
+            {
+                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", DeleteFileInstance);
             }
         }
     }

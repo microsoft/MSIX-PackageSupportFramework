@@ -3,71 +3,93 @@
 #include "StartProcessHelper.h"
 #include "Globals.h"
 #include <wil\resource.h>
+#include <known_folders.h>
 
 #ifndef SW_SHOW
-    #define SW_SHOW 5
+	#define SW_SHOW 5
 #endif
 
 #ifndef SW_HIDE
-    #define SW_HIDE 0
+	#define SW_HIDE 0
 #endif
 
 class PsfPowershellScriptRunner
 {
 public:
-    PsfPowershellScriptRunner() = default;
+	PsfPowershellScriptRunner() = default;
 
-    void Initialize(const psf::json_object* appConfig, const std::filesystem::path& currentDirectory)
-    {
-        auto startScriptInformationObject = PSFQueryStartScriptInfo();
-        auto endScriptInformationObject = PSFQueryEndScriptInfo();
+	void Initialize(const psf::json_object* appConfig, const std::filesystem::path& currentDirectory, const std::filesystem::path& packageRootDirectory)
+	{
+		auto startScriptInformationObject = PSFQueryStartScriptInfo();
+		auto endScriptInformationObject = PSFQueryEndScriptInfo();
 
-        //If we want to run at least one script make sure powershell is installed on the computer.
-        if (startScriptInformationObject || endScriptInformationObject)
-        {
-            THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
-        }
+		//If we want to run at least one script make sure powershell is installed on the computer.
+		if (startScriptInformationObject || endScriptInformationObject)
+		{
+			THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
+		}
 
-        bool stopOnScriptError = false;
-        auto stopOnScriptErrorObject = appConfig->try_get("stopOnScriptError");
-        if (stopOnScriptErrorObject)
-        {
-            stopOnScriptError = stopOnScriptErrorObject->as_boolean().get();
-        }
+		bool stopOnScriptError = false;
+		auto stopOnScriptErrorObject = appConfig->try_get("stopOnScriptError");
+		if (stopOnScriptErrorObject)
+		{
+			stopOnScriptError = stopOnScriptErrorObject->as_boolean().get();
+		}
 
-        if (startScriptInformationObject)
-        {
-            m_StartingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, currentDirectory);
-            m_StartingScriptInformation.doesScriptExistInConfig = true;
-        }
+		std::wstring scriptExecutionMode = L"";
+		auto scriptExecutionModeObject = appConfig->try_get("scriptExecutionMode");  // supports options like "-ExecutionPolicy ByPass"
+		if (scriptExecutionModeObject)
+		{
+			scriptExecutionMode = scriptExecutionModeObject->as_string().wstring();
+		}
 
-        if (endScriptInformationObject)
-        {
-            //Ending script ignores stopOnScriptError.  Keep it the default value
-            m_EndingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, currentDirectory);
-            m_EndingScriptInformation.doesScriptExistInConfig = true;
+		// Note: the following path must be kept in sync with the FileRedirectionFixup PathRedirection.cpp
+		std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
 
-            //Ending script ignores this value.  Keep true to make sure
-            //script runs on the current thread.
-            m_EndingScriptInformation.waitForScriptToFinish = true;
-            m_EndingScriptInformation.stopOnScriptError = false;
-        }
-    }
+		if (startScriptInformationObject)
+		{
+			this->m_startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->m_startingScriptInformation.doesScriptExistInConfig = true;
+		}
 
-    //RunStartingScript should return an error only if stopOnScriptError is true
-    void RunStartingScript()
-    {
-        RunScript(m_StartingScriptInformation, m_AttributeList);
-    }
+		if (endScriptInformationObject)
+		{
+			//Ending script ignores stopOnScriptError.  Keep it the default value
+			this->m_endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->m_endingScriptInformation.doesScriptExistInConfig = true;
 
-    void RunEndingScript()
-    {
-        RunScript(m_EndingScriptInformation, m_AttributeList);
-    }
+			//Ending script ignores this value.  Keep true to make sure
+			//script runs on the current thread.
+			this->m_endingScriptInformation.waitForScriptToFinish = true;
+			this->m_endingScriptInformation.stopOnScriptError = false;
+		}
+	}
+
+	//RunStartingScript should return an error only if stopOnScriptError is true
+	void RunStartingScript()
+	{
+		LogString("StartingScript commandString", this->m_startingScriptInformation.commandString.c_str());
+		LogString("StartingScript currentDirectory", this->m_startingScriptInformation.currentDirectory.c_str());
+		if (this->m_startingScriptInformation.waitForScriptToFinish)
+		{
+			Log("StartingScript waitForScriptToFinish=true");
+		}
+		else
+		{
+			Log("StartingScript waitForScriptToFinish=false");
+		}
+		RunScript(this->m_startingScriptInformation);
+	}
+
+	void RunEndingScript()
+	{
+		LogString("EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
+		LogString("EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
+		RunScript(this->m_endingScriptInformation);
+	}
 
 private:
-
-    struct MyProcThreadAttributeList
+   struct MyProcThreadAttributeList
     {
     private:
         // To make sure the attribute value persists we cache it here.
@@ -124,226 +146,318 @@ private:
         }
 
     };
+  
+	struct ScriptInformation
+	{
+		std::wstring scriptPath;
+		std::wstring commandString;
+		DWORD timeout = INFINITE;
+		bool shouldRunOnce = true;
+		int showWindowAction = SW_HIDE;
+		bool waitForScriptToFinish = true;
+		bool stopOnScriptError = false;
+		std::filesystem::path currentDirectory;
+		std::filesystem::path packageRoot;
+		bool doesScriptExistInConfig = false;
+	};
 
-    struct ScriptInformation
-    {
-        std::wstring scriptPath;
-        std::wstring commandString;
-        DWORD timeout = INFINITE;
-        bool shouldRunOnce = true;
-        int showWindowAction = SW_HIDE;
-        bool waitForScriptToFinish = true;
-        bool stopOnScriptError = false;
-        std::filesystem::path currentDirectory;
-        bool doesScriptExistInConfig = false;
-    };
+	ScriptInformation m_startingScriptInformation;
+	ScriptInformation m_endingScriptInformation;
+	MyProcThreadAttributeList m_AttributeList;
 
-    ScriptInformation m_StartingScriptInformation;
-    ScriptInformation m_EndingScriptInformation;
-    MyProcThreadAttributeList m_AttributeList;
+	void RunScript(ScriptInformation& script)
+	{
+		if (!script.doesScriptExistInConfig)
+		{
+			return;
+		}
 
-    void RunScript(ScriptInformation& script, MyProcThreadAttributeList& attributeList)
-    {
-        if (!script.doesScriptExistInConfig)
-        {
-            return;
-        }
+		THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), !DoesScriptExist(script.scriptPath, script.currentDirectory));
 
-        THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), !DoesScriptExist(script.scriptPath, script.currentDirectory));
+		bool canScriptRun = false;
+		THROW_IF_FAILED(CheckIfShouldRun(script.shouldRunOnce, canScriptRun));
 
-        bool canScriptRun = false;
-        THROW_IF_FAILED(CheckIfShouldRun(script.shouldRunOnce, canScriptRun));
+		if (!canScriptRun)
+		{
+			return;
+		}
 
-        if (!canScriptRun)
-        {
-            return;
-        }
+		if (script.waitForScriptToFinish)
+		{
+			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
 
-        if (script.waitForScriptToFinish)
-        {
-            HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, attributeList.get());
+			if (script.stopOnScriptError)
+			{
+				THROW_IF_FAILED(startScriptResult);
+			}
+		}
+		else
+		{
+			//We don't want to stop on an error and we want to run async
+			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+		}
+	}
 
-            if (script.stopOnScriptError)
-            {
-                THROW_IF_FAILED(startScriptResult);
-            }
-        }
-        else
-        {
-            //We don't want to stop on an error and we want to run async
-            std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, attributeList.get());
-        }
-    }
+	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
+	{
+		ScriptInformation scriptStruct;
+		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
+		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath), packageRoot, packageWritableRoot);
+		scriptStruct.timeout = GetTimeout(*scriptInformation);
+		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
+		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
+		scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
+		scriptStruct.stopOnScriptError = stopOnScriptError;
+		scriptStruct.currentDirectory = currentDirectory;
+		scriptStruct.packageRoot = packageRoot;
 
-    ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::filesystem::path currentDirectory)
-    {
-        ScriptInformation scriptStruct;
-        scriptStruct.scriptPath = GetScriptPath(*scriptInformation);
-        scriptStruct.commandString = MakeCommandString(*scriptInformation, scriptStruct.scriptPath);
-        scriptStruct.timeout = GetTimeout(*scriptInformation);
-        scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
-        scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
-        scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
-        scriptStruct.stopOnScriptError = stopOnScriptError;
-        scriptStruct.currentDirectory = currentDirectory;
+		//Async script run with a termination on failure is not a supported scenario.
+		//Supporting this scenario would mean force terminating an executing user process
+		//if the script fails.
+		if (stopOnScriptError && !scriptStruct.waitForScriptToFinish)
+		{
+			THROW_HR_MSG(HRESULT_FROM_WIN32(ERROR_BAD_CONFIGURATION), "PSF does not allow stopping on a script error and running asynchronously.  Please either remove stopOnScriptError or add a wait");
+		}
 
-        //Async script run with a termination on failure is not a supported scenario.
-        //Supporting this scenario would mean force terminating an executing user process
-        //if the script fails.
-        if (stopOnScriptError && !scriptStruct.waitForScriptToFinish)
-        {
-            THROW_HR_MSG(HRESULT_FROM_WIN32(ERROR_BAD_CONFIGURATION), "PSF does not allow stopping on a script error and running asynchronously.  Please either remove stopOnScriptError or add a wait");
-        }
+		return scriptStruct;
+	}
 
-        return scriptStruct;
-    }
 
-    std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptPath)
-    {
-        std::wstring commandString = L"Powershell.exe -file StartingScriptWrapper.ps1 ";
-        commandString.append(L"\".\\");
-        commandString.append(scriptPath);
+	std::wstring ReplacePsuedoRootVariables(std::wstring inString, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
+	{
+		//Allow for a substitution in the strings for a new pseudo variable %MsixPackageRoot% so that arguments can point to files
+		//inside the package using a syntax relative to the package root rather than rely on VFS pathing which can't kick in yet.
+		std::wstring outString = inString;
+		std::wstring var2rep1 = L"%MsixPackageRoot%";
+		std::wstring var2rep2 = L"%MsixWritablePackageRoot%";
 
-        //Script arguments are optional.
-        auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
-        if (scriptArgumentsJObject)
-        {
-            commandString.append(L" ");
-            commandString.append(scriptArgumentsJObject->as_string().wide());
-        }
+		std::wstring::size_type pos1 = 0u;
+		std::wstring repargs1 = packageRoot.c_str();
+		while ((pos1 = outString.find(var2rep1, pos1)) != std::string::npos) {
+			outString.replace(pos1, var2rep1.length(), repargs1);
+			pos1 += repargs1.length();
+		}
+		std::wstring::size_type pos2 = 0u;
+		std::wstring repargs2 = packageWritableRoot.c_str();
+		while ((pos2 = outString.find(var2rep2, pos2)) != std::string::npos) {
+			outString.replace(pos2, var2rep2.length(), repargs2);
+			pos2 += repargs2.length();
+		}
+		return outString;
+	}
 
-        //Add ending quote for the script inside a string literal.
-        commandString.append(L"\"");
+	std::wstring Dequote(std::wstring inString)
+	{
+		// Remove quotation-like marks around edges of a string reference to a file, if present.
+		if (inString.length() > 2)
+		{
+			if (inString[0] == L'\"' && inString[inString.length() - 1] == L'\"')
+			{
+				return inString.substr(1, inString.length() - 2);
+			}
+			if (inString[0] == L'\'' && inString[inString.length() - 1] == L'\'')
+			{
+				return inString.substr(1, inString.length() - 2);
+			}
+			if (inString.length() > 4)
+			{
+				// Check for Powershell style references too
+				if (inString[0] == L'`' && inString[1] == L'\'' && inString[inString.length() - 2] == L'`' && inString[inString.length() - 1] == L'\'')
+				{
+					return inString.substr(2, inString.length() - 4);
+				}
+				if (inString[0] == L'`' && inString[1] == L'\"' && inString[inString.length() - 2] == L'`' && inString[inString.length() - 1] == L'\"')
+				{
+					return inString.substr(2, inString.length() - 4);
+				}
+			}
+		}
+		return inString;
+	}
 
-        return commandString;
-    }
+	std::wstring EscapeFilenameForPowerShell(std::filesystem::path inputPath)
+	{
+		std::wstring outString = inputPath.c_str();
+		std::wstring::size_type pos = 0u;
+		std::wstring var2rep = L" ";
+		std::wstring repargs = L"` ";
+		while ((pos = outString.find(var2rep, pos)) != std::string::npos) {
+			outString.replace(pos, var2rep.length(), repargs);
+			pos += repargs.length();
+		}
+		return outString;
 
-    const std::wstring GetScriptPath(const psf::json_object& scriptInformation) const
-    {
-        //.get throws if the key does not exist.
-        return scriptInformation.get("scriptPath").as_string().wide();
-    }
+	}
 
-    DWORD GetTimeout(const psf::json_object& scriptInformation)
-    {
-        auto timeoutObject = scriptInformation.try_get("timeout");
-        if (timeoutObject)
-        {
-            //Timout needs to be in milliseconds.
-            //Multiple seconds from config by milliseconds.
-            return (DWORD)(1000 * timeoutObject->as_number().get_unsigned());
-        }
+	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath)
+	{
+		std::wstring commandString = L"Powershell.exe ";
+		commandString.append(scriptExecutionMode);
+		commandString.append(L" -file StartingScriptWrapper.ps1 ");
+		commandString.append(L"\"");
 
-        return INFINITE;
-    }
+		// ScriptWrapper uses invoke-expression so we need the expression to launch another powershell to run a file with arguments.
+		commandString.append(L"Powershell.exe ");
+		commandString.append(scriptExecutionMode);
+		commandString.append(L" -file ");
 
-    bool DoesScriptExist(const std::wstring& scriptPath, std::filesystem::path currentDirectory)
-    {
-        std::filesystem::path powershellScriptPath(scriptPath);
-        bool doesScriptExist = false;
-        //The file might be on a network drive.
-        doesScriptExist = std::filesystem::exists(powershellScriptPath);
+		const std::filesystem::path dequotedScriptPath = Dequote(scriptPath);
+		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
+		if (dequotedScriptPath.is_absolute())
+		{
+			commandString.append(L"\'");
+			commandString.append(fixed4PowerShell);
+			commandString.append(L"\'");
+		}
+		else
+		{
+			commandString.append(L"\'");
+			commandString.append(L".\\");
+			commandString.append(fixed4PowerShell);
+			commandString.append(L"\'");
+		}
 
-        //Check on local computer.
-        if (!doesScriptExist)
-        {
-            doesScriptExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
-        }
+		//Script arguments are optional.
+		auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
+		if (scriptArgumentsJObject)
+		{
+			commandString.append(L" ");
+			commandString.append(scriptArgumentsJObject->as_string().wide());
+		}
 
-        return doesScriptExist;
-    }
+		//Add ending quote for the script inside a string literal.
+		commandString.append(L"\"");
 
-    bool GetRunOnce(const psf::json_object& scriptInformation)
-    {
-        auto runOnceObject = scriptInformation.try_get("runOnce");
-        if (runOnceObject)
-        {
-            return runOnceObject->as_boolean().get();
-        }
+		return commandString;
+	}
 
-        return true;
-    }
+	const std::wstring GetScriptPath(const psf::json_object& scriptInformation) const
+	{
+		//.get throws if the key does not exist.
+		return scriptInformation.get("scriptPath").as_string().wide();
+	}
 
-    int GetShowWindowAction(const psf::json_object& scriptInformation)
-    {
-        auto showWindowObject = scriptInformation.try_get("showWindow");
-        if (showWindowObject)
-        {
-            bool showWindow = showWindowObject->as_boolean().get();
-            if (showWindow)
-            {
-                //5 in SW_SHOW.
-                return SW_SHOW;
-            }
-        }
+	DWORD GetTimeout(const psf::json_object& scriptInformation)
+	{
+		auto timeoutObject = scriptInformation.try_get("timeout");
+		if (timeoutObject)
+		{
+			//Timout needs to be in milliseconds.
+			//Multiple seconds from config by milliseconds.
+			return (DWORD)(1000 * timeoutObject->as_number().get_unsigned());
+		}
 
-        return SW_HIDE;
-    }
+		return INFINITE;
+	}
 
-    bool GetWaitForScriptToFinish(const psf::json_object& scriptInformation)
-    {
-        auto waitForStartingScriptToFinishObject = scriptInformation.try_get("waitForScriptToFinish");
-        if (waitForStartingScriptToFinishObject)
-        {
-            return waitForStartingScriptToFinishObject->as_boolean().get();
-        }
+	bool DoesScriptExist(const std::wstring& scriptPath, std::filesystem::path currentDirectory)
+	{
+		std::filesystem::path powershellScriptPath(scriptPath);
+		bool doesScriptExist = false;
+		//The file might be on a network drive.
+		doesScriptExist = std::filesystem::exists(powershellScriptPath);
 
-        return true;
-    }
+		//Check on local computer.
+		if (!doesScriptExist)
+		{
+			doesScriptExist = std::filesystem::exists(currentDirectory / powershellScriptPath);
+		}
 
-    HRESULT CheckIfShouldRun(bool shouldRunOnce, bool& shouldScriptRun)
-    {
-        shouldScriptRun = true;
-        if (shouldRunOnce)
-        {
-            std::wstring runOnceSubKey = L"SOFTWARE\\";
-            runOnceSubKey.append(psf::current_package_full_name());
-            runOnceSubKey.append(L"\\PSFScriptHasRun ");
+		return doesScriptExist;
+	}
 
-            DWORD keyDisposition;
-            wil::unique_hkey registryHandle;
-            LSTATUS createResult = RegCreateKeyExW(HKEY_CURRENT_USER, runOnceSubKey.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, nullptr, &registryHandle, &keyDisposition);
+	bool GetRunOnce(const psf::json_object& scriptInformation)
+	{
+		auto runOnceObject = scriptInformation.try_get("runOnce");
+		if (runOnceObject)
+		{
+			return runOnceObject->as_boolean().get();
+		}
 
-            if (createResult != ERROR_SUCCESS)
-            {
-                return createResult;
-            }
+		return true;
+	}
 
-            if (keyDisposition == REG_OPENED_EXISTING_KEY)
-            {
-                shouldScriptRun = false;
-            }
-        }
+	int GetShowWindowAction(const psf::json_object& scriptInformation)
+	{
+		auto showWindowObject = scriptInformation.try_get("showWindow");
+		if (showWindowObject)
+		{
+			bool showWindow = showWindowObject->as_boolean().get();
+			if (showWindow)
+			{
+				//5 in SW_SHOW.
+				return SW_SHOW;
+			}
+		}
 
-        return S_OK;
-    }
+		return SW_HIDE;
+	}
 
-    bool CheckIfPowershellIsInstalled()
-    {
-        wil::unique_hkey registryHandle;
-        LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+	bool GetWaitForScriptToFinish(const psf::json_object& scriptInformation)
+	{
+		auto waitForStartingScriptToFinishObject = scriptInformation.try_get("waitForScriptToFinish");
+		if (waitForStartingScriptToFinishObject)
+		{
+			return waitForStartingScriptToFinishObject->as_boolean().get();
+		}
 
-        if (createResult == ERROR_FILE_NOT_FOUND)
-        {
-            // If the key cannot be found, powershell is not installed
-            return false;
-        }
-        else if (createResult != ERROR_SUCCESS)
-        {
-            THROW_HR_MSG(HRESULT_FROM_WIN32(createResult), "Error with getting the key to see if PowerShell is installed.");
-        }
+		return true;
+	}
 
-        DWORD valueFromRegistry = 0;
-        DWORD bufferSize = sizeof(DWORD);
-        DWORD type = REG_DWORD;
-        THROW_IF_WIN32_ERROR_MSG(RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize),
-            "Error with querying the key to see if PowerShell is installed.");
+	HRESULT CheckIfShouldRun(bool shouldRunOnce, bool& shouldScriptRun)
+	{
+		shouldScriptRun = true;
+		if (shouldRunOnce)
+		{
+			std::wstring runOnceSubKey = L"SOFTWARE\\";
+			runOnceSubKey.append(psf::current_package_full_name());
+			runOnceSubKey.append(L"\\PSFScriptHasRun ");
 
-        if (valueFromRegistry != 1)
-        {
-            return false;
-        }
+			DWORD keyDisposition;
+			wil::unique_hkey registryHandle;
+			LSTATUS createResult = RegCreateKeyExW(HKEY_CURRENT_USER, runOnceSubKey.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, nullptr, &registryHandle, &keyDisposition);
 
-        return true;
-    }
+			if (createResult != ERROR_SUCCESS)
+			{
+				return createResult;
+			}
+
+			if (keyDisposition == REG_OPENED_EXISTING_KEY)
+			{
+				shouldScriptRun = false;
+			}
+		}
+		
+		return S_OK;
+	}
+
+	bool CheckIfPowershellIsInstalled()
+	{
+		wil::unique_hkey registryHandle;
+		LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+
+		if (createResult == ERROR_FILE_NOT_FOUND)
+		{
+			// If the key cannot be found, powershell is not installed
+			return false;
+		}
+		else if (createResult != ERROR_SUCCESS)
+		{
+			THROW_HR_MSG(HRESULT_FROM_WIN32(createResult), "Error with getting the key to see if PowerShell is installed.");
+		}
+
+		DWORD valueFromRegistry = 0;
+		DWORD bufferSize = sizeof(DWORD);
+		DWORD type = REG_DWORD;
+		THROW_IF_WIN32_ERROR_MSG(RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize),
+			"Error with querying the key to see if PowerShell is installed.");
+
+		if (valueFromRegistry != 1)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 };

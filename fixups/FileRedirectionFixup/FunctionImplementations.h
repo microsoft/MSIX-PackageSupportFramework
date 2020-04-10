@@ -41,8 +41,11 @@ namespace impl
 
     inline auto GetFileAttributes = psf::detoured_string_function(&::GetFileAttributesA, &::GetFileAttributesW);
     inline auto GetFileAttributesEx = psf::detoured_string_function(&::GetFileAttributesExA, &::GetFileAttributesExW);
-    inline auto GetPrivateProfileString = psf::detoured_string_function(&::GetPrivateProfileStringA, &::GetPrivateProfileStringW);
+    inline auto GetPrivateProfileInt = psf::detoured_string_function(&::GetPrivateProfileIntA, &::GetPrivateProfileIntW);
     inline auto GetPrivateProfileSection = psf::detoured_string_function(&::GetPrivateProfileSectionA, &::GetPrivateProfileSectionW);
+    inline auto GetPrivateProfileSectionNames = psf::detoured_string_function(&::GetPrivateProfileSectionNamesA, &::GetPrivateProfileSectionNamesW);
+    inline auto GetPrivateProfileString = psf::detoured_string_function(&::GetPrivateProfileStringA, &::GetPrivateProfileStringW);
+    inline auto GetPrivateProfileStruct = psf::detoured_string_function(&::GetPrivateProfileStructA, &::GetPrivateProfileStructW);
 
     inline auto MoveFile = psf::detoured_string_function(&::MoveFileA, &::MoveFileW);
     inline auto MoveFileEx = psf::detoured_string_function(&::MoveFileExA, &::MoveFileExW);
@@ -53,7 +56,9 @@ namespace impl
 
     inline auto SetFileAttributes = psf::detoured_string_function(&::SetFileAttributesA, &::SetFileAttributesW);
 
+    inline auto WritePrivateProfileSection = psf::detoured_string_function(&::WritePrivateProfileSectionA, &::WritePrivateProfileSectionW);
     inline auto WritePrivateProfileString = psf::detoured_string_function(&::WritePrivateProfileStringA, &::WritePrivateProfileStringW);
+    inline auto WritePrivateProfileStruct = psf::detoured_string_function(&::WritePrivateProfileStructA, &::WritePrivateProfileStructW);
 
     // Most internal use of GetFileAttributes is to check to see if a file/directory exists, so provide a helper
     template <typename CharT>

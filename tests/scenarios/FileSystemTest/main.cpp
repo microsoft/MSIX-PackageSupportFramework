@@ -63,6 +63,7 @@ int ReplaceFileTests();
 int CreateDirectoryTests();
 int RemoveDirectoryTests();
 int EnumerateDirectoriesTests();
+int PrivateProfileTests();
 
 int run()
 {
@@ -108,6 +109,10 @@ int run()
     testResult = EnumerateDirectoriesTests();
     result = result ? result : testResult;
 
+
+    testResult = PrivateProfileTests();
+    result = result ? result : testResult;
+
     return result;
 }
 
@@ -121,9 +126,9 @@ int wmain(int argc, const wchar_t** argv)
     {
         // The number of file mappings is different in 32-bit vs 64-bit
 #if !_M_IX86
-        test_initialize("File System Tests", 79);
+        test_initialize("File System Tests", 85);
 #else
-        test_initialize("File System Tests", 70);
+        test_initialize("File System Tests", 76);
 #endif
 
         InitializeFolderMappings();

@@ -16,13 +16,20 @@ void LogKeyPath(HKEY key, const char* msg = "Key")
     if (auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
         (status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
     {
-        auto buffer = std::make_unique<std::uint8_t[]>(size+2);
-        if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
+        try
         {
-            buffer[size] = 0x0;
-            buffer[size + 1] = 0x0;  // Add string termination character
-            auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-            LogCountedString(msg, info->Name, info->NameLength / 2);
+            auto buffer = std::make_unique<std::uint8_t[]>(size + 2);
+            if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
+            {
+                buffer[size] = 0x0;
+                buffer[size + 1] = 0x0;  // Add string termination character
+                auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
+                LogCountedString(msg, info->Name, info->NameLength / 2);
+            }
+        }
+        catch (...)
+        {
+            Log("Unable to log Key Path");
         }
     }
 }
@@ -30,31 +37,38 @@ std::string InterpretKeyPath(HKEY key, const char* msg = "Key")
 {
     std::string sret = "";
     ULONG size;
-    auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
-    if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
+    try
     {
-        auto buffer = std::make_unique<std::uint8_t[]>(size+2);
-        if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
+        auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
+        if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
         {
-            buffer[size] = 0x0;
-            buffer[size + 1] = 0x0;  // Add string termination character
-            auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-            sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);
+            auto buffer = std::make_unique<std::uint8_t[]>(size + 2);
+            if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
+            {
+                buffer[size] = 0x0;
+                buffer[size + 1] = 0x0;  // Add string termination character
+                auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
+                sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);
+            }
+            else
+                sret = "InterpretKeyPath failure2";
+        }
+        else if (status == STATUS_INVALID_HANDLE)
+        {
+            if (key == HKEY_LOCAL_MACHINE)
+                sret += msg + InterpretStringA(" HKEY_LOCAL_MACHINE");
+            else if (key == HKEY_CURRENT_USER)
+                sret = msg + InterpretStringA(" HKEY_CURRENT_USER");
+            else if (key == HKEY_CLASSES_ROOT)
+                sret = msg + InterpretStringA(" HKEY_CLASSES_ROOT");
         }
         else
-            sret = "InterpretKeyPath failure2";
+            sret = "InterpretKeyPath failure1" + InterpretAsHex("status", (DWORD)status);
     }
-    else if (status == STATUS_INVALID_HANDLE)
+    catch (...)
     {
-        if (key == HKEY_LOCAL_MACHINE)
-            sret += msg + InterpretStringA(" HKEY_LOCAL_MACHINE");
-        else if (key == HKEY_CURRENT_USER)
-            sret = msg + InterpretStringA(" HKEY_CURRENT_USER");
-        else if (key == HKEY_CLASSES_ROOT)
-            sret = msg + InterpretStringA(" HKEY_CLASSES_ROOT");
+        Log("InterpretKeyPath failure.");
     }
-    else
-        sret = "InterpretKeyPath failure1" + InterpretAsHex("status",(DWORD)status);
     return sret;
 }
 
@@ -177,7 +191,10 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                 else
                 {
                     outputs += InterpretAsHex("Result Key", resultKey);
-                    outputs += "\n" + InterpretRegKeyDisposition(*disposition);
+                    if (disposition != NULL)
+                        outputs += "\n" + InterpretRegKeyDisposition(*disposition);
+                    else
+                        outputs += " CALLER_DID_NOT_ASK_FOR_DISPOSITION";
                 }
 
                 std::ostringstream sout;

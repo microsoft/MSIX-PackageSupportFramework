@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------------
-// Copyright (C) Rafael Rivera, Microsoft Corporation. All rights reserved.
+// Copyright (C) Tim Mangan, TMurgent Technologies, LLP. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
@@ -7,10 +7,11 @@
 #include "PathRedirection.h"
 
 template <typename CharT>
-BOOL __stdcall WritePrivateProfileStringFixup(
+BOOL __stdcall WritePrivateProfileStructFixup(
     _In_opt_ const CharT* appName,
     _In_opt_ const CharT* keyName,
-    _In_opt_ const CharT* string,
+    _In_opt_ const LPVOID structData,
+    _In_opt_ const UINT   uSizeStruct,
     _In_opt_ const CharT* fileName) noexcept
 {
     auto guard = g_reentrancyGuard.enter();
@@ -18,9 +19,9 @@ BOOL __stdcall WritePrivateProfileStringFixup(
     {
         if (guard)
         {
-            DWORD WritePrivateProfileStringInstance = ++g_FileIntceptInstance;
-            LogString(WritePrivateProfileStringInstance,L"WritePrivateProfileStringFixup for fileName", fileName);
-            
+            DWORD WritePrivateProfileStructInstance = ++g_FileIntceptInstance;
+            LogString(WritePrivateProfileStructInstance,L"WritePrivateProfileStructFixup for fileName", fileName);
+
             if (fileName != NULL)
             {
                 if (!IsUnderUserAppDataLocalPackages(fileName))
@@ -30,23 +31,23 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
-                            return impl::WritePrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                                widen_argument(string).c_str(), redirectPath.c_str());
+                            return impl::WritePrivateProfileStructW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
+                                structData, uSizeStruct, redirectPath.c_str());
                         }
                         else
                         {
-                            return impl::WritePrivateProfileString(appName, keyName, string, redirectPath.c_str());
+                            return impl::WritePrivateProfileStructW(appName, keyName, structData, uSizeStruct, redirectPath.c_str());
                         }
                     }
                 }
                 else
                 {
-                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", WritePrivateProfileStringInstance);
+                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", WritePrivateProfileStructInstance);
                 }
             }
             else
             {
-                Log(L"[%d]null fileName, don't redirect", WritePrivateProfileStringInstance);
+                Log(L"[%d]null fileName, don't redirect", WritePrivateProfileStructInstance);
             }
         }
     }
@@ -55,6 +56,6 @@ BOOL __stdcall WritePrivateProfileStringFixup(
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::WritePrivateProfileString(appName, keyName, string, fileName);
+    return impl::WritePrivateProfileStruct(appName, keyName, structData, uSizeStruct, fileName);
 }
-DECLARE_STRING_FIXUP(impl::WritePrivateProfileString, WritePrivateProfileStringFixup);
+DECLARE_STRING_FIXUP(impl::WritePrivateProfileStruct, WritePrivateProfileStructFixup);

@@ -36,9 +36,10 @@ using namespace std::literals;
 // Forward declarations
 void LogApplicationAndProcessesCollection();
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
-void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
+void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 bool IsCurrentOSRS2OrGreater();
+std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
@@ -57,17 +58,26 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     auto dirPtr = appConfig->try_get("workingDirectory");
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
-    auto exeArgs = appConfig->try_get("arguments");
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
-    auto currentDirectory = (packageRoot / dirStr);
+    std::wstring dirWstr = dirStr;
+    dirWstr = ReplaceVariablesInString(dirWstr, true, true);
+    std::filesystem::path currentDirectory;
+    if (dirWstr[1] != L':')
+    {
+        currentDirectory = (packageRoot / dirWstr);
+    }
+    else
+    {
+        currentDirectory = dirWstr;
+    }
 
     PsfPowershellScriptRunner powershellScriptRunner;
 
     if (IsCurrentOSRS2OrGreater())
     {
-        powershellScriptRunner.Initialize(appConfig, currentDirectory);
+        powershellScriptRunner.Initialize(appConfig, currentDirectory, packageRoot);
 
         // Launch the starting PowerShell script if we are using one.
         powershellScriptRunner.RunStartingScript();
@@ -76,30 +86,55 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Launch monitor if we are using one.
     auto monitor = PSFQueryAppMonitorConfig();
     if (monitor != nullptr)
-    {        
+    {
         THROW_IF_FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE));
         GetAndLaunchMonitor(*monitor, packageRoot, cmdShow, dirStr);
     }
 
     // Launch underlying application.
     auto exeName = appConfig->get("executable").as_string().wide();
-    auto exePath = packageRoot / exeName;
-    auto exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+    std::wstring exeWName = exeName;
+    exeWName = ReplaceVariablesInString(exeWName, true, true);
+    std::filesystem::path exePath;
+    if (exeWName[1] != L':')
+    {
+        exePath = packageRoot / exeWName;
+    }
+    else
+    {
+        exePath = exeWName;
+    }
+    
+    auto exeArgs = appConfig->try_get("arguments"); 
+    std::wstring exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+    exeArgString = ReplaceVariablesInString(exeArgString, true, true);
 
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
+        std::wstring fullargs = (L"\"" + exePath.native() + L"\" " + exeArgString + L" " + args);
+        LogString("Process Launch: ", fullargs.data());
+        LogString("Working Directory: ", currentDirectory.c_str());
+        HRESULT hr = StartProcess(exePath.c_str(), fullargs.data(), currentDirectory.c_str(), cmdShow,  INFINITE);
+        if (hr != ERROR_SUCCESS)
+        {
+            Log("Error return from launching process.");
+        }
     }
     else
     {
-        StartWithShellExecute(packageRoot, exeName, exeArgString, dirStr, cmdShow);
+        LogString("Shell Launch", exePath.c_str());
+        LogString("   Arguments", exeArgString.c_str());
+        LogString("Working Directory: ", currentDirectory.c_str());
+        StartWithShellExecute(packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
     }
 
     if (IsCurrentOSRS2OrGreater())
     {
+        Log("Process Launch Ready to run any end scripts.");
         // Launch the end PowerShell script if we are using one.
         powershellScriptRunner.RunEndingScript();
+        Log("Process Launch complete.");
     }
 
     return 0;
@@ -110,7 +145,7 @@ catch (...)
     return win32_from_caught_exception();
 }
 
-void GetAndLaunchMonitor(const psf::json_object &monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
+void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
 {
     bool asAdmin = false;
     bool wait = false;
@@ -179,6 +214,44 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
 }
 
+
+// Replace all occurrences of requested environment and/or pseudo-environment variables in a string.
+std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars)
+{
+    std::wstring outputString = inputString;
+    if (ReplacePseudoVars)
+    {
+        std::wstring::size_type pos = 0u;
+        std::wstring var2rep = L"%MsixPackageRoot%";
+        std::wstring repargs = PSFQueryPackageRootPath();
+        while ((pos = outputString.find(var2rep, pos)) != std::string::npos) {
+            outputString.replace(pos, var2rep.length(), repargs);
+            pos += repargs.length();
+        }
+
+        pos = 0u;
+        var2rep = L"%MsixWritablePackageRoot%";
+        std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+        repargs = writablePackageRootPath.c_str();
+        while ((pos = outputString.find(var2rep, pos)) != std::string::npos) {
+            outputString.replace(pos, var2rep.length(), repargs);
+            pos += repargs.length();
+        }
+    }
+    if (ReplaceEnvironmentVars)
+    {
+        // Potentially an environment variable that needs replacing. For Example: "%HomeDir%\\Documents"
+        DWORD nSizeBuff = 256;
+        LPWSTR buff = new wchar_t[nSizeBuff];
+        DWORD nSizeRet = ExpandEnvironmentStrings(outputString.c_str(), buff, nSizeBuff);
+        if (nSizeRet > 0)
+        {
+            outputString = std::wstring(buff);
+        }
+
+    }
+    return outputString;
+}
 
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept

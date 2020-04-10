@@ -20,27 +20,53 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     {
         if (guard)
         {
-            LogString(L"GetPrivateProfileStringFixup for fileName", fileName);
-            
-            auto[shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
-            if (shouldRedirect)
+            DWORD GetPrivateProfileStringInstance = ++g_FileIntceptInstance;
+            if constexpr (psf::is_ansi<CharT>)
             {
-                if constexpr (psf::is_ansi<CharT>)
+                LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                LogString(GetPrivateProfileStringInstance,L" Section", widen_argument(appName).c_str());
+                LogString(GetPrivateProfileStringInstance,L" Key", widen_argument(keyName).c_str());
+            }
+            else
+            {
+                LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                LogString(GetPrivateProfileStringInstance,L" Section", appName);
+                LogString(GetPrivateProfileStringInstance,L" Key", keyName);
+            }
+            if (fileName != NULL)
+            {
+                if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto wideString = std::make_unique<wchar_t[]>(stringLength);
-                    auto realRetValue = impl::GetPrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                        widen_argument(defaultString).c_str(), wideString.get(), stringLength, redirectPath.c_str());
-
-                    if (_doserrno != ENOENT)
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    if (shouldRedirect)
                     {
-                        ::WideCharToMultiByte(CP_ACP, 0, wideString.get(), stringLength, string, stringLength, nullptr, nullptr);
-                        return realRetValue;
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            
+                            auto realRetValue = impl::GetPrivateProfileString(appName, keyName,
+                                                                               defaultString, string, stringLength, 
+                                                                               narrow(redirectPath.c_str()).c_str() );
+                            
+                            Log(L"[%d] Ansi Returned length=0x%x", GetPrivateProfileStringInstance, realRetValue);
+                            LogString(GetPrivateProfileStringInstance, " Ansi Returned string", string);
+                            return realRetValue;
+                        }
+                        else
+                        {
+                            auto realRetValue = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, redirectPath.c_str());
+                            LogString(GetPrivateProfileStringInstance, L" Returned string", string);
+                            return realRetValue;
+                        }
                     }
                 }
                 else
                 {
-                    return impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, redirectPath.c_str());
+                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStringInstance);
                 }
+            }
+            else
+            {
+                Log(L"[%d]null fileName, don't redirect", GetPrivateProfileStringInstance);
             }
         }
     }
