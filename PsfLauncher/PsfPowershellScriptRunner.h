@@ -48,29 +48,29 @@ public:
 
 		if (startScriptInformationObject)
 		{
-			this->startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
-			this->startingScriptInformation.doesScriptExistInConfig = true;
+			this->m_startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->m_startingScriptInformation.doesScriptExistInConfig = true;
 		}
 
 		if (endScriptInformationObject)
 		{
 			//Ending script ignores stopOnScriptError.  Keep it the default value
-			this->endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
-			this->endingScriptInformation.doesScriptExistInConfig = true;
+			this->m_endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->m_endingScriptInformation.doesScriptExistInConfig = true;
 
 			//Ending script ignores this value.  Keep true to make sure
 			//script runs on the current thread.
-			this->endingScriptInformation.waitForScriptToFinish = true;
-			this->endingScriptInformation.stopOnScriptError = false;
+			this->m_endingScriptInformation.waitForScriptToFinish = true;
+			this->m_endingScriptInformation.stopOnScriptError = false;
 		}
 	}
 
 	//RunStartingScript should return an error only if stopOnScriptError is true
 	void RunStartingScript()
 	{
-		LogString("StartingScript commandString", this->startingScriptInformation.commandString.c_str());
-		LogString("StartingScript currentDirectory", this->startingScriptInformation.currentDirectory.c_str());
-		if (this->startingScriptInformation.waitForScriptToFinish)
+		LogString("StartingScript commandString", this->m_startingScriptInformation.commandString.c_str());
+		LogString("StartingScript currentDirectory", this->m_startingScriptInformation.currentDirectory.c_str());
+		if (this->m_startingScriptInformation.waitForScriptToFinish)
 		{
 			Log("StartingScript waitForScriptToFinish=true");
 		}
@@ -78,14 +78,14 @@ public:
 		{
 			Log("StartingScript waitForScriptToFinish=false");
 		}
-		RunScript(this->startingScriptInformation);
+		RunScript(this->m_startingScriptInformation);
 	}
 
 	void RunEndingScript()
 	{
-		LogString("EndingScript commandString", this->endingScriptInformation.commandString.c_str());
-		LogString("EndingScript currentDirectory", this->endingScriptInformation.currentDirectory.c_str());
-		RunScript(this->endingScriptInformation);
+		LogString("EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
+		LogString("EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
+		RunScript(this->m_endingScriptInformation);
 	}
 
 private:
@@ -154,7 +154,6 @@ private:
 		DWORD timeout = INFINITE;
 		bool shouldRunOnce = true;
 		int showWindowAction = SW_HIDE;
-		bool runInVirtualEnvironment = true;
 		bool waitForScriptToFinish = true;
 		bool stopOnScriptError = false;
 		std::filesystem::path currentDirectory;
@@ -164,7 +163,7 @@ private:
 
 	ScriptInformation m_startingScriptInformation;
 	ScriptInformation m_endingScriptInformation;
-  MyProcThreadAttributeList m_AttributeList;
+	MyProcThreadAttributeList m_AttributeList;
 
 	void RunScript(ScriptInformation& script)
 	{
@@ -185,7 +184,7 @@ private:
 
 		if (script.waitForScriptToFinish)
 		{
-			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout);
+			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
 
 			if (script.stopOnScriptError)
 			{
@@ -195,7 +194,7 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction,  script.timeout);
+			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
 		}
 	}
 
@@ -207,7 +206,6 @@ private:
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
-		scriptStruct.runInVirtualEnvironment = GetRunInVirtualEnvironment(*scriptInformation);
 		scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
 		scriptStruct.stopOnScriptError = stopOnScriptError;
 		scriptStruct.currentDirectory = currentDirectory;
@@ -393,17 +391,6 @@ private:
 		}
 
 		return SW_HIDE;
-	}
-
-	bool GetRunInVirtualEnvironment(const psf::json_object& scriptInformation)
-	{
-		auto runInVirtualEnvironmentJObject = scriptInformation.try_get("runInVirtualEnvironment");
-		if (runInVirtualEnvironmentJObject)
-		{
-			return runInVirtualEnvironmentJObject->as_boolean().get();
-		}
-
-		return true;
 	}
 
 	bool GetWaitForScriptToFinish(const psf::json_object& scriptInformation)
