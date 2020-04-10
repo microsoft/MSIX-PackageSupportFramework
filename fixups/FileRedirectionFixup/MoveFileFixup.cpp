@@ -14,8 +14,9 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     {
         if (guard)
         {
-            LogString(L"MoveFileFixup From", existingFileName);
-            LogString(L"MoveFileFixup To",   newFileName);
+            DWORD MoveFileInstance = ++g_FileIntceptInstance;
+            LogString(MoveFileInstance,L"MoveFileFixup From", existingFileName);
+            LogString(MoveFileInstance,L"MoveFileFixup To",   newFileName);
 
             // NOTE: MoveFile needs delete access to the existing file, but since we won't have delete access to the
             //       file if it is in the package, we copy-on-read it here. This is slightly wasteful since we're
@@ -28,15 +29,21 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectExisting || redirectDest)
             {
-                return impl::MoveFile(
+                BOOL bRet = impl::MoveFile(
                     redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str(),
                     redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                if (bRet)
+                    Log(L"[%d]MoveFile returns true.", MoveFileInstance);
+                else
+                    Log(L"[%d]MoveFile returns false.", MoveFileInstance);
+                return bRet;
             }
         }
     }
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        Log(L"MoveFileFixup Exception detected; fallback.");
     }
 
     return impl::MoveFile(existingFileName, newFileName);
@@ -54,8 +61,9 @@ BOOL __stdcall MoveFileExFixup(
     {
         if (guard)
         {
-            Log("MoveFileExFixup From", existingFileName);
-            Log("MoveFileExFixup To",   newFileName);
+            DWORD MoveFileExInstance = ++g_FileIntceptInstance;
+            LogString(MoveFileExInstance,L"MoveFileExFixup From", existingFileName);
+            LogString(MoveFileExInstance,L"MoveFileExFixup To",   newFileName);
            
 
             // See note in MoveFile for commentary on copy-on-read functionality (though we could do better by checking
@@ -64,16 +72,22 @@ BOOL __stdcall MoveFileExFixup(
             auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectExisting || redirectDest)
             {
-                return impl::MoveFileEx(
+                BOOL bRet= impl::MoveFileEx(
                     redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str(),
                     redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str(),
                     flags);
+                if (bRet)
+                    Log(L"[%d]MoveFileEx returns true.", MoveFileExInstance);
+                else
+                    Log(L"[%d]MoveFileEx returns false.", MoveFileExInstance);
+                return bRet;
             }
         }
     }
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        Log(L"MoveFileExFixup Exception detected; fallback.");
     }
 
     return impl::MoveFileEx(existingFileName, newFileName, flags);

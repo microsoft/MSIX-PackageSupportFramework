@@ -265,15 +265,21 @@ void load_json()
     if (!file)
     {
         Log("Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
-        for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
+        ///Check folder with application, then everyhwere in package if needed
+#pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
+        file = _wfopen((g_CurrentExecutable.parent_path() / L"config.json").c_str(), L"rb, ccs=UTF-8");
+        if (file)
         {
-            if (dentry.is_character_file())
+            Log("Config.json found in executable folder of package %ls", g_PackageRootPath.c_str());
+        }
+        else
+        {
+            Log("Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PackageRootPath.c_str());
+            // If not in those two locations, must check everywhere in package.
+            for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
             {
-                if (dentry.path().filename().compare(L"config.json") == 0)
+                try
                 {
-#ifndef NDEBUG
-                    Log("Found config at: %ls", dentry.path().c_str());
-#endif
                     if (dentry.is_regular_file())
                     {
                         if (dentry.path().filename().compare(L"config.json") == 0)
@@ -281,10 +287,13 @@ void load_json()
                             Log("Found config at: %ls", dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
                             file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
-                            THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_OPEN_FAILED), !file);
                             break;
                         }
                     }
+                }
+                catch (...)
+                {
+                    Log("Non-fatal error enumerating directories while looking for config.json.");
                 }
             }
         }
@@ -325,21 +334,32 @@ void load_json()
     auto currentExe = g_CurrentExecutable.stem();
     if (auto processes = g_JsonHandler.root->as_object().try_get("processes"))
     {
-        for (auto& processConfig : processes->as_array())
+        if (processes)
         {
-            auto& obj = processConfig.as_object();
-            auto exe = obj.get("executable").as_string().wstring();
-            if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
+            for (auto& processConfig : processes->as_array())
             {
-                g_CurrentExeConfig = &obj;
-                LogCountedStringW("Processes config match", exe.data(), exe.length());
-                break;
-            }
-            else if (!g_CurrentExeConfig)
-            {
-                LogCountedStringW("Processes config notmatched", exe.data(), exe.length());
+                auto& obj = processConfig.as_object();
+                auto exe = obj.get("executable").as_string().wstring();
+                if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
+                {
+                    g_CurrentExeConfig = &obj;
+                    LogCountedStringW("Processes config match", exe.data(), exe.length());
+                    break;
+                }
+                else if (!g_CurrentExeConfig)
+                {
+                    //LogCountedStringW("Processes config notmatched", exe.data(), exe.length());
+                }
             }
         }
+        else
+        {
+            Log("No processes to match; no fixups to load.");
+        }
+    }
+    else
+    {
+        Log("No Processes to match; no fixups to load.");
     }
 
     // Permit ReportError disabling iff basic config.json parse succeeded
@@ -463,13 +483,12 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
         auto& appObj = app.as_object();
         auto appId = appObj.get("id").as_string().wstring();
 
-        if (verbose)
-        {
-            LogCountedStringW("Compare against json id", appId.data(), appId.length());
-        }
-
         if (iwstring_view(appId.data(), appId.length()) == applicationId)
         {
+            if (verbose)
+            {
+                LogCountedStringW("Json Application match against id", appId.data(), appId.length());
+            }
             return &appObj;
         }
     }

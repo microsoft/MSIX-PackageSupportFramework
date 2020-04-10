@@ -13,14 +13,14 @@
 #include "Config.h"
 
 //////// Need to undefine Preprocessor definition for NONAMELESSUNION on this .cpp file only for this to work
-
 #include <TraceLoggingProvider.h>
 #include "Telemetry.h"
 
 #include "Logging.h"
 
 // This handles event logging via ETW
-
+// NOTE: The provider name and GUID must be kept in sync with PsfShimMonitor/MainWindow.xaml.cs
+//       The format of the provider name uses dots here and dashes in C#.
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
@@ -156,43 +156,82 @@ result_configuration configured_result(function_type type, function_result resul
 // Set up the ETW Provider
 void Log_ETW_Register()
 {
-    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+    try
+    {
+        TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+    }
+    catch (...)
+    {
+        // Unable to log should not crash an app. 
+        ::OutputDebugStringW(L"Unable to attach to trace logging.");
+    }
 }
 
 void Log_ETW_PostMsgA(const char* s)
 {
-    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-        "TraceEvent",              // Event Name that should uniquely identify your event.
-        TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).
+    try
+    {
+        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+            "TraceEvent",              // Event Name that should uniquely identify your event.
+            TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).
+    }
+    catch (...)
+    {
+        // Unable to log should not crash an app. 
+        ::OutputDebugStringA("Unable to write to trace.");
+    }
 }
 
 void Log_ETW_PostMsgOperationA(const char* operation, const char* inputs, const char* result, const char* outputs, const char* callingmodule, LARGE_INTEGER TickStart, LARGE_INTEGER TickEnd)
 {
-    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-        "TraceEvent",              // Event Name that should uniquely identify your event.
-        TraceLoggingValue(operation, "Operation"),
-        TraceLoggingValue(inputs, "Inputs"),
-        TraceLoggingValue(result, "Result"),
-        TraceLoggingValue(outputs, "Outputs"),
-        TraceLoggingValue(callingmodule, "Caller"),
-        TraceLoggingInt64(TickStart.QuadPart, "Start"),
-        TraceLoggingInt64(TickEnd.QuadPart, "End")
-    ); // Field for your event in the form of (value, field name).
+    try
+    {
+        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+            "TraceEvent",              // Event Name that should uniquely identify your event.
+            TraceLoggingValue(operation, "Operation"),
+            TraceLoggingValue(inputs, "Inputs"),
+            TraceLoggingValue(result, "Result"),
+            TraceLoggingValue(outputs, "Outputs"),
+            TraceLoggingValue(callingmodule, "Caller"),
+            TraceLoggingInt64(TickStart.QuadPart, "Start"),
+            TraceLoggingInt64(TickEnd.QuadPart, "End")
+        ); // Field for your event in the form of (value, field name).
+    }
+    catch (...)
+    {
+        // Unable to log should not crash an app. 
+        ::OutputDebugStringA("Unable to write to trace.");
+    }
 }
 
 void Log_ETW_PostMsgW(const wchar_t* s)
 {
-    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-        "TraceEvent",              // Event Name that should uniquely identify your event.
-        TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).
-
+    try
+    {
+        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+            "TraceEvent",              // Event Name that should uniquely identify your event.
+            TraceLoggingValue(s, "Message")); // Field for your event in the form of (value, field name).
+    }
+    catch (...)
+    {
+        // Unable to log should not crash an app. 
+        ::OutputDebugStringW(L"Unable to write to trace.");
+    }
 }
 
 
 // Tear down the ETW Provider
 void Log_ETW_UnRegister()
 {
-    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+    try
+    {
+        TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+    }
+    catch (...)
+    {
+        // Unable to log should not crash an app. 
+        ::OutputDebugStringW(L"Unable to close trace.");
+    }
 }
 
 BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
@@ -278,14 +317,21 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                 traceDataStream << " ignoreDllLoad:" << static_cast<bool>(ignoreDllConfig->as_boolean()) << " ;";
                 ignore_dll_load = static_cast<bool>(ignoreDllConfig->as_boolean());
             }
-
-            TraceLoggingWrite(
-                g_Log_ETW_ComponentProvider,
-                "TraceFixupConfigdata",
-                TraceLoggingWideString(traceDataStream.str().c_str(), "TraceFixupConfig"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+            try
+            {
+                TraceLoggingWrite(
+                    g_Log_ETW_ComponentProvider,
+                    "TraceFixupConfigdata",
+                    TraceLoggingWideString(traceDataStream.str().c_str(), "TraceFixupConfig"),
+                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+            }
+            catch (...)
+            {
+                // Unable to log should not crash an app. 
+                ::OutputDebugStringW(L"Unable to write to trace");
+            }
         }
 
         if (wait_for_debugger)

@@ -28,5 +28,6 @@
 "file.txt" "Tèƨƭ\Â\file.txt"
 "file.txt" "Tèƨƭ\ß\file.txt"
 "file.txt" "Tèƨƭ\Ç\file.txt"
+"file.ini" "TestIniFile.ini"
+"file.ini" "TèƨƭFïℓè.ini"
 
-"file.ini" "TestFile.ini"

@@ -222,6 +222,7 @@ int ModifyFileTests()
         result = result ? result : testResult;
 
         test_end(testResult);
+
     }
 
     // Modify a file in the package path. This doesn't have a redirected path, but we do set the working directory to be
