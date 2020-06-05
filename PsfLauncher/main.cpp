@@ -23,6 +23,8 @@
 #include <psf_runtime.h>
 #include <wil\result.h>
 #include <wil\resource.h>
+#include <debug.h>
+
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -51,6 +53,11 @@ int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_
 int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
     Log("\tIn Launcher_main()");
+
+    //Log("\tWaiting for debugger to attach...");
+    //psf::wait_for_debugger();
+    //Log("\tDebugger attahced.");
+
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     THROW_HR_IF_MSG(ERROR_NOT_FOUND, !appConfig, "Error: could not find matching appid in config.json and appx manifest");
 
@@ -64,7 +71,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     std::wstring dirWstr = dirStr;
     dirWstr = ReplaceVariablesInString(dirWstr, true, true);
     std::filesystem::path currentDirectory;
-    if (dirWstr[1] != L':')
+    if (dirWstr.size() <2 ||  dirWstr[1] != L':')
     {
         currentDirectory = (packageRoot / dirWstr);
     }
