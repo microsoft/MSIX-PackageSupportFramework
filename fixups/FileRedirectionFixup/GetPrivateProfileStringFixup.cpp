@@ -23,15 +23,21 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             DWORD GetPrivateProfileStringInstance = ++g_FileIntceptInstance;
             if constexpr (psf::is_ansi<CharT>)
             {
-                LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
-                LogString(GetPrivateProfileStringInstance,L" Section", widen_argument(appName).c_str());
-                LogString(GetPrivateProfileStringInstance,L" Key", widen_argument(keyName).c_str());
+                if (fileName != NULL)
+                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                if (appName != NULL)
+                    LogString(GetPrivateProfileStringInstance,L" Section", widen_argument(appName).c_str());
+                if (keyName != NULL)
+                    LogString(GetPrivateProfileStringInstance,L" Key", widen_argument(keyName).c_str());
             }
             else
             {
-                LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
-                LogString(GetPrivateProfileStringInstance,L" Section", appName);
-                LogString(GetPrivateProfileStringInstance,L" Key", keyName);
+                if (fileName != NULL)
+                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                if (appName != NULL)
+                    LogString(GetPrivateProfileStringInstance,L" Section", appName);
+                if (keyName != NULL)
+                    LogString(GetPrivateProfileStringInstance,L" Key", keyName);
             }
             if (fileName != NULL)
             {
