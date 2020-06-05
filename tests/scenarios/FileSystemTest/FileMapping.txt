@@ -25,6 +25,8 @@
 "file.txt" "VFS\AppVSystem32Logfiles\LogFilesFïℓè.txt"
 "file.txt" "VFS\AppVSystem32Spool\SpoolFïℓè.txt"
 
+"file.txt" "ÞáçƙáϱèFïℓè.txt"
+"file.txt" "TèƨƭTè₥ƥℓáƭè\file.txt"
 "file.txt" "Tèƨƭ\Â\file.txt"
 "file.txt" "Tèƨƭ\ß\file.txt"
 "file.txt" "Tèƨƭ\Ç\file.txt"
