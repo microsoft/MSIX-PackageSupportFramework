@@ -1,0 +1,46 @@
+{
+  "applications": [
+    {
+      "id": "Fixed32",
+      "executable": "RegLegacyTest.exe"
+    },
+    {
+      "id": "Fixed64",
+      "executable": "RegLegacyTest.exe"
+    }
+  ],
+  "processes": [
+    {
+      "executable": "PsfLauncher.*"
+    },
+    {
+      "executable": ".*",
+      "fixups": [
+        {
+          "dll": "RegLegacyFixups.dll",
+          "config": [
+            {
+              "type": "ModifyKeyAccess",
+              "remediation": [
+                {
+                  "hive": "HKCU",
+                  "patterns": [
+                    "^Software\\\\Vendor.*"
+                  ],
+                  "access":  "Full2RW"
+                },
+                {
+                  "hive":  "HKLM",
+                  "patterns": [
+                    "^SOFTWARE\\\\Vendor.*"
+                  ],
+                  "access": "RW2R"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

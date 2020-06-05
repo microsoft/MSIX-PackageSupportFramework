@@ -5,6 +5,7 @@ $pfxPath = "$PSScriptRoot\scenarios\signing\CentennialFixupsTestSigningCertifica
 
 function RunTest($Arch, $Config)
 {
+    Write-host "<<<<<<<<<<<<<<<<<<<< Test Pass for $($Arch)  $($Config) >>>>>>>>>>>>>>>>>>>>>"
     # For any directory under the "scenarios" directory that has a "FileMapping.txt", generate an appx for it
     Remove-Item "$PSScriptRoot\scenarios\Appx\*"
     foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
@@ -15,8 +16,8 @@ function RunTest($Arch, $Config)
             try
             {
                 $appxPath = "..\Appx\$($dir.Name).appx"
-                . makeappx.exe pack /o /p "$appxPath" /f "$Arch$Config\FileMapping.txt" | Out-Null
-                . signtool.exe sign /a /v /fd sha256 /f "$pfxPath" /p "CentennialFixupsTestSigning" "$appxPath" | Out-Null
+                . makeappx.exe pack /o /p "$appxPath" /f "$Arch$Config\FileMapping.txt" > "$($appxPath).makeappx.txt"
+                . signtool.exe sign /a /v /fd sha256 /f "$pfxPath" /p "CentennialFixupsTestSigning" "$appxPath" > "$($appxPath).signtool.txt"
             }
             finally
             {
@@ -39,7 +40,7 @@ function RunTest($Arch, $Config)
     {
         # Uninstall all packages on exit. Ideally Add-AppxPackage would give us back something that we could use here,
         # but alas we must hard-code it
-        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest")
+        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest")
         foreach ($pkg in $packagesToUninstall)
         {
             Get-AppxPackage $pkg | Remove-AppxPackage
@@ -47,6 +48,30 @@ function RunTest($Arch, $Config)
     }
 }
 
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
 write-host ("Checking to see if a cert exists at " + $pfxPath)
 if (!(Test-Path "$pfxPath"))
 {
@@ -66,48 +91,50 @@ RunTest "x64" "Release"
 RunTest "x86" "Debug"
 RunTest "x86" "Release"
 
-write-host "Making config.json from config.xml"
-foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
+if ($TestConfigFromXML)
 {
-    if (Test-Path "$($dir.FullName)\FileMapping.txt")
+    write-host "Making config.json from config.xml"
+    foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
     {
-        push-location $dir.fullName
-        
-        foreach ($configurationFile in (get-childitem -file "Config*.json"))
+        if (Test-Path "$($dir.FullName)\FileMapping.txt")
         {
-            Copy-Item $configurationFile -destination ("$configurationFile"+"_bak")
+            push-location $dir.fullName
+        
+            foreach ($configurationFile in (get-childitem -file "Config*.json"))
+            {
+                Copy-Item $configurationFile -destination ("$configurationFile"+"_bak")
             
-            $configFileName = $configurationFile.baseName
-            start-process -FilePath ..\..\..\xmlToJsonConverter\msxsl.exe -ArgumentList "$configFileName.xml ..\..\..\xmlToJsonConverter\Format.xsl -o $configurationFile" -NoNewWindow
+                $configFileName = $configurationFile.baseName
+                start-process -FilePath ..\..\..\xmlToJsonConverter\msxsl.exe -ArgumentList "$configFileName.xml ..\..\..\xmlToJsonConverter\Format.xsl -o $configurationFile" -NoNewWindow
+            }
+            pop-location
         }
-        pop-location
     }
-}
 
-RunTest "x64" "Debug"
-RunTest "x64" "Release"
-RunTest "x86" "Debug"
-RunTest "x86" "Release"
+    RunTest "x64" "Debug"
+    RunTest "x64" "Release"
+    RunTest "x86" "Debug"
+    RunTest "x86" "Release"
 
-Write-host "Removing generated json files"
-foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
-{
-    if (Test-Path "$($dir.FullName)\FileMapping.txt")
+    Write-host "Removing generated json files"
+    foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
     {
-        push-location $dir.fullName
-        
-        
-        foreach ($configurationFile in (get-childitem -file "Config*.json_bak"))
+        if (Test-Path "$($dir.FullName)\FileMapping.txt")
         {
-            $configFileName = $configurationFile.baseName
-            Copy-Item $configurationFile -destination ("$configFileName.json")
-        }
+            push-location $dir.fullName
+        
+        
+            foreach ($configurationFile in (get-childitem -file "Config*.json_bak"))
+            {
+                $configFileName = $configurationFile.baseName
+                Copy-Item $configurationFile -destination ("$configFileName.json")
+            }
 
-        remove-item "Config*.json_bak"
-        pop-location
+            remove-item "Config*.json_bak"
+            pop-location
+        }
     }
 }
-
 Write-Host "$failedTests tests have failed"
 
 Exit $failedTests
