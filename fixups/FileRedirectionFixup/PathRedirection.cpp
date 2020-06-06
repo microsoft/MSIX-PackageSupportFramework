@@ -426,8 +426,7 @@ std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
 {
     if (fileName != NULL)
     {
-        constexpr wchar_t root        constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
-_local_device_prefix[] = LR"(\\?\)";
+        constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
         constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
         if (IsUnderUserAppDataLocal(fileName))
         {
