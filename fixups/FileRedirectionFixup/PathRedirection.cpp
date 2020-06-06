@@ -368,7 +368,12 @@ bool IsUnderUserAppDataLocalPackagesImpl(_In_ const CharT* fileName)
         return false;
     }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+    {
+        return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
+    }
+    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
     }
@@ -394,7 +399,12 @@ bool IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
         return false;
     }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+    {
+        return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
+    }
+    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
     }
@@ -416,12 +426,18 @@ std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
 {
     if (fileName != NULL)
     {
-        constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+        constexpr wchar_t root        constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+_local_device_prefix[] = LR"(\\?\)";
+        constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
         if (IsUnderUserAppDataLocal(fileName))
         {
             auto lad = psf::known_folder(FOLDERID_LocalAppData);
             std::filesystem::path foo;
             if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+            {
+                foo = fileName + 4;
+            }
+            else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
             {
                 foo = fileName + 4;
             }
