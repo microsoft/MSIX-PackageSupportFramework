@@ -344,7 +344,12 @@ bool IsUnderUserAppDataLocalImpl(_In_ const CharT* fileName)
         return false;
     }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+    {
+        return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData));
+    }
+    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData));
     }
@@ -778,27 +783,32 @@ normalized_path NormalizePathImpl(const CharT* path)
 {
     normalized_path result;
 
-    auto pathType = psf::path_type(path);
-    if (pathType == psf::dos_path_type::root_local_device)
+    result.path_type = psf::path_type(path);
+    if (result.path_type == psf::dos_path_type::root_local_device)
     {
         // Root-local device paths are a direct escape into the object manager, so don't normalize them
         result.full_path = widen(path);
     }
-    else if (pathType != psf::dos_path_type::unknown)
+    else if (result.path_type == psf::dos_path_type::local_device)
+    {
+        // these are a direct escape, but for devices.
+        result.full_path = widen(path); // widen(path + 4);
+    }
+    else if (result.path_type != psf::dos_path_type::unknown)
     {
         result.full_path = widen(psf::full_path(path));
-        pathType = psf::path_type(result.full_path.c_str());
+        result.path_type = psf::path_type(result.full_path.c_str());
     }
     else // unknown
     {
         return result;
     }
 
-    if (pathType == psf::dos_path_type::drive_absolute)
+    if (result.path_type == psf::dos_path_type::drive_absolute)
     {
         result.drive_absolute_path = result.full_path.data();
     }
-    else if ((pathType == psf::dos_path_type::local_device) || (pathType == psf::dos_path_type::root_local_device))
+    else if ((result.path_type == psf::dos_path_type::local_device) || (result.path_type == psf::dos_path_type::root_local_device))
     {
         auto candidatePath = result.full_path.data() + 4;
         if (psf::path_type(candidatePath) == psf::dos_path_type::drive_absolute)
@@ -806,7 +816,7 @@ normalized_path NormalizePathImpl(const CharT* path)
             result.drive_absolute_path = candidatePath;
         }
     }
-    else if (pathType == psf::dos_path_type::unc_absolute)
+    else if (result.path_type == psf::dos_path_type::unc_absolute)
     {
         // We assume that UNC paths will never reference a path that we need to redirect. Note that this isn't perfect.
         // E.g. "\\localhost\C$\foo\bar.txt" is the same path as "C:\foo\bar.txt"; we shall defer solving this problem
@@ -816,7 +826,7 @@ normalized_path NormalizePathImpl(const CharT* path)
     {
         // GetFullPathName did something odd...
         LogString(L"\t\tFRF Error: Path type not supported", path);
-        Log(L"\t\tFRF Error: Path type: 0x%x", pathType);
+        Log(L"\t\tFRF Error: Path type: 0x%x", result.path_type);
         assert(false);
         return {};
     }
@@ -857,7 +867,7 @@ normalized_path NormalizePath(const wchar_t* path)
 {
     if (path != NULL && path[0] != 0)
     {
-        std::wstring new_wstring = path;
+        std::wstring new_wstring = UrlDecode(path);   // replaces things like %3a with :
         if (IsColonColonGuid(path))
         {
             Log(L"Guid: avoidance");
@@ -872,7 +882,6 @@ normalized_path NormalizePath(const wchar_t* path)
             npath.full_path = widen(new_wstring);
             return npath;
         }        
-        new_wstring = UrlDecode(path);                      // replaces things like %3a with :
         new_wstring = StripFileColonSlash(new_wstring);     // removes "file:\\" from start of path if present
         return NormalizePathImpl(new_wstring.c_str());
     }
@@ -1187,6 +1196,12 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     // vfsPath represents this as a package relative path
     auto normalizedPath = NormalizePath(path);
     std::filesystem::path destinationTargetBase;
+
+    if (normalizedPath.path_type == psf::dos_path_type::local_device)
+    {
+        LogString(L"\t\tFRF: Path is of type local device so FRF should ignore.", path);
+        return result;
+    }
 
     if (!normalizedPath.drive_absolute_path)
     {

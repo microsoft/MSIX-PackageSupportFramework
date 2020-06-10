@@ -5,6 +5,7 @@
 #pragma once
 
 #include <filesystem>
+#include <dos_paths.h>
 
 enum class redirect_flags
 {
@@ -42,6 +43,8 @@ struct normalized_path
     //      4.  A UNC-absolute path. E.g. "\\server\share\foo\bar.txt"
     // or empty if there was a failure
     std::wstring full_path;
+
+    psf::dos_path_type path_type;
 
     // A pointer inside of full_path if the path explicitly uses a drive symbolic link at the root, otherwise nullptr.
     // Note that this isn't perfect; e.g. we don't handle scenarios such as "\\localhost\C$\foo\bar.txt"
