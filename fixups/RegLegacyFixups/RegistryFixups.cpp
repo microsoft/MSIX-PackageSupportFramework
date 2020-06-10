@@ -13,23 +13,25 @@
 #include "Logging.h"
 #include <regex>
 
-REGSAM RegFixupSam(std::string keypath, REGSAM samDesired)
+DWORD g_RegIntceptInstance = 0;
+
+REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstance)
 {
+
     REGSAM samModified = samDesired;
     std::string keystring;
-#ifdef _DEBUG
-        Log("RegFixupSam: %s", keypath.c_str());
-#endif
+
+    Log("[%d] RegFixupSam: path=%s\n", RegLocalInstance, keypath.c_str());
     for (auto& spec : g_regRemediationSpecs)
     {
 #ifdef _DEBUG
-        Log("spec.type=%d", spec.remeditaionType);
+        Log("[%d] RegFixupSam: spec.type=%d\n", RegLocalInstance, spec.remeditaionType);
 #endif
         switch (spec.remeditaionType)
         {
         case Reg_Remediation_Type_ModifyKeyAccess:
 #ifdef _DEBUG
-            Log("Check ModifyKeyAccess...");
+            Log("[%d] RegFixupSam: is Check ModifyKeyAccess...\n", RegLocalInstance);
 #endif
             for (auto& rem : spec.remediationRecords)
             {
@@ -40,44 +42,44 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired)
                     if (keypath._Starts_with(keystring))
                     {
 #ifdef _DEBUG
-                        Log("HKCU key");
+                        Log("[%d] RegFixupSam: is HKCU key\n", RegLocalInstance);
 #endif
                         for (auto& pattern : rem.modifyKeyAccess.patterns)
                         {
 #ifdef _DEBUG
-                            Log("Check %LS", widen(keypath.substr(keystring.size())).c_str());
-                            Log("using %LS", pattern.c_str());
+                            Log("[%d] RegFixupSam: Check %LS\n", RegLocalInstance, widen(keypath.substr(keystring.size())).c_str());
+                            Log("[%d] RegFixupSam: using %LS\n", RegLocalInstance, pattern.c_str());
 #endif
                             if (std::regex_match(widen(keypath.substr(keystring.size())), std::wregex(pattern)))
                             {
 #ifdef _DEBUG
-                                Log("HKCU pattern match");
+                                Log("[%d] RegFixupSam: is HKCU pattern match.\n", RegLocalInstance);
 #endif
                                 switch (rem.modifyKeyAccess.access)
                                 {
                                 case Modify_Key_Access_Type_Full2RW:
                                     if ((samDesired & (KEY_ALL_ACCESS|KEY_CREATE_LINK)) != 0)
                                     {
-                                        samModified = samDesired & ~KEY_CREATE_LINK;
+                                        samModified = samDesired & ~(DELETE|KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("Full2RW");
+                                        Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
                                     }
                                     break;
                                 case Modify_Key_Access_Type_Full2R:
-                                    if ((samDesired & (KEY_ALL_ACCESS | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
                                     {
-                                        samModified = samDesired & ~(KEY_CREATE_LINK | KEY_CREATE_SUB_KEY);
+                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("Full2R");
+                                        Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
                                     }
                                 case Modify_Key_Access_Type_RW2R:
-                                    if ((samDesired & (KEY_CREATE_SUB_KEY|KEY_SET_VALUE))  != 0)
+                                    if ((samDesired & (KEY_CREATE_LINK|KEY_CREATE_SUB_KEY|KEY_SET_VALUE))  != 0)
                                     {
-                                        samModified = samDesired & ~(KEY_CREATE_SUB_KEY | KEY_SET_VALUE);
+                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("RW2R");
+                                        Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
                                     }
                                 default:
@@ -93,40 +95,40 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired)
                     if (keypath._Starts_with(keystring))
                     {
 #ifdef _DEBUG
-                        Log("HKLM key");
+                        Log("[%d] RegFixupSam:  is HKLM key\n", RegLocalInstance);
 #endif
                         for (auto& pattern : rem.modifyKeyAccess.patterns)
                         {
                             if (std::regex_match(widen(keypath.substr(keystring.size())), std::wregex(pattern)))
                             {
 #ifdef _DEBUG
-                                Log("HKLM pattern match");
+                                Log("[%d] RegFixupSam: HKLM pattern match.\n", RegLocalInstance);
 #endif
                                 switch (rem.modifyKeyAccess.access)
                                 {
                                 case Modify_Key_Access_Type_Full2RW:
                                     if ((samDesired & (KEY_ALL_ACCESS | KEY_CREATE_LINK)) != 0)
                                     {
-                                        samModified = samDesired & ~KEY_CREATE_LINK;
+                                        samModified = samDesired & ~(DELETE|KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("Full2RW");
+                                        Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
                                     }
                                     break;
                                 case Modify_Key_Access_Type_Full2R:
-                                    if ((samDesired & (KEY_ALL_ACCESS| KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE)) != 0)
+                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
                                     {
-                                        samModified = samDesired & ~(KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE);
+                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("Full2R");
+                                        Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
                                     }
                                 case Modify_Key_Access_Type_RW2R:
                                     if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE)) != 0)
                                     {
-                                        samModified = samDesired & ~(KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE);
+                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("RW2R");
+                                        Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
                                     }
                                 default:
@@ -168,13 +170,14 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 {
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
-    auto entry = LogFunctionEntry();
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
 
-    Log("RegCreateKeyEx:\n");
+    auto entry = LogFunctionEntry();
+    Log("[%d] RegCreateKeyEx:\n", RegLocalInstance);
 
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(keypath, samDesired);
+    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
 
     auto result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
     QueryPerformanceCounter(&TickEnd);
@@ -186,14 +189,17 @@ LSTATUS __stdcall RegCreateKeyExFixup(
         try
         {
             LogKeyPath(key);
-            LogString("Sub Key", subKey);
-            if (classType) LogString("Class", classType);
+            LogString("\nSub Key", subKey);
+            Log("[%d]Reserved=%d\n", RegLocalInstance, reserved);
+            if (classType) LogString("\nClass", classType);
             LogRegKeyFlags(options);
-            Log("samDesired=%s", InterpretRegKeyAccess(samDesired).c_str());
+            Log("\n[%d] samDesired=%s\n", RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
             if (samDesired != samModified)
             {
-                Log("ModifiedSam=%s",InterpretRegKeyAccess(samModified).c_str());
+                Log("[%d] ModifiedSam=%s\n", RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
             }
+            LogSecurityAttributes(securityAttributes, RegLocalInstance);
+
             LogFunctionResult(functionResult);
             if (function_failed(functionResult))
             {
@@ -207,7 +213,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
         }
         catch (...)
         {
-            Log("RegCreateKeyEx logging failure");
+            Log("[%d] RegCreateKeyEx logging failure.\n", RegLocalInstance);
         }
     }
 #endif
@@ -227,13 +233,15 @@ LSTATUS __stdcall RegOpenKeyExFixup(
 {
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+
     auto entry = LogFunctionEntry();
 
-    Log("RegOpenKeyEx:\n");
+    Log("[%d] RegOpenKeyEx:\n", RegLocalInstance);
 
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(keypath, samDesired);
+    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
 
     auto result = RegOpenKeyExImpl(key, subKey, options, samModified,  resultKey);
     QueryPerformanceCounter(&TickEnd);
@@ -245,12 +253,12 @@ LSTATUS __stdcall RegOpenKeyExFixup(
         try
         {
             LogKeyPath(key);
-            LogString("Sub Key", subKey);
+            LogString("\nSub Key", subKey);
             LogRegKeyFlags(options);
-            Log("samDesired=%s", InterpretRegKeyAccess(samDesired).c_str());
+            Log("\n[%d] samDesired=%s\n", RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
             if (samDesired != samModified)
             {
-                Log("ModifiedSam=%s", InterpretRegKeyAccess(samModified).c_str());
+                Log("[%d] ModifiedSam=%s\n", RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
             }
             LogFunctionResult(functionResult);
             if (function_failed(functionResult))
@@ -261,7 +269,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
         }
         catch (...)
         {
-            Log("RegOpenKeyEx logging failure");
+            Log("[%d] RegOpenKeyEx logging failure.\n", RegLocalInstance);
         }
     }
 #endif
@@ -286,14 +294,15 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
 
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
     auto entry = LogFunctionEntry();
 
 #if _DEBUG
-    Log("RegOpenKeyTransacted:\n");
+    Log("[%d] RegOpenKeyTransacted:\n", RegLocalInstance);
 #endif
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(keypath, samDesired);
+    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
 
     auto result = RegOpenKeyTransactedImpl(key, subKey, options, samModified, resultKey, hTransaction, pExtendedParameter);
     QueryPerformanceCounter(&TickEnd);
@@ -307,10 +316,10 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
             LogKeyPath(key);
             if (subKey) LogString("Sub Key", subKey);
             LogRegKeyFlags(options);
-            Log("SamDesired=%s", InterpretRegKeyAccess(samDesired).c_str());
+            Log("\n[%d] SamDesired=%s\n", RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
             if (samDesired != samModified)
             {
-                Log("ModifiedSam=%s", InterpretRegKeyAccess(samModified).c_str());
+                Log("[%d] ModifiedSam=%s\n", RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
             }
             LogFunctionResult(functionResult);
             if (function_failed(functionResult))
@@ -321,7 +330,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         }
         catch (...)
         {
-            Log("RegOpenKeyTransacted logging failure");
+            Log("[%d] RegOpenKeyTransacted logging failure.\n", RegLocalInstance);
         }
     }
 #endif

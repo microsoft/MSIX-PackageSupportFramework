@@ -2,8 +2,9 @@
 "AppxManifest.xml" "AppxManifest.xml"
 "config.json" "config.json"
 "Registry.Dat" "Registry.dat"
-"User.Dat" "User.dat"
-"UserClasses.Dat" "UserClasses.dat"
+"User.dat" "User.dat"
+"UserClasses.dat" "UserClasses.dat"
+
 
 "..\..\Win32\Release\RegLegacyTest.exe" "RegLegacyTest.exe"
 

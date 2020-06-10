@@ -36,7 +36,7 @@ extern "C" {
         switch (ul_reason_for_call)
         {
         case DLL_PROCESS_ATTACH:
-            Log("Attaching RegLegacyFixups");
+            Log("Attaching RegLegacyFixups\n");
 
             InitializeFixups();
             InitializeConfiguration();
@@ -50,7 +50,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log("RegLegacyFixups attach ERROR");
+        Log("RegLegacyFixups attach ERROR\n");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }

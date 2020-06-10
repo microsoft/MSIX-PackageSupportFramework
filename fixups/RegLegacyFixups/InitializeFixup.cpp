@@ -112,99 +112,117 @@ void LogString(const wchar_t* name, const wchar_t* value)
 void InitializeFixups()
 {
 
-    Log("Initializing RegLegacyFixups");
+    Log("Initializing RegLegacyFixups\n");
     
 }
 
 
 void InitializeConfiguration()
 {
-    Log("RegLegacyFixups Start InitializeConfiguration()");
+    Log("RegLegacyFixups Start InitializeConfiguration()\n");
     
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
-        const psf::json_array& rootConfigArray = rootConfig->as_array();
-        for (auto& spec : rootConfigArray)
+        if (rootConfig != NULL)
         {
-            Reg_Remediation_Spec specItem;
-
-            auto& specObject = spec.as_object();
-            auto type = specObject.get("type").as_string().wstring();
-#if _DEBUG
-            Log(L"Type: %Ls", type.data());
-#endif
-            if (type.compare(L"ModifyKeyAccess") == 0)
+            Log("RegLegacyFixups process config\n");
+            const psf::json_array& rootConfigArray = rootConfig->as_array();
+            for (auto& spec : rootConfigArray)
             {
-                specItem.remeditaionType = Reg_Remediation_Type_ModifyKeyAccess;
-                if (auto remValue = specObject.try_get("remediation"))
+                Log("RegLegacyFixups: process spec\n");
+
+                Reg_Remediation_Spec specItem;
+
+                auto& specObject = spec.as_object();
+                Log("RegLegacyFixups: Have specObject\n");
+
+                auto type = specObject.get("type").as_string().wstring();
+                Log("RegLegacyFixups: have type");
+#if _DEBUG
+                Log(L"Type: %Ls\n", type.data());
+#endif
+                if (type.compare(L"ModifyKeyAccess") == 0)
                 {
-                    const psf::json_array& remediationsArray = remValue->as_array();
-                    for (auto& remediationsItem : remediationsArray)
+                    Log("RegLegacyFixups: is ModifyKeyAccess\n");
+                    specItem.remeditaionType = Reg_Remediation_Type_ModifyKeyAccess;
+                    if (auto remValue = specObject.try_get("remediation"))
                     {
-                        Reg_Remediation_Record recordItem;
-                        auto& remediationsItemObject = remediationsItem.as_object();
-                        
-                        auto hiveType = remediationsItemObject.try_get("hive")->as_string().wstring(); 
-#if _DEBUG
-                        Log(L"Hive: %Ls", hiveType.data());
-#endif
-                        if (hiveType.compare(L"HKCU") == 0)
+                        Log("RegLegacyFixups: have rediation(s)\n");
+                        const psf::json_array& remediationsArray = remValue->as_array();
+                        for (auto& remediationsItem : remediationsArray)
                         {
-                            recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_HKCU;
-                        }
-                        else if (hiveType.compare(L"HKLM") == 0)
-                        {
-                            recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_HKLM;
-                        }
-                        else
-                        {
-                            recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_Unknown;
-                        }
+                            Log("RegLegacyFixups: process remediation\n");
+                            Reg_Remediation_Record recordItem;
+                            auto& remediationsItemObject = remediationsItem.as_object();
 
-                        if (auto patterns = remediationsItemObject.try_get("patterns"))
-                        {
-                            const psf::json_array& patternsArray = patterns->as_array();
-                            for (auto& pattern : patternsArray)
+                            auto hiveType = remediationsItemObject.try_get("hive")->as_string().wstring();
+#if _DEBUG
+                            Log(L"Hive: %Ls\n", hiveType.data());
+#endif
+                            if (hiveType.compare(L"HKCU") == 0)
                             {
-#if _DEBUG
-                                Log(L"Pattern: %Ls", pattern.as_string().wide());
-#endif
-                                recordItem.modifyKeyAccess.patterns.push_back(pattern.as_string().wide());
+                                recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_HKCU;
                             }
-                        }
+                            else if (hiveType.compare(L"HKLM") == 0)
+                            {
+                                recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_HKLM;
+                            }
+                            else
+                            {
+                                recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_Unknown;
+                            }
+                            Log("RegLegacyFixups: have hive\n");
 
-                        auto accessType = remediationsItemObject.try_get("access")->as_string().wstring();
+                            for (auto& pattern : remediationsItemObject.get("patterns").as_array())
+                            {
+                                auto patternString = pattern.as_string().wstring();
+                                
 #if _DEBUG
-                        Log(L"Access: %Ls", accessType.data());
+                                Log(L"Pattern: %Ls\n", patternString.data());
 #endif
-                        if (accessType.compare(L"Full2RW") == 0)
-                        {
-                            recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2RW;
-                        }
-                        else if (accessType.compare(L"Full2R") == 0)
-                        {
-                            recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2R;
-                        }
-                        else if (accessType.compare(L"RW2R") == 0)
-                        {
+                                recordItem.modifyKeyAccess.patterns.push_back(patternString.data());
+                               
+                            }
+                            Log("RegLegacyFixups: have patterns\n");
+
+                            auto accessType = remediationsItemObject.try_get("access")->as_string().wstring();
+#if _DEBUG
+                            Log(L"Access: %Ls\n", accessType.data());
+#endif
+                            if (accessType.compare(L"Full2RW") == 0)
+                            {
+                                recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2RW;
+                            }
+                            else if (accessType.compare(L"Full2R") == 0)
+                            {
+                                recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2R;
+                            }
+                            else if (accessType.compare(L"RW2R") == 0)
+                            {
                                 recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_RW2R;
+                            }
+                            else
+                            {
+                                recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Unknown;
+                            }
+                            Log("RegLegacyFixups: have access\n");
+                            specItem.remediationRecords.push_back(recordItem);
                         }
-                        else
-                        {
-                            recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Unknown;
-                        }
-                        specItem.remediationRecords.push_back(recordItem);
                     }
+
                 }
+                else
+                {
+                    specItem.remeditaionType = Reg_Remediation_Type_Unknown;
+                }
+                g_regRemediationSpecs.push_back(specItem);
 
             }
-            else
-            {
-                specItem.remeditaionType = Reg_Remediation_Type_Unknown;
-            }
-            g_regRemediationSpecs.push_back(specItem);
         }
-
-        Log("RegLegacyFixups End InitializeConfiguration()");
+        else
+        {
+            Log("RegLegacyFixups: Fixup not found in json config.\n");
+        }
+        Log("RegLegacyFixups End InitializeConfiguration()\n");
     }
 }

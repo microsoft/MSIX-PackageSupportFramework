@@ -19,6 +19,7 @@
 
 
 #include <psf_utils.h>
+#include <sddl.h>
 
 //#include <ntstatus.h>
 #define STATUS_BUFFER_TOO_SMALL          ((NTSTATUS)0xC0000023L)
@@ -719,6 +720,42 @@ inline void LogRegKeyAccess(DWORD access, const char* msg = "Access")
     }
 
     Log("\n");
+}
+
+inline void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWORD instance)
+{
+    try
+    {
+        if (securityAttributes != NULL)
+        {
+            ULONG len = 2048;
+            wchar_t* xvert;
+            bool xverted = ConvertSecurityDescriptorToStringSecurityDescriptor(
+                securityAttributes->lpSecurityDescriptor,
+                SDDL_REVISION_1,
+                ATTRIBUTE_SECURITY_INFORMATION | BACKUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | LABEL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
+                &xvert,
+                &len
+            );
+            if (xverted)
+            {
+                Log("[%d] SecurityAccess %d %d %Ls ", instance, securityAttributes->nLength, securityAttributes->bInheritHandle, xvert);
+                LocalFree(xvert);
+            }
+            else
+            {
+                Log("[%x] error to query security descriptor.\n", instance);
+            }
+        }
+        else
+        {
+            Log("[%x] No security descriptor provided.\n", instance);
+        }
+    }
+    catch (...)
+    {
+        Log("[%x] exception to query security descriptor.\n", instance);
+    }
 }
 
 #define LogCallingModule() \
