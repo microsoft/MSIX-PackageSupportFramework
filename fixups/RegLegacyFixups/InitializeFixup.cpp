@@ -193,6 +193,11 @@ void InitializeConfiguration()
                             {
                                 recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2RW;
                             }
+                            else if (accessType.compare(L"Full2MaxAllowed") == 0)
+                            {
+                                recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2MaxAllowed;
+
+                            }
                             else if (accessType.compare(L"Full2R") == 0)
                             {
                                 recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2R;
@@ -200,6 +205,11 @@ void InitializeConfiguration()
                             else if (accessType.compare(L"RW2R") == 0)
                             {
                                 recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_RW2R;
+                            }
+                            else if (accessType.compare(L"RW2MaxAllowed") == 0)
+                            {
+                                recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_RW2MaxAllowed;
+
                             }
                             else
                             {

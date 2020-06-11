@@ -21,7 +21,9 @@ enum Modify_Key_Access_Types
     Modify_Key_Access_Type_Unknown = 0,
     Modify_Key_Access_Type_Full2RW,
     Modify_Key_Access_Type_Full2R,
-    Modify_Key_Access_Type_RW2R
+    Modify_Key_Access_Type_Full2MaxAllowed,
+    Modify_Key_Access_Type_RW2R,
+    Modify_Key_Access_Type_RW2MaxAllowed
 };
 
 enum Modify_Key_Hive_Types

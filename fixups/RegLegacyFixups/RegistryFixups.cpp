@@ -66,12 +66,20 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #endif
                                     }
                                     break;
+                                case Modify_Key_Access_Type_Full2MaxAllowed:
+                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                    {
+                                        samModified = MAXIMUM_ALLOWED;
+#ifdef _DEBUG
+                                        Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
+#endif                                    
+                                    }
                                 case Modify_Key_Access_Type_Full2R:
                                     if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
                                     {
                                         samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
+                                        Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);  
 #endif
                                     }
                                 case Modify_Key_Access_Type_RW2R:
@@ -81,6 +89,14 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                         Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
+                                    }
+                                case Modify_Key_Access_Type_RW2MaxAllowed:
+                                    if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE | WRITE_DAC | WRITE_OWNER)) != 0)
+                                    {
+                                        samModified = MAXIMUM_ALLOWED;
+#ifdef _DEBUG
+                                        Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
+#endif                                    
                                     }
                                 default:
                                     break;
@@ -123,6 +139,14 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                         Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
                                     }
+                                case Modify_Key_Access_Type_Full2MaxAllowed:
+                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                    {
+                                        samModified = MAXIMUM_ALLOWED;
+#ifdef _DEBUG
+                                        Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
+#endif                                    
+                                    }
                                 case Modify_Key_Access_Type_RW2R:
                                     if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE)) != 0)
                                     {
@@ -130,6 +154,14 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                         Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
+                                    }
+                                case Modify_Key_Access_Type_RW2MaxAllowed:
+                                    if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE | WRITE_DAC | WRITE_OWNER)) != 0)
+                                    {
+                                        samModified = MAXIMUM_ALLOWED;
+#ifdef _DEBUG
+                                        Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
+#endif                                    
                                     }
                                 default:
                                     break;
