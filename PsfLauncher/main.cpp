@@ -54,10 +54,6 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
     Log("\tIn Launcher_main()");
 
-    //Log("\tWaiting for debugger to attach...");
-    //psf::wait_for_debugger();
-    //Log("\tDebugger attahced.");
-
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     THROW_HR_IF_MSG(ERROR_NOT_FOUND, !appConfig, "Error: could not find matching appid in config.json and appx manifest");
 
