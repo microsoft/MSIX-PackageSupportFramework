@@ -33,11 +33,18 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             else
             {
                 if (fileName != NULL)
+                {
                     LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                }
                 if (appName != NULL)
+                {
+
                     LogString(GetPrivateProfileStringInstance,L" Section", appName);
+                }
                 if (keyName != NULL)
-                    LogString(GetPrivateProfileStringInstance,L" Key", keyName);
+                {
+                        LogString(GetPrivateProfileStringInstance,L" Key", keyName);
+                }
             }
             if (fileName != NULL)
             {
