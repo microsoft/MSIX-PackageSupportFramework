@@ -26,6 +26,7 @@ std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
 
 void Log(const char* fmt, ...)
 {
+#if _DEBUG    
     try
     {
         va_list args;
@@ -49,18 +50,18 @@ void Log(const char* fmt, ...)
         }
 
         str.resize(count);
-#if _DEBUG
         ::OutputDebugStringA(str.c_str());
-#endif
     }
     catch (...)
     {
         ::OutputDebugStringA("Exception in Log()");
         ::OutputDebugStringA(fmt);
     }
+    #endif
 }
 void Log(const wchar_t* fmt, ...)
 {
+#if _DEBUG
     try
     {
         va_list args;
@@ -81,15 +82,14 @@ void Log(const wchar_t* fmt, ...)
             va_end(args2);
         }
         wstr.resize(count);
-#if _DEBUG
         ::OutputDebugStringW(wstr.c_str());
-#endif
     }
     catch (...)
     {
         ::OutputDebugStringA("Exception in wide Log()");
         ::OutputDebugStringW(fmt);
     }
+#endif
 }
 void LogString(const char* name, const char* value)
 {
@@ -138,9 +138,7 @@ void InitializeConfiguration()
 
                 auto type = specObject.get("type").as_string().wstring();
                 Log("RegLegacyFixups: have type");
-#if _DEBUG
                 Log(L"Type: %Ls\n", type.data());
-#endif
                 if (type.compare(L"ModifyKeyAccess") == 0)
                 {
                     Log("RegLegacyFixups: is ModifyKeyAccess\n");
@@ -156,9 +154,7 @@ void InitializeConfiguration()
                             auto& remediationsItemObject = remediationsItem.as_object();
 
                             auto hiveType = remediationsItemObject.try_get("hive")->as_string().wstring();
-#if _DEBUG
                             Log(L"Hive: %Ls\n", hiveType.data());
-#endif
                             if (hiveType.compare(L"HKCU") == 0)
                             {
                                 recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_HKCU;
@@ -177,18 +173,14 @@ void InitializeConfiguration()
                             {
                                 auto patternString = pattern.as_string().wstring();
                                 
-#if _DEBUG
                                 Log(L"Pattern: %Ls\n", patternString.data());
-#endif
                                 recordItem.modifyKeyAccess.patterns.push_back(patternString.data());
                                
                             }
                             Log("RegLegacyFixups: have patterns\n");
 
                             auto accessType = remediationsItemObject.try_get("access")->as_string().wstring();
-#if _DEBUG
                             Log(L"Access: %Ls\n", accessType.data());
-#endif
                             if (accessType.compare(L"Full2RW") == 0)
                             {
                                 recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Full2RW;
