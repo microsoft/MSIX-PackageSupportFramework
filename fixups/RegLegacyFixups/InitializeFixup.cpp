@@ -23,10 +23,10 @@ using namespace std::literals;
 
 std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
 
-
+#if _DEBUG 
 void Log(const char* fmt, ...)
 {
-#if _DEBUG    
+   
     try
     {
         va_list args;
@@ -57,11 +57,15 @@ void Log(const char* fmt, ...)
         ::OutputDebugStringA("Exception in Log()");
         ::OutputDebugStringA(fmt);
     }
-    #endif
 }
+#else
+void Log(const char* , ...)
+{
+}
+#endif
+#if _DEBUG
 void Log(const wchar_t* fmt, ...)
 {
-#if _DEBUG
     try
     {
         va_list args;
@@ -89,8 +93,13 @@ void Log(const wchar_t* fmt, ...)
         ::OutputDebugStringA("Exception in wide Log()");
         ::OutputDebugStringW(fmt);
     }
-#endif
 }
+#else
+void Log(const wchar_t* , ...)
+{
+}
+#endif
+
 void LogString(const char* name, const char* value)
 {
     Log("%s=%s\n", name, value);
