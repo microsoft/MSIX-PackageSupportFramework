@@ -24,11 +24,18 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             if constexpr (psf::is_ansi<CharT>)
             {
                 if (fileName != NULL)
+                {
                     LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                }
                 if (appName != NULL)
+                {
+
                     LogString(GetPrivateProfileStringInstance,L" Section", widen_argument(appName).c_str());
+                }
                 if (keyName != NULL)
-                    LogString(GetPrivateProfileStringInstance,L" Key", widen_argument(keyName).c_str());
+                {
+                        LogString(GetPrivateProfileStringInstance,L" Key", widen_argument(keyName).c_str());
+                }
             }
             else
             {
