@@ -14,7 +14,7 @@ The following Windows API calls are supported.
 
 Currently, there is only one remediation type:
 
-| Remedition Type | Purpose |
+| Remediation Type | Purpose |
 | --------------- | ------- |
 | `ModifyKeyAccess` | Allows for modification of access parameters in calls to open registry keys.  This remediation targets the `samDesired` parameter that specifies the permissions granted to the application when opening the key. This remediation type does not target calls for registry values.|
 
@@ -67,17 +67,16 @@ Here is an example of using this fixup to address an application that contains a
 						"hive": "HKCU",
 						"patterns": [
 							"^Software\\\\Vendor.*"
-						]
+						],
 						"access": "Full2RW"
 					},
 										{
 						"hive": "HKLM",
 						"patterns": [
 							"^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor.*"
-						]
+						],
 						"access": "RW2MaxAllowed"
 					}
-
 				]
 			}
 		]
@@ -105,7 +104,7 @@ Here is the equivalent config section when using XML to specify.
 				<remediation>
 					<hive>HKLM</hive>
 					<patterns>
-						<patern>^SOFTWARE\\\\Vendor.*</pattern>
+						<patern>^^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor.*</pattern>
 					</patterns>
 					<access>RW2R</access>
 				</remediation>
