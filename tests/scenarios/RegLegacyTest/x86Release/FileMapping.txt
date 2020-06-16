@@ -1,0 +1,17 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+"Registry.Dat" "Registry.dat"
+"User.dat" "User.dat"
+"UserClasses.dat" "UserClasses.dat"
+
+
+"..\..\Win32\Release\RegLegacyTest.exe" "RegLegacyTest.exe"
+
+"..\..\..\Win32\Release\PsfLauncher32.exe" "PsfLauncher.exe"
+"..\..\..\Win32\Release\PsfRuntime32.dll" "PsfRuntime32.dll"
+"..\..\..\Win32\Release\RegLegacyFixups32.dll" "RegLegacyFixups32.dll"
+
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
