@@ -345,14 +345,17 @@ bool IsUnderUserAppDataLocalImpl(_In_ const CharT* fileName)
     }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+  
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData));
     }
+
     else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData));
     }
+
     return path_relative_to(fileName, psf::known_folder(FOLDERID_LocalAppData));
 }
 bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName)
@@ -373,15 +376,19 @@ bool IsUnderUserAppDataLocalPackagesImpl(_In_ const CharT* fileName)
         return false;
     }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+
     constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
     }
+
     else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
     }
+
     return path_relative_to(fileName, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
 }
 
@@ -405,14 +412,17 @@ bool IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
     }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+
     if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
     }
+
     else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
     {
         return path_relative_to(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
     }
+
     return path_relative_to(fileName, psf::known_folder(FOLDERID_RoamingAppData));
 }
 
@@ -433,6 +443,7 @@ std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
     {
         constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
         constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+
         if (IsUnderUserAppDataLocal(fileName))
         {
             auto lad = psf::known_folder(FOLDERID_LocalAppData);
@@ -441,10 +452,12 @@ std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
             {
                 foo = fileName + 4;
             }
+
             else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
             {
                 foo = fileName + 4;
             }
+
             else
             {
                 foo = fileName;
@@ -827,6 +840,7 @@ normalized_path NormalizePathImpl(const CharT* path)
         // GetFullPathName did something odd...
         LogString(L"\t\tFRF Error: Path type not supported", path);
         Log(L"\t\tFRF Error: Path type: 0x%x", result.path_type);
+
         assert(false);
         return {};
     }
@@ -882,6 +896,7 @@ normalized_path NormalizePath(const wchar_t* path)
             npath.full_path = widen(new_wstring);
             return npath;
         }        
+
         new_wstring = StripFileColonSlash(new_wstring);     // removes "file:\\" from start of path if present
         return NormalizePathImpl(new_wstring.c_str());
     }
