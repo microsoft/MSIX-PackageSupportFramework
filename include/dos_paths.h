@@ -54,6 +54,12 @@ namespace psf
             return dos_path_type::root_local_device;
         }
 
+        constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+        if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, path))
+        {
+            return dos_path_type::local_device;
+        }
+
         if (is_path_separator(path[0]))
         {
             if (is_path_separator(path[1]))

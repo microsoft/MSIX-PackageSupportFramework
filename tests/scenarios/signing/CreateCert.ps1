@@ -116,7 +116,7 @@ function CreateCert()
 	if ($cert -eq $null)
     {
 		write-host "Making a new self-signed certififcate"
-        $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
+        $cert = New-SelfSignedCertificate -Type Custom -Subject "$Subject" -KeyUsage DigitalSignature -KeyExportPolicy Exportable -FriendlyName "$FriendlyName" -CertStoreLocation "$CertStoreLocation"
 } 
 	
 	Write-host "Exporting cert to build"
