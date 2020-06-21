@@ -21,9 +21,9 @@ BOOL __stdcall GetPrivateProfileStructFixup(
         if (guard)
         {
             DWORD GetPrivateProfileStructInstance = ++g_FileIntceptInstance;
-            LogString(GetPrivateProfileStructInstance,L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
             if (fileName != NULL)
             {
+                LogString(GetPrivateProfileStructInstance, L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);

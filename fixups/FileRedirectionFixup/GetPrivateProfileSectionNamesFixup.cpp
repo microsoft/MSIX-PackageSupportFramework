@@ -19,9 +19,9 @@ DWORD __stdcall GetPrivateProfileSectionNamesFixup(
         if (guard)
         {
             DWORD GetPrivateProfileSectionNamesInstance = ++g_FileIntceptInstance;
-            LogString(GetPrivateProfileSectionNamesInstance,L"GetPrivateProfileSectionNamesFixup for fileName", widen(fileName, CP_ACP).c_str());
             if (fileName != NULL)
             {
+                LogString(GetPrivateProfileSectionNamesInstance, L"GetPrivateProfileSectionNamesFixup for fileName", widen(fileName, CP_ACP).c_str());
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
