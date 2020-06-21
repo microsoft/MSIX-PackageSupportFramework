@@ -57,6 +57,22 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     THROW_HR_IF_MSG(ERROR_NOT_FOUND, !appConfig, "Error: could not find matching appid in config.json and appx manifest");
 
+#ifdef _DEBUG
+    if (appConfig)
+    {
+        auto waitSignalPtr = appConfig->try_get("WaitForDebugger");
+        if (waitSignalPtr)
+        {
+            bool waitSignal = waitSignalPtr->as_boolean().get();
+            if (waitSignal)
+            {
+                Log("PsfLauncher waiting for debugger to attach to process...\n");
+                psf::wait_for_debugger();
+            }
+        }
+    }
+#endif
+
     LogApplicationAndProcessesCollection();
 
     auto dirPtr = appConfig->try_get("workingDirectory");
