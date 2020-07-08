@@ -159,6 +159,31 @@ namespace winternl
         ULONG Length,
         PULONG ResultLength);
 
+    NTSTATUS __stdcall RegDeleteKey(
+        HANDLE hKey,
+        PUNICODE_STRING lpSubKey
+    );
+
+    NTSTATUS __stdcall RegDeleteKeyEx(
+        HANDLE hKey,
+        PUNICODE_STRING lpSubKey,
+        DWORD viewDesired, // 32/64
+        DWORD Reserved
+    );
+
+    NTSTATUS __stdcall RegDeleteKeyTransacted(
+        HANDLE hKey,
+        PUNICODE_STRING lpSubKey,
+        DWORD viewDesired, // 32/64
+        DWORD Reserved,
+        HANDLE hTransaction,
+        PVOID  pExtendedParameter
+    );
+
+    NTSTATUS __stdcall RegDeleteValue(
+        HANDLE hKey,
+        PUNICODE_STRING lpValueName
+    );
 }
 
 
@@ -196,6 +221,9 @@ namespace impl
     inline auto NtQueryKey = WINTERNL_FUNCTION(winternl::NtQueryKey);
     //inline auto NtQueryInformationFile = WINTERNL_FUNCTION(winternl::NtQueryInformationFile);
     //inline auto NtQueryValueKey = WINTERNL_FUNCTION(winternl::NtQueryValueKey);
+
+
+   // inline auto RegDeleteKey = WINTERNL_FUNCTION(winternl::RegDeleteKey);
 
 }
 
