@@ -219,11 +219,6 @@ namespace impl
 {
 
     inline auto NtQueryKey = WINTERNL_FUNCTION(winternl::NtQueryKey);
-    //inline auto NtQueryInformationFile = WINTERNL_FUNCTION(winternl::NtQueryInformationFile);
-    //inline auto NtQueryValueKey = WINTERNL_FUNCTION(winternl::NtQueryValueKey);
-
-
-   // inline auto RegDeleteKey = WINTERNL_FUNCTION(winternl::RegDeleteKey);
 
 }
 

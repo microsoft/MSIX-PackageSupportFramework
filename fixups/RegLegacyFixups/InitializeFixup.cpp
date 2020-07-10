@@ -246,7 +246,6 @@ void InitializeConfiguration()
                         }
                         else
                         {
-                            ///specItem.remeditaionType = Reg_Remediation_Type_Unknown;
                         }
                         g_regRemediationSpecs.push_back(specItem);
                     }
