@@ -1,14 +1,15 @@
 [Files]
 "AppxManifest.xml" "AppxManifest.xml"
 "config.json" "config.json"
+"Registry.dat" "Registry.dat"
+"User.Dat" "User.dat"
+"UserClasses.Dat" "UserClasses.dat"
 
-"..\..\${Architecture}${Configuration}\DynamicLibraryTest.exe" "DynamicLibraryTest.exe"
+"..\..\${Architecture}${Configuration}\EnvVarsATest.exe" "EnvVarsATest.exe"
 
 "..\..\..\${Architecture}${Configuration}\PsfLauncher${Bitness}.exe" "PsfLauncher.exe"
 "..\..\..\${Architecture}${Configuration}\PsfRuntime${Bitness}.dll" "PsfRuntime${Bitness}.dll"
-"..\..\..\${Architecture}${Configuration}\DynamicLibraryFixup${Bitness}.dll" "DynamicLibraryFixup${Bitness}.dll"
-
-"..\..\..\${Architecture}${Configuration}\TraceFixup${Bitness}.dll" "SubDir\TraceFixup${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\EnvVarFixup${Bitness}.dll" "EnvVarFixup${Bitness}.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

@@ -61,10 +61,58 @@ inline int parse_args(int argc, const wchar_t** argv, std::map<std::wstring_view
 
     return ERROR_SUCCESS;
 }
+inline int parse_args(int argc, const char** argv, std::map<std::string_view, std::string>& allowedArgs)
+{
+    using namespace std::literals;
+
+    for (int i = 1; i < argc; ++i)
+    {
+        const auto str = argv[i];
+        std::size_t colonPos = 0;
+        for (; str[colonPos] && (str[colonPos] != ':'); ++colonPos);
+
+        bool handled = false;
+        if (str[colonPos])
+        {
+            std::string_view arg(str, colonPos);
+            std::string_view value(str + colonPos + 1);
+            if (arg == "/mode"sv)
+            {
+                if (value == "test")
+                {
+                    g_testRunnerPipe = test_client_connect();
+                    if (!g_testRunnerPipe)
+                    {
+                        return print_last_error("Failed to open pipe");
+                    }
+                    handled = true;
+                }
+            }
+            else if (auto itr = allowedArgs.find(arg); itr != allowedArgs.end())
+            {
+                itr->second = value;
+                handled = true;
+            }
+        }
+
+        if (!handled)
+        {
+            std::cout << error_text() << "ERROR: Unknown argument: " << error_info_text() << argv[i] << "\n";
+            return ERROR_INVALID_PARAMETER;
+        }
+    }
+
+    return ERROR_SUCCESS;
+}
 
 inline int parse_args(int argc, const wchar_t** argv)
 {
     std::map<std::wstring_view, std::wstring> allowedArgs;
+    return parse_args(argc, argv, allowedArgs);
+}
+inline int parse_args(int argc, const char** argv)
+{
+    std::map<std::string_view, std::string> allowedArgs;
     return parse_args(argc, argv, allowedArgs);
 }
 

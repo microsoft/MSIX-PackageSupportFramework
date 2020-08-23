@@ -1,14 +1,15 @@
 [Files]
 "AppxManifest.xml" "AppxManifest.xml"
 "config.json" "config.json"
+"Registry.Dat" "Registry.dat"
+"User.Dat" "User.dat"
+"UserClasses.Dat" "UserClasses.dat"
 
-"..\..\Win32\Release\DynamicLibraryTest.exe" "DynamicLibraryTest.exe"
+"..\..\Win32\Release\EnvVarsWTest.exe" "EnvVarsWTest.exe"
 
 "..\..\..\Win32\Release\PsfLauncher32.exe" "PsfLauncher.exe"
 "..\..\..\Win32\Release\PsfRuntime32.dll" "PsfRuntime32.dll"
-"..\..\..\Win32\Release\DynamicLibraryFixup32.dll" "DynamicLibraryFixup32.dll"
-
-"..\..\..\Win32\Release\TraceFixup32.dll" "SubDir\TraceFixup32.dll"
+"..\..\..\Win32\Release\EnvVarFixup32.dll" "EnvVarFixup32.dll"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
