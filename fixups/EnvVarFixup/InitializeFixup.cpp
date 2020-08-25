@@ -53,14 +53,16 @@ void Log(const char* fmt, ...)
         }
 
         str.resize(count);
-//#if _DEBUG
+#if _DEBUG
         ::OutputDebugStringA(str.c_str());
-//#endif
+#endif
     }
     catch (...)
     {
+#if _DEBUG
         ::OutputDebugStringA("Exception in Log()");
         ::OutputDebugStringA(fmt);
+#endif
     }
 }
 void Log(const wchar_t* fmt, ...)
@@ -84,15 +86,17 @@ void Log(const wchar_t* fmt, ...)
             count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
             va_end(args2);
         }
+#if _DEBUG
         wstr.resize(count);
-//#if _DEBUG
         ::OutputDebugStringW(wstr.c_str());
-//#endif
+#endif
     }
     catch (...)
     {
+#if _DEBUG
         ::OutputDebugStringA("Exception in wide Log()");
         ::OutputDebugStringW(fmt);
+#endif
     }
 }
 void LogString(DWORD inst, const char* name, const char* value)
@@ -155,11 +159,9 @@ void InitializeConfiguration()
                     auto variablevalue = specObject.get("value").as_string().wstring();
 
                     auto useregistry = specObject.get("useregistry").as_string().wstring();
-#if _DEBUG
                     LogString(0, "GetEnvFixup Config: name", variablenamePattern.data());
                     LogString(0, "GetEnvFixup Config: value", variablevalue.data());
                     LogString(0, "GetEnvFixup Config: useregistry", useregistry.data());
-#endif                    
                     g_envvar_envVarSpecs.emplace_back();
                     g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
                     g_envvar_envVarSpecs.back().variablevalue = variablevalue;
