@@ -1,0 +1,44 @@
+{
+    "applications": [
+        {
+            "id": "Fixed32",
+            "executable": "EnvVarsWTest.exe"
+        },
+        {
+            "id": "Fixed64",
+            "executable": "EnvVarsWTest.exe"
+        }
+    ],
+    "processes": [
+        {
+            "executable": "PsfLauncher.*"
+        },
+        {
+            "executable": ".*",
+            "fixups": [
+                {
+                    "dll": "EnvVarFixup.dll",
+          	        "config": {
+            			    "envVars": [
+              			    {
+              			  	    "name": "Test1",
+                            "value": "Value1",
+                            "useregistry": "false"
+              			    },
+				                {
+              			  	    "name": "Test2",
+                            "value": "",
+                            "useregistry": "true"
+              			    },
+                        {
+                              "name": "Test3",
+                              "value": "",
+                              "useregistry": "true"
+                        }
+                      ]
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PSFData Name="EnvVarFixup"
+         SchemaLocation="https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/MetadataSchema.xml ..\MetadataSchema.xsd">
+  >
+  <Version>1.0.0</Version>
+  <MinimumWindowsPlatform>10.0.14393.0</MinimumWindowsPlatform>
+  <Description>
+    To redirect environment variable calls to work within the package.
+  </Description>
+  <WhenToUse>
+    When your packaged application is unable to run because it does not find Environment Variables that are part of the package.
+  </WhenToUse>
+</PSFData>
+
