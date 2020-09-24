@@ -76,8 +76,10 @@ void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::p
 
 	THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
 	DWORD exitCode = ::WaitForSingleObject(shex.hProcess, timeout);
-	THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
-	THROW_IF_WIN32_ERROR(exitCode);
+
+    // Don't throw an error as we should assume that the process would have appropriately made indications to the user.  Log for debug purposes only.
+    Log("PsfLauncher: Shell Launch: process returned exit code 0x%x", exitCode);
+
 	CloseHandle(shex.hProcess);
 }
 
