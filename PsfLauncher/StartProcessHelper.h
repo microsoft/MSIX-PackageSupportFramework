@@ -27,8 +27,34 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     };
 
     PROCESS_INFORMATION processInfo{};
+    std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeListLocal;
+    if (attributeList)
+    {
+        startupInfoEx.lpAttributeList = attributeList;
+    }
+    else
+    {
+        SIZE_T AttributeListSize{};
+        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
 
-    startupInfoEx.lpAttributeList = attributeList;
+        attributeListLocal = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
+
+        RETURN_LAST_ERROR_IF_MSG(
+            !InitializeProcThreadAttributeList(
+                attributeListLocal.get(),
+                1,
+                0,
+                &AttributeListSize),
+            "Could not initialize the proc thread attribute list.");
+        startupInfoEx.lpAttributeList = attributeListLocal.get();
+    }
+    auto deleteAttrList = wil::scope_exit([&]
+    {
+        if (attributeListLocal)
+        {
+            DeleteProcThreadAttributeList(attributeListLocal.get());
+        }
+    });
 
     RETURN_LAST_ERROR_IF_MSG(
         !::CreateProcessW(
