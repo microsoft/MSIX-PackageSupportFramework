@@ -64,7 +64,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     std::wstring dirWstr = dirStr;
     dirWstr = ReplaceVariablesInString(dirWstr, true, true);
     std::filesystem::path currentDirectory;
-    if (dirWstr[1] != L':')
+    if (dirWstr.size() < 2 || dirWstr[1] != L':')
     {
         currentDirectory = (packageRoot / dirWstr);
     }
@@ -112,10 +112,21 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
-        std::wstring fullargs = (L"\"" + exePath.native() + L"\" " + exeArgString + L" " + args);
+        std::wstring fullargs;
+        if (!exeArgString.empty())
+        {
+            fullargs = (exeArgString + L" " + args);
+        }
+        else
+        {
+            fullargs = args;
+        }
+
         LogString("Process Launch: ", fullargs.data());
         LogString("Working Directory: ", currentDirectory.c_str());
-        HRESULT hr = StartProcess(exePath.c_str(), fullargs.data(), currentDirectory.c_str(), cmdShow,  INFINITE);
+
+        //THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
+        HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
         if (hr != ERROR_SUCCESS)
         {
             Log("Error return from launching process.");

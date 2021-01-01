@@ -1,0 +1,125 @@
+﻿{
+  "applications": [
+    {
+      "id": "Fixed",
+      "executable": "FileSystemTest.exe",
+      "workingDirectory": ""
+    }
+  ],
+  "processes": [
+    {
+      "executable": "PsfLauncher.*"
+    },
+    {
+      "executable": ".*",
+      "fixups": [
+        {
+          "dll": "FileRedirectionFixup.dll",
+          "config": {
+            "redirectedPaths": {
+              "packageRelative": [
+                {
+                  "base": "",
+                  "patterns": [
+                    ".*\\.txt",
+                    "Tèƨƭ.*"
+                  ]
+                }
+              ],
+              "knownFolders": [
+                {
+                  "id": "System",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "SystemX86",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "ProgramFilesX86",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "ProgramFilesX64",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "ProgramFilesCommonX86",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "ProgramFilesCommonX64",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "Windows",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "ProgramData",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*\\.txt"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
