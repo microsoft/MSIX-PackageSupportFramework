@@ -62,52 +62,52 @@ if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 }
 
 RunTest "x64" "Debug"
-RunTest "x64" "Release"
-RunTest "x86" "Debug"
-RunTest "x86" "Release"
+#RunTest "x64" "Release"
+#RunTest "x86" "Debug"
+#RunTest "x86" "Release"
 
-write-host "Making config.json from config.xml"
-foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
-{
-    if (Test-Path "$($dir.FullName)\FileMapping.txt")
-    {
-        push-location $dir.fullName
-        
-        foreach ($configurationFile in (get-childitem -file "Config*.json"))
-        {
-            Copy-Item $configurationFile -destination ("$configurationFile"+"_bak")
-            
-            $configFileName = $configurationFile.baseName
-            start-process -FilePath ..\..\..\xmlToJsonConverter\msxsl.exe -ArgumentList "$configFileName.xml ..\..\..\xmlToJsonConverter\Format.xsl -o $configurationFile" -NoNewWindow
-        }
-        pop-location
-    }
-}
+#write-host "Making config.json from config.xml"
+#foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
+#{
+#    if (Test-Path "$($dir.FullName)\FileMapping.txt")
+#    {
+#        push-location $dir.fullName
+#        
+#        foreach ($configurationFile in (get-childitem -file "Config*.json"))
+#        {
+#            Copy-Item $configurationFile -destination ("$configurationFile"+"_bak")
+#            
+#            $configFileName = $configurationFile.baseName
+#            start-process -FilePath ..\..\..\xmlToJsonConverter\msxsl.exe -ArgumentList "$configFileName.xml ..\..\..\xmlToJsonConverter\Format.xsl -o $configurationFile" -NoNewWindow
+#        }
+#        pop-location
+#    }
+#}
 
-RunTest "x64" "Debug"
-RunTest "x64" "Release"
-RunTest "x86" "Debug"
-RunTest "x86" "Release"
+#RunTest "x64" "Debug"
+#RunTest "x64" "Release"
+#RunTest "x86" "Debug"
+#RunTest "x86" "Release"
 
-Write-host "Removing generated json files"
-foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
-{
-    if (Test-Path "$($dir.FullName)\FileMapping.txt")
-    {
-        push-location $dir.fullName
-        
-        
-        foreach ($configurationFile in (get-childitem -file "Config*.json_bak"))
-        {
-            $configFileName = $configurationFile.baseName
-            Copy-Item $configurationFile -destination ("$configFileName.json")
-        }
-
-        remove-item "Config*.json_bak"
-        pop-location
-    }
-}
-
-Write-Host "$failedTests tests have failed"
-
-Exit $failedTests
+#Write-host "Removing generated json files"
+#foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
+#{
+#    if (Test-Path "$($dir.FullName)\FileMapping.txt")
+#    {
+#        push-location $dir.fullName
+#        
+#        
+#        foreach ($configurationFile in (get-childitem -file "Config*.json_bak"))
+#        {
+#            $configFileName = $configurationFile.baseName
+#            Copy-Item $configurationFile -destination ("$configFileName.json")
+#        }
+#
+#        remove-item "Config*.json_bak"
+#        pop-location
+#    }
+#}
+#
+#Write-Host "$failedTests tests have failed"
+#
+#Exit $failedTests
