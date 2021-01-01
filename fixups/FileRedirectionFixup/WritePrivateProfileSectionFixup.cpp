@@ -18,10 +18,10 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
         if (guard)
         {
             DWORD WritePrivateProfileSectionInstance = ++g_FileIntceptInstance;
-            LogString(WritePrivateProfileSectionInstance,L"WritePrivateProfileSectionFixup for fileName", fileName);
 
             if (fileName != NULL)
             {
+                LogString(WritePrivateProfileSectionInstance,L"WritePrivateProfileSectionFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
