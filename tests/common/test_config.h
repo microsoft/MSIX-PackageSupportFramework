@@ -146,7 +146,6 @@ inline int test_initialize(null_terminated_string_view name, std::int32_t testCo
 
 inline int test_cleanup()
 {
-    //MessageBoxEx(NULL, L"In test cleanup", L"In test cleanup", 0, 0);
     if (g_testRunnerPipe)
     {
         cleanup_test_message msg = {};
