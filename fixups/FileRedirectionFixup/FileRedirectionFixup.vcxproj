@@ -49,6 +49,7 @@
     <ClCompile Include="PathRedirection.cpp" />
     <ClCompile Include="RemoveDirectoryFixup.cpp" />
     <ClCompile Include="ReplaceFileFixup.cpp" />
+    <ClCompile Include="SetWorkingDirectory.cpp" />
     <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
