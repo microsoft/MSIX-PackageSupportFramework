@@ -443,7 +443,16 @@ private:
 		}
 		else if (createResult != ERROR_SUCCESS)
 		{
-			THROW_HR_MSG(HRESULT_FROM_WIN32(createResult), "Error with getting the key to see if PowerShell is installed.");
+			// Certain systems lack the 1 key but have the 3 key (both point to same path)
+			createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\3", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+			if (createResult == ERROR_FILE_NOT_FOUND)
+			{
+				return false;
+			}
+			else if (createResult != ERROR_SUCCESS)
+			{
+				THROW_HR_MSG(HRESULT_FROM_WIN32(createResult), "Error with getting the key to see if PowerShell is installed.");
+			}
 		}
 
 		DWORD valueFromRegistry = 0;
