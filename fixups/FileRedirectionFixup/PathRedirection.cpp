@@ -1201,6 +1201,12 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     }
     LogString(inst, L"\tFRF Should: for path", widen(path).c_str());
     
+    size_t found = (widen(path)).find(L"WritablePackageRoot", 0);
+    if (found != 0)
+    {
+        LogString(inst, L"Prevent inception", widen(path).c_str());
+        return result;
+    }
 
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
     bool c_copy = flag_set(flags, redirect_flags::copy_file);
