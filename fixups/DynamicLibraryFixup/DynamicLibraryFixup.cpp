@@ -28,7 +28,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
         Log("LoadLibraryFixup unguarded.");
 #endif
         // Check against known dlls in package.
-        std::wstring libFileNameW = InterpretStringW(libFileName);
+        std::wstring libFileNameW = GetFilenameOnly(InterpretStringW(libFileName));
 
         if (g_dynf_forcepackagedlluse)
         {
