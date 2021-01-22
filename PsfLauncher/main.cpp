@@ -60,7 +60,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 #ifdef _DEBUG 
     if (appConfig) 
     { 
-        auto waitSignalPtr = appConfig->try_get("WaitForDebugger"); 
+        auto waitSignalPtr = appConfig->try_get("waitForDebugger"); 
         if (waitSignalPtr) 
         { 
             bool waitSignal = waitSignalPtr->as_boolean().get(); 
