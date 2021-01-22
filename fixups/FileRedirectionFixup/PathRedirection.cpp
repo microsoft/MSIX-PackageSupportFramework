@@ -1204,7 +1204,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     size_t found = (widen(path)).find(L"WritablePackageRoot", 0);
     if (found != 0)
     {
-        LogString(inst, L"Prevent inception", widen(path).c_str());
+        LogString(inst, L"Prevent redundant redirection.", widen(path).c_str());
         return result;
     }
 
