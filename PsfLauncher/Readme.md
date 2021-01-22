@@ -248,7 +248,7 @@ In this example, the pseudo-variable %MsixPackageRoot% would be replaced by the 
 ### Example 4
 This example shows an alternative for the json used in the prior example. This might be used when an additional script is to be run upon first launch of the application. Such scripts are sometimes used for per-user configuration activities that must be made based on local conditions.
 
-To implement scripting PsfLauncher uses a PowerShell script as an intermediator.  PshLauncher will expect to find a file StartingScriptWrapper.ps1, which is included as part of the PSD, to call the PowerShell script that is referenced in the Json.  The wrapper script should be placed in the package as the same folder used by the launcher.
+To implement scripting PsfLauncher uses a PowerShell script as an intermediator.  PshLauncher will expect to find a file StartingScriptWrapper.ps1, which is included as part of the PSF, to call the PowerShell script that is referenced in the Json.  The wrapper script should be placed in the package as the same folder used by the launcher.
 
 
 ```json

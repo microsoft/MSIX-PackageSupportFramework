@@ -31,8 +31,10 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     startupInfoEx.lpAttributeList = attributeList;
     DWORD CreationFlags = 0;
     if (attributeList != NULL)
+    {
         CreationFlags = EXTENDED_STARTUPINFO_PRESENT;
-
+    }
+    
     RETURN_LAST_ERROR_IF_MSG(
         !::CreateProcessW(
             applicationName,
