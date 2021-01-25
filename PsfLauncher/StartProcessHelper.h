@@ -29,14 +29,19 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     PROCESS_INFORMATION processInfo{};
 
     startupInfoEx.lpAttributeList = attributeList;
-
+    DWORD CreationFlags = 0;
+    if (attributeList != NULL)
+    {
+        CreationFlags = EXTENDED_STARTUPINFO_PRESENT;
+    }
+    
     RETURN_LAST_ERROR_IF_MSG(
         !::CreateProcessW(
             applicationName,
             commandLine,
             nullptr, nullptr, // Process/ThreadAttributes
             true, // InheritHandles
-            EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
+            CreationFlags,
             nullptr, // Environment
             currentDirectory,
             (LPSTARTUPINFO)&startupInfoEx,

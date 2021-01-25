@@ -6,6 +6,8 @@ Based on the manifest's application ID, the `psfLauncher` looks for the app's la
 
 PSF Launcher also supports running an additional "monitor" app, intended for PsfMonitor. You use PsfMonitor to view the output in conjuction with TraceFixup injection configured to output to events.
 
+Finally, PsfLauncher also support some limited PowerShell scripting.
+
 ## Configuration
 PSF Launcher uses a config.json file to configure the behavior.
 
@@ -244,7 +246,9 @@ This example shows an alternative for the json used in the prior example. This m
 In this example, the pseudo-variable %MsixPackageRoot% would be replaced by the folder path that the package was installed to. This pseudo-variable is only available for string replacement by PsfLauncher in the arguments field. The example shows a reference to a file that was placed at the root of the package and another that will exist using VFS pathing. Note that as long as the LOCALAPPDATA file is the only file required from the package LOCALAPPDATA folder, the use of FileRedirectionFixup would not be mandated.
 
 ### Example 4
-This example shows an alternative for the json used in the prior example. This might be used when an additional script is to be run upon first launch of the application. Such scripts are sometimes used for per-user configuration activities that must be made based on local conditions. 
+This example shows an alternative for the json used in the prior example. This might be used when an additional script is to be run upon first launch of the application. Such scripts are sometimes used for per-user configuration activities that must be made based on local conditions.
+
+To implement scripting PsfLauncher uses a PowerShell script as an intermediator.  PshLauncher will expect to find a file StartingScriptWrapper.ps1, which is included as part of the PSF, to call the PowerShell script that is referenced in the Json.  The wrapper script should be placed in the package as the same folder used by the launcher.
 
 
 ```json
