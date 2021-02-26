@@ -29,6 +29,66 @@ using namespace std::literals;
 
 void Log(const char* fmt, ...);
 
+// Function to determine if this process should get 32 or 64bit dll injections
+// Returns 32 or 64 (or 0 for error)
+typedef BOOL(WINAPI* LPFN_ISWOW64PROCESS2) (HANDLE, PUSHORT, PUSHORT);
+USHORT ProcessBitness(HANDLE hProcess)
+{
+    USHORT pProcessMachine;
+    USHORT pMachineNative;
+    LPFN_ISWOW64PROCESS2 fnIsWow64Process2 = (LPFN_ISWOW64PROCESS2)GetProcAddress(
+        GetModuleHandle(TEXT("kernel32")), "IsWow64Process2");
+
+    if (fnIsWow64Process2 != NULL)
+    {
+        BOOL bRet = fnIsWow64Process2(hProcess, &pProcessMachine, &pMachineNative);
+        if (bRet == 0)
+        {
+            return 0;
+        }
+        if (pProcessMachine == IMAGE_FILE_MACHINE_UNKNOWN)
+        {
+            if (pMachineNative == IMAGE_FILE_MACHINE_AMD64)
+            {
+                return 64;
+            }
+            if (pMachineNative == IMAGE_FILE_MACHINE_I386)
+            {
+                return 32;
+            }
+        }
+        else
+        {
+            if (pProcessMachine == IMAGE_FILE_MACHINE_AMD64)
+            {
+                return 64;
+            }
+            if (pProcessMachine == IMAGE_FILE_MACHINE_I386)
+            {
+                return 32;
+            }
+        }
+    }
+    return 0;
+}
+
+std::wstring FixDllBitness(std::wstring originalName, USHORT bitness)
+{
+    std::wstring targetDll =  originalName.substr(0, originalName.length() - 6);
+    switch (bitness)
+    {
+    case 32:
+        targetDll = targetDll.append(L"32.dll");
+        break;
+    case 64:
+        targetDll = targetDll.append(L"64.dll");
+        break;
+    default:
+        targetDll = std::wstring(originalName);
+    }
+    return targetDll;
+}
+
 auto CreateProcessImpl = psf::detoured_string_function(&::CreateProcessA, &::CreateProcessW);
 
 BOOL WINAPI CreateProcessWithPsfRunDll(
@@ -156,76 +216,105 @@ BOOL WINAPI CreateProcessFixup(
     if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
         ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
     {
-#if _DEBUG
-        Log("\tInject %ls into PID=%d", psf::runtime_dll_name, processInformation->dwProcessId);
-#endif
         // The target executable is in the package, so we _do_ want to fixup it
+#if _DEBUG
+        Log("\tIn package, so yes");
+#endif
+        // Fix for issue #167: allow subprocess to be a different bitness than this process.
+        USHORT bitness = ProcessBitness(processInformation->hProcess);
+#if _DEBUG
+        Log("\tInjection for PID=%d Bitness=%d", processInformation->dwProcessId, bitness);
+#endif  
+        std::wstring wtargetDllName = FixDllBitness(std::wstring(psf::runtime_dll_name), bitness);
+#if _DEBUG
+        Log("\tUse runtime %ls", wtargetDllName.c_str());
+#endif
+        static const auto pathToPsfRuntime = (PackageRootPath() / wtargetDllName.c_str()).string();
+        const char * targetDllPath = NULL;
+#if _DEBUG
+        Log("\tInject %s into PID=%d", pathToPsfRuntime.c_str(), processInformation->dwProcessId);
+#endif
 
-        static const auto pathToPsfRuntime = (PackageRootPath() / psf::runtime_dll_name).string();
-        PCSTR targetDll = pathToPsfRuntime.c_str();
-        if (!std::filesystem::exists(targetDll))
+        if (std::filesystem::exists(pathToPsfRuntime))
+        {
+            targetDllPath = pathToPsfRuntime.c_str();
+        }
+        else
         {
             // Possibly the dll is in the folder with the exe and not at the package root.
-            Log("\t%s not found at package root, try target folder.", targetDll);
+            Log("\t%ls not found at package root, try target folder.", wtargetDllName.c_str());
 
             std::filesystem::path altPathToExeRuntime = exePath.data();
-            static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / psf::runtime_dll_name).string();
-            targetDll = altPathToPsfRuntime.c_str();
+            static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / pathToPsfRuntime.c_str()).string();
+            //targetDll = altPathToPsfRuntime.c_str();
 #if _DEBUG
             Log("\talt target filename is now %s", altPathToPsfRuntime.c_str());
 #endif
-        }
-
-        if (!std::filesystem::exists(targetDll))
-        {
-#if _DEBUG
-            Log("\tNot present there either, try elsewhere in package.");
-#endif
-            // If not in those two locations, must check everywhere in package.
-            // The child process might also be in another package folder, so look elsewhere in the package.
-            for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
+            if (std::filesystem::exists(altPathToPsfRuntime))
             {
-                try
-                {
-                    if (dentry.path().filename().compare(psf::runtime_dll_name) == 0)
-                    {
-                        static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
+                targetDllPath = altPathToPsfRuntime.c_str();
+            }
+            else
+            {
 #if _DEBUG
-                        Log("\tFound match as %ls", dentry.path().c_str());
+                Log("\tNot present there either, try elsewhere in package.");
 #endif
-                        targetDll = altDirPathToPsfRuntime.c_str();
-                        break;
+                // If not in those two locations, must check everywhere in package.
+                // The child process might also be in another package folder, so look elsewhere in the package.
+                for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
+                {
+                    try
+                    {
+                        if (dentry.path().filename().compare(wtargetDllName) == 0)
+                        {
+                            static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
+#if _DEBUG
+                            Log("\tFound match as %ls", dentry.path().c_str());
+#endif
+                            targetDllPath = altDirPathToPsfRuntime.c_str();
+                            break;
+                        }
+                    }
+                    catch (...)
+                    {
+                        Log("Non-fatal error enumerating directories while looking for PsfRuntime.");
                     }
                 }
-                catch (...)
-                {
-                    Log("Non-fatal error enumerating directories while looking for PsfRuntime.");
-                }
+
             }
         }
-      
-        Log("\tAttempt injection into %d using %s", processInformation->dwProcessId, targetDll);
-        if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDll, 1))
-        {
-            Log("\t%s not found at target folder, try PsfRunDll.", targetDll);
-            // We failed to detour the created process. Assume that it the failure was due to an architecture mis-match
-            // and try the launch using PsfRunDll
-            if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDll, CreateProcessWithPsfRunDll))
-            {
-                // Could not detour the target process, so return failure
-                auto err = ::GetLastError();
-                Log("\tUnable to inject %ls into PID=%d err=0x%x\n", psf::runtime_dll_name, processInformation->dwProcessId, err);
-                ::TerminateProcess(processInformation->hProcess, ~0u);
-                ::CloseHandle(processInformation->hProcess);
-                ::CloseHandle(processInformation->hThread);
 
-                ::SetLastError(err);
-                return FALSE;
+        if (targetDllPath != NULL)
+        {
+            Log("\tAttempt injection into %d using %s", processInformation->dwProcessId, targetDllPath);
+            if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
+            {
+                Log("\t%ls unable to inject, skipping.", targetDllPath);
+                // We failed to detour the created process. Assume that it the failure was due to an architecture mis-match
+                // and try the launch using PsfRunDll
+                //if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
+                //{
+                    // Could not detour the target process, so return failure
+                //    auto err = ::GetLastError();
+                //    Log("\tUnable to inject %ls into PID=%d err=0x%x\n", psf::runtime_dll_name, processInformation->dwProcessId, err);
+                //    ::TerminateProcess(processInformation->hProcess, ~0u);
+                //    ::CloseHandle(processInformation->hProcess);
+                //    ::CloseHandle(processInformation->hThread);
+
+                //    ::SetLastError(err);
+                //    return FALSE;
+                //}
             }
+            else
+            {
+                Log("\tInjected %ls into PID=%d\n", wtargetDllName.c_str(), processInformation->dwProcessId);
+            }
+        }
+        else
+        {
+            Log("\t%ls not found, skipping.", wtargetDllName.c_str());
         }
     }
-
-    Log("\tInjected %ls into PID=%d\n", psf::runtime_dll_name, processInformation->dwProcessId);
 
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {
