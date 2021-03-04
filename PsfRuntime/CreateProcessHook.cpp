@@ -246,7 +246,6 @@ BOOL WINAPI CreateProcessFixup(
 
             std::filesystem::path altPathToExeRuntime = exePath.data();
             static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / pathToPsfRuntime.c_str()).string();
-            //targetDll = altPathToPsfRuntime.c_str();
 #if _DEBUG
             Log("\talt target filename is now %s", altPathToPsfRuntime.c_str());
 #endif
