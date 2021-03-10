@@ -141,15 +141,15 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         {
             fullargs = args;
         }
-
-        LogString("Process Launch: ", fullargs.data());
+        LogString("Process Launch: ", exePath.c_str());
+        LogString("     Arguments: ", fullargs.data());
         LogString("Working Directory: ", currentDirectory.c_str());
 
         //THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
         HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
         if (hr != ERROR_SUCCESS)
         {
-            Log("Error return from launching process.");
+            Log("Error return from launching process 0x%x.", GetLastError());
         }
     }
     else

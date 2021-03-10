@@ -30,7 +30,7 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
 
     startupInfoEx.lpAttributeList = attributeList;
     DWORD CreationFlags = 0;
-    if (attributeList != NULL)
+    if (attributeList != nullptr)
     {
         CreationFlags = EXTENDED_STARTUPINFO_PRESENT;
     }
