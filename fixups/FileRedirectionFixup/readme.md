@@ -23,7 +23,7 @@ The value of this property is expected to be of type `array`, containing up to t
 | `packageDriveRelative` | Uses the drive that the application is installed on as the base path (e.g. `C:\`). This is expected to be a value of type `array` whose elements specify the relative paths/patterns described in more detail below |
 | `knownFolders` | The base path in the tuple is resolved using `SHGetKnownFolderPath` for some known folder id. This is expected to be a value of type `array`. Each element is expected to be of type `object` whose properties are described in more detail below |
 
-While all three PropertNames may be specified, typically only one of these will be used depending on the form that you want to use when you specify file paths.  
+While all three PropertyNames may be specified, typically only one of these will be used depending on the form that you want to use when you specify file paths.  
 It is also possible, but atypical, to specify a given PropertyName more than once. 
 
 The value of each of these properties is itself of type `array`. 
