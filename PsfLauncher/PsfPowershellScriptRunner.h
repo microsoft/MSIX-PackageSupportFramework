@@ -291,7 +291,7 @@ private:
 
 	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath)
 	{
-		std::wstring commandString = L"Powershell.exe ";
+		std::wstring commandString = L"Powershell.exe "; 
 		commandString.append(scriptExecutionMode);
 		commandString.append(L" -file StartingScriptWrapper.ps1 ");
 		commandString.append(L"\"");
