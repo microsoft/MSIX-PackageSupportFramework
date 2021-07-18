@@ -202,7 +202,7 @@ private:
 	{
 		ScriptInformation scriptStruct;
 		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
-		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath), packageRoot, packageWritableRoot);
+		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath, packageRoot), packageRoot, packageWritableRoot);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
@@ -289,12 +289,25 @@ private:
 
 	}
 
-	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath)
+	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath, const std::filesystem::path packageRoot)
 	{
+		std::filesystem::path SSWrapper = L"StartingScriptWrapper.ps1";
+		if (!std::filesystem::exists(SSWrapper))
+		{
+			// The wrapper isn't in this folder, so we should search for it elewhere in the package.
+			for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
+			{
+				if (file.path().filename().compare(SSWrapper) == 0)
+				{
+					SSWrapper = file.path();
+				}
+			}
+		}
 		std::wstring commandString = L"Powershell.exe ";
 		commandString.append(scriptExecutionMode);
-		commandString.append(L" -file StartingScriptWrapper.ps1 ");
+		commandString.append(L" -file \'" + SSWrapper.native() + L"\'"); /// StartingScriptWrapper.ps1 ");
 		commandString.append(L"\"");
+
 
 		// ScriptWrapper uses invoke-expression so we need the expression to launch another powershell to run a file with arguments.
 		commandString.append(L"Powershell.exe ");
