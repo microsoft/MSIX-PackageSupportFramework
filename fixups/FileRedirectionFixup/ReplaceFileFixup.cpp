@@ -34,21 +34,33 @@ BOOL __stdcall ReplaceFileFixup(
             auto [redirectBackup, backupRedirectPath, shouldReadonlyDest] = ShouldRedirect(backupFileName, redirect_flags::ensure_directory_structure);
             if (redirectTarget || redirectSource || redirectBackup)
             {
-                return impl::ReplaceFile(
-                    redirectTarget ? targetRedirectPath.c_str() : widen_argument(replacedFileName).c_str(),
-                    redirectSource ? sourceRedirectPath.c_str() : widen_argument(replacementFileName).c_str(),
-                    redirectBackup ? backupRedirectPath.c_str() : widen_argument(backupFileName).c_str(),
-                    replaceFlags,
-                    exclude,
-                    reserved);
+                std::wstring rldReplacedFileName = TurnPathIntoRootLocalDevice(redirectTarget ? targetRedirectPath.c_str() : widen_argument(replacedFileName).c_str());
+                std::wstring rldReplacementFileName = TurnPathIntoRootLocalDevice(redirectSource ? sourceRedirectPath.c_str() : widen_argument(replacementFileName).c_str());
+                std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(redirectBackup ? backupRedirectPath.c_str() : widen_argument(backupFileName).c_str());
+                return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
             }
         }
     }
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        LogString(L"ReplaceFileFixup ", L"***Exception; use requested files.***");
     }
 
-    return impl::ReplaceFile(replacedFileName, replacementFileName, backupFileName, replaceFlags, exclude, reserved);
+    if constexpr (psf::is_ansi<CharT>)
+    {
+        std::string rldReplacedFileName = TurnPathIntoRootLocalDevice(replacedFileName);
+        std::string rldReplacementFileName = TurnPathIntoRootLocalDevice(replacementFileName);
+        std::string rldBackupFileName = TurnPathIntoRootLocalDevice(backupFileName);
+        return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+    }
+    else
+    {
+        std::wstring rldReplacedFileName = TurnPathIntoRootLocalDevice(replacedFileName);
+        std::wstring rldReplacementFileName = TurnPathIntoRootLocalDevice(replacementFileName);
+        std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(backupFileName);
+        return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+    }
+    ///return impl::ReplaceFile(replacedFileName, replacementFileName, backupFileName, replaceFlags, exclude, reserved);
 }
 DECLARE_STRING_FIXUP(impl::ReplaceFile, ReplaceFileFixup);

@@ -60,24 +60,17 @@ namespace psf
             return dos_path_type::local_device;
         }
 
-        if (is_path_separator(path[0]))
+        constexpr wchar_t unc_prefix[] = LR"(\\)";
+        if (std::equal(unc_prefix, unc_prefix + 2, path))
         {
-            if (is_path_separator(path[1]))
-            {
-                if (path[2] == '.')
-                {
-                    return is_path_separator(path[3]) ? dos_path_type::local_device : dos_path_type::unknown;
-                }
-                else
-                {
-                    // Otherwise assume any other character is the start of a server name
-                    return dos_path_type::unc_absolute;
-                }
-            }
-            else
-            {
-                return dos_path_type::rooted;
-            }
+            // Otherwise assume any other character is the start of a server name
+            return dos_path_type::unc_absolute;
+        }
+
+        constexpr wchar_t rooted_prefix[] = LR"(\)";
+        if (std::equal(rooted_prefix, rooted_prefix + 1, path))
+        {
+            return dos_path_type::rooted;
         }
 
         if (std::iswalpha(path[0]) && (path[1] == ':'))

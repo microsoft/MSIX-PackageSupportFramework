@@ -39,14 +39,14 @@
                           Square44x44Logo="Assets\Logo44x44.png"
                           Description="No description entered" />
     </Application>
-    <Application Id="Fixed64" Executable="PsfLauncher32.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Fixed64" Executable="PsfLauncher64.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements BackgroundColor="transparent"
                           DisplayName="Architecture Test (Fixed x64)"
                           Square150x150Logo="Assets\Logo150x150.png"
                           Square44x44Logo="Assets\Logo44x44.png"
                           Description="No description entered" />
     </Application>
-    <Application Id="Fixed32" Executable="PsfLauncher64.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="Fixed32" Executable="PsfLauncher32.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements BackgroundColor="transparent"
                           DisplayName="Architecture Test (Fixed x86)"
                           Square150x150Logo="Assets\Logo150x150.png"

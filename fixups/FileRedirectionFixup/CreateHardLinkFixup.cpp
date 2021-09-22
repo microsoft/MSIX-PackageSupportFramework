@@ -17,8 +17,9 @@ BOOL __stdcall CreateHardLinkFixup(
     {
         if (guard)
         {
-            LogString(L"CopyHardLinkFixup for",    fileName);
-            LogString(L"CopyHardLinkFixup target", existingFileName);
+            DWORD CreateHardLinkInstance = ++g_FileIntceptInstance;
+            LogString(CreateHardLinkInstance,L"CopyHardLinkFixup for",    fileName);
+            LogString(CreateHardLinkInstance,L"CopyHardLinkFixup target", existingFileName);
             
 
             // NOTE: We need to copy-on-read the existing file since the application may want to open the hard-link file
@@ -31,10 +32,9 @@ BOOL __stdcall CreateHardLinkFixup(
             auto [redirectTarget, redirectTargetPath, shouldReadonlyDest] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
             if (redirectLink || redirectTarget)
             {
-                return impl::CreateHardLink(
-                    redirectLink ? redirectPath.c_str() : widen_argument(fileName).c_str(),
-                    redirectTarget ? redirectTargetPath.c_str() : widen_argument(existingFileName).c_str(),
-                    securityAttributes);
+                std::wstring rldFileName = TurnPathIntoRootLocalDevice(redirectLink ? redirectPath.c_str() : widen_argument(fileName).c_str());
+                std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(redirectTarget ? redirectTargetPath.c_str() : widen_argument(existingFileName).c_str());
+                return impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
             }
         }
     }
@@ -43,6 +43,19 @@ BOOL __stdcall CreateHardLinkFixup(
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::CreateHardLink(fileName, existingFileName, securityAttributes);
+    // Improve app compat by allowing long paths always
+    if constexpr (psf::is_ansi<CharT>)
+    {
+        std::string rldFileName = TurnPathIntoRootLocalDevice(fileName);
+        std::string rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+        return impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
+    }
+    else
+    {
+        std::wstring rldFileName = TurnPathIntoRootLocalDevice(fileName);
+        std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+        return impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
+    }
+    
 }
 DECLARE_STRING_FIXUP(impl::CreateHardLink, CreateHardLinkFixup);

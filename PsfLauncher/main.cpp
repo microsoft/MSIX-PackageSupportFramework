@@ -146,6 +146,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         LogString("Working Directory: ", currentDirectory.c_str());
 
         //THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
+        //HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
         HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE);
         if (hr != ERROR_SUCCESS)
         {

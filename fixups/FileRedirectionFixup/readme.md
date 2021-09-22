@@ -115,6 +115,7 @@ The pattern may include folders (keeping in mind that this is relative to the ba
 
 > * `.\` A simple way to specify that all files and folders under the base, no matter how many levels deep will match.
 > * `Foo\\.txt$` A way to specify that only a file named exactly as Foo.txt in a case sensitive match directly in the base folder will match.
+> * `.*\\.[iI][nN][iI]$` A way to specify that only all files with file extensions of ini in upper or lower case.
 
 ## Configuration for `redirectTargetBase` Parameter
 In each type of redirection described above, the value of `redirectTargetBase` is expected to be a string.  

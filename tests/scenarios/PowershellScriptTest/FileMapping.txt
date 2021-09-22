@@ -8,7 +8,7 @@
 "..\..\..\${Architecture}${Configuration}\MultiByteToWideCharTestFixup${Bitness}.dll" "MultiByteToWideCharTestFixup${Bitness}.dll"
 "..\..\${Architecture}${Configuration}\PowershellScriptTest.exe" "PowershellScriptTest.exe"
 "SayHello.ps1" "SayHello.ps1"
-"SayHi.ps1" "SayHi.ps1"
+/"SayHi.ps1" "SayHi.ps1"
 "SayWithArgument.ps1" "SayWithArgument.ps1"
 "StartingScriptWrapper.ps1" "StartingScriptWrapper.ps1"
 

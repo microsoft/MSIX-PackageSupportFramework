@@ -42,6 +42,39 @@ namespace details
     }
 }
 
+
+void Log(const wchar_t* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    std::wstring str;
+    str.resize(256);
+    try
+    {
+        std::size_t count = std::vswprintf(str.data(), str.size() + 1, fmt, args);
+        assert(count >= 0);
+        va_end(args);
+
+        if (count > str.size())
+        {
+            str.resize(count);
+
+            va_list args2;
+            va_start(args2, fmt);
+            count = std::vswprintf(str.data(), str.size() + 1, fmt, args2);
+            assert(count >= 0);
+            va_end(args2);
+        }
+
+        str.resize(count);
+    }
+    catch (...)
+    {
+        str = fmt;
+    }
+    ::OutputDebugStringW(str.c_str());
+}
+
 bool DoesFileExist(std::filesystem::path localAppData, LPCWSTR fileName)
 {
     std::filesystem::path pathToFile = localAppData / fileName;
@@ -63,6 +96,8 @@ int wmain(int argc, const wchar_t** argv)
     //get rid of the !
     std::wstring testType = aumid.substr(aumid.find('!') + 1);
     std::transform(testType.begin(), testType.end(), testType.begin(), towlower);
+
+    Log(L"<<<<<Powershell Script Test %ls", testType.c_str());
 
     TCHAR localAppDataPath[MAX_PATH];
     SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppDataPath);
@@ -97,6 +132,7 @@ int wmain(int argc, const wchar_t** argv)
     RemoveFile(localAppDataPath, L"Argument.txt");
 
     test_end(result);
+    Log(L"Powershell Script Test>>>>>");
 
     test_cleanup();
 

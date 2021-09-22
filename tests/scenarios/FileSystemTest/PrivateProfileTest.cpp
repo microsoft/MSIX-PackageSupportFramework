@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 
+extern void Log(const char* fmt, ...);
 
 int PrivateProfileTests()
 {
@@ -100,6 +101,7 @@ int PrivateProfileTests()
 	    test_end(testResult);
 
         test_begin("WritePrivateProfileString to Package(Intl) Test");
+        Log("<<<<<WritePrivateProfileString to Package(Intl) Test");
         BOOL rbool = WritePrivateProfileString(L"Section2", L"UnusedItem", updatedValue.c_str(), otherFilePath.c_str());
         if (rbool != 0)
         {
@@ -109,6 +111,7 @@ int PrivateProfileTests()
         {
             testResult = GetLastError();
         }
+        Log("WritePrivateProfileString to Package(Intl) Test>>>>>");
         result = result ? result : testResult;
         test_end(testResult);
 

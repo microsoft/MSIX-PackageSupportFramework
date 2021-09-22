@@ -50,6 +50,39 @@ namespace details
 #define FULL_RIGHTS_ACCESS_REQUEST   KEY_ALL_ACCESS
 #define RW_ACCESS_REQUEST            KEY_READ | KEY_WRITE
 
+
+void Log(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    std::string str;
+    str.resize(256);
+    try
+    {
+        std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
+        assert(count >= 0);
+        va_end(args);
+
+        if (count > str.size())
+        {
+            str.resize(count);
+
+            va_list args2;
+            va_start(args2, fmt);
+            count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
+            assert(count >= 0);
+            va_end(args2);
+        }
+
+        str.resize(count);
+    }
+    catch (...)
+    {
+        str = fmt;
+    }
+    ::OutputDebugStringA(str.c_str());
+}
+
 void NotCoveredTests()
 {
     DWORD retval = 0;
@@ -190,6 +223,7 @@ int wmain(int argc, const wchar_t** argv)
     NotCoveredTests();
 
     test_begin("RegLegacy Test ModifyKeyAccess HKCU");
+    Log("<<<<<RegLegacyTest ModifyKeyAccess HKCU");
     try
     {
         HKEY HKCU_Verify;
@@ -245,8 +279,10 @@ int wmain(int argc, const wchar_t** argv)
         print_last_error("Failed to MOdify HKCU Full Access case");
     }
     test_end(result);
+    Log("RegLegacyTest ModifyKeyAccess HKCU>>>>>");
 
     test_begin("RegLegacy Test ModifyKeyAccess HKLM");
+    Log("<<<<<RegLegacyTest ModifyKeyAccess HKLM");
     try
     {
         HKEY HKLM_Verify;
@@ -302,10 +338,11 @@ int wmain(int argc, const wchar_t** argv)
     }
 
     test_end(result);
+    Log("RegLegacyTest ModifyKeyAccess HKLM>>>>>");
 
 
 
     test_cleanup();
-    Sleep(1000);
+    Sleep(500);
     return result;
 }

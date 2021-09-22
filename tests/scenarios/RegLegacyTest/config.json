@@ -27,7 +27,7 @@
                   "patterns": [
                     "^Software\\\\Vendor_Covered.*"
                   ],
-                  "access": "Full2RW"
+                  "access": "Full2MaxAllowed"
                 },
                 {
                   "type": "ModifyKeyAccess",
@@ -36,7 +36,7 @@
                     "^SOFTWARE\\\\Vendor_Covered.*",
                     "^SOFTWARE\\\\Wow3264Node\\\\Vendor_Covered.*"
                   ],
-                  "access": "RW2R"
+                  "access": "RW2MaxAllowed"
                 },
                 {
                   "type": "FakeDelete",

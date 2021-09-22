@@ -14,9 +14,10 @@
 
 inline void clean_redirection_path_helper(std::filesystem::path redirectRoot)
 {
-	std::error_code ec;    
-	std::filesystem::remove_all(redirectRoot, ec);
-	if (ec)
+	std::error_code ec; 
+    std::uintmax_t num;
+	num = std::filesystem::remove_all(redirectRoot, ec);
+	if (num == static_cast<std::uintmax_t>(-1) && ec)  // Added num test as that is set to 0 when folder doesn't exist, which is OK.
 	{
 		trace_message(L"WARNING: Failed to clean the redirected path. Future tests may be impacted by this...\n", warning_color);
 		trace_messages(warning_color, L"WARNING: ", ec.message(), new_line);
@@ -42,11 +43,12 @@ inline void clean_redirection_path()
     // NOTE: In the future, if we ever do handle deletes of files in the package path, we should also handle that here,
     //       e.g. by deleting the file that's tracking the deletions, or by calling into an export in PsfRuntime to do
     //       so for us.
-    static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"VFS";
+    static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)"; 
 	static const auto writablePackageRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
-
+    trace_message(L"<<<Cleanup Redirection Paths before next test.\n");
 	clean_redirection_path_helper(redirectRoot);
 	clean_redirection_path_helper(writablePackageRoot);
+    trace_message(L"Cleanup Redirection Paths before next test.>>>\n");
 }
 
 inline std::string read_entire_file(const wchar_t* path)
@@ -84,6 +86,11 @@ inline std::string read_entire_file(const wchar_t* path)
 
 inline bool write_entire_file(const wchar_t* path, const char* contents)
 {
+    // ensure directories
+    //std::wstring wPath = path;
+    //std::filesystem::create_directories(wPath.substr(0, wPath.find_last_of(L"\\")));
+    
+    // create file
     auto file = ::CreateFileW(path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE)
     {
@@ -92,6 +99,7 @@ inline bool write_entire_file(const wchar_t* path, const char* contents)
         return false;
     }
 
+    // Fill file
     auto len = static_cast<DWORD>(std::strlen(contents));
     DWORD bytesWritten;
     if (!::WriteFile(file, contents, len, &bytesWritten, nullptr))
@@ -104,5 +112,6 @@ inline bool write_entire_file(const wchar_t* path, const char* contents)
 
     assert(len == bytesWritten);
     ::CloseHandle(file);
+    trace_message(L"Original file written external to package.",info_color,true);
     return true;
 }

@@ -10,6 +10,8 @@
 
 #include "common_paths.h"
 
+extern void Log(const char* fmt, ...);
+
 static int DoRemoveDirectoryTest(const std::filesystem::path& path, bool expectSuccess)
 {
     trace_messages(L"Removing directory: ", info_color, path.native(), new_line);
@@ -37,11 +39,14 @@ int RemoveDirectoryTests()
 
     // We shouldn't be able to delete the VFS directory, particularly because it isn't redirected
     test_begin("Remove Non-Configured Directory Test");
+    Log("<<<<<Remove Non-Configured Directory Test HERE");
     auto testResult = DoRemoveDirectoryTest(L"VFS", false);
+    Log("Remove Non-Configured Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);
 
     test_begin("Remove Empty Redirected Directory Test");
+    Log("<<<<<Remove Empty Directory Test HERE");
     testResult = []()
     {
         clean_redirection_path();
@@ -53,10 +58,12 @@ int RemoveDirectoryTests()
 
         return DoRemoveDirectoryTest(L"TèƨƭÐïřèçƭôř¥", true);
     }();
+    Log("Remove Empty Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);
 
     test_begin("Remove Non-Empty Directory Test");
+    Log("<<<<<Remove Non-Empty Directory Test HERE");
     testResult = []()
     {
         clean_redirection_path();
@@ -73,7 +80,7 @@ int RemoveDirectoryTests()
             }
             else
             {
-                if (!write_entire_file(L"TèƨƭÐïřèçƭôř¥/file.txt", "This file's presence will cause RemoveDirectory to fail"))
+                if (!write_entire_file(L"TèƨƭÐïřèçƭôř¥\\file.txt", "This file's presence will cause RemoveDirectory to fail"))
                 {
                     return trace_last_error(L"Failed to create file");
                 }
@@ -82,6 +89,7 @@ int RemoveDirectoryTests()
 
         return DoRemoveDirectoryTest(L"TèƨƭÐïřèçƭôř¥", false);
     }();
+    Log("Remove Non-Empty Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);
 
@@ -92,7 +100,9 @@ int RemoveDirectoryTests()
     //       delete the contents of the directory first
     test_begin("Remove Package Directory Test");
     clean_redirection_path();
+    Log("<<<<<Remove Package Directory Test HERE");
     testResult = DoRemoveDirectoryTest(L"Tèƨƭ", true);
+    Log("Remove Package Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);
 

@@ -61,8 +61,15 @@ HANDLE __stdcall CreateFileFixup(
         if (guard)
         {
             DWORD CreateFileInstance = ++g_FileIntceptInstance;
-
-            LogString(CreateFileInstance, L"CreateFileFixup for fileName", widen(fileName, CP_ACP).c_str());
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                LogString(CreateFileInstance, L"CreateFileFixup A for fileName", widen(fileName).c_str()); 
+            }
+            else
+            {
+                LogString(CreateFileInstance, L"CreateFileFixup W for fileName", fileName);
+            }
+            
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
@@ -114,7 +121,7 @@ HANDLE __stdcall CreateFileFixup(
                         redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
                     }
                     Log(L"[%d]CreateFile pre create", CreateFileInstance);
-                    HANDLE hRet = impl::CreateFile(redirectPath.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+                    HANDLE hRet = impl::CreateFile(redirectPath.c_str(), redirectedAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
                     Log(L"[%d]CreateFile post create. Handle=0x%x", CreateFileInstance,hRet);
                     return hRet;
                 }
@@ -130,7 +137,17 @@ HANDLE __stdcall CreateFileFixup(
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::CreateFile(fileName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+    // In the spirit of app compatability, make the path long formed just in case.
+    if constexpr (psf::is_ansi<CharT>)
+    {
+        std::string sFileName = TurnPathIntoRootLocalDevice(fileName);
+        return impl::CreateFile(sFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+    }
+    else
+    {
+        std::wstring wFileName = TurnPathIntoRootLocalDevice(fileName);
+        return impl::CreateFile(wFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+    }
 }
 DECLARE_STRING_FIXUP(impl::CreateFile, CreateFileFixup);
 
@@ -148,7 +165,9 @@ HANDLE __stdcall CreateFile2Fixup(
         {
             DWORD CreateFile2Instance = ++g_FileIntceptInstance;
 
-            Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, widen(fileName, CP_ACP).c_str());
+            ///Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, widen(fileName, CP_ACP).c_str());
+            Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, fileName);
+            LogString(CreateFile2Instance,L"CreateFile2Fixup for ", fileName);
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
@@ -213,6 +232,9 @@ HANDLE __stdcall CreateFile2Fixup(
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
+    // In the spirit of app compatability, make the path long formed just in case.
+    std::wstring wFileName = TurnPathIntoRootLocalDevice(fileName);
+    return impl::CreateFile2(wFileName.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+    /////return impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
 }
 DECLARE_FIXUP(impl::CreateFile2, CreateFile2Fixup);

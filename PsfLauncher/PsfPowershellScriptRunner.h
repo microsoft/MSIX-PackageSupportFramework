@@ -300,46 +300,63 @@ private:
 				if (file.path().filename().compare(SSWrapper) == 0)
 				{
 					SSWrapper = file.path();
+					break;
 				}
 			}
 		}
 		std::wstring commandString = L"Powershell.exe ";
 		commandString.append(scriptExecutionMode);
-		commandString.append(L" -file \'" + SSWrapper.native() + L"\'"); /// StartingScriptWrapper.ps1 ");
-		commandString.append(L"\"");
-
+		commandString.append(L" -file \"" + SSWrapper.native() + L"\""); /// StartingScriptWrapper.ps1 ");
+		commandString.append(L" ");
 
 		// ScriptWrapper uses invoke-expression so we need the expression to launch another powershell to run a file with arguments.
-		commandString.append(L"Powershell.exe ");
+		commandString.append(L"\" ");  // wrapper for the invoked command and arguments
+
+		commandString.append(L"powershell.exe ");
 		commandString.append(scriptExecutionMode);
 		commandString.append(L" -file ");
 
-		const std::filesystem::path dequotedScriptPath = Dequote(scriptPath);
+		std::wstring wScriptPath = scriptPath;
+		if (!std::filesystem::exists(scriptPath))
+		{
+			// The wrapper isn't in this folder, so we should search for it elewhere in the package.
+			for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
+			{
+				if (file.path().filename().compare(scriptPath.c_str()) == 0)
+				{
+					wScriptPath = file.path();
+					break;
+				}
+			}
+		}
+		const std::filesystem::path dequotedScriptPath = Dequote(wScriptPath);
 		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
-		if (dequotedScriptPath.is_absolute())
-		{
-			commandString.append(L"\'");
-			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
-		}
-		else
-		{
-			commandString.append(L"\'");
-			commandString.append(L".\\");
-			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
-		}
+		///if (dequotedScriptPath.is_absolute())
+		///{
+		commandString.append(L"\\");
+		commandString.append(L"\"");
+		commandString.append(fixed4PowerShell);
+		commandString.append(L"\\");
+		commandString.append(L"\"");
+		///}
+		///else
+		///{
+		///	commandString.append(L"\'");
+		///	commandString.append(L".\\");
+		///	commandString.append(fixed4PowerShell);
+		///	commandString.append(L"\'");
+		///}
 
 		//Script arguments are optional.
 		auto scriptArgumentsJObject = scriptInformation.try_get("scriptArguments");
-		if (scriptArgumentsJObject)
+		if (scriptArgumentsJObject && scriptArgumentsJObject->as_string().wstring().length() > 0)
 		{
 			commandString.append(L" ");
 			commandString.append(scriptArgumentsJObject->as_string().wide());
 		}
 
 		//Add ending quote for the script inside a string literal.
-		commandString.append(L"\"");
+		commandString.append(L" \"");
 
 		return commandString;
 	}

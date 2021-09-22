@@ -87,9 +87,9 @@ if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 }
 
 RunTest "x64" "Debug"
-RunTest "x64" "Release"
-RunTest "x86" "Debug"
-RunTest "x86" "Release"
+#RunTest "x64" "Release"
+#RunTest "x86" "Debug"
+#RunTest "x86" "Release"
 
 
 if ($TestConfigFromXML)
@@ -113,9 +113,9 @@ if ($TestConfigFromXML)
     }
 
     RunTest "x64" "Debug"
-    RunTest "x64" "Release"
+    #RunTest "x64" "Release"
     RunTest "x86" "Debug"
-    RunTest "x86" "Release"
+    #RunTest "x86" "Release"
 
     Write-host "Removing generated json files"
     foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))

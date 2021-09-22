@@ -15,22 +15,24 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
         if (guard)
         {
             DWORD GetFileAttributesInstance = ++g_FileIntceptInstance;
-            LogString(GetFileAttributesInstance,L"GetFileAttributesFixup for fileName", fileName);
+            std::wstring wfileName = widen(fileName);
+            LogString(GetFileAttributesInstance,L"GetFileAttributesFixup for fileName", wfileName.c_str());
 
-            if (!IsUnderUserAppDataLocalPackages(fileName))
+            if (!IsUnderUserAppDataLocalPackages(wfileName.c_str()))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence, GetFileAttributesInstance);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesInstance);
                 if (shouldRedirect)
                 {
+                    Log(L"[%d]GetFileAttributes: Should Redirect says yes.", GetFileAttributesInstance);
                     DWORD attributes = impl::GetFileAttributes(redirectPath.c_str());
                     if (attributes == INVALID_FILE_ATTRIBUTES)
                     {
                         // Might be file/dir has not been copied yet, but might also be funky ADL/ADR.
-                        if (IsUnderUserAppDataLocal(fileName) ||
-                            IsUnderUserAppDataRoaming(fileName))
+                        if (IsUnderUserAppDataLocal(wfileName.c_str()) ||
+                            IsUnderUserAppDataRoaming(wfileName.c_str()))
                         {
                             // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
-                            std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                            std::filesystem::path PackageVersion = GetPackageVFSPath(wfileName.c_str());
                             if (wcslen(PackageVersion.c_str()) > 0)
                             {
                                 Log(L"[%d]GetFileAttributes: uncopied ADL/ADR case %ls", GetFileAttributesInstance,PackageVersion.c_str());
@@ -38,14 +40,14 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                                 if (attributes == INVALID_FILE_ATTRIBUTES)
                                 {
                                     Log(L"[%d]GetFileAttributes: fall back to original request location.", GetFileAttributesInstance);
-                                    attributes = impl::GetFileAttributes(fileName);
+                                    attributes = impl::GetFileAttributesW(wfileName.c_str());
                                 }
                             }
                         }
                         else
                         {
                             Log(L"[%d]GetFileAttributes: other not yet redirected case", GetFileAttributesInstance);
-                            attributes = impl::GetFileAttributes(fileName);
+                            attributes = impl::GetFileAttributesW(wfileName.c_str());
                         }
                     }
                     else if (attributes != INVALID_FILE_ATTRIBUTES)
@@ -60,24 +62,30 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             attributes &= ~FILE_ATTRIBUTE_READONLY;
                         }
                     }
-                    Log(L"[%d]GetFileAttributes: ShouldRedirect att=%d", GetFileAttributesInstance, attributes);
+                    Log(L"[%d]GetFileAttributes: ShouldRedirect att=0x%x", GetFileAttributesInstance, attributes);
                     return attributes;
+                }
+                else
+                {
+                    Log(L"[%d]GetFileAttributes: No Redirect, make original call ", GetFileAttributesInstance);
                 }
             }
             else
             {
-                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetFileAttributesInstance);
+                Log(L"[%d]GetFileAttributes: Under LocalAppData\\Packages, don't redirect, make original call", GetFileAttributesInstance);
             }
         }
     }
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        Log(L"GetFileAttributes: *** Exception ***");
     }
 
     return impl::GetFileAttributes(fileName);
 }
 DECLARE_STRING_FIXUP(impl::GetFileAttributes, GetFileAttributesFixup);
+
 
 template <typename CharT>
 BOOL __stdcall GetFileAttributesExFixup(
@@ -91,37 +99,38 @@ BOOL __stdcall GetFileAttributesExFixup(
         if (guard)
         {
             DWORD GetFileAttributesExInstance = ++g_FileIntceptInstance;
-            LogString(GetFileAttributesExInstance,L"GetFileAttributesExFixup for fileName", fileName);
+            std::wstring wfileName = widen(fileName);
+            LogString(GetFileAttributesExInstance,L"GetFileAttributesExFixup for fileName", wfileName.c_str());
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::check_file_presence, GetFileAttributesExInstance);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesExInstance);
                 if (shouldRedirect)
                 {
-                    BOOL retval = impl::GetFileAttributesEx(redirectPath.c_str(), infoLevelId, fileInformation);
+                    BOOL retval = impl::GetFileAttributesExW(redirectPath.c_str(), infoLevelId, fileInformation);
                     if (retval == 0)
                     {
                         // We know it exists, so must be file/dir has not been copied yet.
-                        if (IsUnderUserAppDataLocal(fileName) ||
-                            IsUnderUserAppDataRoaming(fileName))
+                        if (IsUnderUserAppDataLocal(wfileName.c_str()) ||
+                            IsUnderUserAppDataRoaming(wfileName.c_str()))
                         {
                             // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
-                            std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
+                            std::filesystem::path PackageVersion = GetPackageVFSPath(wfileName.c_str());
                             if (wcslen(PackageVersion.c_str()) > 0)
                             {
                                 Log(L"[%d]GetFileAttributesEx: uncopied ADL/ADR case %ls", GetFileAttributesExInstance,PackageVersion.c_str());
-                                retval = impl::GetFileAttributesEx(PackageVersion.c_str(), infoLevelId, fileInformation);
+                                retval = impl::GetFileAttributesExW(PackageVersion.c_str(), infoLevelId, fileInformation);
                                 if (retval == 0)
                                 {
                                     Log(L"[%d]GetFileAttributesEx: fall back to original location.", GetFileAttributesExInstance);
-                                    retval = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
+                                    retval = impl::GetFileAttributesExW(wfileName.c_str(), infoLevelId, fileInformation);
                                 }
                             }
                         }
                         else
                         {
                             Log(L"[%d]GetFileAttributesEx: uncopied other case", GetFileAttributesExInstance);
-                            retval = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
+                            retval = impl::GetFileAttributesExW(wfileName.c_str(), infoLevelId, fileInformation);
                         }
                     }
                     else if (retval != 0)
@@ -177,11 +186,12 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         if (guard)
         {
             DWORD SetFileAttributesInstance = ++g_FileIntceptInstance;
-            LogString(SetFileAttributesInstance,L"SetFileAttributesFixup for fileName", fileName);
+            std::wstring wfileName = widen(fileName);
+            LogString(SetFileAttributesInstance,L"SetFileAttributesFixup for fileName", wfileName.c_str());
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wfileName.c_str(), redirect_flags::copy_on_read, SetFileAttributesInstance);
                 if (shouldRedirect)
                 {
                     DWORD redirectedAttributes = fileAttributes;
@@ -190,7 +200,9 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         if ((fileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                             redirectedAttributes |= FILE_ATTRIBUTE_READONLY;
                     }
-                    return impl::SetFileAttributes(redirectPath.c_str(), redirectedAttributes);
+                    Log(L"[%d] Setting on redirected Equivalent with 0x%x", SetFileAttributesInstance, redirectedAttributes);
+                    std::wstring rldRedirectPath = TurnPathIntoRootLocalDevice(widen_argument(redirectPath.c_str()).c_str());
+                    return impl::SetFileAttributesW(rldRedirectPath.c_str(), redirectedAttributes);
                 }
             }
             else
@@ -204,6 +216,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::SetFileAttributes(fileName, fileAttributes);
+    std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
+    return impl::SetFileAttributes(rldFileName.c_str(), fileAttributes);
 }
 DECLARE_STRING_FIXUP(impl::SetFileAttributes, SetFileAttributesFixup);

@@ -27,6 +27,8 @@ static const char* creation_disposition_text(DWORD creationDisposition)
     return "UNKNOWN";
 }
 
+extern void Log(const char* fmt, ...);
+
 int CreateFileTest(const vfs_mapping& mapping)
 {
     CREATEFILE2_EXTENDED_PARAMETERS extParams = { sizeof(extParams) };
@@ -43,9 +45,10 @@ int CreateFileTest(const vfs_mapping& mapping)
 
         // Since we expect each creation function to produce no error, we need to ensure that the file does not exist
         clean_redirection_path();
-
+        Log("<<<<<CreateNew with CreateFile HERE");
         bool expectSuccess = (creationDisposition != OPEN_EXISTING) && (creationDisposition != TRUNCATE_EXISTING);
         auto file = createFunc(path.c_str(), creationDisposition);
+        Log("CreateNew with CreateFile >>>>>");
         if (file == INVALID_HANDLE_VALUE)
         {
             if (!expectSuccess)
@@ -117,9 +120,10 @@ int CreateNewFileTests()
     {
         std::string testName = "Create " + mapping.get().package_path.filename().string() + " File Test";
         test_begin(testName);
-
+        Log("<<<<<Create %s", testName.c_str());
         auto testResult = CreateFileTest(mapping);
         result = result ? result : testResult;
+        Log("Create %s>>>>>", testName.c_str());
 
         test_end(testResult);
     }

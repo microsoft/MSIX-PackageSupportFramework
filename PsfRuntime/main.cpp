@@ -176,7 +176,7 @@ void attach()
 {
     LoadConfig();
 #if _DEBUG
-    Log("PsfRuntime after load config");
+    //Log("PsfRuntime after load config");
 #endif
     // Restore the contents of the in memory import table that DetourCreateProcessWithDll* modified
     ::DetourRestoreAfterWith();
@@ -185,12 +185,12 @@ void attach()
     check_win32(::DetourUpdateThread(::GetCurrentThread()));
 
 #if _DEBUG
-    Log("PsfRuntime before attach all");
+    //Log("PsfRuntime before attach all");
 #endif
     // Call DetourAttach for all APIs that PsfRuntime detours
     psf::attach_all();
 #if _DEBUG
-    Log("PsfRuntime after attach all");
+    //Log("PsfRuntime after attach all");
 #endif
     // We can't call LoadLibrary in DllMain, so hook the application's entry point and do initialization then
     ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
@@ -202,7 +202,7 @@ void attach()
 
     transaction.commit();
 #if _DEBUG
-    Log("PsfRuntime after transaction commit");
+    Log("PsfRuntime is ready.");
 #endif
 }
 

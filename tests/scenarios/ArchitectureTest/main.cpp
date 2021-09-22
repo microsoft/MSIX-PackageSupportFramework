@@ -72,7 +72,26 @@ int wmain(int argc, const wchar_t** argv)
 
         if (isInitialTest)
         {
-            STARTUPINFO si{};
+            STARTUPINFO si{
+                (DWORD)sizeof(STARTUPINFO)
+                , nullptr // lpReserved
+                , nullptr // lpDesktop
+                , nullptr // lpTitle
+                , 0 // dwX
+                , 0 // dwY
+                , 0 // dwXSize
+                , 0 // swYSize
+                , 0 // dwXCountChar
+                , 0 // dwYCountChar
+                , 0 // dwFillAttribute
+                , STARTF_USESHOWWINDOW // dwFlag
+                , static_cast<WORD>(1) // wShowWindow
+                , 0 // cbReserved2
+                , nullptr  // lpReserved2
+                , nullptr // stdInput
+                , nullptr // stdOutput
+                , nullptr // stdError
+            };
             PROCESS_INFORMATION pi;
 
             std::wstring launchString = targetExe + L" /launchChild:false"s;
@@ -84,7 +103,7 @@ int wmain(int argc, const wchar_t** argv)
                 launchString += L" /mode:test";
             }
 
-            std::wcout << L"Launching \"" << targetExe << L"\"\n";
+            std::wcout << L"Launching \"" << launchString << L"\"\n";
             if (::CreateProcessW(nullptr, launchString.data(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &pi))
             {
                 ::WaitForSingleObject(pi.hProcess, INFINITE);
@@ -121,6 +140,11 @@ int wmain(int argc, const wchar_t** argv)
 
             test_cleanup();
         }
+    }
+    else
+    {
+        trace_message(L"ERROR: Command line argument parsing.\n", error_color);
+
     }
 
     if (!g_testRunnerPipe && isInitialTest)

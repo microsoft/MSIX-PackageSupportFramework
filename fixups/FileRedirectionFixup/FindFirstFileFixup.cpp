@@ -35,6 +35,8 @@ struct find_deleter
 };
 using unique_find_handle = std::unique_ptr<void, find_deleter>;
 
+#if USE_FINDFIXUP2
+#else
 struct find_data
 {
     // Redirected path directory so that we can avoid returning duplicate filenames. This value will be empty if the
@@ -57,6 +59,7 @@ struct find_data
     // We need to hold on to the results of FindFirstFile for find_handles[1/2] 
     WIN32_FIND_DATAW cached_data;
 };
+
 
 template <typename CharT>
 using win32_find_data_t = std::conditional_t<psf::is_ansi<CharT>, WIN32_FIND_DATAA, WIN32_FIND_DATAW>;
@@ -93,6 +96,11 @@ DWORD copy_find_data(const WIN32_FIND_DATAW& from, WIN32_FIND_DATAW& to) noexcep
     return ERROR_SUCCESS;
 }
 
+void LogNormalizedPath(normalized_path np, std::wstring desc, DWORD instance)
+{
+    Log(L"[%d]\tNormalized_path %ls Type=%x, Full=%ls, Abs=%ls", instance, desc.c_str(), (int)np.path_type, np.full_path.c_str(), np.drive_absolute_path);
+}
+
 template <typename CharT>
 HANDLE __stdcall FindFirstFileExFixup(
     _In_ const CharT* fileName,
@@ -113,29 +121,54 @@ HANDLE __stdcall FindFirstFileExFixup(
 
 
     // Split the input into directory and pattern
-    auto path = widen(fileName, CP_ACP);
-    LogString(FindFirstFileExInstance,L"\tFindFirstFileEx: for fileName", path.c_str());
-    Log(L"[%d]\tFindFirstFileEx: addtionalFlags=0x%x", FindFirstFileExInstance, additionalFlags);
+    auto wPath = widen(fileName);
+    auto wfileName = widen(fileName);
+    LogString(FindFirstFileExInstance,L"\tFindFirstFileEx: for fileName", wfileName.c_str());
+    Log(L"[%d]\tFindFirstFileEx: InfoLevel=0x%x searchOp=0x%x addtionalFlags=0x%x ", FindFirstFileExInstance, infoLevelId, searchOp, additionalFlags);
 
     normalized_path dir;
     const wchar_t* pattern = nullptr;
-    if (auto dirPos = path.find_last_of(LR"(\/)"); dirPos != std::wstring::npos)
+    wchar_t dal[512];
+    if (auto dirPos = wPath.find_last_of(LR"(\/)"); dirPos != std::wstring::npos)
     {
         Log("[%d]\tFileFirstFileEx: has slash", FindFirstFileExInstance);
-        // Special case for single separator at beginning of the path "/foo.txt"
+        // Special case for single separator at beginning of the wPath "/foo.txt"
         if (dirPos == 0)
         {
-            auto nextChar = std::exchange(path[dirPos + 1], L'\0');
-            dir = NormalizePath(path.c_str());
-            path[dirPos + 1] = nextChar;
+            auto nextChar = std::exchange(wPath[dirPos + 1], L'\0');
+            Log("[%d]\tdir comes from single char case =%ls", FindFirstFileExInstance,  wPath.c_str() );
+            dir = NormalizePath(wPath.c_str());
+            wPath[dirPos + 1] = nextChar;
+        }
+        else if (std::iswalpha(wPath[0]) && (wPath[1] == ':'))
+        {
+            // Ensure dir path_type is absolute drive and not drive relative
+            auto nextChar = std::exchange(wPath[dirPos + 1], L'\0');
+            Log("[%d]\tdir comes from driveroot case=%ls", FindFirstFileExInstance, wPath.c_str() );
+            dir = NormalizePath(wPath.c_str());
+            // Avoid bug in NormalizePath causing absolute_path to fail.
+            Log(L"[%d]\t\tnormalabs prefix=%ls", FindFirstFileExInstance, dir.drive_absolute_path);
+            if (dir.drive_absolute_path == nullptr)
+            {
+                size_t dirlen = wcslen(wPath.c_str());
+                if (dirlen < 511)
+                {
+                    wcsncpy_s(dal, wPath.c_str(), dirlen);
+                    dal[(int)dirlen] = L'\0';   /* null character manually added */
+                    dir.drive_absolute_path = (wchar_t*)dal;
+                }
+            }
+            wPath[dirPos + 1] = nextChar;
+            Log(L"[%d]\t\tnormalabs postfix=%ls", FindFirstFileExInstance, dir.drive_absolute_path);
         }
         else
         {
-            auto separator = std::exchange(path[dirPos], L'\0');
-            dir = NormalizePath(path.c_str());
-            path[dirPos] = separator;
+            auto separator = std::exchange(wPath[dirPos], L'\0');
+            Log("[%d]\tdir comes from =%ls", FindFirstFileExInstance, wPath.c_str() );
+            dir = NormalizePath(wPath.c_str());
+            wPath[dirPos] = separator;
         }
-        pattern = path.c_str() + dirPos + 1;
+        pattern = wPath.c_str() + dirPos + 1;
     }
     else
     {
@@ -153,10 +186,11 @@ HANDLE __stdcall FindFirstFileExFixup(
         std::filesystem::path cwd = std::filesystem::current_path();
         Log("[%d]\tFileFirstFileEx: swap to cwd: %ls", FindFirstFileExInstance,cwd.c_str());
         dir = NormalizePath(cwd.c_str()); 
-        pattern = path.c_str();
+        pattern = wPath.c_str();
         Log("[%d]\tFileFirstFileEx: no slash, assumed cwd based type=x%x dap=%ls", FindFirstFileExInstance, psf::path_type(cwd.c_str()),dir.drive_absolute_path);
     }
-    
+    Log("[%d]\tpattern=%ls wPath=%ls", FindFirstFileExInstance, pattern, wPath.c_str());
+
     // If you change the below logic, or
 	// you you change what goes into RedirectedPath
 	// you need to mirror all changes to ShouldRedirectImpl
@@ -164,34 +198,79 @@ HANDLE __stdcall FindFirstFileExFixup(
  
     //Basically, what goes into RedirectedPath here also needs to go into 
     // RedirectedPath in PathRedirection.cpp
-    dir = NormalizePath(dir.drive_absolute_path);
+    LogNormalizedPath(dir, L"dir before NP", FindFirstFileExInstance);
+    if (dir.path_type == psf::dos_path_type::local_device || dir.path_type == psf::dos_path_type::root_local_device)
+    {
+        dir = NormalizePath(dir.drive_absolute_path);
+        LogNormalizedPath(dir, L"dir mid NP", FindFirstFileExInstance);
+    }
+    if (dir.full_path.back() != L'\\')
+    {
+        dir.full_path.push_back(L'\\');
+        dir.full_path.append(pattern);  // not really sure why we used the directory and then have to put this back on...
+        if (dir.drive_absolute_path != nullptr)
+        {
+            std::wstring tmp = dir.drive_absolute_path;
+            tmp.append(L"'\\");
+            tmp.append(pattern);
+            dir.drive_absolute_path =tmp.data();
+        }
+    }
+    LogNormalizedPath(dir, L"dir before VP", FindFirstFileExInstance);
     dir = VirtualizePath(std::move(dir), FindFirstFileExInstance);
-
+    LogNormalizedPath(dir, L"dir after VP", FindFirstFileExInstance);
+    
     auto result = std::make_unique<find_data>();
 
-    result->requested_path = path.c_str();
+    result->requested_path = wPath.c_str(); 
+    /////result->requested_path = wfileName.c_str();
+    //if (result->requested_path.back() != L'\\')
+    //{
+    //   result->requested_path.push_back(L'\\');
+    //}
+    Log(L"[%d]FindFirstFile requested_path for [2] (from original) is", FindFirstFileExInstance);
+    Log(result->requested_path.c_str());
+
     result->redirect_path = RedirectedPath(dir,false, FindFirstFileExInstance);
-    if (result->redirect_path.back() != L'\\')
-    {
-        result->redirect_path.push_back(L'\\');
-    }
-    Log(L"[%d]FindFirstFile redirected_path is", FindFirstFileExInstance);
+    //if (result->redirect_path.back() != L'\\')
+    //{
+    //    result->redirect_path.push_back(L'\\');
+    //}
+
+    Log(L"[%d]FindFirstFile redirected_path for [0] (from redirected) is", FindFirstFileExInstance);
     Log(result->redirect_path.c_str());
     
-    std::filesystem::path vfspath = GetPackageVFSPath(path.c_str());
-    if (wcslen(vfspath.c_str()) > 0)
+    size_t foundWA = wPath.find(L"\\WindowsApps");
+    size_t foundVFS = wPath.find(L"\\VFS");
+    if (foundWA == std::wstring::npos || foundVFS == std::wstring::npos)
     {
-        result->package_vfs_path = vfspath.c_str();
+        Log(L"[%d]FindFirstFile wPath not in package.", FindFirstFileExInstance);
+        std::filesystem::path vfspath = GetPackageVFSPath(wPath.c_str());
+        Log(L"[%d]debug FindFirstFile wPath after GetPackageVFSPath.", FindFirstFileExInstance);
+        if (wcslen(vfspath.c_str()) > 0)
+        {
+            result->package_vfs_path = vfspath.c_str();
+            Log(L"[%d]FindFirstFile package_vfs_path for [1] (from vfs_path) is", FindFirstFileExInstance);
+            Log(result->package_vfs_path.c_str());
+        }
+        else
+        {
+            result->package_vfs_path = result->redirect_path; //dir.full_path.c_str();
+            Log(L"[%d]FindFirstFile package_vfs_path for [1] (from vfs_path) is (non AppData) so not applicable", FindFirstFileExInstance);
+            Log(result->package_vfs_path.c_str());
+        }
+        
+
+    }
+    else
+    {
+        // input path was the VFS path so no need to look here 
+        //result->package_vfs_path =  dir.full_path.c_str();
         //if (result->package_vfs_path.back() != L'\\')
         //{
         //    result->package_vfs_path.push_back(L'\\');
         //}
-        Log(L"[%d]FindFirstFile package_vfs_path is", FindFirstFileExInstance);
-        Log(result->package_vfs_path.c_str());
-    }
-    else
-    {
-        Log(L"[%d]FindFirstFile package_vfs_path is [empty]", FindFirstFileExInstance);
+        Log(L"[%d]FindFirstFile package_vfs_path for [1] (from vfs_path) is not applicable", FindFirstFileExInstance);
     }
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
@@ -224,20 +303,22 @@ HANDLE __stdcall FindFirstFileExFixup(
             // No need to copy since we wrote directly into the output buffer
             assert(findData == wideData);
         }
-        Log(L"[%d]FindFirstFile[0] redirected (from redirected): had results", FindFirstFileExInstance);
+        Log(L"[%d]FindFirstFile[0] (from redirected): had results", FindFirstFileExInstance);
     }
     else
     {
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         result->redirect_path.clear();
-        Log(L"[%d]FindFirstFile[0] redirected (from redirected): no results", FindFirstFileExInstance);
+        Log(L"[%d]FindFirstFile[0] (from redirected): no results", FindFirstFileExInstance);
     }
 
     findData = (result->find_handles[0] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
 
     //
     // Open the package_vfsP_path handle if AppData or LocalAppData (letting the runtime handle other VFSs)
-    if (IsUnderUserAppDataLocal(path.c_str()) || IsUnderUserAppDataRoaming(path.c_str()))
+    // runtime not doing what we want...
+    //if (IsUnderUserAppDataLocal(wPath.c_str()) || IsUnderUserAppDataRoaming(wPath.c_str()))
+    if (foundVFS == std::wstring::npos)
     {
         ///auto vfspathSize = result->package_vfs_path.length();
         ///result->package_vfs_path += pattern;
@@ -245,12 +326,12 @@ HANDLE __stdcall FindFirstFileExFixup(
         ///result->package_vfs_path.resize(vfspathSize);
         if (result->find_handles[1])
         {
-            Log(L"[%d]FindFirstFile[1] (from vfs_path): had results", FindFirstFileExInstance);
+            Log(L"[%d]FindFirstFile[1] (from vfs_path):   had results", FindFirstFileExInstance);
         }
         else
         {
             result->package_vfs_path.clear();
-            Log(L"[%d]FindFirstFile[1] (from vfs_path): no results", FindFirstFileExInstance);
+            Log(L"[%d]FindFirstFile[1] (from vfs_path):   no results", FindFirstFileExInstance);
         }
         if (!result->find_handles[0])
         {
@@ -276,12 +357,12 @@ HANDLE __stdcall FindFirstFileExFixup(
     result->find_handles[2].reset(impl::FindFirstFileEx(result->requested_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
     if (result->find_handles[2])
     {
-        Log(L"[%d]FindFirstFile[2] (from origial): had results", FindFirstFileExInstance);
+        Log(L"[%d]FindFirstFile[2] (from origial):    had results", FindFirstFileExInstance);
     }
     else
     {
         result->requested_path.clear();
-        Log(L"[%d]FindFirstFile[2] (from original): no results", FindFirstFileExInstance);
+        Log(L"[%d]FindFirstFile[2] (from original):   no results", FindFirstFileExInstance);
     }
     if (!result->find_handles[0] &&
         !result->find_handles[1])
@@ -317,7 +398,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         }
     }
 
-
+    Log(L"[%d]FindFirstFile returns %ls", FindFirstFileExInstance, result->cached_data.cFileName);
     ::SetLastError(ERROR_SUCCESS);
     return reinterpret_cast<HANDLE>(result.release());
 
@@ -326,6 +407,7 @@ catch (...)
 {
     // NOTE: Since we allocate our own "find handle" memory, we can't just forward on to the implementation
     ::SetLastError(win32_from_caught_exception());
+    Log(L"***FindDirstFileExFixup Exception***");
     return INVALID_HANDLE_VALUE;
 }
 DECLARE_STRING_FIXUP(impl::FindFirstFileEx, FindFirstFileExFixup);
@@ -352,7 +434,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
 
     DWORD FindNextFileInstance = ++g_FileIntceptInstance;
 
-    Log(L"[%d]FindNextFileFixup.", FindNextFileInstance);
+    
 
 
     if (findFile == INVALID_HANDLE_VALUE)
@@ -362,11 +444,11 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     }
 
     auto data = reinterpret_cast<find_data*>(findFile);
-#if !_DEBUG
+
     Log(L"[%d]FindNextFileFixup is against redir  =%ls", FindNextFileInstance, data->redirect_path.c_str());
     Log(L"[%d]FindNextFileFixup is against pkgVfs =%ls", FindNextFileInstance, data->package_vfs_path.c_str());
     Log(L"[%d]FindNextFileFixup is against request=%ls", FindNextFileInstance, data->requested_path.c_str());
-#endif
+
 
     auto redirectedFileExists = [&](auto filename)
     {
@@ -460,7 +542,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                         return FALSE;
                     }
 
-                    LogString(FindNextFileInstance, L"FindNextFile[0] returns TRUE with ERROR_SUCCESS and file %ls", data->cached_data.cFileName);
+                    Log( L"[%x] FindNextFile[0] returns TRUE with ERROR_SUCCESS and file %ls", FindNextFileInstance, data->cached_data.cFileName);
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
                 }
@@ -483,7 +565,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 // Skip the file if it exists in the redirected path
                 if (!redirectedFileExists(findFileData->cFileName))
                 {
-                    LogString(FindNextFileInstance, L"FindNextFile[1] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
+                    Log(L"[%x] FindNextFile[1] returns TRUE with ERROR_SUCCESS and file %ls", FindNextFileInstance, findFileData->cFileName);
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
                 }
@@ -514,7 +596,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 if (!redirectedFileExists(findFileData->cFileName) &&
                     !vfspathFileExists(findFileData->cFileName))
                 {
-                    LogString(FindNextFileInstance, L"FindNextFile[2] returns TRUE with ERROR_SUCCESS and %ls", findFileData->cFileName);
+                    Log(L"[%x] FindNextFile[2] returns TRUE with ERROR_SUCCESS and file %ls", FindNextFileInstance, findFileData->cFileName);
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
                 }
@@ -558,7 +640,7 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
     }
 
 //    DWORD FindCloseInstance = ++g_FileIntceptInstance;
-
+    Log(L"FindCloseFixup.");
     if (findHandle == INVALID_HANDLE_VALUE)
     {
         ::SetLastError(ERROR_INVALID_PARAMETER);
@@ -570,3 +652,5 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
     return TRUE;
 }
 DECLARE_FIXUP(impl::FindClose, FindCloseFixup);
+
+#endif

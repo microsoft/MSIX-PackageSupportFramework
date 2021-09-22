@@ -25,7 +25,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     if (guard)
     {
 #if _DEBUG
-        Log("LoadLibraryFixup unguarded.");
+        //Log("LoadLibraryFixup unguarded.");
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = GetFilenameOnly(InterpretStringW(libFileName));
@@ -33,17 +33,17 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
         if (g_dynf_forcepackagedlluse)
         {
 #if _DEBUG
-            Log("LoadLibraryFixup forcepackagedlluse.");
+            //Log("LoadLibraryFixup forcepackagedlluse.");
 #endif
             for (dll_location_spec spec : g_dynf_dllSpecs)
             {
 #if _DEBUG
-                Log("LoadLibraryFixup test");
+                //Log("LoadLibraryFixup test");
 #endif
                 try
                 {
 #if _DEBUG
-                    LogString("LoadLibraryFixup testing against", spec.filename.data());
+                    //LogString("LoadLibraryFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
@@ -71,7 +71,7 @@ template <typename CharT>
 HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ HANDLE file, _In_ DWORD flags)
 {
 #if _DEBUG
-    LogString("LoadLibraryExFixup called on",libFileName);
+    //LogString("LoadLibraryExFixup called on",libFileName);
 #endif
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
@@ -79,7 +79,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
     if (guard)
     {
 #if _DEBUG
-        Log("LoadLibraryExFixup unguarded.");
+        //Log("LoadLibraryExFixup unguarded.");
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = InterpretStringW(libFileName);
@@ -92,7 +92,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 {
 #if _DEBUG
                     //Log("LoadLibraryExFixup testing %ls against %ls", libFileNameW.c_str(), spec.full_filepath.native().c_str());
-                    LogString("LoadLibraryExFixup testing against", spec.filename.data());
+                    //LogString("LoadLibraryExFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)

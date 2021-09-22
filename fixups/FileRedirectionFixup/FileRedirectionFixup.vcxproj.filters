@@ -67,6 +67,10 @@
     <ClCompile Include="GetPrivateProfileStructFixup.cpp" />
     <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
+    <ClCompile Include="SetWorkingDirectory.cpp" />
+    <ClCompile Include="FindFirstFileFixup2.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="FileRedirectionFixupMetadata.xml" />

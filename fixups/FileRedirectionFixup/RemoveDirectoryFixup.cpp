@@ -15,37 +15,46 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         if (guard)
         {
             DWORD RemoveDirectoryInstance = ++g_FileIntceptInstance;
-            LogString(RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", pathName);
+            std::wstring wPathName = widen(pathName);
+            LogString(RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", wPathName.c_str());
             
-            if (!IsUnderUserAppDataLocalPackages(pathName))
+            if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
             {
                 // NOTE: See commentary in DeleteFileFixup for limitations on deleting files/directories
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(pathName, redirect_flags::none);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wPathName.c_str(), redirect_flags::none);
                 if (shouldRedirect)
                 {
-                    if (!impl::PathExists(redirectPath.c_str()) && impl::PathExists(pathName))
+                    std::wstring rldPathName = TurnPathIntoRootLocalDevice(wPathName.c_str());
+                    std::wstring rldRedirectPath = TurnPathIntoRootLocalDevice(widen_argument(redirectPath.c_str()).c_str());
+                    if (!impl::PathExists(rldRedirectPath.c_str()) && impl::PathExists(rldPathName.c_str()))
                     {
                         // If the directory does not exist in the redirected location, but does in the non-redirected
                         // location, then we want to give the "illusion" that the delete succeeded
+                        LogString(RemoveDirectoryInstance, L"RemoveDirectoryFixup In package but not redirected area.", L"Fake return true.");
                         return TRUE;
                     }
                     else
                     {
-                        return impl::RemoveDirectory(redirectPath.c_str());
+                        LogString(RemoveDirectoryInstance, L"RemoveDirectoryFixup Use Folder", redirectPath.c_str());
+                        BOOL bRet = impl::RemoveDirectory(rldRedirectPath.c_str());
+                        Log(L"[%d]RemoveDirectoryFixup deletes redirected with result: %d", RemoveDirectoryInstance, bRet);
+                        return bRet;
                     }
                 }
             }
             else
             {
-                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", RemoveDirectoryInstance);
+                Log(L"[%d]RemoveDirectoryFixup Under LocalAppData\\Packages, don't redirect", RemoveDirectoryInstance);
             }
         }
     }
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        LogString(L"RemoveDirectoryFixup ", L"***Exception; use requested folder.***");
     }
 
-    return impl::RemoveDirectory(pathName);
+    std::wstring rldPathName = TurnPathIntoRootLocalDevice(widen_argument(pathName).c_str());
+    return impl::RemoveDirectory(rldPathName.c_str());
 }
 DECLARE_STRING_FIXUP(impl::RemoveDirectory, RemoveDirectoryFixup);

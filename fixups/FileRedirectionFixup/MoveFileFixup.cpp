@@ -43,7 +43,7 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
-        Log(L"MoveFileFixup Exception detected; fallback.");
+        Log(L"MoveFileFixup ***Exception detected; fallback.***");
     }
 
     return impl::MoveFile(existingFileName, newFileName);
@@ -72,10 +72,9 @@ BOOL __stdcall MoveFileExFixup(
             auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
             if (redirectExisting || redirectDest)
             {
-                BOOL bRet= impl::MoveFileEx(
-                    redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str(),
-                    redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str(),
-                    flags);
+                std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str());
+                std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                BOOL bRet= impl::MoveFileEx(rldExistingFileName.c_str(), rldNewDirectory.c_str(), flags);
                 if (bRet)
                     Log(L"[%d]MoveFileEx returns true.", MoveFileExInstance);
                 else
@@ -87,9 +86,21 @@ BOOL __stdcall MoveFileExFixup(
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
-        Log(L"MoveFileExFixup Exception detected; fallback.");
+        Log(L"MoveFileExFixup ***Exception detected; fallback.***");
     }
 
-    return impl::MoveFileEx(existingFileName, newFileName, flags);
+    if constexpr (psf::is_ansi<CharT>)
+    {
+        std::string rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+        std::string rldNewFileName = TurnPathIntoRootLocalDevice(newFileName);
+        return impl::MoveFileEx(rldExistingFileName.c_str(), rldNewFileName.c_str(), flags);
+    }
+    else
+    {
+        std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+        std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(newFileName);
+        return impl::MoveFileEx(rldExistingFileName.c_str(), rldNewDirectory.c_str(), flags);
+    }
+    ///return impl::MoveFileEx(existingFileName, newFileName, flags);
 }
 DECLARE_STRING_FIXUP(impl::MoveFileEx, MoveFileExFixup);

@@ -56,6 +56,7 @@ namespace impl
 
     inline auto SetFileAttributes = psf::detoured_string_function(&::SetFileAttributesA, &::SetFileAttributesW);
 
+    inline auto GetCurrentDirectory = psf::detoured_string_function(&::GetCurrentDirectoryA, &::GetCurrentDirectoryW);
     inline auto SetCurrentDirectory = psf::detoured_string_function(&::SetCurrentDirectoryA, &::SetCurrentDirectoryW);
 
     inline auto WritePrivateProfileSection = psf::detoured_string_function(&::WritePrivateProfileSectionA, &::WritePrivateProfileSectionW);

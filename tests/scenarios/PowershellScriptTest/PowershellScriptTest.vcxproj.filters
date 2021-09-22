@@ -14,6 +14,18 @@
     <None Include="config.json">
       <Filter>pkg</Filter>
     </None>
+    <None Include="SayHello.ps1">
+      <Filter>pkg</Filter>
+    </None>
+    <None Include="SayHi.ps1">
+      <Filter>pkg</Filter>
+    </None>
+    <None Include="SayWithArgument.ps1">
+      <Filter>pkg</Filter>
+    </None>
+    <None Include="StartingScriptWrapper.ps1">
+      <Filter>pkg</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,7 +45,7 @@
       <Filter>pkg</Filter>
     </Text>
   </ItemGroup>
-    <ItemGroup>
+  <ItemGroup>
     <None Include="config.json">
       <Filter>pkg</Filter>
     </None>

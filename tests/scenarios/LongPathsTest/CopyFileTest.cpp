@@ -7,6 +7,40 @@
 
 #include "paths.h"
 
+
+void Log(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    std::string str;
+    str.resize(256);
+    try
+    {
+        std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
+        assert(count >= 0);
+        va_end(args);
+
+        if (count > str.size())
+        {
+            str.resize(count);
+
+            va_list args2;
+            va_start(args2, fmt);
+            count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
+            assert(count >= 0);
+            va_end(args2);
+        }
+
+        str.resize(count);
+    }
+    catch (...)
+    {
+        str = fmt;
+    }
+    ::OutputDebugStringA(str.c_str());
+}
+
+
 static int DoCopyFileTest()
 {
     clean_redirection_path();
@@ -17,6 +51,12 @@ static int DoCopyFileTest()
 	write_entire_file(g_testFilePath.c_str(), g_expectedFileContents);
     if (!::CopyFileW(g_testFilePath.c_str(), copyPath.c_str(), false))
     {
+        // The source file does  exist
+        ////if (::GetLastError() == ERROR_PATH_NOT_FOUND)
+        ////{
+        ////    trace_message("Success (PATH_NOT_FOUND).", info_color, true);
+        ////    return ERROR_SUCCESS;
+        ///}
         return trace_last_error(L"CopyFile failed");
     }
     else if (auto contents = read_entire_file(copyPath.c_str()); contents != g_expectedFileContents)
@@ -33,7 +73,9 @@ static int DoCopyFileTest()
 int CopyFileTest()
 {
     test_begin("CopyFile Test");
+    Log("<<<<<LongPathsTest CopyFile");
     auto result = DoCopyFileTest();
+    Log("LongPathsTest CopyFile>>>>>");
     test_end(result);
     return result;
 }

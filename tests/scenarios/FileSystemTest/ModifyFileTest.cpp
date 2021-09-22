@@ -55,8 +55,8 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
 
     auto modifyFile = [](const std::function<HANDLE(LPCWSTR, DWORD)>& createFunc, DWORD creationDisposition, const std::filesystem::path& filePath, const char* expectedContents, const char* newContents) -> int
     {
-        trace_messages(L"Opening File: ", info_color, filePath.native(), new_line);
-        Log("***Opening File to fail>>>");
+        trace_messages(L"   modifyFile File: ", info_color, filePath.native(), new_line);
+        Log("<<<<<Opening File to fail***");
 
         // First, validate that opening with CREATE_NEW fails
         if (auto file = createFunc(filePath.c_str(), CREATE_NEW); file != INVALID_HANDLE_VALUE)
@@ -69,10 +69,9 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         else if (::GetLastError() != ERROR_FILE_EXISTS)
         {
             //return trace_last_error(L"Error should have been set to ERROR_FILE_EXISTS when attempting to open with 'CREATE_NEW'");
-            trace_last_error(L"Error should have been set to ERROR_FILE_EXISTS when attempting to open with 'CREATE_NEW'");
-            trace_message(L"Temp IGNORE ERROR");
+            trace_last_error(L"Error should have been set to ERROR_FILE_EXISTS when attempting to open with 'CREATE_NEW'.");
         }
-        Log(">>>Opened File to fail***");
+        Log("Opened File to fail>>>>>");
 
         auto file = createFunc(filePath.c_str(), creationDisposition);
         if (file == INVALID_HANDLE_VALUE)
@@ -113,6 +112,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
                 ::CloseHandle(file);
                 return ERROR_ASSERTION_FAILURE;
             }
+            ::SetLastError(ERROR_SUCCESS);
         }
 
         if (!::WriteFile(file, newContents, static_cast<DWORD>(std::strlen(newContents)), nullptr, &overlapped))
@@ -127,6 +127,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         }
 
         ::CloseHandle(file);
+        trace_message(L"   modifyFile success:\n",info_color);
         return ERROR_SUCCESS;
     };
 
@@ -140,47 +141,65 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         // Clean up the redirected path so that existing files don't impact this test
         clean_redirection_path();
 
+        trace_message(L"Modify Test subset with OPEN_ALWAYS:\n");
         auto result = modifyFile(createFunc, OPEN_ALWAYS, packagePath / filename, initial_contents, first_modify_contents);
         if (result) return result;
 
+        trace_message(L"Modify Test subset with OPEN_EXISTING:\n");
         result = modifyFile(createFunc, OPEN_EXISTING, packagePath / filename, first_modify_contents, second_modify_contents);
         if (result) return result;
 
+        trace_message(L"Modify Test subset with OPEN_EXISTING:\n");
         result = modifyFile(createFunc, OPEN_EXISTING, packagePath / filename, second_modify_contents, unexpected_contents);
         if (result) return result;
 
+        trace_message(L"Modify Test subset with TRUNCATE_EXISTING:\n");
         // Opening the file with TRUNCATE_EXISTING should mean that we read no contents
         result = modifyFile(createFunc, TRUNCATE_EXISTING, packagePath / filename, "", unexpected_contents);
         if (result) return result;
 
+        trace_message(L"Modify Test subset with CREATE_ALWAYS:\n");
         // Opening the file with CREATE_ALWAYS should effectively be equivalent to TRUNCATE_EXISTING
         result = modifyFile(createFunc, CREATE_ALWAYS, packagePath / filename, "", unexpected_contents);
         if (result) return result;
 
         // Open again with CREATE_ALWAYS, but this time after cleaning the redirected path to ensure the correct error
+        trace_message(L"Modify Test subset with CREATE_ALWAYS after cleanup:\n");
         clean_redirection_path();
         result = modifyFile(createFunc, CREATE_ALWAYS, packagePath / filename, "", unexpected_contents);
-        if (result) return result;
+        if (result) return ERROR_SUCCESS;
 
-        return ERROR_SUCCESS;
+        return ::GetLastError();
     };
 
     // Test with full paths
+    trace_message(L"Testing Set Full Paths with CreateFile\n");
+    Log("<<<<<Full Paths Set with CreateFile HERE");
     auto result = performTest(CreateFileFunc, mapping.package_path);
+    Log("Full Paths Set with CreateFile >>>>>");
     if (result) return result;
 
+    trace_message(L"Testing Set Full Paths with CreateFile2\n");
+    Log("<<<<<Full Paths Set with CreateFile2 HERE");
     result = performTest(CreateFile2Func, mapping.package_path);
+    Log("Full Paths Set with CreateFile2 >>>>>");
     if (result) return result;
 
     // Test with relative paths
+    trace_message(L"Testing Set Relative Paths with CreateFile\n");
+    Log("<<<<<Relative Paths Set with CreateFile HERE");
     result = performTest(
         CreateFileFunc,
         mapping.package_path.lexically_relative(std::filesystem::current_path()));
+    Log("Relative Paths Set with CreateFile >>>>>");
     if (result) return result;
 
+    trace_message(L"Testing Set Relative Paths with CreateFile2\n");  
+    Log("<<<<<Relative Paths Set with CreateFile2 HERE");
     result = performTest(
         CreateFile2Func,
         mapping.package_path.lexically_relative(std::filesystem::current_path()));
+    Log("Relative Paths Set with CreateFile2 >>>>>");
     if (result) return result;
 
     // Test with paths containing forward slashes
@@ -188,10 +207,16 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     auto path = mapping.path.native();
     std::replace(packagePath.begin(), packagePath.end(), L'\\', L'/');
     std::replace(path.begin(), path.end(), L'\\', L'/');
+    trace_message(L"Testing Set Forward Slashes with CreateFile\n");
+    Log("<<<<<Forward Slash Set with CreateFile HERE");
     result = performTest(CreateFileFunc, packagePath);
+    Log("Forward Slash Set with CreateFile >>>>>");
     if (result) return result;
 
+    trace_message(L"Testing Set Forward Slashes with CreateFile2\n");
+    Log("<<<<<Forward Slash Set with CreateFile2 HERE");
     result = performTest(CreateFile2Func, packagePath);
+    Log("Forward Slash Set with CreateFile2 >>>>>");
     if (result) return result;
 
     // Test with root-local device paths
@@ -199,10 +224,16 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     {
         packagePath = LR"(\\?\)"s + mapping.package_path.native();
         path = LR"(\\?\)"s + mapping.path.native();
+        trace_message("Testing Set Root-Local Path with CreateFileW\n");
+        Log("<<<<<Root-Local Set with CreateFile HERE");
         result = performTest(CreateFileFunc, packagePath);
+        Log("Root-Local Set with CreateFile >>>>>");
         if (result) return result;
 
+        trace_message("Testing Set Root-Local Path with CreateFile2\n");
+        Log("<<<<<Root-Local Set with CreateFile2 HERE");
         result = performTest(CreateFile2Func, packagePath);
+        Log("Root-Local Set with CreateFile2 >>>>>");
         if (result) return result;
     }
 
@@ -231,7 +262,9 @@ int ModifyFileTests()
 
     vfs_mapping packageMapping{ L"", g_packageRootPath };
     packageMapping.package_path = g_packageRootPath;
+    Log("<<<<<Modify Package File Test Scenario  HERE");
     auto testResult = ModifyFileTest(g_packageFileName, packageMapping);
+    Log("Modify Package File Test Scenario  >>>>>");
     result = result ? result : testResult;
 
     test_end(testResult);

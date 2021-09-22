@@ -21,7 +21,8 @@
                 {
                   "base": "",
                   "patterns": [
-                    ".*\\.txt",
+                    ".*\\.[tT][xX][tT]$",
+                    ".*\\.[iI][nN][iI]$",
                     "Tèƨƭ.*"
                   ]
                 }
@@ -33,7 +34,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]
@@ -44,7 +45,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]
@@ -55,7 +56,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]
@@ -66,7 +67,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]
@@ -77,7 +78,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]
@@ -88,7 +89,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]
@@ -99,7 +100,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]
@@ -110,7 +111,7 @@
                     {
                       "base": "",
                       "patterns": [
-                        ".*\\.txt"
+                        ".*\\.[tTiI][xXnN][tTiI]$"
                       ]
                     }
                   ]

@@ -288,7 +288,11 @@ BOOL WINAPI CreateProcessFixup(
             Log("\tAttempt injection into %d using %s", processInformation->dwProcessId, targetDllPath);
             if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
             {
-                Log("\t%ls unable to inject, skipping.", targetDllPath);
+                Log("\t%s unable to inject, err=0x%x.", targetDllPath, ::GetLastError());
+                if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
+                {
+                    Log("\t%s unable to inject with RunDll either (Skipping), err=0x%x.", targetDllPath, ::GetLastError());
+                }
             }
             else
             {

@@ -7,6 +7,8 @@
 
 #include "paths.h"
 
+extern void Log(const char* fmt, ...);
+
 static int DoCreateDeleteFileTest()
 {
     clean_redirection_path();
@@ -83,7 +85,10 @@ static int DoCreateDeleteFileTest()
 int CreateDeleteFileTest()
 {
     test_begin("Create/Delete File Test");
+    Log("<<<<<LongPathsTest Create/Delete File");
     auto result = DoCreateDeleteFileTest();
+    Log("LongPathsTest Create/Delete File>>>>>");
     test_end(result);
     return result;
+
 }

@@ -61,7 +61,7 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
         }
 
         clean_redirection_path();
-        trace_message(L"Calling CreateDirectoryEx again, but this time with FILE_ATTRIBUTE_HIDDEN added to the attributes of the template directory\n");
+        trace_message(L"Calling SetFileAttributesW against template folder, but this time with FILE_ATTRIBUTE_HIDDEN added to the attributes of the template directory\n");
         attrFrom |= FILE_ATTRIBUTE_HIDDEN;
         if (!::SetFileAttributesW(L"TèƨƭTè₥ƥℓáƭè", attrFrom))
         {
@@ -74,6 +74,7 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
             return ERROR_ASSERTION_FAILURE;
         }
 
+        trace_message(L"Calling CreateDirectoryExW against this attributed folder\n");
         if (!::CreateDirectoryExW(L"TèƨƭTè₥ƥℓáƭè", path.c_str(), nullptr))
         {
             return trace_last_error(L"Failed to re-create the directory");

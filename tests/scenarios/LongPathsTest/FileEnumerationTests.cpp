@@ -9,6 +9,7 @@
 #include <utilities.h>
 
 #include "paths.h"
+extern void Log(const char* fmt, ...);
 
 static int DoFileEnumerationTest()
 {
@@ -68,7 +69,9 @@ static int DoFileEnumerationTest()
 int FileEnumerationTest()
 {
     test_begin("File Enumeration Test");
+    Log("<<<<<LongPathsTest File Enumeration");
     auto result = DoFileEnumerationTest();
+    Log("LongPathsTest File Enumeration>>>>>");
     test_end(result);
     return result;
 }
