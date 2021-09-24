@@ -82,7 +82,7 @@ DWORD __stdcall GetCurrentDirectoryFixup(_In_ DWORD nBufferLength, _Out_ CharT* 
         {
 
             // This exists for debugging only.
-#if _Debug
+#if _DEBUG
             DWORD GetWorkingDirectoryInstance = ++g_FileIntceptInstance;
             DWORD dRet = impl::GetCurrentDirectory(nBufferLength, filePath);
             Log(L"[%x]GetCurrentDirectory returns 0x%x", GetWorkingDirectoryInstance, dRet);
