@@ -90,50 +90,72 @@ int wmain(int argc, const wchar_t** argv)
 {
     auto result = parse_args(argc, argv);
     std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
-    test_initialize("Powershell Script Tests", 1);
-    test_begin("Powershell Script Test");
-
     //get rid of the !
     std::wstring testType = aumid.substr(aumid.find('!') + 1);
     std::transform(testType.begin(), testType.end(), testType.begin(), towlower);
 
-    Log(L"<<<<<Powershell Script Test %ls", testType.c_str());
-
     TCHAR localAppDataPath[MAX_PATH];
     SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppDataPath);
-    bool doesHelloExist = DoesFileExist(localAppDataPath, L"Hello.txt");
-    bool doesArgumentExist = DoesFileExist(localAppDataPath, L"Argument.txt");
 
-
-    if (testType.compare(L"psonlystart") == 0)
+    if (testType.compare(L"psfshelllaunchverify") == 0)
     {
-        if (!doesHelloExist)
+        test_initialize("Shell Launch Tests", 1);
+        test_begin("Shell Launch Test");
+        bool doesHelloCopyExist = DoesFileExist(localAppDataPath, L"HelloWorldCopy.txt");
+        if (!doesHelloCopyExist)
         {
             result = ERROR_FILE_NOT_FOUND;
         }
-    }
-    else if (testType.compare(L"psbothstartingfirst") == 0)
-    {
-        if (!doesHelloExist)
+        else
         {
-            result = ERROR_FILE_NOT_FOUND;
+           RemoveFile(localAppDataPath, L"HelloWorldCopy.txt");
+ 
         }
+        test_end(result);
     }
-    else if (testType.compare(L"psscriptwitharg") == 0)
+    else
     {
-        if (!doesArgumentExist)
+        bool doesHelloExist = DoesFileExist(localAppDataPath, L"Hello.txt");
+        bool doesArgumentExist = DoesFileExist(localAppDataPath, L"Argument.txt");
+
+        test_initialize("Powershell Script Tests", 1);
+        test_begin("Powershell Script Test");
+
+ 
+        Log(L"<<<<<Powershell Script Test %ls", testType.c_str());
+
+
+        if (testType.compare(L"psonlystart") == 0)
         {
-            result = ERROR_FILE_NOT_FOUND;
+            if (!doesHelloExist)
+            {
+                result = ERROR_FILE_NOT_FOUND;
+            }
         }
+        else if (testType.compare(L"psbothstartingfirst") == 0)
+        {
+            if (!doesHelloExist)
+            {
+                result = ERROR_FILE_NOT_FOUND;
+            }
+        }
+        else if (testType.compare(L"psscriptwitharg") == 0)
+        {
+            if (!doesArgumentExist)
+            {
+                result = ERROR_FILE_NOT_FOUND;
+            }
+        }
+
+
+        RemoveFile(localAppDataPath, L"Hello.txt");
+        RemoveFile(localAppDataPath, L"Argument.txt");
+
+        test_end(result);
+        Log(L"Powershell Script Test>>>>>");
+
+
     }
-
-
-    RemoveFile(localAppDataPath, L"Hello.txt");
-    RemoveFile(localAppDataPath, L"Argument.txt");
-
-    test_end(result);
-    Log(L"Powershell Script Test>>>>>");
-
     test_cleanup();
 
     return result;

@@ -3,14 +3,18 @@
 "config.json" "config.json"
 
 "..\..\..\x64\Debug\PsfLauncher64.exe" "PsfLauncher.exe"
+"..\..\..\Win32\Debug\PsfRuntime32.dll" "PsfRuntime32.dll"
 "..\..\..\x64\Debug\PsfRuntime64.dll" "PsfRuntime64.dll"
-"..\..\..\x64\Debug\CompositionTestFixup64.dll" "CompositionTestFixup64.dll"
-"..\..\..\x64\Debug\MultiByteToWideCharTestFixup64.dll" "MultiByteToWideCharTestFixup64.dll"
+"..\..\..\Win32\Debug\PsfRunDll32.exe" "PsfRunDll32.exe"
+"..\..\..\x64\Debug\PsfRunDll64.exe" "PsfRunDll64.exe"
+
 "..\..\x64\Debug\PowershellScriptTest.exe" "PowershellScriptTest.exe"
 "SayHello.ps1" "SayHello.ps1"
 "SayHi.ps1" "SayHi.ps1"
 "SayWithArgument.ps1" "SayWithArgument.ps1"
 "StartingScriptWrapper.ps1" "StartingScriptWrapper.ps1"
+"SayHello.ps1" "SayHello.ps1"
+"HelloWorld.cmd" "HelloWorld.cmd"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

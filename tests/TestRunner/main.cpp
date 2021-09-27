@@ -27,13 +27,15 @@ static constexpr const wchar_t* g_applications[] =
 {
     L"ArchitectureTest_8wekyb3d8bbwe!Fixed32",
     L"ArchitectureTest_8wekyb3d8bbwe!Fixed64",
-    L"CompositionTest_8wekyb3d8bbwe!Fixed",
-    L"FileSystemTest_8wekyb3d8bbwe!Fixed",
-    L"LongPathsTest_8wekyb3d8bbwe!Fixed",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchTest",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchVerify",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSNoScripts",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSOnlyStart",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSBothStartingFirst",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSScriptWithArg",
+    L"CompositionTest_8wekyb3d8bbwe!Fixed",
+    L"FileSystemTest_8wekyb3d8bbwe!Fixed",
+    L"LongPathsTest_8wekyb3d8bbwe!Fixed",
     L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed32",
     L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed64",
     L"RegLegacyTest_8wekyb3d8bbwe!Fixed32",
@@ -397,13 +399,23 @@ int wmain(int argc, const wchar_t** argv)
 
             if (!currentApp.test_count)
             {
-                assert(!g_state.active_app);
-                std::wcout << error_text() << "ERROR: Application terminated without sending an init message\n";
+                if (wcsstr(aumid,L"PsfShellLaunchTest") != 0)
+                {
+                    std::wcout <<  "This test does not report progress, see verify test that follows.\n";
+                }
+                else
+                {
+                    assert(!g_state.active_app);
+                    std::wcout << error_text() << "ERROR: Application terminated without sending an init message\n";
+                }
             }
             else if (g_state.active_app)
             {
-                std::wcout << error_text() << "ERROR: Application terminated without sending a cleanup message\n";
-                cleanup_current_app(true);
+                if (wcsstr(aumid, L"PsfShellLaunchTest") == 0)
+                {
+                    std::wcout << error_text() << "ERROR: Application terminated without sending a cleanup message\n";
+                    cleanup_current_app(true);
+                }
             }
 
             if (!g_onlyPrintSummary)
@@ -434,67 +446,73 @@ int wmain(int argc, const wchar_t** argv)
             console::change_foreground(console::color::dark_cyan) << testApp.package_family_name << "\n";
 
         std::wcout << console::change_foreground(console::color::cyan) << "             Result: ";
-        if (succeeded)
+        if (testApp.name.find("PsfShellLaunchTest") != std::string::npos)
         {
-            std::wcout << success_text() << "SUCCEEDED!\n";
+            std::wcout << success_text() << "Not Reportable, see verify test that follows.\n";
         }
         else
         {
-            std::wcout << error_text() << "FAILED!\n";
-        }
-
-        if (testApp.test_count)
-        {
-            std::wcout << console::change_foreground(console::color::cyan) << "        Total Count: " <<
-                console::change_foreground(console::color::dark_cyan) << testApp.test_count << "\n";
-            std::wcout << console::change_foreground(console::color::cyan) << "            Success: " <<
-                console::change_foreground(console::color::dark_cyan) << testApp.success_count << "\n";
-            std::wcout << console::change_foreground(console::color::cyan) << "            Failure: " <<
-                console::change_foreground(console::color::dark_cyan) << testApp.failure_count << "\n";
-            std::wcout << console::change_foreground(console::color::cyan) << "            Blocked: " <<
-                console::change_foreground(console::color::dark_cyan) << blockedCount << "\n";
-        }
-
-        if (!succeeded)
-        {
-            std::wcout << console::change_foreground(console::color::cyan) << "             Reason: ";
-            if (FAILED(testApp.activation_result))
+            if (succeeded)
             {
-                ++failureCount; // Don't know how many tests there were, so just assume one
-                std::wcout << console::change_foreground(console::color::dark_cyan) << "Application failed to activate\n";
-                std::wcout << console::change_foreground(console::color::cyan) << "              Error: " <<
-                    console::change_foreground(console::color::dark_cyan) << error_message(testApp.activation_result).c_str() << "\n";
-            }
-            else if (!testApp.test_count)
-            {
-                ++failureCount; // Don't know how many tests there were, so just assume one
-                std::wcout << console::change_foreground(console::color::dark_cyan) << "Application failed to communicate test results\n";
+                std::wcout << success_text() << "SUCCEEDED!\n";
             }
             else
             {
-                failureCount += testApp.test_count - testApp.success_count;
-                std::wcout << console::change_foreground(console::color::dark_cyan) <<
-                    (blockedCount ? "The test terminated unexpectedly" : "Test had failures") << "\n";
+                std::wcout << error_text() << "FAILED!\n";
+            }
 
-                if (testApp.failure_count)
+            if (testApp.test_count)
+            {
+                std::wcout << console::change_foreground(console::color::cyan) << "        Total Count: " <<
+                    console::change_foreground(console::color::dark_cyan) << testApp.test_count << "\n";
+                std::wcout << console::change_foreground(console::color::cyan) << "            Success: " <<
+                    console::change_foreground(console::color::dark_cyan) << testApp.success_count << "\n";
+                std::wcout << console::change_foreground(console::color::cyan) << "            Failure: " <<
+                    console::change_foreground(console::color::dark_cyan) << testApp.failure_count << "\n";
+                std::wcout << console::change_foreground(console::color::cyan) << "            Blocked: " <<
+                    console::change_foreground(console::color::dark_cyan) << blockedCount << "\n";
+            }
+
+            if (!succeeded)
+            {
+                std::wcout << console::change_foreground(console::color::cyan) << "             Reason: ";
+                if (FAILED(testApp.activation_result))
                 {
-                    std::wcout << console::change_foreground(console::color::cyan) << "      Failing Tests:";
+                    ++failureCount; // Don't know how many tests there were, so just assume one
+                    std::wcout << console::change_foreground(console::color::dark_cyan) << "Application failed to activate\n";
+                    std::wcout << console::change_foreground(console::color::cyan) << "              Error: " <<
+                        console::change_foreground(console::color::dark_cyan) << error_message(testApp.activation_result).c_str() << "\n";
+                }
+                else if (!testApp.test_count)
+                {
+                    ++failureCount; // Don't know how many tests there were, so just assume one
+                    std::wcout << console::change_foreground(console::color::dark_cyan) << "Application failed to communicate test results\n";
+                }
+                else
+                {
+                    failureCount += testApp.test_count - testApp.success_count;
+                    std::wcout << console::change_foreground(console::color::dark_cyan) <<
+                        (blockedCount ? "The test terminated unexpectedly" : "Test had failures") << "\n";
 
-                    const char* prefix = " ";
-                    for (auto& test : testApp.tests)
+                    if (testApp.failure_count)
                     {
-                        if (test.result)
+                        std::wcout << console::change_foreground(console::color::cyan) << "      Failing Tests:";
+
+                        const char* prefix = " ";
+                        for (auto& test : testApp.tests)
                         {
-                            std::wcout << console::change_foreground(console::color::dark_cyan) << prefix <<
-                                test.name.c_str() << " [" << error_text() << error_message(test.result).c_str() <<
-                                console::revert_foreground() << "]\n";
-                            prefix = "                     ";
+                            if (test.result)
+                            {
+                                std::wcout << console::change_foreground(console::color::dark_cyan) << prefix <<
+                                    test.name.c_str() << " [" << error_text() << error_message(test.result).c_str() <<
+                                    console::revert_foreground() << "]\n";
+                                prefix = "                     ";
+                            }
                         }
                     }
                 }
             }
         }
-
         std::wcout << "\n";
     }
 

@@ -58,16 +58,17 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     return ERROR_SUCCESS;
 }
 
-void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow, DWORD timeout)
+void StartWithShellExecute(LPCWSTR verb, std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow, DWORD timeout)
 {
 	// Non Exe case, use shell launching to pick up local FTA
+    // Normally verb should be a nullptr.
 	auto nonExePath = packageRoot / exeName;
 
 	SHELLEXECUTEINFO shex = {
 		sizeof(shex)
 		, SEE_MASK_NOCLOSEPROCESS
 		, (HWND)nullptr
-		, nullptr
+		, verb
 		, nonExePath.c_str()
 		, exeArgString.c_str()
 		, dirStr ? (packageRoot / dirStr).c_str() : nullptr

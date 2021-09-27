@@ -26,6 +26,9 @@
     <None Include="StartingScriptWrapper.ps1">
       <Filter>pkg</Filter>
     </None>
+    <None Include="HelloWorld.cmd">
+      <Filter>pkg</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

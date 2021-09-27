@@ -6,6 +6,9 @@
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
 
+/// Consider adding AddDllDirectory hooking to also add virtual equivalents
+/// There seems to be some dll loading that occurs outside of loadlibrary???
+/// It would be done in FRF as only FRF knows the alternate paths.
 
 template <typename CharT>
 BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* filePath) noexcept
@@ -88,7 +91,7 @@ DWORD __stdcall GetCurrentDirectoryFixup(_In_ DWORD nBufferLength, _Out_ CharT* 
             Log(L"[%x]GetCurrentDirectory returns 0x%x", GetWorkingDirectoryInstance, dRet);
             if (dRet == 0)
             {
-                Log(S"[%x]GetCurrentDirectory = %ls", GetWorkingDirectoryInstance, widen(filePath).c_str());
+                Log(L"[%x]GetCurrentDirectory = %ls", GetWorkingDirectoryInstance, widen(filePath).c_str());
             }
             return dRet;
 #else

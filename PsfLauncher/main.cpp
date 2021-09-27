@@ -24,7 +24,7 @@
 #include <wil\result.h>
 #include <wil\resource.h>
 #include <debug.h>
-
+#include <shlwapi.h>
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -158,7 +158,43 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         LogString("Shell Launch", exePath.c_str());
         LogString("   Arguments", exeArgString.c_str());
         LogString("Working Directory: ", currentDirectory.c_str());
-        StartWithShellExecute(packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
+        if (check_suffix_if(exeName, L".cmd"_isv) || check_suffix_if(exeName, L".bat"_isv))
+        {
+            std::wstring wArgs = L"/c \"";
+            wArgs.append(exePath.c_str());
+            wArgs.append(L"\" ");
+            wArgs.append(exeArgString);
+
+            // Create an empty Attribute List so Breakaway may be set to force cmd to run inside the container.
+            SIZE_T AttributeListSize;
+            InitializeProcThreadAttributeList(NULL, 1, 0, &AttributeListSize);
+            LPPROC_THREAD_ATTRIBUTE_LIST attributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
+                GetProcessHeap(),
+                0,
+                AttributeListSize
+            );
+            BOOL b2 = InitializeProcThreadAttributeList(attributeList, 1, 0, &AttributeListSize);          
+            DWORD DAP = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE | PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
+            BOOL b4 =UpdateProcThreadAttribute(attributeList,
+                0,
+                PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
+                &DAP,
+                sizeof(DAP),
+                NULL,
+                NULL);
+            if (b2 && b4) // && b3)
+            {
+                HRESULT hr = StartProcess(L"C:\\Windows\\System32\\cmd.exe", wArgs.data(), currentDirectory.c_str(), cmdShow, INFINITE, attributeList);
+                if (hr != ERROR_SUCCESS)
+                {
+                    Log("Error return from launching cmd process 0x%x.", GetLastError());
+                }
+            }
+        }
+        else
+        {
+            StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
+        }
     }
 
     if (IsCurrentOSRS2OrGreater())
