@@ -1,0 +1,28 @@
+# Script to create the release zip file
+if (!(Test-Path .\ZipRelease))
+{
+    new-item -ItemType Directory -Name .\ZipRelease
+}
+if (Test-Path .\ZipRelease\ReleasePsf.zip)
+{
+    Remove-Item .\ZipRelease\ReleasePsf.zip
+}
+if (Test-Path .\ZipRelease\DebugPsf.zip)
+{
+    Remove-Item .\ZipRelease\DebugPsf.zip
+}
+Get-ChildItem -Path PsfLauncher\*.ps1 | Compress-Archive -DestinationPath .\ZipRelease\ReleasePsf.zip
+Get-ChildItem -Path Win32\Release\*.dll | Compress-Archive -DestinationPath .\ZipRelease\ReleasePsf.zip -Update
+Get-ChildItem -Path Win32\Release\*.exe | Compress-Archive -DestinationPath .\ZipRelease\ReleasePsf.zip -Update
+Get-ChildItem -Path Win32\Release\x86\*.dll | Compress-Archive -DestinationPath .\ZipRelease\ReleasePsf.zip -Update
+Get-ChildItem -Path x64\Release\*.dll | Compress-Archive -DestinationPath .\ZipRelease\ReleasePsf.zip -Update
+Get-ChildItem -Path x64\Release\*.exe | Compress-Archive -DestinationPath .\ZipRelease\ReleasePsf.zip -Update
+Get-ChildItem -Path x64\Release\amd64\*.dll | Compress-Archive -DestinationPath .\ZipRelease\ReleasePsf.zip -Update
+
+Get-ChildItem -Path PsfLauncher\*.ps1 | Compress-Archive -DestinationPath .\ZipRelease\DebugPsf.zip
+Get-ChildItem -Path Win32\Debug\*.dll | Compress-Archive -DestinationPath .\ZipRelease\DebugPsf.zip -Update
+Get-ChildItem -Path Win32\Debug\*.exe | Compress-Archive -DestinationPath .\ZipRelease\DebugPsf.zip -Update
+Get-ChildItem -Path Win32\Debug\x86\*.dll | Compress-Archive -DestinationPath .\ZipRelease\DebugPsf.zip -Update
+Get-ChildItem -Path x64\Debug\*.dll | Compress-Archive -DestinationPath .\ZipRelease\DebugPsf.zip -Update
+Get-ChildItem -Path x64\Debug\*.exe | Compress-Archive -DestinationPath .\ZipRelease\DebugPsf.zip -Update
+Get-ChildItem -Path x64\Debug\amd64\*.dll | Compress-Archive -DestinationPath .\ZipRelease\DebugPsf.zip -Update

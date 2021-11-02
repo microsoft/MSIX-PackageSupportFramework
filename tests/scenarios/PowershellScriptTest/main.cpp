@@ -19,7 +19,7 @@ using namespace std::literals;
 namespace details
 {
     inline std::wstring appmodel_string(LONG(__stdcall *AppModelFunc)(UINT32*, PWSTR))
-    {
+    { 
         // NOTE: `length` includes the null character both as input and output, hence the +1/-1 everywhere
         UINT32 length = MAX_PATH + 1;
         std::wstring result(length - 1, '\0');
@@ -97,10 +97,14 @@ int wmain(int argc, const wchar_t** argv)
     TCHAR localAppDataPath[MAX_PATH];
     SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppDataPath);
 
-    if (testType.compare(L"psfshelllaunchverify") == 0)
+    if (testType.compare(L"psfshelllaunchtest") == 0)
     {
-        test_initialize("Shell Launch Tests", 1);
-        test_begin("Shell Launch Test");
+        // Oh, Just figured out that because we launch a cmd for this test and not this exe,
+        // this exe is not started so this code never gets hit which causes taskrunner to never
+        // see the reporting.
+        test_initialize("PsfShellLaunch Shell Launch Tests", 1);
+        test_begin("PsfShellLaunch Shell Launch Test");
+        Log(L"<<<<<Powershell Shell Launch Test %ls", testType.c_str());
         bool doesHelloCopyExist = DoesFileExist(localAppDataPath, L"HelloWorldCopy.txt");
         if (!doesHelloCopyExist)
         {
@@ -109,9 +113,26 @@ int wmain(int argc, const wchar_t** argv)
         else
         {
            RemoveFile(localAppDataPath, L"HelloWorldCopy.txt");
- 
         }
         test_end(result);
+        Log(L"Powershell Shell Launch Test>>>>>");
+    }
+    else if(testType.compare(L"psfshelllaunchverify") == 0)
+    {
+        test_initialize("PsfShellLaunch Shell Verify Tests", 1);
+        test_begin("PsfShellLaunch Shell Verify Test");
+        Log(L"<<<<<Powershell Shell Launch Test %ls", testType.c_str());
+        bool doesHelloCopyExist = DoesFileExist(localAppDataPath, L"HelloWorldCopy.txt");
+        if (!doesHelloCopyExist)
+        {
+            result = ERROR_FILE_NOT_FOUND;
+        }
+        else
+        {
+            RemoveFile(localAppDataPath, L"HelloWorldCopy.txt");
+        }
+        test_end(result);
+        Log(L"Powershell Shell Verify Test>>>>>");
     }
     else
     {
@@ -148,8 +169,10 @@ int wmain(int argc, const wchar_t** argv)
         }
 
 
-        RemoveFile(localAppDataPath, L"Hello.txt");
-        RemoveFile(localAppDataPath, L"Argument.txt");
+        if (DoesFileExist(localAppDataPath, L"Hello.txt"))
+            RemoveFile(localAppDataPath, L"Hello.txt");
+        if (DoesFileExist(localAppDataPath, L"Argument.txt"))
+            RemoveFile(localAppDataPath, L"Argument.txt");
 
         test_end(result);
         Log(L"Powershell Script Test>>>>>");

@@ -52,10 +52,14 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
     RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
+   
+    DWORD exitCode;
+    GetExitCodeProcess(processInfo.hProcess, &exitCode);
+
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
 
-    return ERROR_SUCCESS;
+    return exitCode; // ERROR_SUCCESS;
 }
 
 void StartWithShellExecute(LPCWSTR verb, std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow, DWORD timeout)

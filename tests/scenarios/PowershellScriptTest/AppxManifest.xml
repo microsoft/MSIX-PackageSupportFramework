@@ -2,9 +2,9 @@
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
          xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+         xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-         xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
-         xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10">
+         xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
 	<Identity Name="PowershellScriptTest"
             Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"
             Version="0.0.0.1"
@@ -14,6 +14,9 @@
 		<PublisherDisplayName>Reserved</PublisherDisplayName>
 		<Description>No description entered</Description>
 		<Logo>Assets\Logo44x44.png</Logo>
+        <uap10:PackageIntegrity>
+            <uap10:Content Enforcement="on"/>
+        </uap10:PackageIntegrity>
 	</Properties>
 	<Resources>
 		<Resource Language="en-us" />

@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
+
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -25,6 +26,7 @@
 #include <wil\resource.h>
 #include <debug.h>
 #include <shlwapi.h>
+#include <WinUser.h>
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -45,14 +47,20 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
-int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
-{
-    return launcher_main(args, cmdShow);
+int __stdcall wWinMain(_In_ HINSTANCE , _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
+{ 
+    int ret = launcher_main(args, cmdShow);
+    
+    return ret;
 }
 
 int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
-    Log("\tIn Launcher_main()");
+    Log("PSFLauncher started.");
+
+    
+    //Log("DEBUG TEMP PsfLauncher waiting for debugger to attach to process...\n");
+    //psf::wait_for_debugger();
 
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     THROW_HR_IF_MSG(ERROR_NOT_FOUND, !appConfig, "Error: could not find matching appid in config.json and appx manifest");
@@ -86,7 +94,10 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     if (dirWstr.size() < 2 || dirWstr[1] != L':')
     {
-        currentDirectory = (packageRoot / dirWstr);
+        if (dirWstr.size() == 0)
+            currentDirectory = packageRoot;
+        else
+            currentDirectory = (packageRoot / dirWstr);
     }
     else
     {
@@ -145,8 +156,6 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         LogString("     Arguments: ", fullargs.data());
         LogString("Working Directory: ", currentDirectory.c_str());
 
-        //THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
-        //HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
         HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE);
         if (hr != ERROR_SUCCESS)
         {
@@ -160,40 +169,105 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         LogString("Working Directory: ", currentDirectory.c_str());
         if (check_suffix_if(exeName, L".cmd"_isv) || check_suffix_if(exeName, L".bat"_isv))
         {
-            std::wstring wArgs = L"/c \"";
-            wArgs.append(exePath.c_str());
-            wArgs.append(L"\" ");
-            wArgs.append(exeArgString);
-
-            // Create an empty Attribute List so Breakaway may be set to force cmd to run inside the container.
-            SIZE_T AttributeListSize;
-            InitializeProcThreadAttributeList(NULL, 1, 0, &AttributeListSize);
-            LPPROC_THREAD_ATTRIBUTE_LIST attributeList = (LPPROC_THREAD_ATTRIBUTE_LIST)HeapAlloc(
-                GetProcessHeap(),
-                0,
-                AttributeListSize
-            );
-            BOOL b2 = InitializeProcThreadAttributeList(attributeList, 1, 0, &AttributeListSize);          
-            DWORD DAP = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE | PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
-            BOOL b4 =UpdateProcThreadAttribute(attributeList,
-                0,
-                PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
-                &DAP,
-                sizeof(DAP),
-                NULL,
-                NULL);
-            if (b2 && b4) // && b3)
+            Log("Shell Launch special case for cmd/bat files"); 
+            // To get the cmd process that runs this script we need to start it via a powershell process that uses Invoke-CommandInDesktopPackage with the -PreventBreakaway option.
+            // This is currently done by using a powershell wrapper script that is part of the PSF.
+            // Why another ps1 file?  
+            //    cmd files are wonky in how they work when launched from in the bubble.  Even if we try to control them by using 
+            //    extended attributes.  So we use a powershell script.
+            // But we also find that powershell is not happy if the launcher injects PSFRuntime into it and shuts down.  So we
+            // start powershell differently, and have the powershell script use inject-commandindesktoppackage to run the cmd script
+            // inside of our package container.
+            //
+            // There is an issue that inject-cidp is asynchronous and returns before the script is run.  So our Launcher will run any
+            // end scripts and shut down, possibly before the cmd ends.  We probably aren't going to see any end scripts on a shortcut to
+            // a cmd script, and the launcher shutting down isn't noticable since it is hidden and causes no problem.
+            std::filesystem::path SSCmdWrapper = packageRoot / L"StartMenuCmdScriptWrapper.ps1";
+            if (!std::filesystem::exists(SSCmdWrapper))
             {
-                HRESULT hr = StartProcess(L"C:\\Windows\\System32\\cmd.exe", wArgs.data(), currentDirectory.c_str(), cmdShow, INFINITE, attributeList);
-                if (hr != ERROR_SUCCESS)
+                // The wrapper isn't in this folder, so we should search for it elewhere in the package.
+                for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
                 {
-                    Log("Error return from launching cmd process 0x%x.", GetLastError());
+                    if (file.path().filename().compare(SSCmdWrapper.filename()) == 0)
+                    {
+                        SSCmdWrapper = file.path();
+                        break;
+                    }
                 }
             }
+
+            //std::wstring wArgs = L"powershell.exe -ExecutionPolicy Bypass";
+            std::wstring wArgs = L"powershell.exe";
+
+            wArgs.append(L" -File \"");
+            wArgs.append(SSCmdWrapper.c_str());
+            wArgs.append(L"\" ");
+            
+            wArgs.append(L" ");
+            ///wArgs.append(L"-PackageFamilyName ");
+            wArgs.append(PSFQueryPackageFamilyName());
+            wArgs.append(L" ");
+
+            wArgs.append(L" ");
+            ///wArgs.append(L"-AppID ");
+            wArgs.append(PSFQueryApplicationId());
+            wArgs.append(L" ");
+
+            wArgs.append(L" \"");
+            wArgs.append(exePath.c_str());
+            wArgs.append(L"\" ");
+
+            wArgs.append(exeArgString);
+
+            powershellScriptRunner.RunOtherScript(SSCmdWrapper.c_str(), currentDirectory.c_str(), exePath.c_str(), exeArgString.c_str(),false);
         }
         else
         {
-            StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
+            // Previously we had issues with this: StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
+            std::wstring ext = exePath.extension().c_str();
+            Log("Looking for default command for FTA %ls", ext.c_str());
+            wchar_t szBuf[1024];
+            DWORD cbBufSize = sizeof(szBuf);
+            
+            cbBufSize = sizeof(szBuf);  // resetting for second call...
+            HRESULT hr = AssocQueryString(0, ASSOCSTR_EXECUTABLE,
+                                    ext.c_str(), NULL, szBuf, &cbBufSize);
+            if (FAILED(hr)) 
+            { 
+                Log("Failed to get an FTA default command 0x0x", GetLastError());
+                StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
+            }
+            else
+            {
+                // We are going to assume this FTA takes the file as an unadorned argument.  Not perfect but should cover most of our cases.
+                // In a pinch, one could add command line arguments to the json.  
+                //      So the jason says executable: file.ext  and Arguments: /xxx
+                //      We construct a command that is:    DefaultExeForFTA.exe /xxx  file.ext
+                // Note: If there is no FTA, the query returns with OpenWith.exe, which means the user will be prompted with what they want to do.  
+                //       That is probably the best we can do.
+                Log("Default command for FTA is %ls, use StartMenuShellLaunchWrapperScript.ps1 to inject into container, if possible.", szBuf);
+                std::wstring newcmd = szBuf;
+
+                std::filesystem::path SSShellWrapper = packageRoot / L"StartMenuShellLaunchWrapperScript.ps1";
+                if (!std::filesystem::exists(SSShellWrapper))
+                {
+                    // The wrapper isn't in this folder, so we should search for it elewhere in the package.
+                    for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
+                    {
+                        if (file.path().filename().compare(SSShellWrapper.filename()) == 0)
+                        {
+                            SSShellWrapper = file.path();
+                            break;
+                        }
+                    }
+                }
+
+                std::wstring wArgs = args;
+                wArgs.append(L" \"");
+                wArgs.append(exePath.c_str());
+                wArgs.append(L"\"");
+                powershellScriptRunner.RunOtherScript(SSShellWrapper.c_str(), currentDirectory.c_str(), newcmd.c_str(), wArgs.c_str(),false);
+            }
         }
     }
 

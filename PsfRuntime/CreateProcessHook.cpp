@@ -24,10 +24,11 @@
 #include <psf_framework.h>
 
 #include "Config.h"
+#include <StartInfo_helper.h>
 
 using namespace std::literals;
 
-void Log(const char* fmt, ...);
+
 
 // Function to determine if this process should get 32 or 64bit dll injections
 // Returns 32 or 64 (or 0 for error)
@@ -110,6 +111,9 @@ BOOL WINAPI CreateProcessWithPsfRunDll(
     std::wstring cmdLine = psf::wrun_dll_name;
     cmdLine += (commandLine + 12); // +12 to get to the first space after "rundll32.exe"
 
+#if _DEBUG
+    Log("\tCreateProcessWithPsfRunDll. \n");
+#endif
     return CreateProcessImpl(
         (PackageRootPath() / psf::wrun_dll_name).c_str(),
         cmdLine.data(),
@@ -213,8 +217,67 @@ BOOL WINAPI CreateProcessFixup(
 #if _DEBUG
     Log("\tPossible injection to process %ls %d.\n", exePath.data(), processInformation->dwProcessId);
 #endif
-    if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
-        ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
+    //if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
+    //    ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
+    // TRM: 1021-10-21 We do want to inject into exe processes that are outside of the package, for example PowerShell for a cmd file...
+    bool allowInjection = true;
+    try
+    {
+        if ((creationFlags & EXTENDED_STARTUPINFO_PRESENT) != 0)
+        {
+            
+#if _DEBUG
+            Log("DEBUG: CreateProcessImpl Attribute: Has extended Attribute.");
+#endif
+            if constexpr (psf::is_ansi<CharT>)
+            {
+#if _DEBUG
+                Log("DEBUG: CreateProcessImpl Attribute: narrow");
+#endif
+                STARTUPINFOEXA* si = reinterpret_cast<STARTUPINFOEXA*>(startupInfo);
+                if (si->lpAttributeList != NULL)
+                {
+#if _DEBUG
+                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
+#endif
+                    allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
+                }
+                else
+                {
+#if _DEBUG
+                    Log("DEBUG: CreateProcessImpl Attribute: attlist is null.");
+#endif
+                }
+            }
+            else
+            {
+#if _DEBUG
+                Log("DEBUG: CreateProcessImpl Attribute:: wide");
+#endif
+                STARTUPINFOEXW* si = reinterpret_cast<STARTUPINFOEXW*>(startupInfo);
+                if (si->lpAttributeList != NULL)
+                {
+#if _DEBUG
+                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
+                    #endif
+                    allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
+                }
+                else
+                {
+#if _DEBUG
+                    Log("DEBUG: CreateProcessImpl Attribute: attlist is null.");
+#endif
+                }
+            }
+        }
+    }
+    catch (...)
+    {
+#if _DEBUG
+        Log("Debug: Exception testing for attribute list, assuming none.");
+#endif
+    }
+    if (allowInjection)
     {
         // The target executable is in the package, so we _do_ want to fixup it
 #if _DEBUG
@@ -304,7 +367,10 @@ BOOL WINAPI CreateProcessFixup(
             Log("\t%ls not found, skipping.", wtargetDllName.c_str());
         }
     }
-
+    else
+    {
+        Log("\tIs not part of package, code currently doesn't inject...");
+    }
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {
         // Caller did not want the process to start suspended
@@ -321,7 +387,9 @@ BOOL WINAPI CreateProcessFixup(
 }
 catch (...)
 {
-    ::SetLastError(win32_from_caught_exception());
+    int err = win32_from_caught_exception();
+    Log("CreateProcessFixup exception 0x%x", err);
+    ::SetLastError(err);
     return FALSE;
 }
 

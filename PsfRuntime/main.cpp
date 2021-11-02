@@ -164,64 +164,87 @@ using EntryPoint_t = int(__stdcall*)();
 EntryPoint_t ApplicationEntryPoint = nullptr;
 static int __stdcall FixupEntryPoint() noexcept try
 {
+
     load_fixups();
     return ApplicationEntryPoint();
 }
 catch (...)
 {
-    return win32_from_caught_exception();
+    int err = win32_from_caught_exception();
+    Log("Exception in PsfRuntime FixupEntryPoint() = 0x%x", err);
+    return  err;
 }
 
 void attach()
 {
-    LoadConfig();
+    try
+    {
 #if _DEBUG
-    //Log("PsfRuntime after load config");
+        Log("PsfRuntime Attach Pid=%d", GetCurrentProcessId());
+#endif
+        LoadConfig();
+#if _DEBUG
+        //Log("DEBUG: PsfRuntime after load config");
 #endif
     // Restore the contents of the in memory import table that DetourCreateProcessWithDll* modified
-    ::DetourRestoreAfterWith();
+        ::DetourRestoreAfterWith();
 
-    auto transaction = detours::transaction();
-    check_win32(::DetourUpdateThread(::GetCurrentThread()));
+        auto transaction = detours::transaction();
+        check_win32(::DetourUpdateThread(::GetCurrentThread()));
 
 #if _DEBUG
-    //Log("PsfRuntime before attach all");
+        //Log("Debug: PsfRuntime before attach all");
 #endif
     // Call DetourAttach for all APIs that PsfRuntime detours
-    psf::attach_all();
+        psf::attach_all();
 #if _DEBUG
-    //Log("PsfRuntime after attach all");
+        //Log("DEBUG: PsfRuntime after attach all");
 #endif
     // We can't call LoadLibrary in DllMain, so hook the application's entry point and do initialization then
-    ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
-    if (!ApplicationEntryPoint)
-    {
-        throw_last_error();
-    }
-    check_win32(::DetourAttach(reinterpret_cast<void**>(&ApplicationEntryPoint), FixupEntryPoint));
+        ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
+        if (!ApplicationEntryPoint)
+        {
+            throw_last_error();
+        }
+        check_win32(::DetourAttach(reinterpret_cast<void**>(&ApplicationEntryPoint), FixupEntryPoint));
 
-    transaction.commit();
+        transaction.commit();
 #if _DEBUG
-    Log("PsfRuntime is ready.");
+        //Log("Debug: PsfRuntime is ready.");
 #endif
+    }
+    catch (...)
+    {
+        Log("App is not running inside the container, but will be allowed to run.");
+    }
 }
 
 void detach()
 {
-    // Unload in the reverse order as we initialized
-    unload_fixups();
+    try
+    {
+        //Log("DEBUG: PsfRuntime Dettach Pid=%d",GetCurrentProcessId());
+        // Unload in the reverse order as we initialized
+        unload_fixups();
 
-    auto transaction = detours::transaction();
-    check_win32(::DetourUpdateThread(::GetCurrentThread()));
-    psf::detach_all();
-    transaction.commit();
+        auto transaction = detours::transaction();
+        check_win32(::DetourUpdateThread(::GetCurrentThread()));
+        psf::detach_all();
+        transaction.commit();
+    }
+    catch (...)
+    {
+        Log("App is not running inside the container, but will be allowed to exit without error.");
+    }
 }
 
 BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
 {
+    Log("PsfRuntime: In DllMain Pid=%d", GetCurrentProcessId());
     // Per detours documentation, immediately return true if running in a helper process
     if (::DetourIsHelperProcess())
     {
+        Log("PsfRuntime: Is Helper Process");
         return TRUE;
     }
 
@@ -234,6 +257,7 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
         }
         catch (...)
         {
+            Log("PsfRuntime: Exception attaching");
             unload_fixups();
             throw;
         }
@@ -242,12 +266,22 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
     case DLL_PROCESS_DETACH:
         detach();
         break;
+    case DLL_THREAD_ATTACH:
+        Log("PsfRuntime: Reason Thread Attach Tid=0x%x", GetCurrentThreadId());
+        break;
+    case DLL_THREAD_DETACH:
+        Log("PsfRuntime: Reason Thread Detach  Tid=0x%x", GetCurrentThreadId()); 
+        break;
+    default:
+        Log("PsfRuntime: Reason %d", reason);
+        break;
     }
 
     return TRUE;
 }
 catch (...)
 {
+    Log("PsfRuntime: Exception in dllMain");
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     ::SetLastError(win32_from_caught_exception());
     return false;

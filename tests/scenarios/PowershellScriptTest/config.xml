@@ -5,7 +5,17 @@
             <id>PSNoScripts</id>
             <executable>PowershellScriptTest.exe</executable>
         </application>
-      <application>
+		
+		<application>
+			<id>PsfShellLaunchTest</id>
+			<executable>HelloWorld.cmd</executable>
+		</application>
+		<application>
+			<id>PsfShellLaunchVerify</id>
+			<executable>PowershellScriptTest.exe</executable>
+		</application>
+
+		<application>
         <id>PSOnlyStart</id>
         <executable>PowershellScriptTest.exe</executable>
         <startScript>
@@ -36,7 +46,9 @@
           <runOnce>false</runOnce>
         </startScript>
       </application>
-    </applications>
+	 
+
+	</applications>
     <processes>
       <process>
         <executable>PowershellScriptTest.*</executable>

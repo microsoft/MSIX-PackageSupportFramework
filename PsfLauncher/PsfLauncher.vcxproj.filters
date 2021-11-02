@@ -34,5 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="StartingScriptWrapper.ps1" />
+    <None Include="StartMenuCmdScriptWrapper.ps1" />
+    <None Include="StartMenuShellLaunchWrapperScript.ps1" />
   </ItemGroup>
 </Project>

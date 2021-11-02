@@ -382,6 +382,7 @@ void LoadConfig()
         g_FinalPackageRootPath = psf::get_final_path_name(g_PackageRootPath);
         g_CurrentExecutable = psf::current_executable_path();
 
+
         LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
         LogCountedStringW("g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
         LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
@@ -389,15 +390,15 @@ void LoadConfig()
         LogString("g_PackageRootPath", g_PackageRootPath.c_str());
         LogString("g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
         LogString("g_CurrentExecutable", g_CurrentExecutable.c_str());
+        load_json();
     }
     else
     {
         // FUTURE: It may be useful to enable testing outside of a packaged environment. For now, finding ourselves in
         //         this situation almost certainly indicates a bug, so bail out early
+        Log("App is not running inside the container and will be terminated.");
         std::terminate();
     }
-
-    load_json();
 }
 
 const std::wstring& PackageFullName() noexcept

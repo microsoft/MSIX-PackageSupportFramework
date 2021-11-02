@@ -78,40 +78,107 @@ public:
 		{
 			Log("StartingScript waitForScriptToFinish=false");
 		}
-		RunScript(this->m_startingScriptInformation);
+		RunScript(this->m_startingScriptInformation,true);
 	}
 
 	void RunEndingScript()
 	{
 		LogString("EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
 		LogString("EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
-		RunScript(this->m_endingScriptInformation);
+		RunScript(this->m_endingScriptInformation,true);
+	}
+
+	void RunOtherScript(const wchar_t *ScriptWrapper, const wchar_t * CurrentDirectory, const wchar_t * InjectCommand, const wchar_t * InjectCommandArgs, bool inside)
+	{
+		ScriptInformation scriptStruct;
+		scriptStruct.PsPath = PathToPowershell();
+		scriptStruct.doesScriptExistInConfig = true; // fake it out
+		scriptStruct.shouldRunOnce = false;
+		scriptStruct.timeout = INFINITE;
+		scriptStruct.showWindowAction = SW_HIDE;  // hide the powershell script, but cmd may show.
+		scriptStruct.waitForScriptToFinish = true;
+		scriptStruct.stopOnScriptError = false;
+
+		scriptStruct.scriptPath = ScriptWrapper;
+		scriptStruct.commandString = scriptStruct.PsPath;
+		scriptStruct.commandString.append(L" -ExecutionPolicy Bypass ");
+		scriptStruct.commandString.append(L" -file \"");
+		scriptStruct.commandString.append(ScriptWrapper);
+		scriptStruct.commandString.append(L"\" ");
+		scriptStruct.commandString.append(PSFQueryPackageFamilyName());
+		scriptStruct.commandString.append(L" ");
+
+		scriptStruct.commandString.append(L" ");
+		scriptStruct.commandString.append(PSFQueryApplicationId());
+		scriptStruct.commandString.append(L" ");
+
+		scriptStruct.commandString.append(L"\"");
+		scriptStruct.commandString.append(InjectCommand);
+		scriptStruct.commandString.append(L"\" ");
+
+		scriptStruct.commandString.append(InjectCommandArgs);
+		scriptStruct.currentDirectory = CurrentDirectory;
+		scriptStruct.packageRoot = PSFQueryPackageRootPath();
+		LogString("Script Launch to inject commandString", scriptStruct.commandString.c_str());
+		LogString("Script Launch using currentDirectory", scriptStruct.currentDirectory.c_str());
+		RunScript(scriptStruct, inside);
+		//Log("RunOtherScript returned.");
 	}
 
 private:
    struct MyProcThreadAttributeList
     {
     private:
-        // To make sure the attribute value persists we cache it here.
-        // 0x02 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
-        // The documentation can be found here:
+		// Implementation notes:
+		//   Currently (Windows 10 21H1 and some previous releases plus Windows 11 21H2), the default
+		//   behavior for most child processes is that they run inside the container.  The two known
+		//   exceptions to this are the conhost and cmd.exe processes.  We generally don't care about
+		//   the conhost processes.
+		// 
+        // The documentation on these can be found here:
         //https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
-        // This attribute tells PSF to
-        // 1. Create Powershell in the same container as PSF.
-        // 2. Any windows Powershell makes will also be in the same container as PSF.
+
+        // The PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY attribute has some settings that can impact this.
+		// 0x04 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE.  
+		//     When used in a process creation call it affects only the new process being created, and 
+		//     forces the new process to start inside the container, if possible.
+		// 0x01 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE
+		//     When used in a process creation call, it ONLY affects child processes of the process being
+		//     created, meaning that grandshildren can/will break away from running inside the container used by
+		//     that new process.
+        // 0x02 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE 
+		//     When used in a process creation call, it ONLY affects child processes of the process being
+		//     created, meaning that grandshildren can/will NOT break away from running inside the container used by
+		//     that new process.
+        //
+		// This PSF code uses the attribute to cause:
+        //   1. Create a Powershell process in the same container as PSF.
+        //   2. Any process that Powershell stats will also be in the same container as PSF.
         // This means that powershell, and any windows it makes, will have the same restrictions as PSF.
-        DWORD createInContainerAttribute = 0x02;
+		DWORD createInContainerAttribute = 0x02;
+		DWORD createOutsideContainerAttribute = 0x04;
+
+		// Processes running inside the container run at a different level (Low) that uncontained processes,
+		// and the default behavior is to have the child process run at the same level.  This can be overridden
+		// by using PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL.
+		//
+		// The code here currently does not set this level as we prefer to keep the same level anyway.
+		//DWORD protectionLevel = PROTECTION_LEVEL_SAME;
+
+		// Should it become neccessary to change more than one attribute, the number of attributes will need
+		// to be modified in both initialization calls in the CTOR.
+
         std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
 
     public:
 
-        MyProcThreadAttributeList()
+        MyProcThreadAttributeList(bool inside)
         {
-            SIZE_T AttributeListSize{};
-            InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-
+			// Ffor example of this code with two attributes see: https://github.com/microsoft/terminal/blob/main/src/server/Entrypoints.cpp
+            SIZE_T AttributeListSize; //{};
+			InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
             attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
-
+			//attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(HeapAlloc(GetProcessHeap(), 0, AttributeListSize)));
             THROW_LAST_ERROR_IF_MSG(
                 !InitializeProcThreadAttributeList(
                     attributeList.get(),
@@ -123,16 +190,47 @@ private:
             // 18 stands for
             // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
             // this is the attribute value we want to add
-            THROW_LAST_ERROR_IF_MSG(
-                !UpdateProcThreadAttribute(
-                    attributeList.get(),
-                    0,
-                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
-                    &createInContainerAttribute,
-                    sizeof(createInContainerAttribute),
-                    nullptr,
-                    nullptr),
-                "Could not update Proc thread attribute.");
+			if (inside)
+			{
+				THROW_LAST_ERROR_IF_MSG(
+					!UpdateProcThreadAttribute(
+						attributeList.get(),
+						0,
+						ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+						&createInContainerAttribute,
+						sizeof(createInContainerAttribute),
+						nullptr,
+						nullptr),
+					"Could not update Proc thread attribute for DESKTOP_APP_POLICY (inside).");
+			}
+			else
+			{
+				THROW_LAST_ERROR_IF_MSG(
+					!UpdateProcThreadAttribute(
+						attributeList.get(),
+						0,
+						ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+						&createOutsideContainerAttribute,
+						sizeof(createOutsideContainerAttribute),
+						nullptr,
+						nullptr),
+					"Could not update Proc thread attribute for DESKTOP_APP_POLICY (outside).");
+			}
+
+			// 11 stands for
+			// PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL
+			// this is the attribute value we want to add
+			//
+			//THROW_LAST_ERROR_IF_MSG(
+			//	!UpdateProcThreadAttribute(
+			//		attributeList.get(),
+			//		0,
+			//		ProcThreadAttributeValue(11, FALSE, TRUE, FALSE),
+			//		&protectionLevel,
+			//		sizeof(protectionLevel),
+			//		nullptr,
+			//		nullptr),
+			//	"Could not update Proc thread attribute for PROTECTION_LEVEL.");
         }
 
         ~MyProcThreadAttributeList()
@@ -149,6 +247,7 @@ private:
   
 	struct ScriptInformation
 	{
+		std::wstring PsPath;
 		std::wstring scriptPath;
 		std::wstring commandString;
 		DWORD timeout = INFINITE;
@@ -163,9 +262,10 @@ private:
 
 	ScriptInformation m_startingScriptInformation;
 	ScriptInformation m_endingScriptInformation;
-	MyProcThreadAttributeList m_AttributeList;
+	MyProcThreadAttributeList m_AttributeListInside = MyProcThreadAttributeList(true);
+	MyProcThreadAttributeList m_AttributeListOutside = MyProcThreadAttributeList(false);
 
-	void RunScript(ScriptInformation& script)
+	void RunScript(ScriptInformation& script, bool inside)
 	{
 		if (!script.doesScriptExistInConfig)
 		{
@@ -179,13 +279,36 @@ private:
 
 		if (!canScriptRun)
 		{
+			Log("Script has already been run and is marked to run once.");
 			return;
 		}
 
 		if (script.waitForScriptToFinish)
-		{
-			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
-
+		{  
+			HRESULT startScriptResult;
+			if (inside)
+			{
+				//LogString("DEBUG: Starting the script (inside) and waiting to finish", script.commandString.data());
+				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
+			}
+			else
+			{
+				//LogString("DEBUG: Starting the script (outside) and waiting to finish", script.commandString.data());
+				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
+			}
+			//HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, nullptr);
+			if (startScriptResult == 0xC000013A)
+			{
+				Log("Debug: Script process was closed by user action.");
+			}
+			else if (startScriptResult != ERROR_SUCCESS)
+			{
+				Log("Debug: Error return from script process 0x%x LastError=0x%x", startScriptResult, GetLastError());
+			}
+			else
+			{
+				//Log("Debug: Script returns without error");
+			}
 			if (script.stopOnScriptError)
 			{
 				THROW_IF_FAILED(startScriptResult);
@@ -194,15 +317,25 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			if (inside)
+			{
+				//LogString("DEBUG: Starting the script (inside) without waiting to finish", script.commandString.data());
+				std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
+			}
+			else
+			{
+				//LogString("DEBUG: Starting the script (outside) without waiting to finish", script.commandString.data());
+				std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
+			}
 		}
 	}
 
 	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
 	{
 		ScriptInformation scriptStruct;
+		scriptStruct.PsPath = PathToPowershell();
 		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
-		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath, packageRoot), packageRoot, packageWritableRoot);
+		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptStruct.PsPath, scriptExecutionMode, scriptStruct.scriptPath, packageRoot), packageRoot, packageWritableRoot);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
@@ -289,34 +422,37 @@ private:
 
 	}
 
-	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath, const std::filesystem::path packageRoot)
+	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& psPath, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath, const std::filesystem::path packageRoot)
 	{
-		std::filesystem::path SSWrapper = L"StartingScriptWrapper.ps1";
+		//std::filesystem::path SSWrapperFileName = L"StartingScriptWrapper.ps1";
+		std::filesystem::path SSWrapper = packageRoot / L"StartingScriptWrapper.ps1";
 		if (!std::filesystem::exists(SSWrapper))
 		{
 			// The wrapper isn't in this folder, so we should search for it elewhere in the package.
 			for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
 			{
-				if (file.path().filename().compare(SSWrapper) == 0)
+				if (file.path().filename().compare(SSWrapper.filename()) == 0)
 				{
 					SSWrapper = file.path();
 					break;
 				}
 			}
 		}
-		std::wstring commandString = L"Powershell.exe ";
+		std::wstring commandString = psPath;
+		commandString.append(L" ");
 		commandString.append(scriptExecutionMode);
 		commandString.append(L" -file \"" + SSWrapper.native() + L"\""); /// StartingScriptWrapper.ps1 ");
 		commandString.append(L" ");
 
 		// ScriptWrapper uses invoke-expression so we need the expression to launch another powershell to run a file with arguments.
-		commandString.append(L"\" ");  // wrapper for the invoked command and arguments
-
-		commandString.append(L"powershell.exe ");
+		commandString.append(L"\"");  // wrapper for the invoked command and arguments
+		commandString.append(psPath.c_str());
+		commandString.append(L" ");
 		commandString.append(scriptExecutionMode);
 		commandString.append(L" -file ");
 
 		std::wstring wScriptPath = scriptPath;
+		LogString("MakeCommandString: Input Script path", scriptPath.c_str());
 		if (!std::filesystem::exists(scriptPath))
 		{
 			// The wrapper isn't in this folder, so we should search for it elewhere in the package.
@@ -329,8 +465,11 @@ private:
 				}
 			}
 		}
+		LogString("MakeCommandString: post exists search Script path", wScriptPath.c_str());
 		const std::filesystem::path dequotedScriptPath = Dequote(wScriptPath);
+		LogString("MakeCommandString: post DeQuote Script path", wScriptPath.c_str());
 		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
+		LogString("MakeCommandString: Updated Script path", fixed4PowerShell.c_str());
 		///if (dequotedScriptPath.is_absolute())
 		///{
 		commandString.append(L"\\");
@@ -356,7 +495,7 @@ private:
 		}
 
 		//Add ending quote for the script inside a string literal.
-		commandString.append(L" \"");
+		commandString.append(L"\"");
 
 		return commandString;
 	}
@@ -498,5 +637,10 @@ private:
 
 		return true;
 	}
-
+	std::wstring PathToPowershell()
+	{
+		// TODO: Use registry search like in CheckIfPowershellIsInstalled()
+		std::wstring path = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+		return path;
+	}
 };

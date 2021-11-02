@@ -13,8 +13,40 @@
 
 #include "win32_error.h"
 
+
+
+
 namespace psf
 {
+#if _DEBUG
+	inline void LogDebug(const char fmt[], ...)
+	{
+		std::string str;
+		str.resize(256);
+
+		va_list args;
+		va_start(args, fmt);
+		std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
+		assert(count >= 0);
+		va_end(args);
+
+		if (count > str.size())
+		{
+			str.resize(count);
+
+			va_list args2;
+			va_start(args2, fmt);
+			count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
+			assert(count >= 0);
+			va_end(args2);
+		}
+
+		str.resize(count);
+		::OutputDebugStringA(str.c_str());
+	}
+#endif
+	
+
 	using GetCurrentPackagePath2 = LONG(__stdcall *)(unsigned int, UINT32*, PWSTR);
 	inline std::filesystem::path get_module_path(HMODULE module)
 	{
@@ -184,7 +216,11 @@ namespace psf
 
 	inline std::filesystem::path get_final_path_name(const std::filesystem::path& filePath)
 	{
-		std::wstring result;
+		std::wstring result = filePath.native().c_str();
+		if (result.length() < 4 || result.substr(0, 4).compare(L"\\\\?\\") != 0)
+		{
+			result.insert(0, (L"\\\\?\\"));
+		}
 		HANDLE file = CreateFile(filePath.native().c_str(), FILE_READ_EA, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 			NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 		if (file)
@@ -204,8 +240,22 @@ namespace psf
 				// In success case the returned length does contain the value of the null terminator
 				assert(length <= result.size());
 			}
+			else
+			{
+#if _DEBUG
+				LogDebug("Debug get-final_path_name: 0 length, use original as adjusted.");
+#endif
+				return result;
+			}
 
 			CloseHandle(file);
+		}
+		else
+		{
+#if _DEBUG
+			LogDebug("Debug get-final_path_name: no file so use original as adjusted.");
+#endif
+			return result;
 		}
 		return result;
 	}

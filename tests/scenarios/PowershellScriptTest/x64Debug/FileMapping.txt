@@ -13,6 +13,7 @@
 "SayHi.ps1" "SayHi.ps1"
 "SayWithArgument.ps1" "SayWithArgument.ps1"
 "StartingScriptWrapper.ps1" "StartingScriptWrapper.ps1"
+"StartMenuCmdScriptWrapper.ps1" "StartMenuCmdScriptWrapper.ps1"
 "SayHello.ps1" "SayHello.ps1"
 "HelloWorld.cmd" "HelloWorld.cmd"
 

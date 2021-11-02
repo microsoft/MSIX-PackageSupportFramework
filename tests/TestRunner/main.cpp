@@ -401,7 +401,9 @@ int wmain(int argc, const wchar_t** argv)
             {
                 if (wcsstr(aumid,L"PsfShellLaunchTest") != 0)
                 {
-                    std::wcout <<  "This test does not report progress, see verify test that follows.\n";
+                    std::wcout << console::change_foreground(console::color::cyan) << "This test does not report progress, see verify test that follows.\n";
+                    currentApp.test_count++;
+                    currentApp.success_count++;
                 }
                 else
                 {
@@ -416,6 +418,7 @@ int wmain(int argc, const wchar_t** argv)
                     std::wcout << error_text() << "ERROR: Application terminated without sending a cleanup message\n";
                     cleanup_current_app(true);
                 }
+                
             }
 
             if (!g_onlyPrintSummary)
@@ -449,6 +452,7 @@ int wmain(int argc, const wchar_t** argv)
         if (testApp.name.find("PsfShellLaunchTest") != std::string::npos)
         {
             std::wcout << success_text() << "Not Reportable, see verify test that follows.\n";
+            std::wcout << success_text() << "           Treat as: SUCCEEDED!\n";
         }
         else
         {

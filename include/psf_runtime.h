@@ -32,6 +32,7 @@ PSFAPI DWORD __stdcall PSFUnregister(_Inout_ void** implFn, _In_ void* fixupFn) 
 // Simplifications around the package query API from appmodel.h
 // NOTE: These functions are guaranteed to succeed as PsfRuntime will fail to load if they can't be set (e.g. when
 //       running outside of a package)
+PSFAPI const wchar_t* __stdcall PSFQueryPackageFamilyName() noexcept;
 PSFAPI const wchar_t* __stdcall PSFQueryPackageFullName() noexcept;
 PSFAPI const wchar_t* __stdcall PSFQueryApplicationUserModelId() noexcept;
 PSFAPI const wchar_t* __stdcall PSFQueryApplicationId() noexcept;
