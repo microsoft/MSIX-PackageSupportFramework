@@ -332,6 +332,23 @@ The PSF Launcher supports the use of two special purpose "pseudo-variables". The
 | %MsixPackageRoot% | The root folder of the package. While nominally this would be a subfolder under "C:\\Program Files\\WindowsApps" it is possible for the volume to be mounted in other locations. |
 | %MsixWritablePackageRoot% | The package specific redirection location for this user when the FileRedirectionFixup is in use. | 
 
+### PsfLauncher Additional Requirements
+PsfLauncher will expect to find, under certain conditions, additional script files with specific names located in the package:
+* [StartingScriptWrapper.ps1] This script file is required if the config.json includes either a `StartScript` or `EndScript` entry.
+* [StartMenuCmdScriptWrapper.ps1] This script file is required if the `executable` file listed for an application entry of the `config.json` file references a file with a "`.cmd`" or "`.bat`" file extension.
+* [StartMenuCmdShellLaunchWrapperScript.ps1] This script file is required if the `executable` file listed for an application entry of the `config.json` file references a file that does NOT end in one of these file extensions: "`.exe`", "`.cmd`", or "`.bat`".
+
+These script wrapper files may be placed anywhere in the package, although traditionally they are placed either in the root folder of the package or in the same folder as the executable file listed in the config.json application.
+
+### Will Launched Processes run in the container?
+By default, processes created by the existance of an application entry of the `config.json` file with an application executable value that is an `.exe` file type, and it's child processes, all run inside the container. (This is a change in 2021.11.02 release, previously exe files not located inside the package ran outside of the container).
+
+The  `StartScript` and `EndScript` script referenced in a `config.json` application will always run inside of the container.  The launcher will use a powershell process to accomplish this.  
+
+Starting with the 2021.11.02 release, `CMD/BAT` scripts listed as the config.json application executable value, will now also run inside the container. A powershell process will be used to inject the cmd/bat script back into the container.  This solution will not work on end-user systems that are not on 21h1 OS release.  Consider using the launcher from prior PSF versions for back-rev client systems (where the cmd\bat will run outside of the container).
+
+Starting with the 2021.11.02 release, the Other `non-exe` file types listed as the config.json application executable value will be executed using the default file association for the file type on the end-user system.  If the executable file associated with the default action is a windows exe, it will run inside the container; if it is a console app (such as hh.exe that is the normal default to display .chm files) it will run outside of the container and an extra cmd window will appear visible to the end-user.  A powershell process will be used to inject the cmd/bat script back into the container.  This solution will not work on end-user systems that are not on 21h1 OS release.  Consider using the launcher from prior PSF versions for back-rev client systems (where the cmd\bat will run outside of the container).
+
 =======
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
