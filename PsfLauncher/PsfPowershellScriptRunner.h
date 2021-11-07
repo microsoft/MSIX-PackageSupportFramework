@@ -26,7 +26,8 @@ public:
 		//If we want to run at least one script make sure powershell is installed on the computer.
 		if (startScriptInformationObject || endScriptInformationObject)
 		{
-			THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
+			// throwing out this check as useless
+			//THROW_HR_IF_MSG(ERROR_NOT_SUPPORTED, !CheckIfPowershellIsInstalled(), "PowerShell is not installed.  Please install PowerShell to run scripts in PSF");
 		}
 
 		bool stopOnScriptError = false;
