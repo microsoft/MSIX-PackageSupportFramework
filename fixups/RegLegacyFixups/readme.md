@@ -76,6 +76,10 @@ The value of the `hive` element may specified as shown in this table:
 
 The value for the element `patterns` is a regex pattern string that specifies the registry paths to be affected.  This regex string is applied against the path of the key/subkey combination without the hive.
 
+NOTE: Sometimes calling code will end up with an application hive key, which looks like =\REGISTRY\USER\S-1-5... or =\REGISTRY\MACHINE\S-1-5-...
+      The RegLegacyFixup will match these patterns against the HKCU/HKLM `hive` element, however care is cautioned on the pattern that you use.
+	  The regex pattern will match against what comes after HKEY_CURRENT_USER\ or =\REGISTRY\USER\S-1-5...\ which should be strings starting with "Software" or "System".  See examples below.
+
 # JSON Example
 Here is an example of using this fixup to address an application that contains a vendor key under the HKEY_CURRENT_USER hive and the application requests for full access control to that key. While permissible in a native installation of the application, such a request is denied by some versions of the MSIX runtime (OS version specific) because the request would allow the applicaiton make modifications. The json file shown could address this by causing a change to the requested access to give the application contol for read/write purposes only.
 

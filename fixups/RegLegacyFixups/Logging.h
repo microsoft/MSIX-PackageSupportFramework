@@ -31,6 +31,8 @@
 #define REG_OPTION_DONT_VIRTUALIZE  0x00000010L
 #endif
 
+
+
 extern bool trace_function_entry; 
 extern bool m_inhibitOutput;
 extern bool m_shouldLog;
@@ -449,6 +451,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg)
 }
 
 
+
 std::string InterpretKeyPath(HKEY key)
 {
     std::string sret = "";
@@ -464,8 +467,7 @@ std::string InterpretKeyPath(HKEY key)
                 buffer[size] = 0x0;
                 buffer[size + 1] = 0x0;  // Add string termination character
                 auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-                sret = InterpretCountedString("", info->Name, info->NameLength / 2);
-                
+                sret = InterpretCountedString("", info->Name, info->NameLength / 2);                
             }
             else
                 sret = "InterpretKeyPath failure2";
@@ -478,9 +480,14 @@ std::string InterpretKeyPath(HKEY key)
                 sret = InterpretStringA("HKEY_CURRENT_USER");
             else if (key == HKEY_CLASSES_ROOT)
                 sret = InterpretStringA("HKEY_CLASSES_ROOT");
+            else
+                Log("InterpretKeyPath failure2.");
         }
         else
+        {
             sret = "InterpretKeyPath failure1" + InterpretAsHex("status", (DWORD)status);
+            Log("InterpretKeyPath failure1.");
+        }
     }
     catch (...)
     {
