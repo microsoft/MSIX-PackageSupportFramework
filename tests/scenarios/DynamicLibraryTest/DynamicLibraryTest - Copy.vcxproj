@@ -190,7 +190,7 @@
   </ItemGroup>
   
 <PropertyGroup Label="Globals">
-    <VCProjectVersion>15.0</VCProjectVersion>
+    <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{90EB768A-C3BE-498E-B8A2-4AF9E797DC47}</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
