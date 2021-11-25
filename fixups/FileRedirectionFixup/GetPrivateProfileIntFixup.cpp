@@ -15,16 +15,20 @@ UINT __stdcall GetPrivateProfileIntFixup(
     _In_opt_ const CharT* fileName) noexcept
 {
     auto guard = g_reentrancyGuard.enter();
+    DWORD GetPrivateProfileIntInstance = ++g_FileIntceptInstance;
     try
     {
         if (guard)
         {
-            DWORD GetPrivateProfileIntInstance = ++g_FileIntceptInstance;
             if constexpr (psf::is_ansi<CharT>)
             {
                 if (fileName != NULL)
                 {
                     LogString(GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
+                }
+                else
+                {
+                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
@@ -40,6 +44,9 @@ UINT __stdcall GetPrivateProfileIntFixup(
                 if (fileName != NULL)
                 {
                     LogString(GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", fileName);
+                }
+                {
+                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
@@ -60,25 +67,25 @@ UINT __stdcall GetPrivateProfileIntFixup(
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             UINT retval = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, redirectPath.c_str());
-                            Log(L" [%d]Returned uint: %d ", GetPrivateProfileIntInstance, retval);
+                            Log(L" [%d] Returned uint: %d ", GetPrivateProfileIntInstance, retval);
                             return retval;
                         }
                         else
                         {
                             UINT retval = impl::GetPrivateProfileIntW(sectionName, key, nDefault, redirectPath.c_str());
-                            Log(L" [%d]Returned uint: %d ", GetPrivateProfileIntInstance, retval);
+                            Log(L" [%d] Returned uint: %d ", GetPrivateProfileIntInstance, retval);
                             return retval;
                         }
                     }
                 }
                 else
                 {
-                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileIntInstance);
+                    Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileIntInstance);
                 }
             }
             else
             {
-                Log(L"[%d]null filename, don't redirect", GetPrivateProfileIntInstance);
+                Log(L"[%d]  null filename, don't redirect as may be registry based or default.", GetPrivateProfileIntInstance);
             }
         }
     }
@@ -87,6 +94,9 @@ UINT __stdcall GetPrivateProfileIntFixup(
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
+    UINT uVal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
+    Log( L"[%d] Returning 0x%x", GetPrivateProfileIntInstance,uVal);
+    return uVal;
+
 }
 DECLARE_STRING_FIXUP(impl::GetPrivateProfileInt, GetPrivateProfileIntFixup);

@@ -48,12 +48,12 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                 }
                 else
                 {
-                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileSectionInstance);
+                    Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileSectionInstance);
                 }
             }
             else
             {
-                Log(L"[%d]null fileName, don't redirect", GetPrivateProfileSectionInstance);
+                Log(L"[%d]  null fileName, don't redirect as may be registry based or default.", GetPrivateProfileSectionInstance);
             }
         }
     }

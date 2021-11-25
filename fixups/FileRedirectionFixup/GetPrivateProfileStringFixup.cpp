@@ -16,16 +16,20 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     _In_opt_ const CharT* fileName) noexcept
 {
     auto guard = g_reentrancyGuard.enter();
+    DWORD GetPrivateProfileStringInstance = ++g_FileIntceptInstance;
     try
     {
         if (guard)
         {
-            DWORD GetPrivateProfileStringInstance = ++g_FileIntceptInstance;
             if constexpr (psf::is_ansi<CharT>)
             {
                 if (fileName != NULL)
                 {
                     LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                }
+                else
+                {
+                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileStringInstance);
                 }
                 if (appName != NULL)
                 {
@@ -42,6 +46,10 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                 if (fileName != NULL)
                 {
                     LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                }
+                else
+                {
+                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileStringInstance);
                 }
                 if (appName != NULL)
                 {
@@ -81,12 +89,12 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                 }
                 else
                 {
-                    Log(L"[%d]Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStringInstance);
+                    Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStringInstance);
                 }
             }
             else
             {
-                Log(L"[%d]null fileName, don't redirect", GetPrivateProfileStringInstance);
+                Log(L"[%d]  null fileName, don't redirect as may be registry based or default.", GetPrivateProfileStringInstance);
             }
         }
     }
@@ -95,6 +103,8 @@ DWORD __stdcall GetPrivateProfileStringFixup(
         // Fall back to assuming no redirection is necessary
     }
 
-    return impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
+    DWORD dRet =  impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
+    LogString(GetPrivateProfileStringInstance, L"Returning ", string);
+    return dRet;
 }
 DECLARE_STRING_FIXUP(impl::GetPrivateProfileString, GetPrivateProfileStringFixup);
