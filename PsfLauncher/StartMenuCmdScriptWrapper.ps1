@@ -34,7 +34,7 @@ Param (
 try
 {
 	write-host "StartMenuCmdScriptWrapper.ps1: Launching script `"$($scriptPath)`" in package $($PackageFamilyName)"
-	invoke-CommandInDesktopPackage -PackageFamilyName $PackageFamilyName -AppID $AppID -Command "C:\Windows\System32\cmd.exe" -Args "/c `"$($scriptPath)`" $($ScriptArguments)"
+	invoke-CommandInDesktopPackage -PackageFamilyName $PackageFamilyName -AppID $AppID -Command "C:\Windows\System32\cmd.exe" -Args "/c `"$($scriptPath)`"  $($ScriptArguments) "
 	write-host "StartMenuCmdScriptWrapper.ps1: returned."
 	#start-sleep 30
 }

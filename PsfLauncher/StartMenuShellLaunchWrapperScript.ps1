@@ -34,7 +34,7 @@ Param (
 try
 {
 	write-host "StartMenuShellLaunchWrapperScript.ps1: Launching file `"$($FilePath)`" in package $($PackageFamilyName)"
-	invoke-CommandInDesktopPackage -PackageFamilyName $PackageFamilyName -AppID $AppID -Command "$($FilePath)" -Args "$($ScriptArguments)"
+	invoke-CommandInDesktopPackage -PackageFamilyName $PackageFamilyName -AppID $AppID -Command "$($FilePath)" -Args "`"$($ScriptArguments)`""
 	write-host "StartMenuShellLaunchWrapperScript.ps1: returned."
 	#start-sleep 30
 }
