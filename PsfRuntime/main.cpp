@@ -50,93 +50,101 @@ struct loaded_fixup
 };
 std::vector<loaded_fixup> loaded_fixups;
 
+bool usingPsf = false;
+
 void load_fixups()
 {
     using namespace std::literals;
 
     if (auto config = PSFQueryCurrentExeConfig())
     {
-        if (auto fixups = config->try_get("fixups"))
+        if (config != nullptr)
         {
-            for (auto& fixupConfig : fixups->as_array())
+            if (auto fixups = config->try_get("fixups"))
             {
-                auto& fixup = loaded_fixups.emplace_back();
-
-                auto path = PackageRootPath() / fixupConfig.as_object().get("dll").as_string().wide();
-                fixup.module_handle = ::LoadLibraryW(path.c_str());
-                if (!fixup.module_handle)
+                if (fixups != nullptr)
                 {
-                    path.replace_extension();
-                    path.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
-                    fixup.module_handle = ::LoadLibraryW(path.c_str());
-
-                    if (!fixup.module_handle)
+                    for (auto& fixupConfig : fixups->as_array())
                     {
-#if _DEBUG
-                        Log("\tfixup not found at root of package, look elsewhere %ls.", path.filename().c_str());
-#endif
-                        // just try to find it elsewhere as it isn't at the root
-                        for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
+                        auto& fixup = loaded_fixups.emplace_back();
+
+                        auto path = PackageRootPath() / fixupConfig.as_object().get("dll").as_string().wide();
+                        fixup.module_handle = ::LoadLibraryW(path.c_str());
+                        if (!fixup.module_handle)
                         {
-                            try
+                            path.replace_extension();
+                            path.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
+                            fixup.module_handle = ::LoadLibraryW(path.c_str());
+
+                            if (!fixup.module_handle)
                             {
-                                if (dentry.path().filename().compare(path.filename().c_str()) == 0)
-                                {
-                                    fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
-                                    if (!fixup.module_handle)
-                                    {
-                                        auto d2 = dentry.path();
-                                        d2.replace_extension();
-                                        d2.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
-                                        fixup.module_handle = ::LoadLibraryW(d2.c_str());
-                                    }
-                                    if (fixup.module_handle)
-                                    {
 #if _DEBUG
-                                        Log("\tfixup found at . %ls", dentry.path().c_str());
+                                Log("\tfixup not found at root of package, look elsewhere %ls.", path.filename().c_str());
+#endif
+                                // just try to find it elsewhere as it isn't at the root
+                                for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
+                                {
+                                    try
+                                    {
+                                        if (dentry.path().filename().compare(path.filename().c_str()) == 0)
+                                        {
+                                            fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
+                                            if (!fixup.module_handle)
+                                            {
+                                                auto d2 = dentry.path();
+                                                d2.replace_extension();
+                                                d2.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
+                                                fixup.module_handle = ::LoadLibraryW(d2.c_str());
+                                            }
+                                            if (fixup.module_handle)
+                                            {
+#if _DEBUG
+                                                Log("\tfixup found at . %ls", dentry.path().c_str());
 #endif                            
-                                        path = dentry.path();
-                                        break;
+                                                path = dentry.path();
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    catch (...)
+                                    {
+                                        Log("Non-fatal error enumerating directories while looking for fixup.");
                                     }
                                 }
                             }
-                            catch (...)
+
+
+                            if (!fixup.module_handle)
                             {
-                                Log("Non-fatal error enumerating directories while looking for fixup.");
+                                auto message = narrow(path.c_str());
+                                throw_last_error(message.c_str());
                             }
                         }
+                        Log("\tInject into current process: %ls\n", path.c_str());
+
+                        auto initialize = reinterpret_cast<PSFInitializeProc>(::GetProcAddress(fixup.module_handle, "PSFInitialize"));
+                        if (!initialize)
+                        {
+                            auto message = "PSFInitialize export not found in "s + narrow(path.c_str());
+                            throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
+                        }
+                        auto uninitialize = reinterpret_cast<PSFUninitializeProc>(::GetProcAddress(fixup.module_handle, "PSFUninitialize"));
+                        if (!uninitialize)
+                        {
+                            auto message = "PSFUninitialize export not found in "s + narrow(path.c_str());
+                            throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
+                        }
+
+                        auto transaction = detours::transaction();
+                        check_win32(::DetourUpdateThread(::GetCurrentThread()));
+
+                        // Only set the uninitialize pointer if the transaction commits successfully since that's our cue to clean
+                        // it up, which will attempt to call DetourDetach
+                        check_win32(initialize());
+                        transaction.commit();
+                        fixup.uninitialize = uninitialize;
                     }
-
-
-                    if (!fixup.module_handle)
-                    {
-                        auto message = narrow(path.c_str());
-                        throw_last_error(message.c_str());
-                    }
                 }
-                Log("\tInject into current process: %ls\n", path.c_str());
-
-                auto initialize = reinterpret_cast<PSFInitializeProc>(::GetProcAddress(fixup.module_handle, "PSFInitialize"));
-                if (!initialize)
-                {
-                    auto message = "PSFInitialize export not found in "s + narrow(path.c_str());
-                    throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
-                }
-                auto uninitialize = reinterpret_cast<PSFUninitializeProc>(::GetProcAddress(fixup.module_handle, "PSFUninitialize"));
-                if (!uninitialize)
-                {
-                    auto message = "PSFUninitialize export not found in "s + narrow(path.c_str());
-                    throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
-                }
-
-                auto transaction = detours::transaction();
-                check_win32(::DetourUpdateThread(::GetCurrentThread()));
-
-                // Only set the uninitialize pointer if the transaction commits successfully since that's our cue to clean
-                // it up, which will attempt to call DetourDetach
-                check_win32(initialize());
-                transaction.commit();
-                fixup.uninitialize = uninitialize;
             }
         }
     }
@@ -180,38 +188,41 @@ void attach()
     try
     {
 #if _DEBUG
-        Log("PsfRuntime Attach Pid=%d", GetCurrentProcessId());
+        Log("PsfRuntime Attach Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
 #endif
-        LoadConfig();
+        usingPsf = LoadConfig();
 #if _DEBUG
-        //Log("DEBUG: PsfRuntime after load config");
+        Log("DEBUG: PsfRuntime after load config 0x%x",usingPsf);
 #endif
-    // Restore the contents of the in memory import table that DetourCreateProcessWithDll* modified
-        ::DetourRestoreAfterWith();
+        if (usingPsf)
+        {
+            // Restore the contents of the in memory import table that DetourCreateProcessWithDll* modified
+            ::DetourRestoreAfterWith();
 
-        auto transaction = detours::transaction();
-        check_win32(::DetourUpdateThread(::GetCurrentThread()));
+            auto transaction = detours::transaction();
+            check_win32(::DetourUpdateThread(::GetCurrentThread()));
 
 #if _DEBUG
-        //Log("Debug: PsfRuntime before attach all");
+            //Log("Debug: PsfRuntime before attach all");
 #endif
     // Call DetourAttach for all APIs that PsfRuntime detours
-        psf::attach_all();
+            psf::attach_all();
 #if _DEBUG
-        //Log("DEBUG: PsfRuntime after attach all");
+            //Log("DEBUG: PsfRuntime after attach all");
 #endif
     // We can't call LoadLibrary in DllMain, so hook the application's entry point and do initialization then
-        ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
-        if (!ApplicationEntryPoint)
-        {
-            throw_last_error();
-        }
-        check_win32(::DetourAttach(reinterpret_cast<void**>(&ApplicationEntryPoint), FixupEntryPoint));
+            ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
+            if (!ApplicationEntryPoint)
+            {
+                throw_last_error();
+            }
+            check_win32(::DetourAttach(reinterpret_cast<void**>(&ApplicationEntryPoint), FixupEntryPoint));
 
-        transaction.commit();
+            transaction.commit();
 #if _DEBUG
-        //Log("Debug: PsfRuntime is ready.");
+            //Log("Debug: PsfRuntime is ready.");
 #endif
+        }
     }
     catch (...)
     {
@@ -223,14 +234,17 @@ void detach()
 {
     try
     {
-        //Log("DEBUG: PsfRuntime Dettach Pid=%d",GetCurrentProcessId());
-        // Unload in the reverse order as we initialized
-        unload_fixups();
+        if (usingPsf)
+        {
+            //Log("DEBUG: PsfRuntime Dettach Pid=%d",GetCurrentProcessId());
+            // Unload in the reverse order as we initialized
+            unload_fixups();
 
-        auto transaction = detours::transaction();
-        check_win32(::DetourUpdateThread(::GetCurrentThread()));
-        psf::detach_all();
-        transaction.commit();
+            auto transaction = detours::transaction();
+            check_win32(::DetourUpdateThread(::GetCurrentThread()));
+            psf::detach_all();
+            transaction.commit();
+        }
     }
     catch (...)
     {
@@ -240,7 +254,7 @@ void detach()
 
 BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
 {
-    Log("PsfRuntime: In DllMain Pid=%d", GetCurrentProcessId());
+    Log("PsfRuntime: In DllMain Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
     // Per detours documentation, immediately return true if running in a helper process
     if (::DetourIsHelperProcess())
     {
@@ -267,10 +281,10 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
         detach();
         break;
     case DLL_THREAD_ATTACH:
-        Log("PsfRuntime: Reason Thread Attach Tid=0x%x", GetCurrentThreadId());
+        //Log("PsfRuntime: Reason Thread Attach Tid=0x%x", GetCurrentThreadId());
         break;
     case DLL_THREAD_DETACH:
-        Log("PsfRuntime: Reason Thread Detach  Tid=0x%x", GetCurrentThreadId()); 
+        //Log("PsfRuntime: Reason Thread Detach  Tid=0x%x", GetCurrentThreadId()); 
         break;
     default:
         Log("PsfRuntime: Reason %d", reason);

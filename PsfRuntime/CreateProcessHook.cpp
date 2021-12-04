@@ -28,7 +28,29 @@
 
 using namespace std::literals;
 
+bool SetProcessPrivilege(LPCWSTR PrivilegeName, bool Enable)
+{
+    HANDLE Token;
+    TOKEN_PRIVILEGES TokenPrivs;
+    LUID TempLuid;
+    bool Result;
 
+    if (!::LookupPrivilegeValueW(NULL, PrivilegeName, &TempLuid))  return false;
+
+    if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &Token))  
+        return false;
+   
+
+    TokenPrivs.PrivilegeCount = 1;
+    TokenPrivs.Privileges[0].Luid = TempLuid;
+    TokenPrivs.Privileges[0].Attributes = (Enable ? SE_PRIVILEGE_ENABLED : 0);
+
+    Result = (::AdjustTokenPrivileges(Token, FALSE, &TokenPrivs, 0, NULL, NULL) && ::GetLastError() == ERROR_SUCCESS);
+
+    ::CloseHandle(Token);
+
+    return Result;
+}
 
 // Function to determine if this process should get 32 or 64bit dll injections
 // Returns 32 or 64 (or 0 for error)
@@ -190,6 +212,7 @@ BOOL WINAPI CreateProcessFixup(
         else
         {
             // Unexpected error
+            Log("Unable to create process.");
             ::TerminateProcess(processInformation->hProcess, ~0u);
             ::CloseHandle(processInformation->hProcess);
             ::CloseHandle(processInformation->hThread);
@@ -205,34 +228,36 @@ BOOL WINAPI CreateProcessFixup(
     iwstring_view exePath = path;
     auto fixupPath = [](iwstring_view& p)
     {
-        if ((p.length() >= 4) && (p.substr(0, 4) == LR"(\\?\)"_isv))
-        {
-            p = p.substr(4);
-        }
+            if ((p.length() >= 4) && (p.substr(0, 4) == LR"(\\?\)"_isv))
+            {
+                p = p.substr(4);
+            }
     };
     fixupPath(packagePath);
     fixupPath(finalPackagePath);
     fixupPath(exePath);
 
 #if _DEBUG
-    Log("\tPossible injection to process %ls %d.\n", exePath.data(), processInformation->dwProcessId);
+    Log("\tDEBUG: Possible injection to process %ls %d.\n", exePath.data(), processInformation->dwProcessId);
 #endif
     //if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
     //    ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
-    // TRM: 1021-10-21 We do want to inject into exe processes that are outside of the package, for example PowerShell for a cmd file...
-    bool allowInjection = true;
+    // TRM: 2021-10-21 We do want to inject into exe processes that are outside of the package structure, for example PowerShell for a cmd file,
+    // TRM: 2021-11-03 but only if the new process is running inside the Container ...
+    bool allowInjection = false;
+
     try
     {
         if ((creationFlags & EXTENDED_STARTUPINFO_PRESENT) != 0)
         {
-            
+
 #if _DEBUG
-            Log("DEBUG: CreateProcessImpl Attribute: Has extended Attribute.");
+            Log("\tDEBUG: CreateProcessImpl Attribute: Has extended Attribute.");
 #endif
             if constexpr (psf::is_ansi<CharT>)
             {
 #if _DEBUG
-                Log("DEBUG: CreateProcessImpl Attribute: narrow");
+                Log("\tDEBUG: CreateProcessImpl Attribute: narrow");
 #endif
                 STARTUPINFOEXA* si = reinterpret_cast<STARTUPINFOEXA*>(startupInfo);
                 if (si->lpAttributeList != NULL)
@@ -245,43 +270,91 @@ BOOL WINAPI CreateProcessFixup(
                 else
                 {
 #if _DEBUG
-                    Log("DEBUG: CreateProcessImpl Attribute: attlist is null.");
+                    Log("\tDEBUG: CreateProcessImpl Attribute: attlist is null.");
 #endif
+                    allowInjection = true;
                 }
             }
             else
             {
 #if _DEBUG
-                Log("DEBUG: CreateProcessImpl Attribute:: wide");
+                Log("\tDEBUG: CreateProcessImpl Attribute:: wide");
 #endif
                 STARTUPINFOEXW* si = reinterpret_cast<STARTUPINFOEXW*>(startupInfo);
                 if (si->lpAttributeList != NULL)
                 {
 #if _DEBUG
                     DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
-                    #endif
+#endif
                     allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
                 }
                 else
                 {
 #if _DEBUG
-                    Log("DEBUG: CreateProcessImpl Attribute: attlist is null.");
+                    Log("\tDEBUG: CreateProcessImpl Attribute: attlist is null.");
 #endif
+                    allowInjection = true;
                 }
             }
+        }
+        else
+        {
+#if _DEBUG
+            Log("\tDEBUG: CreateProcessImpl Attribute: Does not have extended attribute and should be added.");
+#endif
+            allowInjection = true;
         }
     }
     catch (...)
     {
-#if _DEBUG
-        Log("Debug: Exception testing for attribute list, assuming none.");
-#endif
+        Log("\tDebug: Exception testing for attribute list, assuming none.");
+        allowInjection = false;
     }
+
+    if (allowInjection)
+    {
+        // There are situations where the new process might jump outside of the container to run.
+        // In those situations, we can't inject dlls into it.
+        try
+        {
+            BOOL b;
+            BOOL res = IsProcessInJob(processInformation->hProcess, nullptr, &b);
+            if (res != 0)
+            {
+                if (b == false)
+                {
+                    allowInjection = false;
+#if _DEBUG
+                    Log("\tNew process has broken away, do not inject.");
+#endif
+                }
+                else
+                {
+                    Log("\tNew process is in a job, allow.");
+                    // NOTE: we could maybe try to see if in the same job, but this is probably good enough.
+                }
+            }
+            else
+            {
+#if _DEBUG
+                Log("\tUnable to detect job status of new process, ignore for now and try to inject 0x%x 0x%x 0x%x.",res, GetLastError(),b);
+#endif
+            }
+        }
+        catch (...)
+        {
+            allowInjection = false;
+#if _DEBUG
+            Log("\tException while trying to determine job status of new process. Do not inject.");
+#endif
+        }
+    }
+
     if (allowInjection)
     {
         // The target executable is in the package, so we _do_ want to fixup it
 #if _DEBUG
-        Log("\tIn package, so yes");
+        Log("\tAllowed Injection, so yes");
 #endif
         // Fix for issue #167: allow subprocess to be a different bitness than this process.
         USHORT bitness = ProcessBitness(processInformation->hProcess);
@@ -369,7 +442,7 @@ BOOL WINAPI CreateProcessFixup(
     }
     else
     {
-        Log("\tIs not part of package, code currently doesn't inject...");
+        Log("\tThe new process is not inside the container, so doesn't inject...");
     }
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {

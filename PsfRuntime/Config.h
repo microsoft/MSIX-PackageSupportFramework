@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <string>
 
-void LoadConfig();
+bool LoadConfig();
 
 // Globals set by `LoadConfig`, to avoid continuously querying them
 /////const std::wstring& PSFQueryPackageFamilyName() noexcept;

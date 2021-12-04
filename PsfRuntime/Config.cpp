@@ -370,7 +370,7 @@ void load_json()
     }
 }
 
-void LoadConfig()
+bool LoadConfig()
 {
     if (psf::is_packaged())
     {
@@ -391,13 +391,17 @@ void LoadConfig()
         LogString("g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
         LogString("g_CurrentExecutable", g_CurrentExecutable.c_str());
         load_json();
+        return true;
     }
     else
     {
         // FUTURE: It may be useful to enable testing outside of a packaged environment. For now, finding ourselves in
         //         this situation almost certainly indicates a bug, so bail out early
-        Log("App is not running inside the container and will be terminated.");
-        std::terminate();
+        //Log("App is not running inside the container and will be terminated.");
+        //std::terminate();
+        // The future is now, why terminate?  Just let it run without fixup.
+        Log("App is not running inside the container and will be ignored by the Psf.");
+        return false;
     }
 }
 
