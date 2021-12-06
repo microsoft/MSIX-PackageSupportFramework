@@ -3,7 +3,7 @@
          SchemaLocation="https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/MetadataSchema.xml ..\MetadataSchema.xsd">
   >
   <Version>1.0.0</Version>
-  <MinimumWindowsPlatform>10.0.14393.0</MinimumWindowsPlatform>
+  <MinimumWindowsPlatform>10.0</MinimumWindowsPlatform>
   <Description>
     To remediate registry calls to an appx/msix friendly way.
   </Description>
