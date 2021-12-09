@@ -223,6 +223,7 @@ HANDLE __stdcall FindFirstFileExFixup2(
     WIN32_FIND_DATAW* findData = psf::is_ansi<CharT> ? &result->cached_data : wideData; 
     DWORD initialFindError = ERROR_PATH_NOT_FOUND;
     bool AnyValidResult = false;
+    bool AnyValidPath = false;
     //
     // [0] Open the redirected find handle
     if (!pathRedirected.empty())
@@ -231,7 +232,6 @@ HANDLE __stdcall FindFirstFileExFixup2(
         // Some applications really care about the failure reason. Try and make this the best that we can, preferring
         // something like "file not found" over "path does not exist"
         initialFindError = ::GetLastError();
-
 
         if (result->find_handles[0])
         {
@@ -250,10 +250,14 @@ HANDLE __stdcall FindFirstFileExFixup2(
                 copy_find_data(*wideData, result->cached_data);
             }
             Log(L"[%d]FindFirstFileExFixup2[0] (from redirected): had results", FindFirstFileExInstance2);
+            AnyValidPath = true;
             AnyValidResult = true;
         }
         else
         {
+            if (initialFindError == ERROR_FILE_NOT_FOUND)
+                AnyValidPath = true;
+
             // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
             result->redirect_path.clear();
             Log(L"[%d]FindFirstFileExFixup2[0] (from redirected): no results", FindFirstFileExInstance2);
@@ -264,7 +268,7 @@ HANDLE __stdcall FindFirstFileExFixup2(
     }
     else
     {
-        Log(L"[%d]FindFirstFileExFixup2[1] (from redirected):   no results possible", FindFirstFileExInstance2);
+        Log(L"[%d]FindFirstFileExFixup2[0] (from redirected):   no results possible", FindFirstFileExInstance2);
     }
 
     //
@@ -280,11 +284,14 @@ HANDLE __stdcall FindFirstFileExFixup2(
         if (result->find_handles[1])
         {
             Log(L"[%d]FindFirstFileExFixup2[1] (from vfs_path):   had results", FindFirstFileExInstance2);
+            AnyValidPath = true;
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
         }
         else
         {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                AnyValidPath = true;
             result->package_vfs_path.clear();
             Log(L"[%d]FindFirstFileExFixup2[1] (from vfs_path):   no results", FindFirstFileExInstance2);
         }
@@ -324,11 +331,14 @@ HANDLE __stdcall FindFirstFileExFixup2(
     if (result->find_handles[2])
     {
         Log(L"[%d]FindFirstFileExFixup2[2] (from origial):    had results", FindFirstFileExInstance2);
+        AnyValidPath = true; 
         AnyValidResult = true;
         initialFindError = ERROR_SUCCESS;
     }
     else
     {
+        if (GetLastError() == ERROR_FILE_NOT_FOUND)
+            AnyValidPath = true;
         result->requested_path.clear();
         Log(L"[%d]FindFirstFileExFixup2[2] (from original):   no results", FindFirstFileExInstance2);
     }
@@ -365,11 +375,14 @@ HANDLE __stdcall FindFirstFileExFixup2(
         if (result->find_handles[3])
         {
             Log(L"[%d]FindFirstFileExFixup2[3] (from devirt):     had results", FindFirstFileExInstance2);
+            AnyValidPath = true; 
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
         }
         else
         {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                AnyValidPath = true;
             result->requested_path.clear();
             Log(L"[%d]FindFirstFileExFixup2[3] (from devirt):    no results", FindFirstFileExInstance2);
         }
@@ -432,6 +445,12 @@ HANDLE __stdcall FindFirstFileExFixup2(
     }
     else
     {
+        if (AnyValidPath)
+        {
+            // If in any of the potential locations, the directory exists but no files found,
+            // we prefer to return file not found.
+            initialFindError = ERROR_FILE_NOT_FOUND;
+        }
         Log(L"[%d]FindFirstFileExFixup2 returns 0x%x", FindFirstFileExInstance2, initialFindError);
         ::SetLastError(initialFindError);
         return INVALID_HANDLE_VALUE;
