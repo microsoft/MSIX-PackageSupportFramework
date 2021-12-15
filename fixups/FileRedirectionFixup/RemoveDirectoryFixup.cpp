@@ -21,7 +21,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
             if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
             {
                 // NOTE: See commentary in DeleteFileFixup for limitations on deleting files/directories
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wPathName.c_str(), redirect_flags::none);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wPathName.c_str(), redirect_flags::none, RemoveDirectoryInstance);
                 if (shouldRedirect)
                 {
                     std::wstring rldPathName = TurnPathIntoRootLocalDevice(wPathName.c_str());

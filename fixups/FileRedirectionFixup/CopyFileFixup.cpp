@@ -27,8 +27,8 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             //       manually fail out ourselves if 'failIfExists' is true and the file exists in the package, but
             //       that's arguably worse since we currently aren't handling the case where an application tries to
             //       delete a file in its package path.
-            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
-            auto [redirectDest, destRedirectPath,shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence, CopyFileInstance);
+            auto [redirectDest, destRedirectPath,shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure, CopyFileInstance);
             if (redirectSource )
             {
                 std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(sourceRedirectPath).c_str());
@@ -93,8 +93,8 @@ BOOL __stdcall CopyFileExFixup(
             LogString(CopyFileExInstance,L"CopyFileExFixup to",   newFileName);
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
-            auto [redirectDest, destRedirectPath,shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence, CopyFileExInstance);
+            auto [redirectDest, destRedirectPath,shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure, CopyFileExInstance);
             if (redirectSource)
             {
                 std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(sourceRedirectPath).c_str());
@@ -158,8 +158,8 @@ HRESULT __stdcall CopyFile2Fixup(
             LogString(CopyFile2Instance,L"CopyFile2Fixup to",   newFileName);
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            auto [redirectSource, sourceRedirectPath, shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence);
-            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectSource, sourceRedirectPath, shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::check_file_presence, CopyFile2Instance);
+            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure, CopyFile2Instance);
             if (redirectSource)
             {
                 return impl::CopyFile2(

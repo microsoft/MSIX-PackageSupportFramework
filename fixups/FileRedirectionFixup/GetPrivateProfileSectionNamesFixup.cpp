@@ -24,7 +24,7 @@ DWORD __stdcall GetPrivateProfileSectionNamesFixup(
                 LogString(GetPrivateProfileSectionNamesInstance,L"GetPrivateProfileSectionNamesFixup for fileName", widen(fileName, CP_ACP).c_str());
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read, GetPrivateProfileSectionNamesInstance);
                     if (shouldRedirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)

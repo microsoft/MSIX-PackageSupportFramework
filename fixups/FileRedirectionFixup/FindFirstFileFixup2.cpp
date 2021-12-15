@@ -505,6 +505,7 @@ BOOL __stdcall FindNextFileFixup2(_In_ HANDLE findFile, _Out_ win32_find_data_t<
 
     if (findFile == INVALID_HANDLE_VALUE)
     {
+        Log(L"[%d]FindNextFileFixup2 invaid handle.", FindNextFileInstance2);
         ::SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }

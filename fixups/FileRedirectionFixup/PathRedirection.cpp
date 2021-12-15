@@ -2015,7 +2015,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             // Otherwise exact match. Assume an implicit directory separator at the end (e.g. for matches to satisfy the
             // first call to CreateDirectory
 #ifdef MOREDEBUG
-            LogString(inst, L"\t\t\tFRFShouldRedirect: relativePath",relativePath);
+            //LogString(inst, L"\t\t\tFRFShouldRedirect: relativePath",relativePath);
 #endif
             if (std::regex_match(relativePath, redirectSpec.pattern))
             {
@@ -2042,8 +2042,8 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
                         destinationTargetBase = redirectSpec.redirect_targetbase;
                         
 #ifdef MOREDEBUG
-                        LogString(inst, L"\t\tFRFShouldRedirect isWide for", vfspath.drive_absolute_path);
-                        LogString(inst, L"\t\tFRFShouldRedirect isWide redir", destinationTargetBase.c_str());
+                        //LogString(inst, L"\t\tFRFShouldRedirect isWide for", vfspath.drive_absolute_path);
+                        //LogString(inst, L"\t\tFRFShouldRedirect isWide redir", destinationTargetBase.c_str());
 #endif
                         result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase, inst);
                         
@@ -2118,20 +2118,20 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             else
             {
 #ifdef MOREDEBUG
-                LogString(inst, L"\t\tFRFShouldRedirect: no match on parse relativePath", relativePath);
+                //LogString(inst, L"\t\tFRFShouldRedirect: no match on parse relativePath", relativePath);
 #endif
             }
         }
         else
         {
 #ifdef MOREDEBUG
-            LogString(inst, L"\t\tFRFShouldRedirect: Not in ball park of base", redirectSpec.base_path.c_str());
+            //LogString(inst, L"\t\tFRFShouldRedirect: Not in ball park of base", redirectSpec.base_path.c_str());
 #endif
         }
     }
 
 #ifdef MOREDEBUG
-    Log(L"[%d]\t\tFRFShouldRedirect post check 1",inst);
+    //Log(L"[%d]\t\tFRFShouldRedirect post check 1",inst);
 #endif
 
 
@@ -2144,7 +2144,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     }
 
 #ifdef MOREDEBUG
-    Log(L"[%d]\t\tFRFShouldRedirect post check 2",inst);
+    //Log(L"[%d]\t\tFRFShouldRedirect post check 2",inst);
 #endif
 
     if (flag_set(flags, redirect_flags::check_file_presence))
@@ -2167,7 +2167,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     }
 
 #ifdef MOREDEBUG
-    Log(L"[%d]\t\tFRFShouldRedirect post check 3",inst);
+    //Log(L"[%d]\t\tFRFShouldRedirect post check 3",inst);
 #endif
 
     if (flag_set(flags, redirect_flags::copy_file))
@@ -2291,7 +2291,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             }
         }
     }
-    LogString(inst, L"\tFRFShouldRedirect: Redirect to result", result.redirect_path.c_str());
+    LogString(inst, L"\tFRFShouldRedirect: returns with result", result.redirect_path.c_str());
 
     return result;
 }

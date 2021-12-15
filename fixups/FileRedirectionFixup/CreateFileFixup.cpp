@@ -85,7 +85,8 @@ HANDLE __stdcall CreateFileFixup(
 {
     auto guard = g_reentrancyGuard.enter();
     DWORD CreateFileInstance = ++g_FileIntceptInstance;
-    
+    LogString(CreateFileInstance, L"CreateFileFixup for ", fileName);
+
     std::string FileNameString;
     std::wstring WFileNameString;
     const CharT* FixedFileName = fileName;
@@ -98,7 +99,7 @@ HANDLE __stdcall CreateFileFixup(
                 FileNameString = fileName;
                 FileNameString = RemoveAnyFinalDoubleSlash(FileNameString);
                 FixedFileName = FileNameString.c_str();
-                LogString(CreateFileInstance, L"CreateFileFixup A for fileName", widen(fileName).c_str()); 
+                //LogString(CreateFileInstance, L"CreateFileFixup A for fileName", widen(fileName).c_str()); 
                 if (IsUnderUserPackageWritablePackageRoot(FileNameString.c_str()))
                 {
                     WFileNameString = ReverseRedirectedToPackage(widen(FileNameString));
@@ -111,7 +112,7 @@ HANDLE __stdcall CreateFileFixup(
                 WFileNameString = fileName;
                 WFileNameString = RemoveAnyFinalDoubleSlash(WFileNameString);
                 FixedFileName = WFileNameString.c_str();
-                LogString(CreateFileInstance, L"CreateFileFixup W for fileName", fileName);
+                //LogString(CreateFileInstance, L"CreateFileFixup W for fileName", fileName);
                 if (IsUnderUserPackageWritablePackageRoot(WFileNameString.c_str()))
                 {
                     WFileNameString = ReverseRedirectedToPackage(WFileNameString.c_str());
@@ -226,6 +227,7 @@ HANDLE __stdcall CreateFile2Fixup(
 {
     auto guard = g_reentrancyGuard.enter();
     DWORD CreateFile2Instance = ++g_FileIntceptInstance;
+    LogString(CreateFile2Instance, L"CreateFile2Fixup for ", fileName);
     std::wstring WFileNameString = fileName;
     try
     {
@@ -235,7 +237,7 @@ HANDLE __stdcall CreateFile2Fixup(
 
             ///Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, widen(fileName, CP_ACP).c_str());
             //Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, fileName);
-            LogString(CreateFile2Instance,L"CreateFile2Fixup for ", fileName);
+            
 
             if (IsUnderUserPackageWritablePackageRoot(WFileNameString.c_str()))
             {

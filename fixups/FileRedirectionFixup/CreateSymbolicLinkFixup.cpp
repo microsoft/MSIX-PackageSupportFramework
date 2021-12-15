@@ -22,8 +22,8 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             LogString(CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup for", symlinkFileName);
             LogString(CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup target",  targetFileName);
 
-            auto [redirectLink, redirectPath, shoudReadonlySource] = ShouldRedirect(symlinkFileName, redirect_flags::ensure_directory_structure);
-            auto [redirectTarget, redirectTargetPath, shoudReadonlyDest] = ShouldRedirect(targetFileName, redirect_flags::copy_on_read);
+            auto [redirectLink, redirectPath, shoudReadonlySource] = ShouldRedirect(symlinkFileName, redirect_flags::ensure_directory_structure, CreateSymbolicLinkInstance);
+            auto [redirectTarget, redirectTargetPath, shoudReadonlyDest] = ShouldRedirect(targetFileName, redirect_flags::copy_on_read, CreateSymbolicLinkInstance);
             if (redirectLink || redirectTarget)
             {
                 // NOTE: If the target is a directory, then ideally we would recursively copy its contents to its

@@ -17,6 +17,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
 {
     auto guard = g_reentrancyGuard.enter();
     DWORD GetPrivateProfileStringInstance = ++g_FileIntceptInstance;
+    Log(L"[%d] GetPrivateProfileStringFixup", GetPrivateProfileStringInstance);
     try
     {
         if (guard)
@@ -25,7 +26,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             {
                 if (fileName != NULL)
                 {
-                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup (A) for fileName", widen(fileName, CP_ACP).c_str());
                 }
                 else
                 {
@@ -45,7 +46,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             {
                 if (fileName != NULL)
                 {
-                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup for fileName", widen(fileName, CP_ACP).c_str());
+                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup (W) for fileName", widen(fileName, CP_ACP).c_str());
                 }
                 else
                 {
@@ -65,7 +66,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             {
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read, GetPrivateProfileStringInstance);
                     if (shouldRedirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
@@ -76,13 +77,18 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                                                                                narrow(redirectPath.c_str()).c_str() );
                             
                             Log(L"[%d] Ansi Returned length=0x%x", GetPrivateProfileStringInstance, realRetValue);
-                            LogString(GetPrivateProfileStringInstance, " Ansi Returned string", string);
+                            if (realRetValue > 0)
+                                LogString(GetPrivateProfileStringInstance, L" Ansi Returned string", string);
                             return realRetValue;
                         }
                         else
                         {
                             auto realRetValue = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, redirectPath.c_str());
-                            LogString(GetPrivateProfileStringInstance, L" Returned string", string);
+                            if (realRetValue > 0)
+                                LogString(GetPrivateProfileStringInstance, L" Returned string", string);
+                            else
+                                Log(L"[%d] Returned string zero length", GetPrivateProfileStringInstance);
+
                             return realRetValue;
                         }
                     }
@@ -104,7 +110,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     }
 
     DWORD dRet =  impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-    LogString(GetPrivateProfileStringInstance, L"Returning ", string);
+    LogString(GetPrivateProfileStringInstance, L" Returning ", string);
     return dRet;
 }
 DECLARE_STRING_FIXUP(impl::GetPrivateProfileString, GetPrivateProfileStringFixup);

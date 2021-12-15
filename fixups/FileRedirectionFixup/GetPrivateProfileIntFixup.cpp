@@ -28,7 +28,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                 }
                 else
                 {
-                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileIntInstance);
+                    Log(L"[%d] GetPrivateProfileIntFixup for null file.", GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
@@ -45,8 +45,9 @@ UINT __stdcall GetPrivateProfileIntFixup(
                 {
                     LogString(GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", fileName);
                 }
+                else
                 {
-                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileIntInstance);
+                    Log(L"[%d] GetPrivateProfileIntFixup for null file.", GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
@@ -61,7 +62,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
             {
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read, GetPrivateProfileIntInstance);
                     if (shouldRedirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)

@@ -25,8 +25,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             //       well. Additionally, we don't copy-on-read the destination file for the same reason we don't do the
             //       same for CopyFile: we give the application the benefit of the doubt that they previously tried to
             //       delete the file if it exists in the package path.
-            auto [redirectExisting, existingRedirectPath, shouldReadonlSource] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
-            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectExisting, existingRedirectPath, shouldReadonlSource] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read, MoveFileInstance);
+            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure, MoveFileInstance);
             if (redirectExisting || redirectDest)
             {
                 BOOL bRet = impl::MoveFile(
@@ -68,8 +68,8 @@ BOOL __stdcall MoveFileExFixup(
 
             // See note in MoveFile for commentary on copy-on-read functionality (though we could do better by checking
             // flags for MOVEFILE_REPLACE_EXISTING)
-            auto [redirectExisting, existingRedirectPath, shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
-            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure);
+            auto [redirectExisting, existingRedirectPath, shouldReadonlySource] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read, MoveFileExInstance);
+            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirect(newFileName, redirect_flags::ensure_directory_structure, MoveFileExInstance);
             if (redirectExisting || redirectDest)
             {
                 std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str());
