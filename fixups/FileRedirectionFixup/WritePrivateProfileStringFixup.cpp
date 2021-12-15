@@ -25,13 +25,12 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                 LogString(WritePrivateProfileStringInstance,L"WritePrivateProfileStringFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read, WritePrivateProfileStringInstance);
                     if (shouldRedirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
-                            return impl::WritePrivateProfileStringW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                                widen_argument(string).c_str(), redirectPath.c_str());
+                            return impl::WritePrivateProfileString(appName, keyName, string, ((std::filesystem::path)redirectPath).string().c_str());
                         }
                         else
                         {
