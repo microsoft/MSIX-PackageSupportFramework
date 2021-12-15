@@ -210,6 +210,7 @@ std::vector<path_redirection_spec> g_redirectionSpecs;
 
 
 
+#pragma region LOGGING
 
 void Log(const char* fmt, ...)
 {
@@ -452,6 +453,9 @@ void Loghexdump(void* pAddressIn, long  lSize)
     }
 }
 
+#pragma endregion
+
+
 template <typename CharT>
 bool _stdcall IsUnderUserAppDataLocalImpl(_In_ const CharT* fileName)
 {
@@ -518,6 +522,38 @@ bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName)
     return IsUnderUserAppDataLocalPackagesImpl(fileName);
 }
 
+template <typename CharT>
+bool IsUnderUserPackageWritablePackageRootImpl(_In_ const CharT* fileName)
+{
+    if (fileName == NULL)
+    {
+        return false;
+    }
+    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+    {
+        return path_relative_to(fileName + 4, g_writablePackageRootPath);
+    }
+    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
+    {
+        return path_relative_to(fileName + 4, g_writablePackageRootPath);
+    }
+    else
+    {
+        return path_relative_to(fileName, g_writablePackageRootPath);
+    }
+}
+
+bool IsUnderUserPackageWritablePackageRoot(_In_ const wchar_t* fileName)
+{
+    return IsUnderUserPackageWritablePackageRootImpl(fileName);
+}
+
+bool IsUnderUserPackageWritablePackageRoot(_In_ const char* fileName)
+{
+    return IsUnderUserPackageWritablePackageRootImpl(fileName);
+}
 
 template <typename CharT>
 bool IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
@@ -1829,6 +1865,37 @@ std::wstring RedirectedPath2(const normalized_path2& pathAsRequestedNormalized, 
 }
 
 
+/// <summary>
+/// Given a file path that is in the WritablePackageRoot area, determine the equivalent Package Path.
+/// Example "C:\Users\xxx\Appdata\Local\Packages\yyy\LocalCache\Microsoft\Local\WritablePackageRoot\VFS\zzz
+/// returns "%Packageroot%\VFS\xxx" or empty string if not relevant.
+std::wstring ReverseRedirectedToPackage(const std::wstring input)
+{
+    if (IsUnderUserPackageWritablePackageRoot(input.c_str()))
+    {
+        std::wstring ret = g_packageRootPath;
+        //LogString(0, L"ReverseRedirection will be using g_packageRootPath", g_packageRootPath.c_str());
+
+        constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+        constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+        if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, input.c_str()))
+        {
+            ret.append(input.substr(4+lstrlenW(g_writablePackageRootPath.c_str())));
+            return ret;
+        }
+        else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, input.c_str()))
+        {
+            ret.append(input.substr(4+lstrlenW(g_writablePackageRootPath.c_str())));
+            return ret;
+        }
+        else
+        {
+            ret.append(input.substr(lstrlenW(g_writablePackageRootPath.c_str())));
+            return ret;
+        }
+    }
+    return L"";
+}
 
 template <typename CharT>
 static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags flags, DWORD inst)
@@ -1843,6 +1910,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     LogString(inst, L"\tFRFShouldRedirect: called for path", widen(path).c_str());
 #endif
 
+#ifdef RETURN_REMOVED_CODE_REVERSE_WRITABLE
     size_t found = (widen(path)).find(L"WritablePackageRoot", 0);
     if (found != std::wstring::npos)
     {
@@ -1851,6 +1919,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 #endif
         return result;
     }
+#endif
 
 #if _DEBUG
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
@@ -1888,6 +1957,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     LogString(inst, L"\t\tFRFShouldRedirect: DeVirtualized", normalizedPath.drive_absolute_path);
 #endif
 
+
 	// If you change the below logic, or
 	// you you change what goes into RedirectedPath
 	// you need to mirror all changes in FindFirstFileFixup.cpp
@@ -1902,6 +1972,24 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         LogString(inst, L"\t\tFRFShouldRedirect: Virtualized", vfspath.drive_absolute_path);
 #endif
     }
+
+
+    std::wstring reversedWritablePathWstring = ReverseRedirectedToPackage(widen(path).c_str());
+    if (reversedWritablePathWstring.length() > 0)
+    {
+        // We were provided a path that is in the redirection area. We probably want to use this path,
+        // but maybe the area it was redirected from.
+#ifdef MOREDEBUG
+        LogString(inst, L"\t\tFRFShouldRedirect: ReverseRedirection", reversedWritablePathWstring.c_str());
+#endif
+
+        // For now, let's return this path and let the caller deal with it.
+#if _DEBUG
+        LogString(inst, L"\tFRFShouldRedirect: Prevent redundant redirection.", widen(path).c_str());
+#endif
+        return result;
+    }
+
 
     // Figure out if this is something we need to redirect
     for (auto& redirectSpec : g_redirectionSpecs)

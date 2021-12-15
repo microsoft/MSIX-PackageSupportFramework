@@ -99,7 +99,12 @@ HANDLE __stdcall CreateFileFixup(
                 FileNameString = RemoveAnyFinalDoubleSlash(FileNameString);
                 FixedFileName = FileNameString.c_str();
                 LogString(CreateFileInstance, L"CreateFileFixup A for fileName", widen(fileName).c_str()); 
-                //LogString(CreateFileInstance, L"DEBUG: CreateFileFixup FixedfileName", FixedFileName);
+                if (IsUnderUserPackageWritablePackageRoot(FileNameString.c_str()))
+                {
+                    WFileNameString = ReverseRedirectedToPackage(widen(FileNameString));
+                    FixedFileName = (narrow(WFileNameString)).c_str();
+                    LogString(CreateFileInstance, L"Use ReverseRedirected fileName", FixedFileName);
+                }
             }
             else
             {
@@ -107,9 +112,14 @@ HANDLE __stdcall CreateFileFixup(
                 WFileNameString = RemoveAnyFinalDoubleSlash(WFileNameString);
                 FixedFileName = WFileNameString.c_str();
                 LogString(CreateFileInstance, L"CreateFileFixup W for fileName", fileName);
-                //LogString(CreateFileInstance, L"DEBUG: CreateFileFixup FixedfileName", FixedFileName);
+                if (IsUnderUserPackageWritablePackageRoot(WFileNameString.c_str()))
+                {
+                    WFileNameString = ReverseRedirectedToPackage(WFileNameString.c_str());
+                    FixedFileName = WFileNameString.c_str();
+                    LogString(CreateFileInstance, L"Use ReverseRedirected fileName", FixedFileName);
+                }
             }
-            
+
             if (!IsUnderUserAppDataLocalPackages(FixedFileName))
             {
                 // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
@@ -226,6 +236,12 @@ HANDLE __stdcall CreateFile2Fixup(
             ///Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, widen(fileName, CP_ACP).c_str());
             //Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, fileName);
             LogString(CreateFile2Instance,L"CreateFile2Fixup for ", fileName);
+
+            if (IsUnderUserPackageWritablePackageRoot(WFileNameString.c_str()))
+            {
+                WFileNameString = ReverseRedirectedToPackage(WFileNameString.c_str());
+                LogString(CreateFile2Instance, L"Use ReverseRedirected fileName", WFileNameString.c_str());
+            }
 
             if (!IsUnderUserAppDataLocalPackages(WFileNameString.c_str()))
             {

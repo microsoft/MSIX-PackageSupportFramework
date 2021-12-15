@@ -18,6 +18,12 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
             std::wstring wfileName = widen(fileName);
             LogString(GetFileAttributesInstance,L"GetFileAttributesFixup for fileName", wfileName.c_str());
 
+            if (IsUnderUserPackageWritablePackageRoot(wfileName.c_str()))
+            {
+                wfileName = ReverseRedirectedToPackage(wfileName.c_str());
+                LogString(GetFileAttributesInstance, L"Use ReverseRedirected fileName", wfileName.c_str());
+            }
+
             if (!IsUnderUserAppDataLocalPackages(wfileName.c_str()))
             {
                 auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesInstance);
@@ -101,6 +107,12 @@ BOOL __stdcall GetFileAttributesExFixup(
             DWORD GetFileAttributesExInstance = ++g_FileIntceptInstance;
             std::wstring wfileName = widen(fileName);
             LogString(GetFileAttributesExInstance,L"GetFileAttributesExFixup for fileName", wfileName.c_str());
+
+            if (IsUnderUserPackageWritablePackageRoot(wfileName.c_str()))
+            {
+                wfileName = ReverseRedirectedToPackage(wfileName.c_str());
+                LogString(GetFileAttributesExInstance, L"Use ReverseRedirected fileName", wfileName.c_str());
+            }
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
@@ -207,6 +219,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
             }
             else
             {
+                // We don't treat WritablePackageRoot different when setting attributes, only when getting them.
                 Log(L"[%d]Under LocalAppData\\Packages, don't redirect", SetFileAttributesInstance);
             }
         }

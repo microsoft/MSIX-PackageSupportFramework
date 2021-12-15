@@ -107,9 +107,13 @@ bool path_relative_to(const char* path, const std::filesystem::path& basePath);
 bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName);
 bool IsUnderUserAppDataLocalPackages(_In_ const wchar_t* fileName);
 bool IsUnderUserAppDataRoaming(_In_ const wchar_t* fileName);
+bool IsUnderUserPackageWritablePackageRoot(_In_ const wchar_t* fileName);
 bool IsUnderUserAppDataLocal(_In_ const char* fileName);
 bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName);
 bool IsUnderUserAppDataRoaming(_In_ const char* fileName);
+bool IsUnderUserPackageWritablePackageRoot(_In_ const char* fileName);
+
+std::wstring ReverseRedirectedToPackage(const std::wstring input);
 
 // Return path to existing package VFS file (or NULL if not present) but only for AppData local and remote
 std::filesystem::path GetPackageVFSPath(const wchar_t* fileName);
