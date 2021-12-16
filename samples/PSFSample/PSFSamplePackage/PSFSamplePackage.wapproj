@@ -36,7 +36,7 @@
   <PropertyGroup>
     <ProjectGuid>7121cb59-375b-41b2-b5bc-fe2358de0601</ProjectGuid>
     <TargetPlatformVersion>10.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <PackageCertificateKeyFile>PSFSamplePackage_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
