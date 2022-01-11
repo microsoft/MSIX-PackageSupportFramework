@@ -43,7 +43,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                 try
                 {
 #if _DEBUG
-                    //LogString("LoadLibraryFixup testing against", spec.filename.data());
+                    //LogString(L"LoadLibraryFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
@@ -71,7 +71,7 @@ template <typename CharT>
 HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ HANDLE file, _In_ DWORD flags)
 {
 #if _DEBUG
-    //LogString("LoadLibraryExFixup called on",libFileName);
+    //LogString(L"LoadLibraryExFixup called on",libFileName);
 #endif
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
@@ -92,7 +92,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 {
 #if _DEBUG
                     //Log("LoadLibraryExFixup testing %ls against %ls", libFileNameW.c_str(), spec.full_filepath.native().c_str());
-                    //LogString("LoadLibraryExFixup testing against", spec.filename.data());
+                    //LogString(L"LoadLibraryExFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)

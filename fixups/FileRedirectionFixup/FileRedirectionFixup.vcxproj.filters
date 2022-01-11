@@ -68,7 +68,13 @@
     <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
     <ClCompile Include="SetWorkingDirectory.cpp" />
-    <ClCompile Include="FindFirstFileFixup2.cpp">
+    <ClCompile Include="FindFirstFileFixupV2.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="PathTests.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="PathRedirectionV2.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

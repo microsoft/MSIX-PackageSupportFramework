@@ -9,8 +9,14 @@ When injected into a process, the File Redirection Fixup supports the ability to
 > > * In the case of a folder the redirected folder is created (including folder structures as needed) and used.
 > * The rule may optionally have additional configuration to modify the behavior, such as to control the redirected location or exempt a file from redirection.
 
-This configuration is specified in the `processes` se
+## About Debugging this fixup
+The Release build of this fixup produces no output to the debug console port for performance reasons.
+Use of the Debug build will enable you to see the intercepts and what the fixup did.
+That output is easily seen using the Sysinternals "DebugView" tool.
+
 ## Configuration
+This configuration is specified in the `processes` section of the config.jason file.
+
 The configuration for the File Redirection Fixup is specified under the element `config` of the fixup structure within the json file when FileRedirectionFixup.dll is requested.
 This `config` element contains a single property named `redirectedPaths`.
 

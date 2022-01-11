@@ -137,7 +137,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         {
             auto nextChar = std::exchange(wPath[dirPos + 1], L'\0');
             Log("[%d]\tdir comes from single char case =%ls", FindFirstFileExInstance,  wPath.c_str() );
-            dir = NormalizePath(wPath.c_str());
+            dir = NormalizePath(wPath.c_str(), FindFirstFileExInstance);
             wPath[dirPos + 1] = nextChar;
         }
         else if (std::iswalpha(wPath[0]) && (wPath[1] == ':'))
@@ -145,7 +145,7 @@ HANDLE __stdcall FindFirstFileExFixup(
             // Ensure dir path_type is absolute drive and not drive relative
             auto nextChar = std::exchange(wPath[dirPos + 1], L'\0');
             Log("[%d]\tdir comes from driveroot case=%ls", FindFirstFileExInstance, wPath.c_str() );
-            dir = NormalizePath(wPath.c_str());
+            dir = NormalizePath(wPath.c_str(), FindFirstFileExInstance);
             // Avoid bug in NormalizePath causing absolute_path to fail.
             Log(L"[%d]\t\tnormalabs prefix=%ls", FindFirstFileExInstance, dir.drive_absolute_path);
             if (dir.drive_absolute_path == nullptr)
@@ -165,7 +165,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         {
             auto separator = std::exchange(wPath[dirPos], L'\0');
             Log("[%d]\tdir comes from =%ls", FindFirstFileExInstance, wPath.c_str() );
-            dir = NormalizePath(wPath.c_str());
+            dir = NormalizePath(wPath.c_str(), FindFirstFileExInstance);
             wPath[dirPos] = separator;
         }
         pattern = wPath.c_str() + dirPos + 1;
@@ -181,11 +181,11 @@ HANDLE __stdcall FindFirstFileExFixup(
         // The right solution might be to first find subfolders matching the path pattern and make individual layered calls on the rest, but that seems too ugly.
         // Here is the code being replaced, but while it fixes the "*" I'm not comforatble that the replacement is right in all cases, 
         // so this comment is here to try to explain.
-        //     dir = NormalizePath(L".");
+        //     dir = NormalizePath(L".",FindFirstFileExInstance);
         //     pattern = path.c_str();
         std::filesystem::path cwd = std::filesystem::current_path();
         Log("[%d]\tFileFirstFileEx: swap to cwd: %ls", FindFirstFileExInstance,cwd.c_str());
-        dir = NormalizePath(cwd.c_str()); 
+        dir = NormalizePath(cwd.c_str(), FindFirstFileExInstance);
         pattern = wPath.c_str();
         Log("[%d]\tFileFirstFileEx: no slash, assumed cwd based type=x%x dap=%ls", FindFirstFileExInstance, psf::path_type(cwd.c_str()),dir.drive_absolute_path);
     }
@@ -201,7 +201,7 @@ HANDLE __stdcall FindFirstFileExFixup(
     LogNormalizedPath(dir, L"dir before NP", FindFirstFileExInstance);
     if (dir.path_type == psf::dos_path_type::local_device || dir.path_type == psf::dos_path_type::root_local_device)
     {
-        dir = NormalizePath(dir.drive_absolute_path);
+        dir = NormalizePath(dir.drive_absolute_path, FindFirstFileExInstance);
         LogNormalizedPath(dir, L"dir mid NP", FindFirstFileExInstance);
     }
     if (dir.full_path.back() != L'\\')
@@ -231,7 +231,7 @@ HANDLE __stdcall FindFirstFileExFixup(
     Log(L"[%d]FindFirstFile requested_path for [2] (from original) is", FindFirstFileExInstance);
     Log(result->requested_path.c_str());
 
-    result->redirect_path = RedirectedPath(dir,false, FindFirstFileExInstance);
+    result->redirect_path = RedirectedPath(dir,false, g_writablePackageRootPath.native(), FindFirstFileExInstance);
     //if (result->redirect_path.back() != L'\\')
     //{
     //    result->redirect_path.push_back(L'\\');

@@ -69,7 +69,9 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
     std::string altkeystring;
 
 
+#ifdef _DEBUG
     Log("[%d] RegFixupSam: path=%s\n", RegLocalInstance, keypath.c_str());
+#endif
     for (auto& spec : g_regRemediationSpecs)
     {
       
@@ -78,7 +80,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
             switch (specitem.remeditaionType)
             {
             case Reg_Remediation_Type_ModifyKeyAccess:
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                 Log("[%d] RegFixupSam: rule is Check ModifyKeyAccess...\n", RegLocalInstance);
 #endif
                 switch (specitem.modifyKeyAccess.hive)
@@ -89,7 +91,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                     if (keypath._Starts_with(keystring) ||
                         keypath._Starts_with(altkeystring))
                     {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                         //Log("[%d] RegFixupSam: is HKCU key\n", RegLocalInstance);
 #endif
                         for (auto& pattern : specitem.modifyKeyAccess.patterns)
@@ -100,7 +102,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                 // Must remove both the pattern and the S-1-5-...\ that follows.
                                 OffsetHkcu = keypath.find_first_of('\\', altkeystring.size())+1;
                             }
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                             Log("[%d] RegFixupSam: Check %LS\n", RegLocalInstance, widen(keypath.substr(OffsetHkcu)).c_str());
                             Log("[%d] RegFixupSam: using %LS\n", RegLocalInstance, pattern.c_str());
 #endif
@@ -108,7 +110,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             {
                                 if (std::regex_match(widen(keypath.substr(OffsetHkcu)), std::wregex(pattern)))
                                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                     Log("[%d] RegFixupSam: is HKCU pattern match on type=0x%x.\n", RegLocalInstance, specitem.modifyKeyAccess.access);
 #endif
                                     switch (specitem.modifyKeyAccess.access)
@@ -120,7 +122,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                         {
                                             //samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK);
                                             samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY);
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
                                         }
@@ -131,7 +133,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER |  KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
                                         {
                                             samModified = MAXIMUM_ALLOWED;
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
 #endif                                    
                                         }
@@ -142,7 +144,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WRITE)) != 0)
                                         {
                                             samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WRITE);
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
                                         }
@@ -152,7 +154,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK )) != 0)
                                         {
                                             samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WRITE);
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
                                         }
@@ -163,7 +165,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
                                         {
                                             samModified = MAXIMUM_ALLOWED;
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
 #endif                                    
                                         }
@@ -199,7 +201,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             // Must remove both the pattern and the S-1-5-...\ that follows.
                             OffsetHklm = keypath.find_first_of('\\', altkeystring.size()) + 1;
                         }
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                         //Log("[%d] RegFixupSam:  is HKLM key\n", RegLocalInstance);
 #endif
                         for (auto& pattern : specitem.modifyKeyAccess.patterns)
@@ -208,7 +210,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             {
                                 if (std::regex_match(widen(keypath.substr(OffsetHklm)), std::wregex(pattern)))
                                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                     Log("[%d] RegFixupSam: is HKLM pattern match on type=0x%x.\n", RegLocalInstance, specitem.modifyKeyAccess.access);
 #endif
                                     switch (specitem.modifyKeyAccess.access)
@@ -220,7 +222,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                         {
                                             //samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK );
                                             samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY);
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
                                         }
@@ -231,7 +233,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WRITE)) != 0)
                                         {
                                             samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WRITE);
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
                                         }
@@ -242,7 +244,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK| KEY_CREATE_SUB_KEY)) != 0)
                                         {
                                             samModified = MAXIMUM_ALLOWED;
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
 #endif                                    
                                         }
@@ -253,7 +255,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
                                         {
                                             samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WRITE);
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
                                         }
@@ -264,7 +266,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                             (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
                                         {
                                             samModified = MAXIMUM_ALLOWED;
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                             Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
 #endif                                    
                                         }
@@ -309,11 +311,8 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
     return samModified;
 }
 
-#ifdef _DEBUG
-bool RegFixupFakeDelete(std::string keypath,DWORD RegLocalInstance)
-#else
-bool RegFixupFakeDelete(std::string keypath)
-#endif
+
+bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInstance)
 {
 #ifdef _DEBUG
     Log("[%d] RegFixupFakeDelete: path=%s\n", RegLocalInstance, keypath.c_str());
@@ -325,12 +324,12 @@ bool RegFixupFakeDelete(std::string keypath)
       
         for (auto& specitem : spec.remediationRecords)
         {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
             Log("[%d] RegFixupFakeDelete: specitem.type=%d\n", RegLocalInstance, specitem.remeditaionType);
 #endif      
             if (specitem.remeditaionType == Reg_Remediation_type_FakeDelete)
             {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                 Log("[%d] RegFixupFakeDelete: specitem.type=%d\n", RegLocalInstance, specitem.remeditaionType);
 #endif 
                 switch (specitem.fakeDeleteKey.hive)
@@ -353,7 +352,7 @@ bool RegFixupFakeDelete(std::string keypath)
                             {
                                 if (std::regex_match(widen(keypath.substr(OffsetHkcu)), std::wregex(pattern)))
                                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                     Log("[%d] RegFixupFakeDelete: match hkcu\n", RegLocalInstance);
 #endif                            
                                     return true;
@@ -361,7 +360,7 @@ bool RegFixupFakeDelete(std::string keypath)
                             }
                             catch (...)
                             {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                 Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
 #endif
                             }
@@ -386,7 +385,7 @@ bool RegFixupFakeDelete(std::string keypath)
                             {
                                 if (std::regex_match(widen(keypath.substr(OffsetHklm)), std::wregex(pattern)))
                                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                     Log("[%d] RegFixupFakeDelete: match hklm\n", RegLocalInstance);
 #endif                            
                                     return true;
@@ -394,7 +393,7 @@ bool RegFixupFakeDelete(std::string keypath)
                             }
                             catch (...)
                             {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                                 Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
 #endif
                             }
@@ -446,7 +445,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
     auto result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
     QueryPerformanceCounter(&TickEnd);
 
-#if _DEBUG
+#ifdef MOREDEBUG
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
@@ -518,7 +517,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     auto result = RegOpenKeyExImpl(key, subKey, options, samModified,  resultKey);
     QueryPerformanceCounter(&TickEnd);
 
-#if _DEBUG
+#ifdef MOREDEBUG
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
@@ -579,7 +578,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     auto result = RegOpenKeyTransactedImpl(key, subKey, options, samModified, resultKey, hTransaction, pExtendedParameter);
     QueryPerformanceCounter(&TickEnd);
 
-#if _DEBUG
+#if MOREDEBUG
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
@@ -645,14 +644,14 @@ LSTATUS __stdcall RegDeleteKeyFixup(
 #endif
                 std::string keypath = ReplaceRegistrySyntax( InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
 
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                 Log("[%d] RegDeleteKey: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
-                if (RegFixupFakeDelete(keypath) == true)
+                if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
-#if _DEBUG
+#if MOREDEBUG
                     Log("[%d] RegDeleteKey:Fake Success\n", RegLocalInstance);
 #endif
                     result = 0;
@@ -702,14 +701,14 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
                 Log("[%d] RegDeleteKeyEx:\n", RegLocalInstance);
 #endif
                 std::string keypath = ReplaceRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                 Log("[%d] RegDeleteKeyEx: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
-                if (RegFixupFakeDelete(keypath) == true)
+                if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
-#if _DEBUG
+#if MOREDEBUG
                     Log("[%d] RegDeleteKeyEx:Fake Success\n", RegLocalInstance);
 #endif
                     result = 0;
@@ -760,14 +759,14 @@ LSTATUS __stdcall RegDeleteKeyTransactedFixup(
                 Log("[%d] RegDeleteKeyTransacted:\n", RegLocalInstance);
 #endif
                 std::string keypath = ReplaceRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                 Log("[%d] RegDeleteKeyTransacted: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
-                if (RegFixupFakeDelete(keypath) == true)
+                if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
-#if _DEBUG
+#if MOREDEBUG
                     Log("[%d] RegDeleteKeyTransacted:Fake Success\n", RegLocalInstance);
 #endif
                     result = 0;
@@ -815,14 +814,14 @@ LSTATUS __stdcall RegDeleteValueFixup(
                 Log("[%d] RegDeleteValue:\n", RegLocalInstance);
 #endif
                 std::string keypath = ReplaceRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subValueName));
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                 Log("[%d] RegDeleteValue: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
-                if (RegFixupFakeDelete(keypath) == true)
+                if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
-#if _DEBUG
+#if MOREDEBUG
                     Log("[%d] RegDeleteValue:Fake Success\n", RegLocalInstance);
 #endif
                     result = 0;

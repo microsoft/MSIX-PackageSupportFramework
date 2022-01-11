@@ -4,6 +4,25 @@ When injected into a process, RegLegacyFixups supports the ability to:
 
 There is no guarantee that these changes will be enough to allow the application to perform properly, but often the change can solve application compatibility issues by removing request incompatible parameters that the application did not need.
 
+## About Debugging this fixup
+The Release build of this fixup produces no output to the debug console port for performance reasons.
+Use of the Debug build will enable you to see the intercepts and what the fixup did.
+That output is easily seen using the Sysinternals "DebugView" tool.
+
+### Dependencies for RegLegacyFixups
+The following dlls are also required and should generally be placed in the same folder as RegLegacyFixups:
+
+| Build | File | Source |
+| ----- | ---- | ------ |
+| Release | msvcp140.dll | VC141 |
+| Release | vcruntime140.dll | VC141 |
+| Debug | msvcp140d.dll | VC141 |
+| Debug | vcruntime140d.dll | VC141 |
+| Either  | ucrtbased.dll | SDK 10.0.17763 |
+
+Copies of these dlls are available in this project.
+
+
 # General Configuration
 The configuration for the Registry Legacy Fixups is specified in the element `config` of the fixup structure within the `proceses` section of the json file when RegLegacyFixups.dll is requested.
 

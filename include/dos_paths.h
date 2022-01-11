@@ -102,7 +102,7 @@ namespace psf
     {
         // Root-local device paths are forwarded to the object manager with minimal modification, so we shouldn't be
         // trying to expand them here
-        assert(path_type(path) != dos_path_type::root_local_device);
+        /////assert(path_type(path) != dos_path_type::root_local_device);
 
         auto len = get_full_path_name(path, 0, nullptr);
         if (!len)

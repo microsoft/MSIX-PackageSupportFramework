@@ -11,11 +11,87 @@
 
 #include "test_config.h"
 
+inline bool wiequals(std::wstring a, std::wstring b)
+{
+    return std::equal(a.begin(), a.end(),
+                      b.begin(), b.end(),
+        [](wchar_t a, wchar_t b) {
+            return tolower(a) == tolower(b);
+        });
+}
+
+inline bool isPathActuallyUnder(std::filesystem::path candidatePath, const std::filesystem::path dir_path)
+{
+    std::wstring wCandidate = candidatePath.c_str();
+    std::wstring wDir = dir_path.c_str();
+    return (wCandidate.substr(0, wDir.length()).compare(wDir.c_str()) == 0);
+}
+inline std::uintmax_t deleteDirectoryContents(const std::filesystem::path dir_path)
+{
+    std::uintmax_t cnt = 0;
+    std::uintmax_t num = 0;
+    for (const auto& entry : std::filesystem::directory_iterator(dir_path))
+    {
+        try
+        {
+            if (isPathActuallyUnder(entry.path(), dir_path))
+            {
+                if (entry.is_directory())
+                {
+                    //trace_messages(warning_color, L"Potential directory for cleanup: ", entry.path().c_str(), new_line);
+                    num = deleteDirectoryContents(entry);
+                    cnt += num;
+                    bool b = std::filesystem::remove(entry.path().c_str());
+                    if (b)
+                    {
+                        cnt++;
+                        //trace_message(L"directory removed.\n");
+                    }
+                    else
+                    {
+                        //trace_message(L"directory NOT removed.\n");
+                    }
+                }
+                else
+                {
+                    std::wstring theName = entry.path().filename().c_str();
+                    //trace_messages(warning_color, L"Potential file for cleanup: ", theName.c_str(), new_line);
+
+                    // On windows 11, we seem to overlay the package root folder onto every level folder under writable package root, so this
+                    // isn't the only bad file we can't delete.
+                    if (!wiequals(theName.c_str(), L"appxblockmap.xml"))
+                    {
+                        bool b = std::filesystem::remove(entry);
+                        if (b)
+                        {
+                            cnt++;
+                            //trace_message(L"file removed.\n");
+                        }
+                        else
+                        {
+                            //trace_message(L"file NOT removed.\n");
+                        }
+                    }
+                    else
+                    {
+                        //trace_message(L"file skipped\n");;
+                    }
+                }
+            }
+        }
+        catch (...)
+        {
+            //trace_message(L"deleteDirectoryContents Exception\n");
+        }
+    }
+    return cnt;
+}
 
 inline void clean_redirection_path_helper(std::filesystem::path redirectRoot)
 {
 	std::error_code ec; 
     std::uintmax_t num;
+#if OLD
 	num = std::filesystem::remove_all(redirectRoot, ec);
 	if (num == static_cast<std::uintmax_t>(-1) && ec)  // Added num test as that is set to 0 when folder doesn't exist, which is OK.
 	{
@@ -23,16 +99,27 @@ inline void clean_redirection_path_helper(std::filesystem::path redirectRoot)
 		trace_messages(warning_color, L"WARNING: ", ec.message(), new_line);
         trace_messages(warning_color, L"Path was:", redirectRoot.c_str(), new_line);
 	}
-	else
-	{
-		// The file redirection fixup makes an assumption about the existence of the VFS directory, but we just deleted
-		// it above, so re-create it to avoid future issues
-		if (!::CreateDirectoryW(redirectRoot.c_str(), nullptr))
-		{
-			trace_message(L"WARNING: Failed to re-create the VFS directory in the redirected path. Future tests may be impacted by this...\n", warning_color);
-			trace_messages(warning_color, L"WARNING: ", error_message(::GetLastError()), new_line);
-		}
-	}
+    else
+    {
+        // The file redirection fixup makes an assumption about the existence of the VFS directory, but we just deleted
+        // it above, so re-create it to avoid future issues
+        if (!::CreateDirectoryW(redirectRoot.c_str(), nullptr))
+        {
+            trace_message(L"WARNING: Failed to re-create the VFS directory in the redirected path. Future tests may be impacted by this...\n", warning_color);
+            trace_messages(warning_color, L"WARNING: ", error_message(::GetLastError()), new_line);
+        }
+    }
+#else
+    // 12/19/2021: Modified cleanup to only cleanup contents of requested folder, as OS is now protecting the folder from deletion.
+    trace_messages(info_color, L"clean_redirection_path_helper: ", redirectRoot.c_str(), new_line);
+    num = deleteDirectoryContents(redirectRoot);
+    wchar_t wNum[16]; 
+    std::wstring sNum = L"Detail: CleanupCount=";
+    _itow_s((int)num, wNum, 16, 10);
+    trace_messages(info_color, sNum.c_str(), wNum, new_line);
+    // without deletion of the folder, no need to recreate it either.
+#endif
+
 }
 
 inline void clean_redirection_path()
@@ -46,7 +133,7 @@ inline void clean_redirection_path()
     static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)"; 
 	static const auto writablePackageRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
     trace_message(L"<<<Cleanup Redirection Paths before next test.\n");
-	clean_redirection_path_helper(redirectRoot);
+    clean_redirection_path_helper(redirectRoot);
 	clean_redirection_path_helper(writablePackageRoot);
     trace_message(L"Cleanup Redirection Paths before next test.>>>\n");
 }

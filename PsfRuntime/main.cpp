@@ -9,10 +9,9 @@
 #include <detour_transaction.h>
 #include <psf_framework.h>
 #include <psf_runtime.h>
+#include <psf_logging.h>
 
 #include "Config.h"
-
-void Log(const char* fmt, ...);
 
 struct loaded_fixup
 {
@@ -69,47 +68,77 @@ void load_fixups()
                         auto& fixup = loaded_fixups.emplace_back();
 
                         auto path = PackageRootPath() / fixupConfig.as_object().get("dll").as_string().wide();
+#if _DEBUG
+                        Log("\tfixup to attempt to load as specified: %ls.", path.c_str());
+#endif
                         fixup.module_handle = ::LoadLibraryW(path.c_str());
                         if (!fixup.module_handle)
                         {
                             path.replace_extension();
                             path.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
+#if _DEBUG
+                            Log("\tfixup to attempt to load as: %ls.", path.c_str());
+#endif
                             fixup.module_handle = ::LoadLibraryW(path.c_str());
 
                             if (!fixup.module_handle)
                             {
 #if _DEBUG
-                                Log("\tfixup not found at root of package, look elsewhere %ls.", path.filename().c_str());
+                                Log("\tfixup not found at cwd,checkroot of package." );
+#endif
+                                std::filesystem::path pathfromroot = PackageRootPath() / path.filename().c_str();
+                                fixup.module_handle = ::LoadLibraryW(pathfromroot.c_str());
+                                if (fixup.module_handle)
+                                {
+#if _DEBUG
+                                    Log("\tfixup found at . %ls", pathfromroot.c_str());
+#endif                            
+                                    path = pathfromroot;
+                                }
+                            }
+
+                            if (!fixup.module_handle)
+                            {
+#if _DEBUG
+                                Log("\tfixup not found at root of package, look elsewhere.");
 #endif
                                 // just try to find it elsewhere as it isn't at the root
                                 for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
                                 {
-                                    try
+                                    if (!fixup.module_handle)
                                     {
-                                        if (dentry.path().filename().compare(path.filename().c_str()) == 0)
+                                        try
                                         {
-                                            fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
-                                            if (!fixup.module_handle)
-                                            {
-                                                auto d2 = dentry.path();
-                                                d2.replace_extension();
-                                                d2.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
-                                                fixup.module_handle = ::LoadLibraryW(d2.c_str());
-                                            }
-                                            if (fixup.module_handle)
+                                            if (dentry.path().filename().compare(path.filename().c_str()) == 0)
                                             {
 #if _DEBUG
-                                                Log("\tfixup found at . %ls", dentry.path().c_str());
+                                                Log("\tfixup might be found as %ls.", dentry.path().c_str());
+#endif
+                                                fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
+                                                if (!fixup.module_handle)
+                                                {
+                                                    auto d2 = dentry.path();
+                                                    d2.replace_extension();
+                                                    d2.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
+                                                    fixup.module_handle = ::LoadLibraryW(d2.c_str());
+                                                }
+                                                if (fixup.module_handle)
+                                                {
+#if _DEBUG
+                                                    Log("\tfixup found at . %ls", dentry.path().c_str());
 #endif                            
-                                                path = dentry.path();
-                                                break;
+                                                    path = dentry.path();
+                                                    break;
+                                                }
                                             }
                                         }
+                                        catch (...)
+                                        {
+                                            Log("Non-fatal error enumerating directories while looking for fixup.");
+                                        }
                                     }
-                                    catch (...)
-                                    {
-                                        Log("Non-fatal error enumerating directories while looking for fixup.");
-                                    }
+                                    else
+                                        break;
                                 }
                             }
 
@@ -120,7 +149,7 @@ void load_fixups()
                                 throw_last_error(message.c_str());
                             }
                         }
-                        Log("\tInject into current process: %ls\n", path.c_str());
+                        Log("\tInjected into current process: %ls\n", path.c_str());
 
                         auto initialize = reinterpret_cast<PSFInitializeProc>(::GetProcAddress(fixup.module_handle, "PSFInitialize"));
                         if (!initialize)

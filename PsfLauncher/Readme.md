@@ -8,8 +8,24 @@ PSF Launcher also supports running an additional "monitor" app, intended for Psf
 
 Finally, PsfLauncher also support some limited PowerShell scripting.
 
+Additional details about what processes should/should not run inside the container is located in the Readme for PsfRuntime, which implements that detail.
+
+## About PsfLauncher and Debug Logging
+PsfLauncher and PsfRuntime are designed to always output logging information to the debug console port. 
+This infomration may be viewed with a tool like the SysInternals DebugView as you start the application.
+  
+This information will provide the details about all of the actions that the launcher will do, including any monitoring, scripting, and how the target process will be started.
+
+For performance reasons, the "fixup" modules generally do not log to the debug console port in release builds.
+If you need debugging of the fixup modules, you may include the Debug builds of those modules which output verbosely to the debug console port.
+This debug output is more useful in debugging the fixup itself rather than debugging the app.
+If you are not interested in fixing the PSF, you would be better served to include the PsfTraceFixup for debugging instead.
+
 ## Configuration
 PSF Launcher uses a config.json file to configure the behavior.
+This file is normally placed in the root folder of the package, however it may be put anywhere in the package.
+Should an application happen to also have a file named config.json, a syntax check will be made to ensure the found file is for the PSF.
+
 
 ### Example 1 - Package using FileRedirectionFixup
 Given an application package with an `AppxManifest.xml` file containing the following:

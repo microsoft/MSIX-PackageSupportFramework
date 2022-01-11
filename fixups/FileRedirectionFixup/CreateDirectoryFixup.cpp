@@ -18,6 +18,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             DWORD CreateDirectoryInstance = ++g_FileIntceptInstance;
             std::wstring wPathName = widen(pathName);
             LogString(CreateDirectoryInstance,L"CreateDirectoryFixup for path", pathName);
+            std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
 
             if (IsUnderUserPackageWritablePackageRoot(wPathName.c_str()))
             {
@@ -27,7 +28,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
 
             if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonlySource] = ShouldRedirect(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
+                auto [shouldRedirect, redirectPath, shouldReadonlySource] = ShouldRedirectV2(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
                 if (shouldRedirect)
                 {
                     LogString(CreateDirectoryInstance, L"CreateDirectoryFixup Use Folder", redirectPath.c_str());
@@ -79,6 +80,8 @@ BOOL __stdcall CreateDirectoryExFixup(
 
             std::wstring WtemplateDirectory = widen(templateDirectory);
             std::wstring WnewDirectory = widen(newDirectory);
+            std::replace(WtemplateDirectory.begin(), WtemplateDirectory.end(), L'/', L'\\');
+            std::replace(WnewDirectory.begin(), WnewDirectory.end(), L'/', L'\\');
 
             if (IsUnderUserPackageWritablePackageRoot(WtemplateDirectory.c_str()))
             {
@@ -92,8 +95,8 @@ BOOL __stdcall CreateDirectoryExFixup(
             }
 
             
-            auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirect(WtemplateDirectory.c_str(), redirect_flags::check_file_presence, CreateDirectoryExInstance);
-            auto [redirectDest, redirectDestPath,shouldReadonlyDest] = ShouldRedirect(WnewDirectory.c_str(), redirect_flags::ensure_directory_structure, CreateDirectoryExInstance);
+            auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirectV2(WtemplateDirectory.c_str(), redirect_flags::check_file_presence, CreateDirectoryExInstance);
+            auto [redirectDest, redirectDestPath,shouldReadonlyDest] = ShouldRedirectV2(WnewDirectory.c_str(), redirect_flags::ensure_directory_structure, CreateDirectoryExInstance);
             if (redirectTemplate || redirectDest)
             {
                 std::wstring rldRedirectTemplate = TurnPathIntoRootLocalDevice(redirectTemplate ? redirectTemplatePath.c_str() : WtemplateDirectory.c_str());

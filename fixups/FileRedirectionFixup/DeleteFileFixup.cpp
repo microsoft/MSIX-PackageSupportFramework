@@ -26,7 +26,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
                 //       "deleted" and then just pretend like they've been deleted. Such a change would be rather large and
                 //       disruptful and probably fairly inefficient as it would impact virtually every code path, so we'll
                 //       put it off for now.
-                auto [shouldRedirect, redirectPath, shoudReadonly] = ShouldRedirect(fileName, redirect_flags::none, DeleteFileInstance);
+                auto [shouldRedirect, redirectPath, shoudReadonly] = ShouldRedirectV2(fileName, redirect_flags::none, DeleteFileInstance);
                 if (shouldRedirect)
                 {
                     std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
@@ -53,6 +53,10 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
                 Log(L"[%d]DeleteFileFixup Under LocalAppData\\Packages, don't redirect. deletes with result: %d", DeleteFileInstance, bRet);
                 return bRet;
             }
+        }
+        else
+        {
+            LogString(0, L"DeleteFileFixup Unguarded for fileName", fileName);
         }
     }
     catch (...)

@@ -38,7 +38,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* filePath) noexcept
             LogString(SetWorkingDirectoryInstance, L"SetCurrentDirectoryFixup ", wFilePath.c_str());
             if (!path_relative_to(wFilePath.c_str(), psf::current_package_path()))
             {
-                normalized_path normalized = NormalizePath(wFilePath.c_str());
+                normalized_path normalized = NormalizePath(wFilePath.c_str(), SetWorkingDirectoryInstance);
                 normalized_path virtualized = VirtualizePath(normalized, SetWorkingDirectoryInstance);
                 if (impl::PathExists(virtualized.full_path.c_str()))
                 {
@@ -88,10 +88,28 @@ DWORD __stdcall GetCurrentDirectoryFixup(_In_ DWORD nBufferLength, _Out_ CharT* 
 #if _DEBUG
             DWORD GetWorkingDirectoryInstance = ++g_FileIntceptInstance;
             DWORD dRet = impl::GetCurrentDirectory(nBufferLength, filePath);
-            Log(L"[%x]GetCurrentDirectory returns 0x%x", GetWorkingDirectoryInstance, dRet);
-            if (dRet == 0)
+            Log(L"[%d]GetCurrentDirectory: returns 0x%x", GetWorkingDirectoryInstance, dRet);
+            if (dRet != 0)
             {
-                Log(L"[%x]GetCurrentDirectory = %ls", GetWorkingDirectoryInstance, widen(filePath).c_str());
+                if (nBufferLength >= dRet)
+                {
+                    try
+                    {
+                        LogString(GetWorkingDirectoryInstance, L"GetCurrentDirectory path", filePath);
+                    }
+                    catch (...)
+                    {
+                        Log(L"[%d] Exception printing GetCurrentDirectory.");
+                    }
+                }
+                else
+                {
+                    Log(L"[%d]GetCurrentDirectory but buffer was only 0x%x", GetWorkingDirectoryInstance, nBufferLength);
+                }
+            }
+            else
+            {
+                Log(L"[%d]GetCurrentDirectory Error = 0x%x", GetWorkingDirectoryInstance, GetLastError());
             }
             return dRet;
 #else

@@ -39,4 +39,7 @@
   <ItemGroup>
     <Xml Include="DynamicLibraryFixup.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" />
+  </ItemGroup>
 </Project>

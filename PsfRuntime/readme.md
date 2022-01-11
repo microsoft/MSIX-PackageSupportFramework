@@ -1,6 +1,20 @@
 # PSF Runtime
 The PSF Runtime serves several purposes. The first is that it is responsible for detouring `CreateProcess` to ensure that any child process will also get the PSF Runtime injected into it. Additionally, it is responsible for loading and parsing the `config.json` DOM as well as loading any configured fixup dlls for the current executable. Finally, it exposes a set of utility functions collectively referred to as the "PSF Framework" for use by the individual fixup dlls. This includes helpers for interop with the Detours library, functions for querying information about the current package/app id, and a set of functions for querying information from the `config.json` DOM. See [psf_runtime.h](../include/psf_runtime.h) for a more complete idea of this API surface as well as [psf_config.h](../include/psf_config.h) for an idea of how the JSON data is exposed.
 
+## Processes to be fixed up
+To ensure that all processes that require fixups are handled, PsfRuntime intercepts the processes creation API CreateProcess.  
+Ultimately, this covers cases of calls to CreateProcess by the PsfLauncher, 
+but also CreateProcess, StartProcess, and some of the managed code and private implementions by the target application that must eventually call this API.
+
+Generally, we want all such child processes to run inside the container, however there is an exception
+for the case of a CONHOST process which may not.
+Currently:
+> * Most child processes will run inside the container by default and do not require fixing.
+> * Some child processes do not supply the Extended information to request whether to run inside or not.  Except for excluded processes (Conhost currently)
+> * we will add the extended information to the request to ensure it runs inside the container.
+> * Some child processes do supply extended information, but don't request either inside or outside. These are currently not fixed up but should run inside.
+> * Some child processes do supply extended information specifying either inside or outside.  These are also not adjusted currently.
+
 ## Fixup Loading
 As mentioned above, one of the major responsibilities that the PSF Runtime has is loading the fixups that are configured for the current executable. E.g. for a configuration that looks something like:
 

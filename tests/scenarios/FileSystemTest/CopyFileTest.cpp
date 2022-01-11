@@ -115,8 +115,10 @@ int CopyFileTests()
 	result = result ? result : testResult;
 	test_end(testResult);
 
+
 	test_begin("CopyFile2 From Package Test");
 	clean_redirection_path();
+
 	testResult = DoCopyFileTest(CopyFile2Func, "CopyFile2", packageFilePath, otherFilePath, g_packageFileContents);
 	result = result ? result : testResult;
 	test_end(testResult);

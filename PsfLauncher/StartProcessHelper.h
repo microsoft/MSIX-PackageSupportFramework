@@ -1,6 +1,6 @@
 #pragma once
 #include <windows.h>
-#include "Logger.h"
+#include <psf_logging.h>
 #include "Globals.h"
 #include <wil\resource.h>
 

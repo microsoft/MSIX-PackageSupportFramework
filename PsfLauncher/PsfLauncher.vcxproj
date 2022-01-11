@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="main.cpp">
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
@@ -41,11 +42,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Globals.h" />
-    <ClInclude Include="Logger.h" />
     <ClInclude Include="PsfPowershellScriptRunner.h" />
     <ClInclude Include="StartProcessHelper.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Readme.md" />
     <None Include="StartingScriptWrapper.ps1" />
     <None Include="StartMenuCmdScriptWrapper.ps1" />
     <None Include="StartMenuShellLaunchWrapperScript.ps1" />

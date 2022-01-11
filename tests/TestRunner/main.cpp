@@ -25,25 +25,25 @@ using namespace std::literals;
 // missing applications as too serious
 static constexpr const wchar_t* g_applications[] =
 {
-    L"ArchitectureTest_8wekyb3d8bbwe!Fixed32",
-    L"ArchitectureTest_8wekyb3d8bbwe!Fixed64",
-    L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchTest",
-    L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchVerify",
-    L"PowershellScriptTest_8wekyb3d8bbwe!PSNoScripts",
-    L"PowershellScriptTest_8wekyb3d8bbwe!PSOnlyStart",
-    L"PowershellScriptTest_8wekyb3d8bbwe!PSBothStartingFirst",
-    L"PowershellScriptTest_8wekyb3d8bbwe!PSScriptWithArg",
-    L"CompositionTest_8wekyb3d8bbwe!Fixed",
+    //L"ArchitectureTest_8wekyb3d8bbwe!Fixed32",
+    //L"ArchitectureTest_8wekyb3d8bbwe!Fixed64",
+    ////L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchTest",
+    ////L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchVerify",
+    ////L"PowershellScriptTest_8wekyb3d8bbwe!PSNoScripts",
+    ////L"PowershellScriptTest_8wekyb3d8bbwe!PSOnlyStart",
+    ////L"PowershellScriptTest_8wekyb3d8bbwe!PSBothStartingFirst",
+    ////L"PowershellScriptTest_8wekyb3d8bbwe!PSScriptWithArg",
+    //L"CompositionTest_8wekyb3d8bbwe!Fixed",
     L"FileSystemTest_8wekyb3d8bbwe!Fixed",
-    L"LongPathsTest_8wekyb3d8bbwe!Fixed",
-    L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed32",
-    L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed64",
-    L"RegLegacyTest_8wekyb3d8bbwe!Fixed32",
-    L"RegLegacyTest_8wekyb3d8bbwe!Fixed64",
-    L"EnvVarsATest_8wekyb3d8bbwe!Fixed32",
-    L"EnvVarsATest_8wekyb3d8bbwe!Fixed64",
-    L"EnvVarsWTest_8wekyb3d8bbwe!Fixed32",
-    L"EnvVarsWTest_8wekyb3d8bbwe!Fixed64"
+    //L"LongPathsTest_8wekyb3d8bbwe!Fixed",
+    //L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed32",
+    ////L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed64",
+    //L"RegLegacyTest_8wekyb3d8bbwe!Fixed32",
+    //L"RegLegacyTest_8wekyb3d8bbwe!Fixed64",
+    //L"EnvVarsATest_8wekyb3d8bbwe!Fixed32",
+    //L"EnvVarsATest_8wekyb3d8bbwe!Fixed64",
+    //L"EnvVarsWTest_8wekyb3d8bbwe!Fixed32",
+    //L"EnvVarsWTest_8wekyb3d8bbwe!Fixed64"
 };
 
 bool g_onlyPrintSummary = false;

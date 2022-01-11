@@ -59,11 +59,11 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         Log("<<<<<Opening File to fail***");
 
         // First, validate that opening with CREATE_NEW fails
-        if (auto file = createFunc(filePath.c_str(), CREATE_NEW); file != INVALID_HANDLE_VALUE)
-        //if (auto file = CreateFileW(filePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL); file != INVALID_HANDLE_VALUE)
+        if (auto filebad = createFunc(filePath.c_str(), CREATE_NEW); filebad != INVALID_HANDLE_VALUE)
+        //if (auto filebad = CreateFileW(filePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL); file != INVALID_HANDLE_VALUE)
         {
             trace_message(L"ERROR: Attempting to open the file with 'CREATE_NEW' should fail as the file should already exist\n", error_color);
-            ::CloseHandle(file);
+            ::CloseHandle(filebad);
             return ERROR_ASSERTION_FAILURE;
         }
         else if (::GetLastError() != ERROR_FILE_EXISTS)
@@ -71,12 +71,13 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
             //return trace_last_error(L"Error should have been set to ERROR_FILE_EXISTS when attempting to open with 'CREATE_NEW'");
             trace_last_error(L"Error should have been set to ERROR_FILE_EXISTS when attempting to open with 'CREATE_NEW'.");
         }
-        Log("Opened File to fail>>>>>");
+        Log("Opened File to fail complete>>>>>");
 
         auto file = createFunc(filePath.c_str(), creationDisposition);
         if (file == INVALID_HANDLE_VALUE)
         {
             return trace_last_error(L"Failed to open file");
+            Sleep(1000 * 30);
         }
         else if ((creationDisposition == CREATE_ALWAYS) && (::GetLastError() != ERROR_ALREADY_EXISTS))
         {
@@ -135,11 +136,13 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     static const char* const first_modify_contents = "You are reading the first write to the redirected file";
     static const char* const second_modify_contents = "You are reading the second write to the redirected file";
     static const char* const unexpected_contents = "This is text that you shouldn't be reading!";
+    static const char* const final_modify_contents = "You are reading the final write to the redirected file";
 
     auto performTest = [&](const std::function<HANDLE(LPCWSTR, DWORD)>& createFunc, const std::filesystem::path& packagePath) -> int
     {
         // Clean up the redirected path so that existing files don't impact this test
         clean_redirection_path();
+        Log("<<<End of Cleanup Redirection Paths before next test.>>>\n");
 
         trace_message(L"Modify Test subset with OPEN_ALWAYS:\n");
         auto result = modifyFile(createFunc, OPEN_ALWAYS, packagePath / filename, initial_contents, first_modify_contents);
@@ -166,7 +169,8 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         // Open again with CREATE_ALWAYS, but this time after cleaning the redirected path to ensure the correct error
         trace_message(L"Modify Test subset with CREATE_ALWAYS after cleanup:\n");
         clean_redirection_path();
-        result = modifyFile(createFunc, CREATE_ALWAYS, packagePath / filename, "", unexpected_contents);
+        Log("!!!!Modify Test subset with CREATE_ALWAYS after cleanup.");
+        result = modifyFile(createFunc, CREATE_ALWAYS, packagePath / filename, "", final_modify_contents);
         if (result) return ERROR_SUCCESS;
 
         return ::GetLastError();

@@ -17,6 +17,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
             DWORD GetFileAttributesInstance = ++g_FileIntceptInstance;
             std::wstring wfileName = widen(fileName);
             LogString(GetFileAttributesInstance,L"GetFileAttributesFixup for fileName", wfileName.c_str());
+            std::replace(wfileName.begin(), wfileName.end(), L'/', L'\\');
 
             if (IsUnderUserPackageWritablePackageRoot(wfileName.c_str()))
             {
@@ -26,7 +27,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 
             if (!IsUnderUserAppDataLocalPackages(wfileName.c_str()))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesInstance);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesInstance);
                 if (shouldRedirect)
                 {
                     Log(L"[%d]GetFileAttributes: Should Redirect says yes.", GetFileAttributesInstance);
@@ -73,7 +74,25 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                 }
                 else
                 {
-                    Log(L"[%d]GetFileAttributes: No Redirect, make original call ", GetFileAttributesInstance);
+                    Log(L"[%d]GetFileAttributes: No Redirect, try original call ", GetFileAttributesInstance);
+                    DWORD attributes = impl::GetFileAttributes(fileName);
+                    if (attributes == INVALID_FILE_ATTRIBUTES)
+                    {
+                        // If this was a native path and folder is in the package, we might need to try the package
+                        // just to set the LastError correctly.
+                        std::filesystem::path PackageVersion = GetPackageVFSPath(wfileName.c_str());
+                        if (wcslen(PackageVersion.c_str()) > 0)
+                        {
+                            Log(L"[%d]GetFileAttributes: Retry in package anyway %ls", GetFileAttributesInstance, PackageVersion.c_str());
+                            attributes = impl::GetFileAttributes(PackageVersion.c_str());
+                            Log(L"[%d]GetFileAttributes: ShouldRedirect att=0x%x", GetFileAttributesInstance, attributes);
+                        }
+                    }
+                    else
+                    {
+                        Log(L"[%d]GetFileAttributes: ShouldRedirect att=0x%x", GetFileAttributesInstance, attributes);
+                    }
+                    return attributes;
                 }
             }
             else
@@ -85,7 +104,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
-        Log(L"GetFileAttributes: *** Exception ***");
+        Log(L"0 GetFileAttributes: *** Exception *** 0x%x",GetLastError());
     }
 
     return impl::GetFileAttributes(fileName);
@@ -107,6 +126,7 @@ BOOL __stdcall GetFileAttributesExFixup(
             DWORD GetFileAttributesExInstance = ++g_FileIntceptInstance;
             std::wstring wfileName = widen(fileName);
             LogString(GetFileAttributesExInstance,L"GetFileAttributesExFixup for fileName", wfileName.c_str());
+            std::replace(wfileName.begin(), wfileName.end(), L'/', L'\\');
 
             if (IsUnderUserPackageWritablePackageRoot(wfileName.c_str()))
             {
@@ -116,7 +136,7 @@ BOOL __stdcall GetFileAttributesExFixup(
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesExInstance);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesExInstance);
                 if (shouldRedirect)
                 {
                     BOOL retval = impl::GetFileAttributesExW(redirectPath.c_str(), infoLevelId, fileInformation);
@@ -183,6 +203,7 @@ BOOL __stdcall GetFileAttributesExFixup(
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        Log(L"0 GetFileAttributesEx Exception 0x%x", GetLastError());
     }
 
     return impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
@@ -203,7 +224,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(wfileName.c_str(), redirect_flags::copy_on_read, SetFileAttributesInstance);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(wfileName.c_str(), redirect_flags::copy_on_read, SetFileAttributesInstance);
                 if (shouldRedirect)
                 {
                     DWORD redirectedAttributes = fileAttributes;

@@ -43,36 +43,6 @@ DWORD inline ConvertToReadOnlyAccess(DWORD desiredAccess)
     return redirectedAccess;
 }
 
-// We are seeing apps adding in an extra backslash when performing certain file operations.
-// The cause seems like it must be the FRF, but we can simply fix it here like this.
-std::string RemoveAnyFinalDoubleSlash(std::string input)
-{
-    size_t off = input.rfind("\\\\");
-    if (off != std::wstring::npos &&
-        off > 4)
-    {
-        std::string output = input.substr(0, off);
-        output.append(input.substr(off + 1));
-        return output;
-    }
-    else
-        return input;
-}
-std::wstring RemoveAnyFinalDoubleSlash(std::wstring input)
-{
-    size_t off = input.rfind(L"\\\\");
-    if (off != std::wstring::npos &&
-        off > 4)
-    {
-        std::wstring output = input.substr(0, off);
-        output.append(input.substr(off + 1));
-        return output;
-    }
-    else
-            return input;
-}
-
-
 template <typename CharT>
 HANDLE __stdcall CreateFileFixup(
     _In_ const CharT* fileName,
@@ -97,6 +67,7 @@ HANDLE __stdcall CreateFileFixup(
             if constexpr (psf::is_ansi<CharT>)
             {
                 FileNameString = fileName;
+                std::replace(FileNameString.begin(), FileNameString.end(), '/', '\\');
                 FileNameString = RemoveAnyFinalDoubleSlash(FileNameString);
                 FixedFileName = FileNameString.c_str();
                 //LogString(CreateFileInstance, L"CreateFileFixup A for fileName", widen(fileName).c_str()); 
@@ -110,6 +81,7 @@ HANDLE __stdcall CreateFileFixup(
             else
             {
                 WFileNameString = fileName;
+                std::replace(WFileNameString.begin(), WFileNameString.end(), L'/', L'\\');
                 WFileNameString = RemoveAnyFinalDoubleSlash(WFileNameString);
                 FixedFileName = WFileNameString.c_str();
                 //LogString(CreateFileInstance, L"CreateFileFixup W for fileName", fileName);
@@ -125,7 +97,7 @@ HANDLE __stdcall CreateFileFixup(
             {
                 // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
                 //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(FixedFileName, redirect_flags::copy_on_read, CreateFileInstance);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(FixedFileName, redirect_flags::copy_on_read, CreateFileInstance);
                 if (shouldRedirect)
                 {
                     if (IsUnderUserAppDataLocal(FixedFileName))
@@ -148,7 +120,7 @@ HANDLE __stdcall CreateFileFixup(
                     }
                     else if (IsUnderUserAppDataRoaming(FixedFileName))
                     {
-                        Log(L"[%d]Under AppData(roaming)", CreateFileInstance);
+                        Log(L"[%d]\tUnder AppData(roaming)", CreateFileInstance);
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(FixedFileName);
                         if (wcslen(PackageVersion.c_str()) >= 0)
@@ -174,7 +146,29 @@ HANDLE __stdcall CreateFileFixup(
                     if (hRet == INVALID_HANDLE_VALUE)
                     {
                         Log(L"[%d]CreateFile redirected uses %ls. FAILURE.", CreateFileInstance, redirectPath.c_str());
-                        // Fall back to original request
+                        // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
+                        DWORD ecode = GetLastError();
+                        HANDLE hRes3;
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            std::string sFileName = TurnPathIntoRootLocalDevice(FixedFileName);
+                            hRes3 = impl::CreateFile(sFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+                        }
+                        else
+                        {
+                            std::wstring wFileName = TurnPathIntoRootLocalDevice(FixedFileName);
+                            hRes3 = impl::CreateFile(wFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+                        }
+                        if (hRes3 == INVALID_HANDLE_VALUE)
+                        {
+                            Log(L"[%d]CreateFile fall-through to original request also failed return redirected result 0x%x", CreateFileInstance, ecode);
+                            SetLastError(ecode);
+                        }
+                        else
+                        {
+                            Log(L"[%d]CreateFile2 fall-through to original request SUCCESS", CreateFileInstance);
+                        }
+                        return hRes3;
                     }
                     else
                     {
@@ -192,6 +186,7 @@ HANDLE __stdcall CreateFileFixup(
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
+        Log(L"[%d]CreateFile Exception=0x%x", CreateFileInstance,GetLastError());
     }
 
     // In the spirit of app compatability, make the path long formed just in case.
@@ -233,6 +228,7 @@ HANDLE __stdcall CreateFile2Fixup(
     {
         if (guard)
         {
+            std::replace( WFileNameString.begin(), WFileNameString.end(), L'/', L'\\');
             WFileNameString = RemoveAnyFinalDoubleSlash(WFileNameString);
 
             ///Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, widen(fileName, CP_ACP).c_str());
@@ -249,7 +245,7 @@ HANDLE __stdcall CreateFile2Fixup(
             {
                 // FUTURE: See comment in CreateFileFixup about using 'creationDisposition' to choose a potentially better
             //         redirect flags value
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(WFileNameString.c_str(), redirect_flags::copy_on_read, CreateFile2Instance);
+                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(WFileNameString.c_str(), redirect_flags::copy_on_read, CreateFile2Instance);
                 if (shouldRedirect)
                 {
                     if (IsUnderUserAppDataLocal(WFileNameString.c_str()))
@@ -272,7 +268,7 @@ HANDLE __stdcall CreateFile2Fixup(
                     }
                     else if (IsUnderUserAppDataRoaming(WFileNameString.c_str()))
                     {
-                        Log(L"[%d]Under AppData(roaming)", CreateFile2Instance);
+                        Log(L"[%d]\tUnder AppData(roaming)", CreateFile2Instance);
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
                         if (wcslen(PackageVersion.c_str()) >= 0)
@@ -298,7 +294,20 @@ HANDLE __stdcall CreateFile2Fixup(
                     if (hRet == INVALID_HANDLE_VALUE)
                     {
                         Log(L"[%d]CreateFile2 redirected uses %ls. FAILURE.", CreateFile2Instance, redirectPath.c_str());
-                        // Fall back to original request
+                        // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
+                        DWORD ecode = GetLastError();
+                        std::wstring wFileName = TurnPathIntoRootLocalDevice(WFileNameString.c_str());
+                        HANDLE hRet3 = impl::CreateFile2(wFileName.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+                        if (hRet3 == INVALID_HANDLE_VALUE)
+                        {
+                            Log(L"[%d]CreateFile2 Fall through to original request also failed return redirected result 0x%x", CreateFile2Instance, ecode);
+                            SetLastError(ecode);
+                        }
+                        else
+                        {
+                            Log(L"[%d]CreateFile2 Fall through to original request SUCCESS", CreateFile2Instance);
+                        }
+                        return hRet3;
                     }
                     else
                     {

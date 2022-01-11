@@ -36,6 +36,9 @@
   <ItemGroup>
     <Xml Include="DynamicLibraryFixup.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{40F9058D-8059-4ED4-859E-7A548A73CA4F}</ProjectGuid>

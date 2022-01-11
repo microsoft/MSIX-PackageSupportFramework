@@ -18,9 +18,13 @@
     <ClCompile Include="Config.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\CommonSrc\psf_logging.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />
+    <None Include="readme.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">

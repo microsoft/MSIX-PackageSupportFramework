@@ -4,6 +4,7 @@
 #include "Globals.h"
 #include <wil\resource.h>
 #include <known_folders.h>
+#include <StartInfo_helper.h>
 
 #ifndef SW_SHOW
 	#define SW_SHOW 5
@@ -66,27 +67,46 @@ public:
 		}
 	}
 
+	bool HasStartingScript()
+	{
+		if (this->m_startingScriptInformation.doesScriptExistInConfig)
+				return true;
+			return false;		
+	}
+	bool HasEndingScript()
+	{
+		if (this->m_endingScriptInformation.doesScriptExistInConfig)
+			return true;
+		return false;
+	}
+
 	//RunStartingScript should return an error only if stopOnScriptError is true
 	void RunStartingScript()
 	{
-		LogString("StartingScript commandString", this->m_startingScriptInformation.commandString.c_str());
-		LogString("StartingScript currentDirectory", this->m_startingScriptInformation.currentDirectory.c_str());
-		if (this->m_startingScriptInformation.waitForScriptToFinish)
+		if (HasStartingScript())
 		{
-			Log("StartingScript waitForScriptToFinish=true");
+			LogString(L"StartingScript commandString", this->m_startingScriptInformation.commandString.c_str());
+			LogString(L"StartingScript currentDirectory", this->m_startingScriptInformation.currentDirectory.c_str());
+			if (this->m_startingScriptInformation.waitForScriptToFinish)
+			{
+				Log(L"StartingScript waitForScriptToFinish=true");
+			}
+			else
+			{
+				Log(L"StartingScript waitForScriptToFinish=false");
+			}
+			RunScript(this->m_startingScriptInformation, true);
 		}
-		else
-		{
-			Log("StartingScript waitForScriptToFinish=false");
-		}
-		RunScript(this->m_startingScriptInformation,true);
 	}
 
 	void RunEndingScript()
 	{
-		LogString("EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
-		LogString("EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
-		RunScript(this->m_endingScriptInformation,true);
+		if (HasEndingScript())
+		{
+			LogString(L"EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
+			LogString(L"EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
+			RunScript(this->m_endingScriptInformation, true);
+		}
 	}
 
 	void RunOtherScript(const wchar_t *ScriptWrapper, const wchar_t * CurrentDirectory, const wchar_t * InjectCommand, const wchar_t * InjectCommandArgs, bool inside)
@@ -120,13 +140,14 @@ public:
 		scriptStruct.commandString.append(InjectCommandArgs);
 		scriptStruct.currentDirectory = CurrentDirectory;
 		scriptStruct.packageRoot = PSFQueryPackageRootPath();
-		LogString("Script Launch to inject commandString", scriptStruct.commandString.c_str());
-		LogString("Script Launch using currentDirectory", scriptStruct.currentDirectory.c_str());
+		LogString(L"Script Launch to inject commandString", scriptStruct.commandString.c_str());
+		LogString(L"Script Launch using currentDirectory", scriptStruct.currentDirectory.c_str());
 		RunScript(scriptStruct, inside);
-		//Log("RunOtherScript returned.");
+		//Log(L"RunOtherScript returned.");
 	}
 
 private:
+#if NOTMOVEDTOSTARTINFO_HELPER
    struct MyProcThreadAttributeList
     {
     private:
@@ -245,7 +266,8 @@ private:
         }
 
     };
-  
+#endif
+
 	struct ScriptInformation
 	{
 		std::wstring PsPath;
@@ -280,7 +302,7 @@ private:
 
 		if (!canScriptRun)
 		{
-			Log("Script has already been run and is marked to run once.");
+			Log(L"Script has already been run and is marked to run once.");
 			return;
 		}
 
@@ -289,26 +311,26 @@ private:
 			HRESULT startScriptResult;
 			if (inside)
 			{
-				//LogString("DEBUG: Starting the script (inside) and waiting to finish", script.commandString.data());
+				//LogString(L"DEBUG: Starting the script (inside) and waiting to finish", script.commandString.data());
 				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
 			}
 			else
 			{
-				//LogString("DEBUG: Starting the script (outside) and waiting to finish", script.commandString.data());
+				//LogString(L"DEBUG: Starting the script (outside) and waiting to finish", script.commandString.data());
 				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
 			}
 			//HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, nullptr);
 			if (startScriptResult == 0xC000013A)
 			{
-				Log("Debug: Script process was closed by user action.");
+				Log(L"Debug: Script process was closed by user action.");
 			}
 			else if (startScriptResult != ERROR_SUCCESS)
 			{
-				Log("Debug: Error return from script process 0x%x LastError=0x%x", startScriptResult, GetLastError());
+				Log(L"Debug: Error return from script process 0x%x LastError=0x%x", startScriptResult, GetLastError());
 			}
 			else
 			{
-				//Log("Debug: Script returns without error");
+				//Log(L"Debug: Script returns without error");
 			}
 			if (script.stopOnScriptError)
 			{
@@ -320,12 +342,12 @@ private:
 			//We don't want to stop on an error and we want to run async
 			if (inside)
 			{
-				//LogString("DEBUG: Starting the script (inside) without waiting to finish", script.commandString.data());
+				//LogString(L"DEBUG: Starting the script (inside) without waiting to finish", script.commandString.data());
 				std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
 			}
 			else
 			{
-				//LogString("DEBUG: Starting the script (outside) without waiting to finish", script.commandString.data());
+				//LogString(L"DEBUG: Starting the script (outside) without waiting to finish", script.commandString.data());
 				std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
 			}
 		}
@@ -453,7 +475,7 @@ private:
 		commandString.append(L" -file ");
 
 		std::wstring wScriptPath = scriptPath;
-		LogString("MakeCommandString: Input Script path", scriptPath.c_str());
+		LogString(L"MakeCommandString: Input Script path", scriptPath.c_str());
 		if (!std::filesystem::exists(scriptPath))
 		{
 			// The wrapper isn't in this folder, so we should search for it elewhere in the package.
@@ -466,11 +488,11 @@ private:
 				}
 			}
 		}
-		LogString("MakeCommandString: post exists search Script path", wScriptPath.c_str());
+		LogString(L"MakeCommandString: post exists search Script path", wScriptPath.c_str());
 		const std::filesystem::path dequotedScriptPath = Dequote(wScriptPath);
-		LogString("MakeCommandString: post DeQuote Script path", wScriptPath.c_str());
+		LogString(L"MakeCommandString: post DeQuote Script path", wScriptPath.c_str());
 		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
-		LogString("MakeCommandString: Updated Script path", fixed4PowerShell.c_str());
+		LogString(L"MakeCommandString: Updated Script path", fixed4PowerShell.c_str());
 		///if (dequotedScriptPath.is_absolute())
 		///{
 		commandString.append(L"\\");

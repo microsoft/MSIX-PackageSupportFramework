@@ -292,3 +292,25 @@ __pycache__/
 
 # Visual Studio Code configuration/settings
 .vscode/
+tests/scenarios/Appx/CompositionTest.appx.signtool.txt
+tests/scenarios/Appx/DynamicLibraryTest.appx.makeappx.txt
+tests/scenarios/Appx/DynamicLibraryTest.appx.signtool.txt
+tests/scenarios/Appx/EnvVarsATest.appx.makeappx.txt
+tests/scenarios/Appx/EnvVarsATest.appx.signtool.txt
+tests/scenarios/Appx/EnvVarsWTest.appx.makeappx.txt
+tests/scenarios/Appx/EnvVarsWTest.appx.signtool.txt
+tests/scenarios/Appx/FileSystemTest.appx.makeappx.txt
+tests/scenarios/Appx/FileSystemTest.appx.signtool.txt
+tests/scenarios/Appx/LongPathsTest.appx.makeappx.txt
+tests/scenarios/Appx/LongPathsTest.appx.signtool.txt
+tests/scenarios/Appx/PowershellScriptTest.appx.makeappx.txt
+tests/scenarios/Appx/PowershellScriptTest.appx.signtool.txt
+tests/scenarios/Appx/RegLegacyTest.appx.makeappx.txt
+tests/scenarios/Appx/RegLegacyTest.appx.signtool.txt
+tests/scenarios/Appx/WorkingDirectoryTest.appx.makeappx.txt
+tests/scenarios/Appx/WorkingDirectoryTest.appx.signtool.txt
+tests/scenarios/Appx/ArchitectureTest.appx.makeappx.txt
+tests/scenarios/Appx/ArchitectureTest.appx.signtool.txt
+tests/scenarios/Appx/CompositionTest.appx.makeappx.txt
+ZipRelease/DebugPsf.zip
+ZipRelease/ReleasePsf.zip

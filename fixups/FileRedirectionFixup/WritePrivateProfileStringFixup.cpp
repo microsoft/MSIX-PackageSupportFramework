@@ -25,16 +25,24 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                 LogString(WritePrivateProfileStringInstance,L"WritePrivateProfileStringFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read, WritePrivateProfileStringInstance);
+                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, WritePrivateProfileStringInstance);
                     if (shouldRedirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
-                            return impl::WritePrivateProfileString(appName, keyName, string, ((std::filesystem::path)redirectPath).string().c_str());
+                            BOOL bRet = impl::WritePrivateProfileString(appName, keyName, string, ((std::filesystem::path)redirectPath).string().c_str());
+#if _DEBUG
+                            Log(L"[%d] WritePrivateProfileString(A) returns %d", WritePrivateProfileStringInstance, bRet);
+#endif
+                            return bRet;
                         }
                         else
                         {
-                            return impl::WritePrivateProfileString(appName, keyName, string, redirectPath.c_str());
+                            BOOL bRet = impl::WritePrivateProfileString(appName, keyName, string, redirectPath.c_str());
+#if _DEBUG
+                            Log(L"[%d] WritePrivateProfileString(W) returns %d", WritePrivateProfileStringInstance, bRet);
+#endif                            
+                            return bRet;
                         }
                     }
                 }

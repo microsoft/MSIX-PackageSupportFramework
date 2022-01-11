@@ -6,66 +6,8 @@
 #pragma once
 
 #include <processthreadsapi.h>
-
-
-void Log(const char* fmt, ...);
-
-inline void Loghexdump(void* pAddressIn, long  lSize)
-{
-    char szBuf[128];
-    long lIndent = 1;
-    long lOutLen, lIndex, lIndex2, lOutLen2;
-    long lRelPos;
-    struct { char* pData; unsigned long lSize; } buf;
-    unsigned char* pTmp, ucTmp;
-    unsigned char* rememberPtmp;
-    unsigned char* pAddress = (unsigned char*)pAddressIn;
-
-    buf.pData = (char*)pAddress;
-    buf.lSize = lSize;
-
-while (buf.lSize > 0)
-{
-    pTmp = (unsigned char*)buf.pData;
-    lOutLen = (int)buf.lSize;
-    if (lOutLen > 16)
-        lOutLen = 16;
-
-    // create a 64-character formatted output line:
-    sprintf_s(szBuf, 100, " >                            "
-        "                      "
-        "         ");
-    rememberPtmp = pTmp;
-    lOutLen2 = lOutLen;
-
-    for (lIndex = 1 + lIndent, lIndex2 = 53 - 15 + lIndent, lRelPos = 0;
-        lOutLen2;
-        lOutLen2--, lIndex += 2, lIndex2++
-        )
-    {
-        ucTmp = *pTmp++;
-
-        sprintf_s(szBuf + lIndex, 100 - lIndex, "%02X ", (unsigned short)ucTmp);
-        if (!isprint(ucTmp))  ucTmp = '.'; // nonprintable char
-        szBuf[lIndex2] = ucTmp;
-
-        if (!(++lRelPos & 3))     // extra blank after 4 bytes
-        {
-            lIndex++; szBuf[lIndex + 2] = ' ';
-        }
-    }
-
-    if (!(lRelPos & 3)) lIndex--;
-
-    sprintf_s(szBuf + lIndex, 100 - lIndex, "<    %08lx  ", (unsigned long)(rememberPtmp - pAddress));
-    szBuf[lIndex + 14] = 0x0;
-
-    ::OutputDebugStringA(szBuf);
-
-    buf.pData += lOutLen;
-    buf.lSize -= lOutLen;
-}
-}
+#include "..\PsfLauncher\Globals.h"
+#include "psf_logging.h"
 
 /* These Attribute definitions are the form as stored in the dwflags field of the structure*/
 #define SIH_PROC_THREAD_ATTRIBUTE_PARENT_PROCESS                    (1 << ProcThreadAttributeParentProcess)
@@ -172,3 +114,116 @@ inline bool DoesAttributeSpecifyInside(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist)
     }
     return bRet;
 }
+
+struct MyProcThreadAttributeList
+{
+private:
+    // Implementation notes:
+    //   Currently (Windows 10 21H1 and some previous releases plus Windows 11 21H2), the default
+    //   behavior for most child processes is that they run inside the container.  The two known
+    //   exceptions to this are the conhost and cmd.exe processes.  We generally don't care about
+    //   the conhost processes.
+    // 
+    // The documentation on these can be found here:
+    //https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
+
+    // The PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY attribute has some settings that can impact this.
+    // 0x04 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE.  
+    //     When used in a process creation call it affects only the new process being created, and 
+    //     forces the new process to start inside the container, if possible.
+    // 0x01 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE
+    //     When used in a process creation call, it ONLY affects child processes of the process being
+    //     created, meaning that grandshildren can/will break away from running inside the container used by
+    //     that new process.
+    // 0x02 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE 
+    //     When used in a process creation call, it ONLY affects child processes of the process being
+    //     created, meaning that grandshildren can/will NOT break away from running inside the container used by
+    //     that new process.
+    //
+    // This PSF code uses the attribute to cause:
+    //   1. Create a Powershell process in the same container as PSF.
+    //   2. Any process that Powershell stats will also be in the same container as PSF.
+    // This means that powershell, and any windows it makes, will have the same restrictions as PSF.
+    DWORD createInContainerAttribute = 0x02;
+    DWORD createOutsideContainerAttribute = 0x04;
+
+    // Processes running inside the container run at a different level (Low) that uncontained processes,
+    // and the default behavior is to have the child process run at the same level.  This can be overridden
+    // by using PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL.
+    //
+    // The code here currently does not set this level as we prefer to keep the same level anyway.
+    //DWORD protectionLevel = PROTECTION_LEVEL_SAME;
+
+    // Should it become neccessary to change more than one attribute, the number of attributes will need
+    // to be modified in both initialization calls in the CTOR.
+
+    std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
+
+public:
+
+    MyProcThreadAttributeList(bool inside)
+    {
+        // Ffor example of this code with two attributes see: https://github.com/microsoft/terminal/blob/main/src/server/Entrypoints.cpp
+        SIZE_T AttributeListSize; //{};
+        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
+        attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
+        //attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(HeapAlloc(GetProcessHeap(), 0, AttributeListSize)));
+        InitializeProcThreadAttributeList(
+                attributeList.get(),
+                1,
+                0,
+                &AttributeListSize);
+
+        // 18 stands for
+        // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+        // this is the attribute value we want to add
+        if (inside)
+        {
+            UpdateProcThreadAttribute(
+                    attributeList.get(),
+                    0,
+                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+                    &createInContainerAttribute,
+                    sizeof(createInContainerAttribute),
+                    nullptr,
+                    nullptr);
+        }
+        else
+        {
+            UpdateProcThreadAttribute(
+                    attributeList.get(),
+                    0,
+                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+                    &createOutsideContainerAttribute,
+                    sizeof(createOutsideContainerAttribute),
+                    nullptr,
+                    nullptr);
+        }
+
+        // 11 stands for
+        // PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL
+        // this is the attribute value we want to add
+        //
+        //THROW_LAST_ERROR_IF_MSG(
+        //	!UpdateProcThreadAttribute(
+        //		attributeList.get(),
+        //		0,
+        //		ProcThreadAttributeValue(11, FALSE, TRUE, FALSE),
+        //		&protectionLevel,
+        //		sizeof(protectionLevel),
+        //		nullptr,
+        //		nullptr),
+        //	"Could not update Proc thread attribute for PROTECTION_LEVEL.");
+    }
+
+    ~MyProcThreadAttributeList()
+    {
+        DeleteProcThreadAttributeList(attributeList.get());
+    }
+
+    LPPROC_THREAD_ATTRIBUTE_LIST get()
+    {
+        return attributeList.get();
+    }
+
+};

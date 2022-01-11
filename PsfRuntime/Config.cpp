@@ -21,6 +21,7 @@
 #include <psf_constants.h>
 #include <psf_runtime.h>
 #include <psf_utils.h>
+#include <psf_logging.h>
 #include <stringapiset.h>
 #include <utilities.h>
 #include <wil\resource.h>
@@ -215,6 +216,7 @@ static struct
     bool enableReportError{ true };
 } g_JsonHandler;
 
+#if DONTCONSOLIDATELOGS
 void Log(const char* fmt, ...)
 {
     std::string str;
@@ -249,11 +251,7 @@ void LogString(const char* name, const wchar_t* value)
 {
     Log("\t%s=%ls\n", name, value);
 }
-
-void LogCountedStringW(const char* name, const wchar_t* value, std::size_t length)
-{
-    Log("\t%s=%.*ls\n", name, length, value);
-}
+#endif
 
 static const psf::json_object* g_CurrentExeConfig = nullptr;
 
@@ -264,17 +262,17 @@ void load_json()
     auto file = _wfopen((g_PackageRootPath / L"config.json").c_str(), L"rb, ccs=UTF-8");
     if (!file)
     {
-        Log("Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
+        Log(L"Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
         ///Check folder with application, then everyhwere in package if needed
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
         file = _wfopen((g_CurrentExecutable.parent_path() / L"config.json").c_str(), L"rb, ccs=UTF-8");
         if (file)
         {
-            Log("Config.json found in executable folder of package %ls", g_PackageRootPath.c_str());
+            Log(L"Config.json found in executable folder of package %ls", g_PackageRootPath.c_str());
         }
         else
         {
-            Log("Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PackageRootPath.c_str());
+            Log(L"Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PackageRootPath.c_str());
             // If not in those two locations, must check everywhere in package.
             for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
             {
@@ -284,7 +282,7 @@ void load_json()
                     {
                         if (dentry.path().filename().compare(L"config.json") == 0)
                         {
-                            Log("Found config at: %ls", dentry.path().c_str());
+                            Log(L"Found config at: %ls", dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
                             file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
                             break;
@@ -293,7 +291,7 @@ void load_json()
                 }
                 catch (...)
                 {
-                    Log("Non-fatal error enumerating directories while looking for config.json.");
+                    Log(L"Non-fatal error enumerating directories while looking for config.json.");
                 }
             }
         }
@@ -354,12 +352,12 @@ void load_json()
         }
         else
         {
-            Log("No processes to match; no fixups to load.");
+            Log(L"No processes to match; no fixups to load.");
         }
     }
     else
     {
-        Log("No Processes to match; no fixups to load.");
+        Log(L"No Processes to match; no fixups to load.");
     }
 
     // Permit ReportError disabling iff basic config.json parse succeeded
@@ -387,9 +385,9 @@ bool LoadConfig()
         LogCountedStringW("g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
         LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
         LogCountedStringW("g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
-        LogString("g_PackageRootPath", g_PackageRootPath.c_str());
-        LogString("g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
-        LogString("g_CurrentExecutable", g_CurrentExecutable.c_str());
+        LogString(L"g_PackageRootPath", g_PackageRootPath.c_str());
+        LogString(L"g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
+        LogString(L"g_CurrentExecutable", g_CurrentExecutable.c_str());
         load_json();
         return true;
     }
@@ -397,10 +395,10 @@ bool LoadConfig()
     {
         // FUTURE: It may be useful to enable testing outside of a packaged environment. For now, finding ourselves in
         //         this situation almost certainly indicates a bug, so bail out early
-        //Log("App is not running inside the container and will be terminated.");
+        //Log(L"App is not running inside the container and will be terminated.");
         //std::terminate();
         // The future is now, why terminate?  Just let it run without fixup.
-        Log("App is not running inside the container and will be ignored by the Psf.");
+        Log(L"App is not running inside the container and will be ignored by the Psf.");
         return false;
     }
 }
@@ -500,7 +498,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
 
     if (verbose)
     {
-        Log("\tNo Matches");
+        Log(L"\tNo Matches");
     }
 
     return nullptr;
