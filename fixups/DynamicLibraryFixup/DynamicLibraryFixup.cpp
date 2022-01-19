@@ -17,7 +17,7 @@ template <typename CharT>
 HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 {
 #if _DEBUG
-    LogString("LoadLibraryFixup called for", libFileName);
+    LogString(L"LoadLibraryFixup called for", libFileName);
 #endif
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
@@ -25,7 +25,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     if (guard)
     {
 #if _DEBUG
-        //Log("LoadLibraryFixup unguarded.");
+        //Log(L"LoadLibraryFixup unguarded.");
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = GetFilenameOnly(InterpretStringW(libFileName));
@@ -33,12 +33,12 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
         if (g_dynf_forcepackagedlluse)
         {
 #if _DEBUG
-            //Log("LoadLibraryFixup forcepackagedlluse.");
+            //Log(L"LoadLibraryFixup forcepackagedlluse.");
 #endif
             for (dll_location_spec spec : g_dynf_dllSpecs)
             {
 #if _DEBUG
-                //Log("LoadLibraryFixup test");
+                //Log(L"LoadLibraryFixup test");
 #endif
                 try
                 {
@@ -48,14 +48,16 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
                     {
-                        LogString("LoadLibraryFixup using", spec.full_filepath.c_str());
+#if _DEBUG
+                        LogString(L"LoadLibraryFixup using", spec.full_filepath.c_str());
+#endif
                         result = LoadLibraryImpl(spec.full_filepath.c_str());
                         return result;
                     }
                 }
                 catch (...)
                 {
-                    Log("LoadLibraryFixup ERROR");
+                    Log(L"LoadLibraryFixup ERROR");
                 }
             }
         }
@@ -79,7 +81,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
     if (guard)
     {
 #if _DEBUG
-        //Log("LoadLibraryExFixup unguarded.");
+        //Log(L"LoadLibraryExFixup unguarded.");
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = InterpretStringW(libFileName);
@@ -91,20 +93,22 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 try
                 {
 #if _DEBUG
-                    //Log("LoadLibraryExFixup testing %ls against %ls", libFileNameW.c_str(), spec.full_filepath.native().c_str());
+                    //Log(L"LoadLibraryExFixup testing %ls against %ls", libFileNameW.c_str(), spec.full_filepath.native().c_str());
                     //LogString(L"LoadLibraryExFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
                     {
-                        LogString("LoadLibraryExFixup using", spec.full_filepath.c_str());
+#if _DEBUG
+                        LogString(L"LoadLibraryExFixup using", spec.full_filepath.c_str());
+#endif
                         result = LoadLibraryExImpl(spec.full_filepath.c_str(), file, flags);
                         return result;
                     }
                 }
                 catch (...)
                 {
-                    Log("LoadLibraryExFixup Error");
+                    Log(L"LoadLibraryExFixup Error");
                 }
             }
         }

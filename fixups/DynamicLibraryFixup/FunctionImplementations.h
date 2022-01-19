@@ -11,6 +11,7 @@
 
 #include <reentrancy_guard.h>
 #include <psf_framework.h>
+#include <psf_logging.h>
 
 // A much bigger hammer to avoid reentrancy. Still, the impl::* functions are good to have around to prevent the
 // unnecessary invocation of the fixup
@@ -39,6 +40,6 @@ inline std::wstring GetFilenameOnly(std::wstring path)
     return path.substr(index + 1);
 }
 
-void Log(const char* fmt, ...);
-void LogString(const char* name, const char* value);
-void LogString(const char* name, const wchar_t* value);
+///void Log(const char* fmt, ...);
+///void LogString(const char* name, const char* value);
+///void LogString(const char* name, const wchar_t* value);

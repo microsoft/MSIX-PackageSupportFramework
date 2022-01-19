@@ -28,95 +28,11 @@ bool                  g_dynf_forcepackagedlluse = false;
 
 std::vector<dll_location_spec> g_dynf_dllSpecs;
 
-void Log(const char* fmt, ...)
-{
-    try
-    {
-        va_list args;
-        va_start(args, fmt);
-        std::string str;
-        str.resize(256);
-        std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-        assert(count >= 0);
-        va_end(args);
-
-        if (count > str.size())
-        {
-            count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-            str.resize(count);
-
-            va_list args2;
-            va_start(args2, fmt);
-            count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-            assert(count >= 0);
-            va_end(args2);
-        }
-
-        str.resize(count);
-#if _DEBUG
-        ::OutputDebugStringA(str.c_str());
-#endif
-    }
-    catch (...)
-    {
-        ::OutputDebugStringA("Exception in Log()");
-        ::OutputDebugStringA(fmt);
-    }
-}
-void Log(const wchar_t* fmt, ...)
-{
-    try
-    {
-        va_list args;
-        va_start(args, fmt);
-
-        std::wstring wstr;
-        wstr.resize(256);
-        std::size_t count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args);
-        va_end(args);
-
-        if (count > wstr.size())
-        {
-            count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-            wstr.resize(count);
-            va_list args2;
-            va_start(args2, fmt);
-            count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
-            va_end(args2);
-        }
-        wstr.resize(count);
-#if _DEBUG
-        ::OutputDebugStringW(wstr.c_str());
-#endif
-    }
-    catch (...)
-    {
-        ::OutputDebugStringA("Exception in wide Log()");
-        ::OutputDebugStringW(fmt);
-    }
-}
-void LogString(const char* name, const char* value)
-{
-    Log("%s=%s\n", name, value);
-}
-void LogString(const char* name, const wchar_t* value)
-{
-    Log("%s=%ls\n", name, value);
-}
-void LogString(const wchar_t* name, const char* value)
-{
-    Log("%ls=%s\n", name, value);
-}
-void LogString(const wchar_t* name, const wchar_t* value)
-{
-    Log(L"%ls=%ls\n", name, value);
-}
-
 void InitializeFixups()
 {
-
-    Log("Initializing DynamicLibraryFixup");
-
+#if _DEBUG
+    Log(L"Initializing DynamicLibraryFixup");
+#endif
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
     auto packageRootPath = ::PSFQueryPackageRootPath();
@@ -134,7 +50,9 @@ void InitializeFixups()
 
 void InitializeConfiguration()
 {
-    Log("DynamicLibraryFixup InitializeConfiguration()");
+#if _DEBUG
+    Log(L"DynamicLibraryFixup InitializeConfiguration()");
+#endif
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         auto& rootObject = rootConfig->as_object();
@@ -149,7 +67,9 @@ void InitializeConfiguration()
 
         if (g_dynf_forcepackagedlluse == true)
         {
-            Log("DynamicLibraryFixup ForcePackageDllUse=true");
+#if _DEBUG
+            Log(L"DynamicLibraryFixup ForcePackageDllUse=true");
+#endif
             if (auto relativeDllsValue = rootObject.try_get("relativeDllPaths"))
             {
                 if (relativeDllsValue)
@@ -170,11 +90,17 @@ void InitializeConfiguration()
                         g_dynf_dllSpecs.back().filename = filename;
                         count++;
                     };
-                    Log("DynamicLibraryFixup: %d relative items read.", count);
+#if _DEBUG
+                    Log(L"DynamicLibraryFixup: %d relative items read.", count);
+#endif
                 }
             }
             else
-                Log("DynamicLibraryFixup ForcePacageDllUse=false");
+            {
+#if _DEBUG
+                Log(L"DynamicLibraryFixup ForcePacageDllUse=false");
+#endif
+            }
         }
     }
 }

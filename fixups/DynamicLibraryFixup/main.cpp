@@ -6,11 +6,11 @@
 
 #define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
+#include <psf_logging.h>
 
 
 void InitializeFixups();
 void InitializeConfiguration();
-void Log(const char* fmt, ...);
 
 extern "C" {
 
@@ -18,7 +18,9 @@ extern "C" {
     {
         if (reason == DLL_PROCESS_ATTACH)
         {
-            Log("Attaching DynamicLibraryFixup");
+#if _DEBUG
+            Log(L"Attaching DynamicLibraryFixup");
+#endif
 
             InitializeFixups();
             InitializeConfiguration();
@@ -28,7 +30,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log("RuntDynamicLibraryFixup attach ERROR");
+        Log(L"RuntDynamicLibraryFixup attach ERROR");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }
