@@ -7,6 +7,11 @@
 
 // Must add psf_logging.cpp from the CommonSrc folder into the project.
 
+#include <windows.h>
+
+
+
+
 void Log(const char* fmt, ...);
 
 
