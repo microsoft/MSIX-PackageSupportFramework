@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 /// Consider adding AddDllDirectory hooking to also add virtual equivalents
 /// There seems to be some dll loading that occurs outside of loadlibrary???
@@ -32,29 +33,39 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* filePath) noexcept
             }
             else
             {
-                LogStringWW(SetWorkingDirectoryInstance,L"SetWorkingDirectoryInstance W input is", filePath);
+#if _DEBUG
+                LogStringWW(SetWorkingDirectoryInstance,L"SetCurrentDirectoryFixup W input is", filePath);
+#endif
             }
             std::wstring wFilePath = widen(filePath);
+#if _DEBUG
             LogString(SetWorkingDirectoryInstance, L"SetCurrentDirectoryFixup ", wFilePath.c_str());
+#endif
             if (!path_relative_to(wFilePath.c_str(), psf::current_package_path()))
             {
                 normalized_path normalized = NormalizePath(wFilePath.c_str(), SetWorkingDirectoryInstance);
                 normalized_path virtualized = VirtualizePath(normalized, SetWorkingDirectoryInstance);
                 if (impl::PathExists(virtualized.full_path.c_str()))
                 {
+#if _DEBUG
                     LogString(SetWorkingDirectoryInstance, L"SetCurrentDirectoryFixup Use Folder", virtualized.full_path.c_str());
+#endif
                     return impl::SetCurrentDirectoryW(virtualized.full_path.c_str());
                 }
                 else
                 {
                     // Fall through to original call
+#if _DEBUG
                     LogString(SetWorkingDirectoryInstance, L"SetCurrentDirectoryFixup ", L"Virtualized folder not in package, use requested folder."); 
+#endif
                 }
             }
             else
             {
                 // Fall through to original call
+#if _DEBUG
                 LogString(SetWorkingDirectoryInstance, L"SetCurrentDirectoryFixup ", L"Requested folder is part of package, use requested folder.");
+#endif
             }
             return ::SetCurrentDirectoryW(wFilePath.c_str());
         }
@@ -87,15 +98,21 @@ DWORD __stdcall GetCurrentDirectoryFixup(_In_ DWORD nBufferLength, _Out_ CharT* 
             // This exists for debugging only.
 #if _DEBUG
             DWORD GetWorkingDirectoryInstance = ++g_FileIntceptInstance;
+#endif
             DWORD dRet = impl::GetCurrentDirectory(nBufferLength, filePath);
+
+#if _DEBUG
             Log(L"[%d]GetCurrentDirectory: returns 0x%x", GetWorkingDirectoryInstance, dRet);
+#endif
             if (dRet != 0)
             {
                 if (nBufferLength >= dRet)
                 {
                     try
                     {
+#if _DEBUG
                         LogString(GetWorkingDirectoryInstance, L"GetCurrentDirectory path", filePath);
+#endif
                     }
                     catch (...)
                     {
@@ -104,17 +121,19 @@ DWORD __stdcall GetCurrentDirectoryFixup(_In_ DWORD nBufferLength, _Out_ CharT* 
                 }
                 else
                 {
+#if _DEBUG
                     Log(L"[%d]GetCurrentDirectory but buffer was only 0x%x", GetWorkingDirectoryInstance, nBufferLength);
+#endif
                 }
             }
             else
             {
+#if _DEBUG
                 Log(L"[%d]GetCurrentDirectory Error = 0x%x", GetWorkingDirectoryInstance, GetLastError());
-            }
-            return dRet;
-#else
-            return impl::GetCurrentDirectory(nBufferLength, filePath);
 #endif
+            }
+
+            return dRet;
         }
     }
     catch (...)

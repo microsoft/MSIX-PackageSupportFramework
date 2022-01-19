@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 /// ConvertToReadOnlyAccess: Modify a file operation call if it requests write access to one without write access.
 DWORD inline ConvertToReadOnlyAccess(DWORD desiredAccess)
@@ -55,7 +56,9 @@ HANDLE __stdcall CreateFileFixup(
 {
     auto guard = g_reentrancyGuard.enter();
     DWORD CreateFileInstance = ++g_FileIntceptInstance;
+#if _DEBUG
     LogString(CreateFileInstance, L"CreateFileFixup for ", fileName);
+#endif
 
     std::string FileNameString;
     std::wstring WFileNameString;
@@ -75,7 +78,9 @@ HANDLE __stdcall CreateFileFixup(
                 {
                     WFileNameString = ReverseRedirectedToPackage(widen(FileNameString));
                     FixedFileName = (narrow(WFileNameString)).c_str();
+#if _DEBUG
                     LogString(CreateFileInstance, L"Use ReverseRedirected fileName", FixedFileName);
+#endif
                 }
             }
             else
@@ -89,7 +94,9 @@ HANDLE __stdcall CreateFileFixup(
                 {
                     WFileNameString = ReverseRedirectedToPackage(WFileNameString.c_str());
                     FixedFileName = WFileNameString.c_str();
+#if _DEBUG
                     LogString(CreateFileInstance, L"Use ReverseRedirected fileName", FixedFileName);
+#endif
                 }
             }
 
@@ -102,7 +109,9 @@ HANDLE __stdcall CreateFileFixup(
                 {
                     if (IsUnderUserAppDataLocal(FixedFileName))
                     {
+#if _DEBUG
                         Log(L"[%d]Under LocalAppData", CreateFileInstance);
+#endif
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(FixedFileName);
                         if (wcslen(PackageVersion.c_str()) >= 0)
@@ -112,7 +121,9 @@ HANDLE __stdcall CreateFileFixup(
                                 if (!impl::PathExists(redirectPath.c_str()))
                                 {
                                     // Need to copy now
+#if _DEBUG
                                     LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADL to", redirectPath.c_str());
+#endif
                                     impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                                 }
                             }
@@ -120,7 +131,9 @@ HANDLE __stdcall CreateFileFixup(
                     }
                     else if (IsUnderUserAppDataRoaming(FixedFileName))
                     {
+#if _DEBUG
                         Log(L"[%d]\tUnder AppData(roaming)", CreateFileInstance);
+#endif
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(FixedFileName);
                         if (wcslen(PackageVersion.c_str()) >= 0)
@@ -130,7 +143,9 @@ HANDLE __stdcall CreateFileFixup(
                                 if (!impl::PathExists(redirectPath.c_str()))
                                 {
                                     // Need to copy now
+#if _DEBUG
                                     LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADR to", redirectPath.c_str());
+#endif
                                     impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                                 }
                             }
@@ -145,7 +160,9 @@ HANDLE __stdcall CreateFileFixup(
                     HANDLE hRet = impl::CreateFile(redirectPath.c_str(), redirectedAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
                     if (hRet == INVALID_HANDLE_VALUE)
                     {
+#if _DEBUG
                         Log(L"[%d]CreateFile redirected uses %ls. FAILURE.", CreateFileInstance, redirectPath.c_str());
+#endif
                         // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
                         DWORD ecode = GetLastError();
                         HANDLE hRes3;
@@ -161,26 +178,34 @@ HANDLE __stdcall CreateFileFixup(
                         }
                         if (hRes3 == INVALID_HANDLE_VALUE)
                         {
+#if _DEBUG
                             Log(L"[%d]CreateFile fall-through to original request also failed return redirected result 0x%x", CreateFileInstance, ecode);
+#endif
                             SetLastError(ecode);
                         }
                         else
                         {
+#if _DEBUG
                             Log(L"[%d]CreateFile2 fall-through to original request SUCCESS", CreateFileInstance);
+#endif
                         }
                         return hRes3;
                     }
                     else
                     {
+#if _DEBUG
                         Log(L"[%d]CreateFile redirected uses %ls. SUCCESS.", CreateFileInstance, redirectPath.c_str());
+#endif
                         return hRet;
                     }
                 }
             }
             else
             {
+#if _DEBUG
                 Log(L"[%d]Under LocalAppData\\Packages, don't redirect", CreateFileInstance);
-            }
+#endif          
+  }
         }
     }
     catch (...)
@@ -194,20 +219,24 @@ HANDLE __stdcall CreateFileFixup(
     {
         std::string sFileName = TurnPathIntoRootLocalDevice(FixedFileName);
         HANDLE hRes = impl::CreateFile(sFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+#if _DEBUG
         if (hRes == INVALID_HANDLE_VALUE)
             LogString(CreateFileInstance, L"CreateFileFixup fall through call returns FAILURE.", sFileName.c_str());
         else
             LogString(CreateFileInstance, L"CreateFileFixup fall through call returns SUCCESS.", sFileName.c_str());
+#endif
         return hRes;
     }
     else
     {
         std::wstring wFileName = TurnPathIntoRootLocalDevice(FixedFileName);
         HANDLE hRes = impl::CreateFile(wFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+#if _DEBUG
         if (hRes == INVALID_HANDLE_VALUE)
             LogString(CreateFileInstance,L"CreateFileFixup fall through call returns FAILURE.", wFileName.c_str());
         else
             LogString(CreateFileInstance,L"CreateFileFixup fall through call returns SUCCESS.", wFileName.c_str());
+#endif
         return hRes;
     }
 }
@@ -222,7 +251,9 @@ HANDLE __stdcall CreateFile2Fixup(
 {
     auto guard = g_reentrancyGuard.enter();
     DWORD CreateFile2Instance = ++g_FileIntceptInstance;
+#if _DEBUG
     LogString(CreateFile2Instance, L"CreateFile2Fixup for ", fileName);
+#endif
     std::wstring WFileNameString = fileName;
     try
     {
@@ -238,7 +269,9 @@ HANDLE __stdcall CreateFile2Fixup(
             if (IsUnderUserPackageWritablePackageRoot(WFileNameString.c_str()))
             {
                 WFileNameString = ReverseRedirectedToPackage(WFileNameString.c_str());
+#if _DEBUG
                 LogString(CreateFile2Instance, L"Use ReverseRedirected fileName", WFileNameString.c_str());
+#endif
             }
 
             if (!IsUnderUserAppDataLocalPackages(WFileNameString.c_str()))
@@ -250,7 +283,9 @@ HANDLE __stdcall CreateFile2Fixup(
                 {
                     if (IsUnderUserAppDataLocal(WFileNameString.c_str()))
                     {
+#if _DEBUG
                         Log(L"[%d]Under LocalAppData", CreateFile2Instance);
+#endif
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
                         if (wcslen(PackageVersion.c_str()) >= 0)
@@ -260,7 +295,9 @@ HANDLE __stdcall CreateFile2Fixup(
                                 if (!impl::PathExists(redirectPath.c_str()))
                                 {
                                     // Need to copy now
+#if _DEBUG
                                     LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADL to", redirectPath.c_str());
+#endif
                                     impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                                 }
                             }
@@ -268,7 +305,9 @@ HANDLE __stdcall CreateFile2Fixup(
                     }
                     else if (IsUnderUserAppDataRoaming(WFileNameString.c_str()))
                     {
+#if _DEBUG
                         Log(L"[%d]\tUnder AppData(roaming)", CreateFile2Instance);
+#endif
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
                         if (wcslen(PackageVersion.c_str()) >= 0)
@@ -278,7 +317,9 @@ HANDLE __stdcall CreateFile2Fixup(
                                 if (!impl::PathExists(redirectPath.c_str()))
                                 {
                                     // Need to copy now
+#if _DEBUG
                                     LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADR to", redirectPath.c_str());
+#endif
                                     impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
                                 }
                             }
@@ -293,32 +334,42 @@ HANDLE __stdcall CreateFile2Fixup(
                     HANDLE hRet = impl::CreateFile2(redirectPath.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
                     if (hRet == INVALID_HANDLE_VALUE)
                     {
+#if _DEBUG
                         Log(L"[%d]CreateFile2 redirected uses %ls. FAILURE.", CreateFile2Instance, redirectPath.c_str());
+#endif
                         // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
                         DWORD ecode = GetLastError();
                         std::wstring wFileName = TurnPathIntoRootLocalDevice(WFileNameString.c_str());
                         HANDLE hRet3 = impl::CreateFile2(wFileName.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
                         if (hRet3 == INVALID_HANDLE_VALUE)
                         {
+#if _DEBUG
                             Log(L"[%d]CreateFile2 Fall through to original request also failed return redirected result 0x%x", CreateFile2Instance, ecode);
+#endif
                             SetLastError(ecode);
                         }
                         else
                         {
+#if _DEBUG
                             Log(L"[%d]CreateFile2 Fall through to original request SUCCESS", CreateFile2Instance);
+#endif
                         }
                         return hRet3;
                     }
                     else
                     {
+#if _DEBUG
                         Log(L"[%d]CreateFile2 redirected uses %ls. SUCCESS.", CreateFile2Instance, redirectPath.c_str());
+#endif
                         return hRet;
                     }
                 }
             }
             else
             {
+#if _DEBUG
                 Log(L"[%d]Under LocalAppData\\Packages, don't redirect", CreateFile2Instance);
+#endif
             }
         }
     }
@@ -333,12 +384,16 @@ HANDLE __stdcall CreateFile2Fixup(
     HANDLE hRet2= impl::CreateFile2(wFileName.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
     if (hRet2 == INVALID_HANDLE_VALUE)
     {
+#if _DEBUG
         LogString(CreateFile2Instance, L"CreateFile2 fallthrough FAILURE.",  wFileName.c_str());
+#endif
         // Fall back to original request
     }
     else
     {
+#if _DEBUG
         LogString(CreateFile2Instance, L"CreateFile2 fallthrough SUCCESS.",  wFileName.c_str());
+#endif
     }
     return hRet2;
 }

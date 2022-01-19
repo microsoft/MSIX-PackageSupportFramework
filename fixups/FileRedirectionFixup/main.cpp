@@ -4,6 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 #include <psf_framework.h>
+#include <psf_logging.h>
 
 void InitializePaths();
 void InitializeConfiguration();
@@ -43,7 +44,9 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
+#ifdef _DEBUG
         ::OutputDebugStringA("FileRedirectionFixup attached");
+#endif
         InitializePaths();
     }
 

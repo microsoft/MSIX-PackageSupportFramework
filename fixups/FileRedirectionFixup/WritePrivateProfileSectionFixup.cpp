@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall WritePrivateProfileSectionFixup(

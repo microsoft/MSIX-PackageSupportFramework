@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall CreateHardLinkFixup(
@@ -17,10 +18,11 @@ BOOL __stdcall CreateHardLinkFixup(
     {
         if (guard)
         {
+#if _DEBUG
             DWORD CreateHardLinkInstance = ++g_FileIntceptInstance;
             LogString(CreateHardLinkInstance,L"CopyHardLinkFixup for",    fileName);
             LogString(CreateHardLinkInstance,L"CopyHardLinkFixup target", existingFileName);
-            
+#endif
 
             // NOTE: We need to copy-on-read the existing file since the application may want to open the hard-link file
             //       for write in the future. As for the link file, we currently _don't_ copy-on-read it due to the fact

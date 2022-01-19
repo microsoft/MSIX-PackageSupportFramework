@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
@@ -15,7 +16,9 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
         if (guard)
         {
             DWORD DeleteFileInstance = ++g_FileIntceptInstance;
+#if _DEBUG
             LogString(DeleteFileInstance,L"DeleteFileFixup for fileName", fileName);
+#endif
             
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
@@ -35,13 +38,17 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
                     {
                         // If the file does not exist in the redirected location, but does in the non-redirected location,
                         // then we want to give the "illusion" that the delete succeeded
+#if _DEBUG
                         Log(L"[%d]DeleteFileFixup Exists in package but not redir, so fake success.", DeleteFileInstance);
+#endif
                         return TRUE;
                     }
                     else
                     {
                         BOOL bRet = impl::DeleteFile(rldRedirPath.c_str());
+#if _DEBUG
                         Log(L"[%d]DeleteFileFixup deletes from redir with result: %d %ls", DeleteFileInstance,bRet, rldRedirPath.c_str());
+#endif
                         return bRet;
                     }
                 }
@@ -50,13 +57,17 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
             {
                 std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
                 BOOL bRet = impl::DeleteFile(rldFileName.c_str());
+#if _DEBUG
                 Log(L"[%d]DeleteFileFixup Under LocalAppData\\Packages, don't redirect. deletes with result: %d", DeleteFileInstance, bRet);
+#endif
                 return bRet;
             }
         }
         else
         {
+#if _DEBUG
             LogString(0, L"DeleteFileFixup Unguarded for fileName", fileName);
+#endif
         }
     }
     catch (...)

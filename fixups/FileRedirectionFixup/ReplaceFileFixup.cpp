@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall ReplaceFileFixup(
@@ -21,8 +22,14 @@ BOOL __stdcall ReplaceFileFixup(
         if (guard)
         {
             DWORD ReplaceFileInstance = ++g_FileIntceptInstance;
+#if _DEBUG
             LogString(ReplaceFileInstance,L"ReplaceFileFixup From", replacedFileName);
             LogString(ReplaceFileInstance,L"ReplaceFileFixup To",   replacementFileName);
+            if (backupFileName != nullptr)
+            {
+                LogString(ReplaceFileInstance, L"ReplaceFileFixup with backup", backupFileName);
+            }
+#endif
 
             // NOTE: ReplaceFile will delete the "replacement file" (the file we're copying from), so therefore we need
             //       delete access to it, thus we copy-on-read it here. I.e. we're copying the file only for it to
@@ -36,8 +43,15 @@ BOOL __stdcall ReplaceFileFixup(
             {
                 std::wstring rldReplacedFileName = TurnPathIntoRootLocalDevice(redirectTarget ? targetRedirectPath.c_str() : widen_argument(replacedFileName).c_str());
                 std::wstring rldReplacementFileName = TurnPathIntoRootLocalDevice(redirectSource ? sourceRedirectPath.c_str() : widen_argument(replacementFileName).c_str());
-                std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(redirectBackup ? backupRedirectPath.c_str() : widen_argument(backupFileName).c_str());
-                return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+                if (backupFileName != nullptr)
+                {
+                    std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(redirectBackup ? backupRedirectPath.c_str() : widen_argument(backupFileName).c_str());
+                    return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+                }
+                else
+                {
+                    return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), nullptr, replaceFlags, exclude, reserved);
+                }
             }
         }
     }
@@ -51,15 +65,29 @@ BOOL __stdcall ReplaceFileFixup(
     {
         std::string rldReplacedFileName = TurnPathIntoRootLocalDevice(replacedFileName);
         std::string rldReplacementFileName = TurnPathIntoRootLocalDevice(replacementFileName);
-        std::string rldBackupFileName = TurnPathIntoRootLocalDevice(backupFileName);
-        return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+        if (backupFileName != nullptr)
+        {
+            std::string rldBackupFileName = TurnPathIntoRootLocalDevice(backupFileName);
+            return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+        }
+        else
+        {
+            return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), nullptr, replaceFlags, exclude, reserved);
+        }
     }
     else
     {
         std::wstring rldReplacedFileName = TurnPathIntoRootLocalDevice(replacedFileName);
         std::wstring rldReplacementFileName = TurnPathIntoRootLocalDevice(replacementFileName);
-        std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(backupFileName);
-        return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+        if (backupFileName != nullptr)
+        {
+            std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(backupFileName);
+            return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+        }
+        else
+        {
+            return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), nullptr, replaceFlags, exclude, reserved);
+        }
     }
     ///return impl::ReplaceFile(replacedFileName, replacementFileName, backupFileName, replaceFlags, exclude, reserved);
 }

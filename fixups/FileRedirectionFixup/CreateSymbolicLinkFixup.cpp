@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOLEAN __stdcall CreateSymbolicLinkFixup(
@@ -18,10 +19,10 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
         if (guard)
         {
             DWORD CreateSymbolicLinkInstance = ++g_FileIntceptInstance;
-
+#if _DEBUG
             LogString(CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup for", symlinkFileName);
             LogString(CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup target",  targetFileName);
-
+#endif
             auto [redirectLink, redirectPath, shoudReadonlySource] = ShouldRedirectV2(symlinkFileName, redirect_flags::ensure_directory_structure, CreateSymbolicLinkInstance);
             auto [redirectTarget, redirectTargetPath, shoudReadonlyDest] = ShouldRedirectV2(targetFileName, redirect_flags::copy_on_read, CreateSymbolicLinkInstance);
             if (redirectLink || redirectTarget)

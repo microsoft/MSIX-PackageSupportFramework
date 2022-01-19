@@ -19,6 +19,7 @@
 #include <TraceLoggingProvider.h>
 #include "Telemetry.h"
 #include "RemovePII.h"
+#include <psf_logging.h>
 
 
 #if _DEBUG
@@ -197,253 +198,6 @@ std::vector<path_redirection_spec> g_redirectionSpecs;
 
 
 
-#pragma region LOGGING
-
-void Log(const char* fmt, ...)
-{
-    try
-    {
-        va_list args;
-        va_start(args, fmt);
-        std::string str;
-        str.resize(256);
-        std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-        assert(count >= 0);
-        va_end(args);
-
-        if (count > str.size())
-        {
-            count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-            str.resize(count);
-
-            va_list args2;
-            va_start(args2, fmt);
-            count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-            assert(count >= 0);
-            va_end(args2);
-        }
-
-        str.resize(count);
-#if _DEBUG
-        ::OutputDebugStringA(str.c_str());
-#endif
-    }
-    catch (...)
-    {
-        ::OutputDebugStringA("Exception in Log()");
-        ::OutputDebugStringA(fmt);
-    }
-}
-
-void Log(const wchar_t* fmt, ...)  
-{
-    try
-    {
-        va_list args;
-        va_start(args, fmt);
-
-        std::wstring wstr;
-        wstr.resize(256);
-        std::size_t count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args);
-        va_end(args);
-
-        if (count > wstr.size())
-        {
-            count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-            wstr.resize(count);
-            va_list args2;
-            va_start(args2, fmt);
-            count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
-            va_end(args2);
-        }
-        wstr.resize(count);
-#if _DEBUG
-        ::OutputDebugStringW(wstr.c_str());
-#endif
-    }
-    catch (...)
-    {
-        ::OutputDebugStringA("Exception in wide Log()");
-        ::OutputDebugStringW(fmt);
-    }
-}
-
-void LogString(const char* name, const char* value)
-{
-    if ((value != NULL && value[1] != 0x0))
-    {
-        Log(L"%s=%s\n", name, value);
-    }
-    else
-    {
-        Log(L"%s=%ls", name, (wchar_t*)value);
-    }
-}
-
-void LogString(const char* name, const wchar_t* value)
-{
-    if ((value != NULL && ((char*)value)[1] == 0x0))
-    {
-        Log(L"%s=%ls\n", name, value);
-    }
-    else
-    {
-        Log(L"%s=%s", name, (char*)value);
-    }
-}
-
-void LogString(const wchar_t* name, const char* value)
-{
-    if ((value != NULL && value[1] != 0x0))
-    {
-        Log(L"%ls=%s\n", name, value);
-    }
-    else
-    {
-        Log(L"%ls=%ls", name, (wchar_t*)value);
-    }
-}
-
-void LogString(const wchar_t* name, const wchar_t* value)
-{
-    if ((value != NULL && ((char*)value)[1] == 0x0))
-    {
-        Log(L"%ls=%ls\n", name, value);
-    }
-    else
-    {
-        Log(L"%ls=%s", name, (char*)value);
-    }
-}
-
-
-void LogString(DWORD inst, const char* name, const char* value)
-{
-    if ((value != NULL && value[1] != 0x0))
-    {
-        Log(L"[%d]%s=%s\n", inst, name, value);
-    }
-    else
-    {
-        Log(L"[%d]%s=%ls", inst, name, (wchar_t*)value);
-    }
-}
-
-void LogString(DWORD inst, const char* name, const wchar_t* value)
-{
-    if ((value != NULL && ((char*)value)[1] == 0x0))
-    {
-        Log(L"[%d]%s=%ls\n", inst, name, value);
-    }
-    else
-    {
-        Log(L"[%d]%s=%s", inst, name, (char*)value);
-    }
-}
-
-void LogStringAA(DWORD inst, const char* name, const char* value)
-{
-    Log(L"[%d]%s=%s\n", inst, name, value);
-    
-}
-void LogStringAW(DWORD inst, const char* name, const wchar_t* value)
-{
-    Log(L"[%d]%s=%ls", inst, name, value);
-}
-
-void LogString(DWORD inst, const wchar_t* name, const char* value)
-{
-    if ((value != NULL && value[1] != 0x0))
-    {
-        Log(L"[%d]%ls=%ls\n", inst, name, widen(value).c_str());
-    }
-    else
-    {
-        Log(L"[%d]%ls=%ls", inst, name, (wchar_t*)value);
-    }
-}
-
-void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    if ((value != NULL && ((char*)value)[1] == 0x0))
-    {
-        Log(L"[%d]%ls=%ls\n", inst, name, value);
-    }
-    else
-    {
-        Log(L"[%d]%ls=%ls", inst, name, widen((const char*)value).c_str());
-    }
-}
-
-void LogStringWA(DWORD inst, const wchar_t* name, const char* value)
-{
-    Log(L"[%d]%ls=%ls\n", inst, name, widen(value).c_str());   
-}
-void LogStringWW(DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    Log(L"[%d]%ls=%ls", inst, name, value);
-}
-
-void Loghexdump(void* pAddressIn, long  lSize)
-{
-    char szBuf[128];
-    long lIndent = 1;
-    long lOutLen, lIndex, lIndex2, lOutLen2;
-    long lRelPos;
-    struct { char* pData; unsigned long lSize; } buf;
-    unsigned char* pTmp, ucTmp;
-    unsigned char* pAddress = (unsigned char*)pAddressIn;
-
-    buf.pData = (char*)pAddress;
-    buf.lSize = lSize;
-
-    while (buf.lSize > 0)
-    {
-        pTmp = (unsigned char*)buf.pData;
-        lOutLen = (int)buf.lSize;
-        if (lOutLen > 16)
-            lOutLen = 16;
-
-        // create a 64-character formatted output line:
-        sprintf_s(szBuf, 100, " >                            "
-            "                      "
-            "    %08lX", (unsigned long)(pTmp - pAddress));
-        lOutLen2 = lOutLen;
-
-        for (lIndex = 1 + lIndent, lIndex2 = 53 - 15 + lIndent, lRelPos = 0;
-            lOutLen2;
-            lOutLen2--, lIndex += 2, lIndex2++
-            )
-        {
-            ucTmp = *pTmp++;  
-
-            sprintf_s(szBuf + lIndex, 100-lIndex, "%02X ", (unsigned short)ucTmp);
-            if (!isprint(ucTmp))  ucTmp = '.'; // nonprintable char
-            szBuf[lIndex2] = ucTmp;
-
-            if (!(++lRelPos & 3))     // extra blank after 4 bytes
-            {
-                lIndex++; szBuf[lIndex + 2] = ' ';
-            }
-        }
-
-        if (!(lRelPos & 3)) lIndex--;
-
-        szBuf[lIndex] = '<';
-        szBuf[lIndex + 1] = '\n';
-        szBuf[lIndex + 1] = 0x0;
-
-        ::OutputDebugStringA(szBuf);
-
-        buf.pData += lOutLen;
-        buf.lSize -= lOutLen;
-    }
-}
-
-#pragma endregion
-
-
-
 template <typename CharT>
 std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
 {
@@ -561,10 +315,12 @@ void InitializeConfiguration()
                           g_redirectionSpecs.back().isReadOnly = IsReadOnlyValue;
                         }
                     }
+#if _DEBUG
                     if (IsExclusionValue)
                         Log("\t\tFRF EXCLUSION: Path=%ls", path.c_str());
                     else
                         Log("\t\tFRF RULE: Path=%ls retarget=%ls", path.c_str(), redirectTargetBaseValue.c_str());
+#endif
                 }
             };
 
@@ -778,7 +534,9 @@ normalized_path NormalizePath(const wchar_t* path, DWORD inst)
     }
     else
     {
+#if _DEBUG
         Log(L"[%d]\t\tNormalizePath W: null avoidance",inst);
+#endif
         //return NormalizePathImpl(L".",inst);
         return NormalizePathImpl(std::filesystem::current_path().c_str(),inst);
     }
@@ -833,7 +591,7 @@ normalized_path DeVirtualizePath(normalized_path path)
 // If the input path is a physical path outside of the package (e.g. "C:\Windows\System32\foo.txt"),
 // this returns what the package VFS equivalent would be (e.g "C:\Program Files\WindowsApps\Packagename\VFS\SystemX64\foo.txt");
 // NOTE: Does not check if package has this virtualized path.
-normalized_path VirtualizePath(normalized_path path, DWORD impl)
+normalized_path VirtualizePath(normalized_path path, [[maybe_unused]] DWORD impl)
 {
     ///Log(L"[%d]\t\tVirtualizePath: Input drive_absolute_path %ls", impl, path.drive_absolute_path);
     ///Log(L"[%d]\t\tVirtualizePath: Input full_path %ls", impl, path.full_path.c_str());
@@ -889,26 +647,32 @@ normalized_path VirtualizePath(normalized_path path, DWORD impl)
         ///Log(L"[%d]\t\tVirtualizePath: output same as input, not on system drive.", impl);
         return path;
     }
+#if _DEBUG
     Log(L"[%d]\t\tVirtualizePath: output same as input, no match.",impl);
+#endif
     return path;
 }
 #pragma endregion
 
 
-std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureDirectoryStructure, std::wstring result, DWORD inst)
+std::wstring GenerateRedirectedPath(std::wstring_view relativePath, bool ensureDirectoryStructure, std::wstring result, [[maybe_unused]] DWORD inst)
 {
     if (ensureDirectoryStructure)
     {
         for (std::size_t pos = 0; pos < relativePath.length(); )
         {
+#if _DEBUG
             LogString(inst,L"\t\tGenerateRedirectedPath: Create dir", result.c_str());
+#endif
             [[maybe_unused]] auto dirResult = impl::CreateDirectory(result.c_str(), nullptr);
 #if _DEBUG
             auto err = ::GetLastError();
             //assert(dirResult || (err == ERROR_ALREADY_EXISTS));
             if (!(dirResult || (err == ERROR_ALREADY_EXISTS)))
             {
+#if _DEBUG
                 Log(L"[%d]\t\tGenerateRedirectedPath: Directory Fail=0x%x", inst, err);
+#endif
             }
 #endif
             auto nextPos = relativePath.find_first_of(LR"(\/)", pos + 1);
@@ -1181,7 +945,9 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     if (!normalizedPath.drive_absolute_path)
     {
         // FUTURE: We could do better about canonicalising paths, but the cost/benefit doesn't make it worth it right now
+#if _DEBUG
         Log(L"[%d] ***Normalized has no drive_absolute_path", inst);
+#endif
         return result;
     }
 
@@ -1531,7 +1297,9 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             }
         }
     }
+#if _DEBUG
     LogString(inst, L"\tFRFShouldRedirect: returns with result", result.redirect_path.c_str());
+#endif
     }
     catch (...)
     {
@@ -1543,13 +1311,17 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
 path_redirect_info ShouldRedirect(const char* path, redirect_flags flags, DWORD inst)
 {
+#if _DEBUG
     Log(L"[%d]\t\tFRFShouldRedirectA",inst);
+#endif
     return ShouldRedirectImpl(path, flags, inst);
 }
 
 path_redirect_info ShouldRedirect(const wchar_t* path, redirect_flags flags, DWORD inst)
 {
+#if _DEBUG
     Log(L"[%d]\t\tFRFShouldRedirectW",inst);
+#endif
     return ShouldRedirectImpl(path, flags, inst);
 }
 

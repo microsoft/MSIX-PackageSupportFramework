@@ -7,6 +7,9 @@
     <Filter Include="inc">
       <UniqueIdentifier>{6fb30f49-c397-45cb-acb1-34b2225e5cb7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CommonSrc">
+      <UniqueIdentifier>{d73905ad-dec2-42a0-99c5-7520cd3b7f9c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FunctionImplementations.h">
@@ -64,7 +67,6 @@
     <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
     <ClCompile Include="GetPrivateProfileIntFixup.cpp" />
     <ClCompile Include="GetPrivateProfileSectionNamesFixup.cpp" />
-    <ClCompile Include="GetPrivateProfileStructFixup.cpp" />
     <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
     <ClCompile Include="SetWorkingDirectory.cpp" />
@@ -77,6 +79,10 @@
     <ClCompile Include="PathRedirectionV2.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\CommonSrc\psf_logging.cpp">
+      <Filter>CommonSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="GetPrivateProfileStructFixup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="FileRedirectionFixupMetadata.xml" />

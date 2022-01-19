@@ -139,23 +139,6 @@ std::filesystem::path GetPackageVFSPath(const char* fileName);
 std::string TurnPathIntoRootLocalDevice(const char* path);
 std::wstring TurnPathIntoRootLocalDevice(const wchar_t* path);
 
-void Log(const char* fmt, ...);
-void Log(const wchar_t* fmt, ...);
-void LogString(const char* name, const char* value);
-void LogString(const char* name, const wchar_t* value);
-void LogString(const wchar_t* name, const char* value);
-void LogString(const wchar_t* name, const wchar_t* value);
-void LogString(DWORD inst, const char* name, const char* value);
-void LogString(DWORD inst, const char* name, const wchar_t* value);
-void LogString(DWORD inst, const wchar_t* name, const char* value);
-void LogString(DWORD inst, const wchar_t* name, const wchar_t* value);
-void Loghexdump(void* pAddressIn, long  lSize);
-
-void  LogStringAA(DWORD inst, const char* name, const char* value);
-void  LogStringAW(DWORD inst, const char* name, const wchar_t* value);
-void  LogStringWA(DWORD inst, const wchar_t* name, const char* value);
-void  LogStringWW(DWORD inst, const wchar_t* name, const wchar_t* value);
-
 extern DWORD g_FileIntceptInstance;
 
 

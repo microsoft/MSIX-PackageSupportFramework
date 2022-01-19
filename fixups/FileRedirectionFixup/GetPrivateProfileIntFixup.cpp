@@ -6,6 +6,7 @@
 #include <errno.h>
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 UINT __stdcall GetPrivateProfileIntFixup(
@@ -20,6 +21,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
     {
         if (guard)
         {
+#if _DEBUG
             if constexpr (psf::is_ansi<CharT>)
             {
                 if (fileName != NULL)
@@ -58,6 +60,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                     LogString(GetPrivateProfileIntInstance,L" Key", key);
                 }
             }
+#endif
             if (fileName != NULL)
             {
                 if (!IsUnderUserAppDataLocalPackages(fileName))
@@ -68,25 +71,33 @@ UINT __stdcall GetPrivateProfileIntFixup(
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             UINT retval = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, redirectPath.c_str());
+#if _DEBUG
                             Log(L" [%d] Returned uint: %d ", GetPrivateProfileIntInstance, retval);
+#endif
                             return retval;
                         }
                         else
                         {
                             UINT retval = impl::GetPrivateProfileIntW(sectionName, key, nDefault, redirectPath.c_str());
+#if _DEBUG
                             Log(L" [%d] Returned uint: %d ", GetPrivateProfileIntInstance, retval);
+#endif
                             return retval;
                         }
                     }
                 }
                 else
                 {
+#if _DEBUG
                     Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileIntInstance);
+#endif
                 }
             }
             else
             {
+#if _DEBUG
                 Log(L"[%d]  null filename, don't redirect as may be registry based or default.", GetPrivateProfileIntInstance);
+#endif
             }
         }
     }
@@ -96,7 +107,9 @@ UINT __stdcall GetPrivateProfileIntFixup(
     }
 
     UINT uVal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
+#if _DEBUG
     Log( L"[%d] Returning 0x%x", GetPrivateProfileIntInstance,uVal);
+#endif
     return uVal;
 
 }

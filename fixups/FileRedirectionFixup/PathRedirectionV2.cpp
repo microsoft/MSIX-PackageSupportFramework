@@ -13,6 +13,7 @@
 #include <known_folders.h>
 #include <objbase.h>
 #include <psf_framework.h>
+#include <psf_logging.h>
 #include <utilities.h>
 
 #include "FunctionImplementations.h"
@@ -38,7 +39,7 @@ extern std::vector<vfs_folder_mapping> g_vfsFolderMappings;
 extern std::vector<path_redirection_spec> g_redirectionSpecs;
 
 #pragma region NormalizeV2
-void LogNormalizedPathV2(normalized_pathV2 np2, std::wstring desc, DWORD instance)
+void LogNormalizedPathV2(normalized_pathV2 np2, std::wstring desc, [[maybe_unused]] DWORD instance)
 {
     Log(L"[%d]\tNormalized_path %ls Type=%x, Orig=%ls, Full=%ls, Abs=%ls",
         instance, desc.c_str(), (int)np2.path_type, np2.original_path.c_str(),
@@ -46,7 +47,7 @@ void LogNormalizedPathV2(normalized_pathV2 np2, std::wstring desc, DWORD instanc
 }
 
 
-normalized_pathV2 NormalizePathV2Impl(const wchar_t* path, DWORD inst)
+normalized_pathV2 NormalizePathV2Impl(const wchar_t* path, [[maybe_unused]] DWORD inst)
 {
     normalized_pathV2 result;
     ///Log(L"[%d]\t\t\tNormailizePath2Impl",inst);
@@ -99,9 +100,11 @@ normalized_pathV2 NormalizePathV2Impl(const wchar_t* path, DWORD inst)
         break;
     }
 
+#if _DEBUG
     LogString(inst, L"\t\tNormailizePath2Impl orig",result.original_path.data());
     LogString(inst, L"\t\tNormailizePath2Impl full", result.full_path.c_str());
     LogString(inst, L"\t\tNormailizePath2Impl abs", result.drive_absolute_path.c_str());
+#endif
     return result;
 }
 
@@ -151,7 +154,9 @@ normalized_pathV2 NormalizePathV2(const wchar_t* path, DWORD inst)
         n2.original_path = path;
         if (IsColonColonGuid(path))
         {
+#if _DEBUG
             Log(L"[%d]\t\t\tNormalizePathV2 W: Guid avoidance.",inst);
+#endif
             n2.path_type = psf::dos_path_type::unknown;
             n2.original_path = path;
             n2.full_path = path;
@@ -159,7 +164,9 @@ normalized_pathV2 NormalizePathV2(const wchar_t* path, DWORD inst)
         }
         else if (IsBlobColon(path))  // blog:hexstring has been seen, believed to be associated with writing encrypted data,  Just pass it through as it is not a real file.
         {
+#if _DEBUG
             Log(L"[%d]\t\t\tNormalizePathV2 W: Blob avoidance.",inst);
+#endif
             n2.path_type = psf::dos_path_type::unknown;
             n2.full_path = path;
             n2.full_path = path;
@@ -172,7 +179,9 @@ normalized_pathV2 NormalizePathV2(const wchar_t* path, DWORD inst)
     }
     else
     {
+#if _DEBUG
         Log(L"[%d]\t\tNormalizePathV2 W: NULL Use CWD.",inst);
+#endif
         n2 = NormalizePathV2Impl(std::filesystem::current_path().c_str(),inst);
         n2.original_path = path;
     }
@@ -182,9 +191,11 @@ normalized_pathV2 NormalizePathV2(const wchar_t* path, DWORD inst)
 #pragma endregion
 
 #pragma region DevirtualizeV2
-void LogDeVirtualizedPathV2(normalized_pathV2 np2, std::wstring desc, DWORD instance)
+void LogDeVirtualizedPathV2(normalized_pathV2 np2, std::wstring desc, [[maybe_unused]] DWORD instance)
 {
+#if _DEBUG
     Log(L"[%d]\tDeVirtualized_path %ls Type=%x, Orig=%ls, Full=%ls, Abs=%ls", instance, desc.c_str(), (int)np2.path_type, np2.original_path.c_str(), np2.full_path.c_str(), np2.drive_absolute_path.c_str());
+#endif
 }
 
 std::wstring DeVirtualizePathV2(normalized_pathV2 path)
@@ -548,7 +559,9 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         if (normalizedPathV2.drive_absolute_path.empty())
         {
             // FUTURE: We could do better about canonicalising paths, but the cost/benefit doesn't make it worth it right now
+#if _DEBUG
             Log(L"[%d] ***Normalized has no drive_absolute_path", inst);
+#endif
             return result;
         }
 
@@ -893,7 +906,9 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                 }
             }
         }
+#if _DEBUG
         LogString(inst, L"\tFRFShouldRedirectV2: returns with result", result.redirect_path.c_str());
+#endif
     }
     catch (...)
     {
@@ -905,13 +920,17 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
 
 path_redirect_info ShouldRedirectV2(const char* path, redirect_flags flags, DWORD inst)
 {
+#ifdef MOREDEBUG
     Log(L"[%d]\t\tFRFShouldRedirectV2 A", inst);
+#endif
     return ShouldRedirectV2Impl(path, flags, inst);
 }
 
 path_redirect_info ShouldRedirectV2(const wchar_t* path, redirect_flags flags, DWORD inst)
 {
+#ifdef MOREDEBUG
     Log(L"[%d]\t\tFRFShouldRedirectV2 W", inst);
+#endif
     return ShouldRedirectV2Impl(path, flags, inst);
 }
 

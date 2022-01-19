@@ -6,6 +6,7 @@
 #include <errno.h>
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall GetPrivateProfileStructFixup(
@@ -23,7 +24,9 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             DWORD GetPrivateProfileStructInstance = ++g_FileIntceptInstance;
             if (fileName != NULL)
             {
+#if _DEBUG
                 LogString(GetPrivateProfileStructInstance,L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
+#endif
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileStructInstance);
@@ -42,12 +45,16 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                 }
                 else
                 {
+#if _DEBUG
                     Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStructInstance);
+#endif
                 }
             }
             else
             {
+#if _DEBUG
                 Log(L"[%d]  null fileName, don't redirect as may be registry based or default.", GetPrivateProfileStructInstance);
+#endif
             }
         }
     }

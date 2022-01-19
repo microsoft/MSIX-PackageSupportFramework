@@ -3,8 +3,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
+
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const CharT* newFileName, _In_ BOOL failIfExists) noexcept
@@ -15,8 +17,10 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
         if (guard)
         {
             DWORD CopyFileInstance = ++g_FileIntceptInstance;
+#if _DEBUG
             LogString(CopyFileInstance,L"CopyFileFixup from", existingFileName);
             LogString(CopyFileInstance,L"CopyFileFixup to",   newFileName);
+#endif
             
             // NOTE: We don't want to copy either file in the event one/both exist. Copying the source file would be
             //       wasteful since it's not the file that we care about (nor do we need write permissions to it); we
@@ -89,8 +93,10 @@ BOOL __stdcall CopyFileExFixup(
         if (guard)
         {
             DWORD CopyFileExInstance = ++g_FileIntceptInstance;
+#if _DEBUG
             LogString(CopyFileExInstance,L"CopyFileExFixup from", existingFileName);
             LogString(CopyFileExInstance,L"CopyFileExFixup to",   newFileName);
+#endif
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
             auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFileExInstance);
@@ -154,8 +160,10 @@ HRESULT __stdcall CopyFile2Fixup(
         if (guard)
         {
             DWORD CopyFile2Instance = ++g_FileIntceptInstance;
+#if _DEBUG
             LogString(CopyFile2Instance,L"CopyFile2Fixup from", existingFileName);
             LogString(CopyFile2Instance,L"CopyFile2Fixup to",   newFileName);
+#endif
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
             auto [redirectSource, sourceRedirectPath, shouldReadonlySource] = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFile2Instance);

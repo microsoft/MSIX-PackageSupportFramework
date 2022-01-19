@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes) noexcept
@@ -17,13 +18,17 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         {
             DWORD CreateDirectoryInstance = ++g_FileIntceptInstance;
             std::wstring wPathName = widen(pathName);
+#if _DEBUG
             LogString(CreateDirectoryInstance,L"CreateDirectoryFixup for path", pathName);
+#endif
             std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
 
             if (IsUnderUserPackageWritablePackageRoot(wPathName.c_str()))
             {
                 wPathName = ReverseRedirectedToPackage(wPathName.c_str());
+#if _DEBUG
                 LogString(CreateDirectoryInstance, L"Use ReverseRedirected fileName", wPathName.c_str());
+#endif
             }
 
             if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
@@ -31,13 +36,17 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 auto [shouldRedirect, redirectPath, shouldReadonlySource] = ShouldRedirectV2(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
                 if (shouldRedirect)
                 {
+#if _DEBUG
                     LogString(CreateDirectoryInstance, L"CreateDirectoryFixup Use Folder", redirectPath.c_str());
+#endif
                     return impl::CreateDirectory(redirectPath.c_str(), securityAttributes);
                 }
             }
             else
             {
+#if _DEBUG
                 Log(L"[%d]Under LocalAppData\\Packages, don't redirect", CreateDirectoryInstance);
+#endif
             }
         }
     }
@@ -74,10 +83,10 @@ BOOL __stdcall CreateDirectoryExFixup(
         if (guard)
         {
             DWORD CreateDirectoryExInstance = ++g_FileIntceptInstance;
-
+#if _DEBUG
             LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup for", templateDirectory);
             LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup to",  newDirectory);
-
+#endif
             std::wstring WtemplateDirectory = widen(templateDirectory);
             std::wstring WnewDirectory = widen(newDirectory);
             std::replace(WtemplateDirectory.begin(), WtemplateDirectory.end(), L'/', L'\\');
@@ -86,12 +95,16 @@ BOOL __stdcall CreateDirectoryExFixup(
             if (IsUnderUserPackageWritablePackageRoot(WtemplateDirectory.c_str()))
             {
                 WtemplateDirectory = ReverseRedirectedToPackage(WtemplateDirectory.c_str());
+#if _DEBUG
                 LogString(CreateDirectoryExInstance, L"Use ReverseRedirected templateDirectory", WtemplateDirectory.c_str());
+#endif
             }
             if (IsUnderUserPackageWritablePackageRoot(WnewDirectory.c_str()))
             {
                 WnewDirectory = ReverseRedirectedToPackage(WtemplateDirectory.c_str());
+#if _DEBUG
                 LogString(CreateDirectoryExInstance, L"Use ReverseRedirected newDirectory", WnewDirectory.c_str());
+#endif
             }
 
             

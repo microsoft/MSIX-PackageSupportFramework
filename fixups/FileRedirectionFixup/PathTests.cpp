@@ -11,6 +11,7 @@
 #include <known_folders.h>
 #include <objbase.h>
 #include <psf_framework.h>
+#include <psf_logging.h>
 #include <utilities.h>
 
 #include "FunctionImplementations.h"
