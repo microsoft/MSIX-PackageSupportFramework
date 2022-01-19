@@ -19,6 +19,7 @@
 
 
 #include <psf_utils.h>
+#include <psf_logging.h>
 #include <sddl.h>
 
 //#include <ntstatus.h>
@@ -37,8 +38,6 @@ extern bool trace_function_entry;
 extern bool m_inhibitOutput;
 extern bool m_shouldLog;
 inline std::recursive_mutex g_outputMutex;
-
-extern void Log(const char* fmt, ...);
 
 enum class function_type
 {
@@ -178,7 +177,7 @@ struct function_entry_tracker
             {
                 if (++function_call_depth == 1)
                 {
-                    Log("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
+                    Log(L"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
                 }
 
                 // Most functions are named "SomeFunctionFixup" where the target API is "SomeFunction". Logging the API
@@ -191,7 +190,7 @@ struct function_entry_tracker
                     name.resize(name.length() - fixupSuffix.length());
                 }
 
-                Log("Function Entry: %s\n", name.c_str());
+                Log(L"Function Entry: %s\n", name.c_str());
             }
         }
     }
@@ -205,7 +204,7 @@ struct function_entry_tracker
             {
                 if (--function_call_depth == 0)
                 {
-                    Log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+                    Log(L"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
                 }
             }
         }
@@ -223,7 +222,7 @@ inline constexpr bool IsFlagSet(T value, U flag)
 #define LogIfFlagSetMsg(value, flag, msg) \
     if (IsFlagSet(value, flag)) \
     { \
-        Log("%s%s", prefix, msg); \
+        Log(L"%s%s", prefix, msg); \
         prefix = " | "; \
     }
 
@@ -241,11 +240,11 @@ inline void LogCountedString(const char* name, const wchar_t* value, std::size_t
 {
     if (value != NULL)
     {
-        Log("\t%s=%.*ls\n", name, length, value);
+        Log(L"\t%s=%.*ls\n", name, length, value);
     }
     else
     {
-        Log("\t%s=NULL", name);
+        Log(L"\t%s=NULL", name);
     }
 }
 
@@ -344,7 +343,7 @@ inline std::string win32_error_description(DWORD error)
 inline void LogWin32Error(DWORD error, const char* msg = "Error")
 {
     auto str = win32_error_description(error);
-    Log("\t%s=%d (%s)\n", msg, error, str.c_str());
+    Log(L"\t%s=%d (%s)\n", msg, error, str.c_str());
 }
 
 inline std::string InterpretWin32Error(DWORD error, const char* msg = "Error")
@@ -382,31 +381,31 @@ void LogKeyPath(HKEY key, const char* msg = "Key")
         }
         catch (...)
         {
-            Log("%s Unable to log Key Path", msg);
+            Log(L"%s Unable to log Key Path", msg);
         }
     }
     else if (status == STATUS_INVALID_HANDLE)
     {
         if (key == HKEY_CURRENT_USER)
         {
-            Log("%s HKEY_CURRENT_USER", msg);
+            Log(L"%s HKEY_CURRENT_USER", msg);
         }
         else if (key == HKEY_LOCAL_MACHINE)
         {
-            Log("%s HKEY_LOCAL_MACHINE", msg);
+            Log(L"%s HKEY_LOCAL_MACHINE", msg);
         }
         else if (key == HKEY_CLASSES_ROOT)
         {
-            Log("%s HKEY_CLASSES_ROOT", msg);
+            Log(L"%s HKEY_CLASSES_ROOT", msg);
         }
         else
         {
-            Log("%s Unable to log Key Path: Invalid handle", msg);
+            Log(L"%s Unable to log Key Path: Invalid handle", msg);
         }
     }
     else
     {
-        Log("%s Unable to log Key Path 0x%x",msg, status);   
+        Log(L"%s Unable to log Key Path 0x%x",msg, status);   
     }
 }
 
@@ -445,7 +444,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg)
     }
     catch (...)
     {
-        Log("InterpretKeyPath failure.");
+        Log(L"InterpretKeyPath failure.");
     }
     return sret;
 }
@@ -481,28 +480,28 @@ std::string InterpretKeyPath(HKEY key)
             else if (key == HKEY_CLASSES_ROOT)
                 sret = InterpretStringA("HKEY_CLASSES_ROOT");
             else
-                Log("InterpretKeyPath failure2.");
+                Log(L"InterpretKeyPath failure2.");
         }
         else
         {
             sret = "InterpretKeyPath failure1" + InterpretAsHex("status", (DWORD)status);
-            Log("InterpretKeyPath failure1.");
+            Log(L"InterpretKeyPath failure1.");
         }
     }
     catch (...)
     {
-        Log("InterpretKeyPath failure.");
+        Log(L"InterpretKeyPath failure.");
     }
     return sret;
 }
 
 inline void LogRegKeyFlags(DWORD flags, const char* msg = "Options")
 {
-    Log("\t%s=%08X", msg, flags);
+    Log(L"\t%s=%08X", msg, flags);
     if (flags)
     {
         const char* prefix = "";
-        Log(" (");
+        Log(L" (");
         LogIfFlagSet(flags, REG_OPTION_VOLATILE);           // 0x0001
         LogIfFlagSet(flags, REG_OPTION_CREATE_LINK);        // 0x0002
         LogIfFlagSet(flags, REG_OPTION_BACKUP_RESTORE);     // 0x0004
@@ -512,20 +511,20 @@ inline void LogRegKeyFlags(DWORD flags, const char* msg = "Options")
     }
     else
     {
-        Log(" (REG_OPTION_NON_VOLATILE)"); // 0x0000
+        Log(L" (REG_OPTION_NON_VOLATILE)"); // 0x0000
     }
 
-    Log("\n");
+    Log(L"\n");
 }
 
 
 inline void LogRegKeyDisposition(DWORD disposition, const char* msg = "Disposition")
 {
-    Log("\t%s=%d (", msg, disposition);
+    Log(L"\t%s=%d (", msg, disposition);
     LogIfEqual(disposition, REG_CREATED_NEW_KEY)
     else LogIfEqual(disposition, REG_OPENED_EXISTING_KEY)
-    else Log("UNKNOWN");
-    Log(")\n");
+    else Log(L"UNKNOWN");
+    Log(L")\n");
 }
 
 
@@ -703,12 +702,12 @@ inline void LogFunctionResult(function_result result, const char* msg = "Result"
 {
     const char* resultMsg = InterperetFunctionResult(result);
 
-    Log("\t%s=%s\n", msg, resultMsg);
+    Log(L"\t%s=%s\n", msg, resultMsg);
 }
 
 inline void LogRegKeyAccess(DWORD access, const char* msg = "Access")
 {
-    Log("\t%s=%08X", msg, access);
+    Log(L"\t%s=%08X", msg, access);
     if (access)
     {
         const char* prefix = "";
@@ -724,10 +723,10 @@ inline void LogRegKeyAccess(DWORD access, const char* msg = "Access")
 
         LogCommonAccess(access, prefix);
 
-        Log(")");
+        Log(L")");
     }
 
-    Log("\n");
+    Log(L"\n");
 }
 
 inline void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWORD instance)
@@ -747,22 +746,22 @@ inline void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWOR
             );
             if (xverted)
             {
-                Log("[%d] SecurityAccess %d %d %Ls ", instance, securityAttributes->nLength, securityAttributes->bInheritHandle, xvert);
+                Log(L"[%d] SecurityAccess %d %d %Ls ", instance, securityAttributes->nLength, securityAttributes->bInheritHandle, xvert);
                 LocalFree(xvert);
             }
             else
             {
-                Log("[%x] error to query security descriptor.\n", instance);
+                Log(L"[%x] error to query security descriptor.\n", instance);
             }
         }
         else
         {
-            Log("[%x] No security descriptor provided.\n", instance);
+            Log(L"[%x] No security descriptor provided.\n", instance);
         }
     }
     catch (...)
     {
-        Log("[%x] exception to query security descriptor.\n", instance);
+        Log(L"[%x] exception to query security descriptor.\n", instance);
     }
 }
 
@@ -774,7 +773,7 @@ inline void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWOR
             reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
             &moduleHandle)) \
         { \
-            Log("\tCalling Module=%ls\n", psf::get_module_path(moduleHandle).c_str()); \
+            Log(L"\tCalling Module=%ls\n", psf::get_module_path(moduleHandle).c_str()); \
         } \
     }
 

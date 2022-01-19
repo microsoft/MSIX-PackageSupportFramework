@@ -236,9 +236,3 @@ inline std::wstring InterpretStringW(const wchar_t* value)
     return value;
 }
 
-
-void Log(const char* fmt, ...);
-void LogString(const char* name, const char* value);
-void LogString(const char* name, const wchar_t* value);
-
-

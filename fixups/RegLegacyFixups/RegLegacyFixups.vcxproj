@@ -203,6 +203,7 @@
     <ClInclude Include="Reg_Remediation_Spec.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="InitializeFixup.cpp" />
     <ClCompile Include="pch.cpp">

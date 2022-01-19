@@ -7,6 +7,7 @@
 
 #define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
+#include <psf_logging.h>
 
 bool trace_function_entry = false;
 bool m_inhibitOutput = false;
@@ -14,7 +15,6 @@ bool m_shouldLog = true;
 
 void InitializeFixups();
 void InitializeConfiguration();
-void Log(const char* fmt, ...);
 
 extern "C" {
 
@@ -36,8 +36,9 @@ extern "C" {
         switch (ul_reason_for_call)
         {
         case DLL_PROCESS_ATTACH:
-            Log("Attaching RegLegacyFixups\n");
-
+#if _DEBUG
+            Log(L"Attaching RegLegacyFixups\n");
+#endif
             InitializeFixups();
             InitializeConfiguration();
             break;
@@ -50,7 +51,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log("RegLegacyFixups attach ERROR\n");
+        Log(L"RegLegacyFixups attach ERROR\n");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }
