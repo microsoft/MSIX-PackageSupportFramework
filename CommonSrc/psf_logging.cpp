@@ -36,9 +36,7 @@ void Log(const char* fmt, ...)
         }
 
         str.resize(count);
-#if _DEBUG
         ::OutputDebugStringA(str.c_str());
-#endif
     }
     catch (...)
     {
@@ -69,9 +67,7 @@ void Log(const wchar_t* fmt, ...)
             va_end(args2);
         }
         wstr.resize(count);
-#if _DEBUG
         ::OutputDebugStringW(wstr.c_str());
-#endif
     }
     catch (...)
     {
