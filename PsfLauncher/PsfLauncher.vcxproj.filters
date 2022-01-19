@@ -7,13 +7,16 @@
     <Filter Include="inc">
       <UniqueIdentifier>{77e9f243-3cc8-4b32-bbec-ebbad733560b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CommonSrc">
+      <UniqueIdentifier>{4fe8d672-4153-4e50-9f37-a9c7930ebcf6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\CommonSrc\psf_logging.cpp">
-      <Filter>src</Filter>
+      <Filter>CommonSrc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -35,19 +35,20 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
         CreationFlags = EXTENDED_STARTUPINFO_PRESENT;
     }
     
-    RETURN_LAST_ERROR_IF_MSG(
-        !::CreateProcessW(
-            applicationName,
-            commandLine,
-            nullptr, nullptr, // Process/ThreadAttributes
-            true, // InheritHandles
-            CreationFlags,
-            nullptr, // Environment
-            currentDirectory,
-            (LPSTARTUPINFO)&startupInfoEx,
-            &processInfo),
-        "ERROR: Failed to create a process for %ws",
-        applicationName);
+    BOOL bErr = ::CreateProcessW(
+        applicationName,
+        commandLine,
+        nullptr, nullptr, // Process/ThreadAttributes
+        true, // InheritHandles
+        CreationFlags,
+        nullptr, // Environment
+        currentDirectory,
+        (LPSTARTUPINFO)&startupInfoEx,
+        &processInfo);
+    if (bErr == FALSE)
+    {
+        return GetLastError();
+    }
 
     RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);

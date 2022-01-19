@@ -50,33 +50,33 @@ inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist)
     if (attlist != NULL)
     {
         Log("Attribute List Dump:");
-        Log("\tdwflags=0x%x Size=0x%x Count=0x%x", attlist->dwflags, attlist->Size, attlist->Count);
+        Log("\t\tdwflags=0x%x Size=0x%x Count=0x%x", attlist->dwflags, attlist->Size, attlist->Count);
 
         if ((attlist->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
         {
-            Log("\tHas Desktop_App_Policy.");
+            Log("\t\tHas Desktop_App_Policy.");
             for (ULONG inx = 0; inx < attlist->Count; inx++)
             {
                 SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = attlist->Entry[inx];
-                Log("\t\tIndex %d Attribute 0x%x Size=0x%x", inx, Entry.Attribute, Entry.cbSize);
+                Log("\t\t\tIndex %d Attribute 0x%x Size=0x%x", inx, Entry.Attribute, Entry.cbSize);
                 Loghexdump(Entry.lpvalue, (long)Entry.cbSize);
                 if (Entry.Attribute == PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY)
                 {
-                    Log("\t\tIs Attribute_Desktop_App_Policy");
+                    Log("\t\t\tIs Attribute_Desktop_App_Policy");
                     if (Entry.cbSize == 4)
                     {
                         DWORD attval = *((DWORD*)(Entry.lpvalue));
                         if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE) != 0)
                         {
-                            Log("\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE present.");
+                            Log("\t\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE present.");
                         }
                         if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE) != 0)
                         {
-                            Log("\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE present.");
+                            Log("\t\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE present.");
                         }
                         if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE) != 0)
                         {
-                            Log("\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE present.");
+                            Log("\t\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE present.");
                         }
                     }
                 }
@@ -145,14 +145,16 @@ private:
     //   2. Any process that Powershell stats will also be in the same container as PSF.
     // This means that powershell, and any windows it makes, will have the same restrictions as PSF.
     DWORD createInContainerAttribute = 0x02;
-    DWORD createOutsideContainerAttribute = 0x04;
+    DWORD createOutsideContainerAttribute = 0x01;
 
     // Processes running inside the container run at a different level (Low) that uncontained processes,
     // and the default behavior is to have the child process run at the same level.  This can be overridden
     // by using PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL.
     //
     // The code here currently does not set this level as we prefer to keep the same level anyway.
-    //DWORD protectionLevel = PROTECTION_LEVEL_SAME;
+    // UPDATE: If we provide an atttribute list we must include this for certain proesses anyway.
+    DWORD attProtLevel = ProcThreadAttributeProtectionLevel;
+    DWORD protectionLevel = PROTECTION_LEVEL_SAME;
 
     // Should it become neccessary to change more than one attribute, the number of attributes will need
     // to be modified in both initialization calls in the CTOR.
@@ -161,25 +163,36 @@ private:
 
 public:
 
-    MyProcThreadAttributeList(bool inside)
+    MyProcThreadAttributeList(bool setContainer, bool inside, bool setProtSame)
     {
+        DWORD countAtt = 0;
+        if (setContainer)
+        {
+            countAtt++;
+        }
+        if (setProtSame)
+        {
+            countAtt++;
+        }
         // Ffor example of this code with two attributes see: https://github.com/microsoft/terminal/blob/main/src/server/Entrypoints.cpp
         SIZE_T AttributeListSize; //{};
-        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
+        InitializeProcThreadAttributeList(nullptr, countAtt, 0, &AttributeListSize);
         attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
         //attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(HeapAlloc(GetProcessHeap(), 0, AttributeListSize)));
         InitializeProcThreadAttributeList(
                 attributeList.get(),
-                1,
+                countAtt,
                 0,
                 &AttributeListSize);
 
-        // 18 stands for
-        // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
-        // this is the attribute value we want to add
-        if (inside)
+        if (setContainer)
         {
-            UpdateProcThreadAttribute(
+            // 18 stands for
+            // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+            // this is the attribute value we want to add
+            if (inside)
+            {
+                bool b = UpdateProcThreadAttribute(
                     attributeList.get(),
                     0,
                     ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
@@ -187,10 +200,14 @@ public:
                     sizeof(createInContainerAttribute),
                     nullptr,
                     nullptr);
-        }
-        else
-        {
-            UpdateProcThreadAttribute(
+                if (!b)
+                {
+                    ;
+                }
+            }
+            else
+            {
+                bool b = UpdateProcThreadAttribute(
                     attributeList.get(),
                     0,
                     ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
@@ -198,22 +215,36 @@ public:
                     sizeof(createOutsideContainerAttribute),
                     nullptr,
                     nullptr);
+                if (!b)
+                {
+                    ;
+                }
+            }
         }
 
-        // 11 stands for
-        // PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL
-        // this is the attribute value we want to add
-        //
-        //THROW_LAST_ERROR_IF_MSG(
-        //	!UpdateProcThreadAttribute(
-        //		attributeList.get(),
-        //		0,
-        //		ProcThreadAttributeValue(11, FALSE, TRUE, FALSE),
-        //		&protectionLevel,
-        //		sizeof(protectionLevel),
-        //		nullptr,
-        //		nullptr),
-        //	"Could not update Proc thread attribute for PROTECTION_LEVEL.");
+        if (setProtSame)
+        {
+            // 11 stands for
+            // PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL
+            // this is the attribute value we want to add
+            //
+            BOOL additive = FALSE;
+            if (countAtt == 2)
+                additive = TRUE;
+            bool b2 = UpdateProcThreadAttribute(
+                attributeList.get(),
+                0,
+                ProcThreadAttributeValue(attProtLevel, FALSE, TRUE, additive),
+                &protectionLevel,
+                sizeof(protectionLevel),
+                nullptr,
+                nullptr);
+            if (!b2)
+            {
+                //	"Could not update Proc thread attribute for PROTECTION_LEVEL.");
+                ;
+            }
+        }
     }
 
     ~MyProcThreadAttributeList()

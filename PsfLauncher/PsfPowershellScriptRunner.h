@@ -285,8 +285,8 @@ private:
 
 	ScriptInformation m_startingScriptInformation;
 	ScriptInformation m_endingScriptInformation;
-	MyProcThreadAttributeList m_AttributeListInside = MyProcThreadAttributeList(true);
-	MyProcThreadAttributeList m_AttributeListOutside = MyProcThreadAttributeList(false);
+	MyProcThreadAttributeList m_AttributeListInside = MyProcThreadAttributeList(true,true,false);
+	MyProcThreadAttributeList m_AttributeListOutside = MyProcThreadAttributeList(true,false,false);
 
 	void RunScript(ScriptInformation& script, bool inside)
 	{
