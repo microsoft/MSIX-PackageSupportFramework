@@ -181,6 +181,7 @@ static PBYTE FindAndAllocateNearBase(HANDLE hProcess, PBYTE pbBase, DWORD cbAllo
         PBYTE pbAddress = (PBYTE)(((DWORD_PTR)mbi.BaseAddress + 0xffff) & ~(DWORD_PTR)0xffff);
 
 #ifdef _WIN64
+
         // The distance from pbBase to pbAddress must fit in 32 bits.
         //
         const size_t GB4 = ((((size_t)1) << 32) - 1);
@@ -572,7 +573,7 @@ BOOL WINAPI DetourUpdateProcessWithDll(_In_ HANDLE hProcess,
         }
     }
 
-    DETOUR_TRACE(("    32BitExe=%d 32BitProcess\n", bHas32BitExe, bIs32BitProcess));
+    DETOUR_TRACE(("    32BitExe=%d 32BitProcess=%d\n", bHas32BitExe, bIs32BitProcess));
 
     return DetourUpdateProcessWithDllEx(hProcess,
                                         hModule,
@@ -606,7 +607,7 @@ BOOL WINAPI DetourUpdateProcessWithDllEx(_In_ HANDLE hProcess,
         bIs32BitExe = TRUE;
     }
 
-    DETOUR_TRACE(("    32BitExe=%d 32BitProcess\n", bIs32BitExe, bIs32BitProcess));
+    DETOUR_TRACE(("    32BitExe=%d 32BitProcess=%d\n", bIs32BitExe, bIs32BitProcess));
 
     if (hModule == NULL) {
         SetLastError(ERROR_INVALID_OPERATION);
@@ -712,7 +713,8 @@ BOOL WINAPI DetourUpdateProcessWithDllEx(_In_ HANDLE hProcess,
         if (der.clr.Flags & 0x2) { // Is the 32BIT Required Flag set?
             // X64 never gets here because the process appears as a WOW64 process.
             // However, on IA64, it doesn't appear to be a WOW process.
-            DETOUR_TRACE(("CLR Requires 32-bit\n", der.pclr, der.pclr + der.cbclr));
+            //DETOUR_TRACE(("CLR Requires 32-bit\n", der.pclr, der.pclr + der.cbclr));
+            DETOUR_TRACE(("CLR Requires 32-bit\n"));
             SetLastError(ERROR_INVALID_HANDLE);
             return FALSE;
         }
