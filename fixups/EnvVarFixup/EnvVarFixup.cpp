@@ -6,6 +6,7 @@
 
 #include <regex>
 #include <psf_framework.h>
+#include <psf_logging.h>
 #include "FunctionImplementations.h"
 #include "EnvVar_spec.h"
 
@@ -30,13 +31,17 @@ template <typename CharC, typename CharT>
 DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ CharT* lpValue, _In_ DWORD lenBuf)
 {
     DWORD GetEnvVarInstance = ++g_EnvVarInterceptInstance;
-    LogString(GetEnvVarInstance,"GetEnvironmentVariableFixup called for", lpName);
+#if _DEBUG
+    LogString(GetEnvVarInstance,L"GetEnvironmentVariableFixup called for", lpName);
+#endif
     auto guard = g_reentrancyGuard.enter();
     DWORD result;
 
     if (guard)
     {
-        Log("[%d] GetEnvironmentVariableFixup unguarded.", GetEnvVarInstance);
+#if _DEBUG
+        Log(L"[%d] GetEnvironmentVariableFixup unguarded.", GetEnvVarInstance);
+#endif
         std::wstring eName;
         if constexpr (psf::is_ansi<CharT>)
         {
@@ -56,7 +61,9 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                     size_t valuelen = spec.variablevalue.length();
                     if (spec.useregistry == true)
                     {
-                        Log("[%d] GetEnvironmentVariableFixup: Registry supplied case.", GetEnvVarInstance);
+#if _DEBUG
+                        Log(L"[%d] GetEnvironmentVariableFixup: Registry supplied case.", GetEnvVarInstance);
+#endif
                         // Check app registry for an answer instead of the Json. Note: this allows value to be modified possibly also.
                         HKEY hKeyCU;
                         if constexpr (psf::is_ansi<CharT>)
@@ -64,21 +71,27 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                             if (RegOpenKeyExA(HKEY_CURRENT_USER, "Environment",
                                 0, KEY_ENUMERATE_SUB_KEYS | KEY_READ | KEY_QUERY_VALUE, &hKeyCU) == ERROR_SUCCESS)
                             {
-                                Log("[%d] GetEnvironmentVariableFixup:(A) HKCU key found.", GetEnvVarInstance);
+#if _DEBUG
+                                Log(L"[%d] GetEnvironmentVariableFixup:(A) HKCU key found.", GetEnvVarInstance);
+#endif
                                 DWORD type = RRF_RT_REG_SZ;
                                 DWORD dLen = (DWORD)lenBuf;
                                 auto ret = RegGetValueA(HKEY_CURRENT_USER, "Environment", lpName,
                                     RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ | RRF_ZEROONFAILURE, &type, lpValue, &dLen);
                                 if (ret == ERROR_SUCCESS)
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(A) HKCU value found %s", GetEnvVarInstance, lpValue);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(A) HKCU value found %s", GetEnvVarInstance, lpValue);
+#endif
                                     result = dLen;
                                     RegCloseKey(hKeyCU);
                                     return result;
                                 }
                                 else
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(A) HKCU value Failed 0x%x.", GetEnvVarInstance, ret);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(A) HKCU value Failed 0x%x.", GetEnvVarInstance, ret);
+#endif
                                 }
                                 RegCloseKey(hKeyCU);
                             }
@@ -88,22 +101,28 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                             if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Environment",
                                 0, KEY_ENUMERATE_SUB_KEYS | KEY_READ | KEY_QUERY_VALUE, &hKeyCU) == ERROR_SUCCESS)
                             {
-                                Log("[%d] GetEnvironmentVariableFixup:(W) HKCU key found.", GetEnvVarInstance);
-                                LogString(GetEnvVarInstance, "GetEnvironmentVariableFixup:(W) Looking for ", lpName);
+#if _DEBUG
+                                Log(L"[%d] GetEnvironmentVariableFixup:(W) HKCU key found.", GetEnvVarInstance);
+                                LogString(GetEnvVarInstance, L"GetEnvironmentVariableFixup:(W) Looking for ", lpName);
+#endif
                                 DWORD type = RRF_RT_REG_SZ;
                                 DWORD dLen = lenBuf;
                                 auto ret = RegGetValueW(HKEY_CURRENT_USER, L"Environment", lpName,
                                     RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ | RRF_ZEROONFAILURE, &type, lpValue, &dLen);
                                 if (ret == ERROR_SUCCESS)
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(W) HKCU value found %ls", GetEnvVarInstance, lpValue);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(W) HKCU value found %ls", GetEnvVarInstance, lpValue);
+#endif
                                     result = dLen;
                                     RegCloseKey(hKeyCU);
                                     return result;
                                 }
                                 else
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(W) HKCU value Failed 0x%x.", GetEnvVarInstance, ret);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(W) HKCU value Failed 0x%x.", GetEnvVarInstance, ret);
+#endif
                                 }
                                 RegCloseKey(hKeyCU);
                             }
@@ -116,20 +135,25 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                             if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
                                 0, KEY_ENUMERATE_SUB_KEYS | KEY_READ | KEY_QUERY_VALUE, &hKeyLM) == ERROR_SUCCESS)
                             {
-                                Log("[%d] GetEnvironmentVariableFixup:(A) HKLM key found.", GetEnvVarInstance);
-
+#if _DEBUG
+                                Log(L"[%d] GetEnvironmentVariableFixup:(A) HKLM key found.", GetEnvVarInstance);
+#endif
                                 LONG dLen0 = (LONG)lenBuf;
                                 auto ret00 = RegQueryValueA(hKeyLM, lpName, lpValue, &dLen0);
                                 if (ret00 == ERROR_SUCCESS)
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(A) HKLM value queried! %s", GetEnvVarInstance, lpValue);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(A) HKLM value queried! %s", GetEnvVarInstance, lpValue);
+#endif
                                     result = (DWORD)dLen0;
                                     RegCloseKey(hKeyLM);
                                     return result;
                                 }
                                 else
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(W) HKCU value Failed 0x%x.", GetEnvVarInstance, ret00);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(W) HKCU value Failed 0x%x.", GetEnvVarInstance, ret00);
+#endif
                                 }
 
                                 RegCloseKey(hKeyLM);
@@ -140,21 +164,27 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                             if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
                                 0, KEY_ENUMERATE_SUB_KEYS | STANDARD_RIGHTS_READ | KEY_QUERY_VALUE, &hKeyLM) == ERROR_SUCCESS)
                             {
-                                Log("[%d] GetEnvironmentVariableFixup:(W) HKLM key found.", GetEnvVarInstance);
+#if _DEBUG
+                                Log(L"[%d] GetEnvironmentVariableFixup:(W) HKLM key found.", GetEnvVarInstance);
+#endif
                                 DWORD type = RRF_RT_REG_SZ;
                                 DWORD dLen = lenBuf;
                                 auto ret = RegGetValueW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", lpName,
                                     RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ | RRF_ZEROONFAILURE, &type, lpValue, &dLen);
                                 if (ret == ERROR_SUCCESS)
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(W) HKLM value found %ls", GetEnvVarInstance, lpValue);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(W) HKLM value found %ls", GetEnvVarInstance, lpValue);
+#endif
                                     result = dLen;
                                     RegCloseKey(hKeyLM);
                                     return result;
                                 }
                                 else
                                 {
-                                    Log("[%d] GetEnvironmentVariableFixup:(W) HKLM value Failed 0x%x.", GetEnvVarInstance, ret);
+#if _DEBUG
+                                    Log(L"[%d] GetEnvironmentVariableFixup:(W) HKLM value Failed 0x%x.", GetEnvVarInstance, ret);
+#endif
                                 }
                                 RegCloseKey(hKeyLM);
                             }
@@ -167,37 +197,55 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                     // Sometimes HKLM\System reg items from the package are not visible to the app.  We think this is a bug, so
                     // allow a check to see if there is a value field in the JSON and use that.
                     // Of course, we should always look at the json if useregistry was set to false anyway.
-                    Log("[%d] GetEnvironmentVariableFixup: Json supplied case.", GetEnvVarInstance);
+
+#if _DEBUG
+                    Log(L"[%d] GetEnvironmentVariableFixup: Json supplied case.", GetEnvVarInstance);
+#endif
 
                     if (valuelen < lenBuf)
                     {
-                        Log("[%d] GetEnvironmentVariableFixup: Match to be returned.", GetEnvVarInstance);
+#if _DEBUG
+                        Log(L"[%d] GetEnvironmentVariableFixup: Match to be returned.", GetEnvVarInstance);
+#endif
                         // copy into lpValue, but might need form conversion
                         if constexpr (psf::is_ansi<CharT>)
                         {
+
                             std::string sval = narrow(spec.variablevalue);
-                            LogString(GetEnvVarInstance, "GetEnvironmentVariableFixup:(A) HKCU value is ", sval.c_str());
+#if _DEBUG
+                            LogString(GetEnvVarInstance, L"GetEnvironmentVariableFixup:(A) HKCU value is ", sval.c_str());
+#endif
                             ZeroMemory(lpValue, lenBuf);
                             sval.copy(lpValue, lenBuf, 0);
                             //strcpy_s(lpValue, lenBuf, sval.c_str());
-                            LogString(GetEnvVarInstance, "GetEnvironmentVariableFixup:(A) HKCU value copied is ", lpValue);
+#if _DEBUG
+                            LogString(GetEnvVarInstance, L"GetEnvironmentVariableFixup:(A) HKCU value copied is ", lpValue);
+#endif
                             result = (DWORD)sval.length();
                         }
                         else
                         {
-                            LogString(GetEnvVarInstance, "GetEnvironmentVariableFixup:(W) HKCU value is ", spec.variablevalue.data());
+#if _DEBUG
+                            LogString(GetEnvVarInstance, L"GetEnvironmentVariableFixup:(W) HKCU value is ", spec.variablevalue.data());
+#endif
                             ZeroMemory(lpValue, lenBuf);
                             spec.variablevalue.copy(lpValue, lenBuf, 0);
-                            LogString(GetEnvVarInstance, "GetEnvironmentVariableFixup:(W) HKCU value copied is ", lpValue);
+#if _DEBUG
+                            LogString(GetEnvVarInstance, L"GetEnvironmentVariableFixup:(W) HKCU value copied is ", lpValue);
+#endif
                             result = (DWORD)valuelen;
                         }
-                        Log("GetEnvironmentVariableFixup: Value saved.");
+#if _DEBUG
+                        Log(L"GetEnvironmentVariableFixup: Value saved.");
+#endif
                         SetLastError(ERROR_SUCCESS);
                         return(result);
                     }
                     else
                     {
-                        Log("GetEnvironmentVariableFixup: Match returns bufferoverflow.");
+#if _DEBUG
+                        Log(L"GetEnvironmentVariableFixup: Match returns bufferoverflow.");
+#endif
                         // return buffer overflow
                         result = ERROR_BUFFER_OVERFLOW;
                         SetLastError(ERROR_BUFFER_OVERFLOW);
@@ -208,12 +256,15 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
             }
             catch (...)
             {
-                Log("[%d] Bad Regex pattern ignored in EnvVarFixup.\n", GetEnvVarInstance);
+                Log(L"[%d] Bad Regex pattern ignored in EnvVarFixup.\n", GetEnvVarInstance);
             }
         }
 
         // If still here, make original call
-        Log("[%d] GetEnvironmentVariableFixup: No match - fall through.", GetEnvVarInstance);
+
+#if _DEBUG
+        Log(L"[%d] GetEnvironmentVariableFixup: No match - fall through.", GetEnvVarInstance);
+#endif
     }
     result = GetEnvironmentVariableImpl(lpName, lpValue, lenBuf);
     return result;
@@ -229,14 +280,18 @@ template <typename CharT>
 BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const CharT* lpValue)
 {
     DWORD SetEnvVarInstance = ++g_EnvVarInterceptInstance;
-    LogString(SetEnvVarInstance, "SetEnvironmentVariableFixup called for", lpName);
+#if _DEBUG
+    LogString(SetEnvVarInstance, L"SetEnvironmentVariableFixup called for", lpName);
+#endif
 
     auto guard = g_reentrancyGuard.enter();
     BOOL result;
 
     if (guard)
     {
-        Log("[%d] SetEnvironmentVariableFixup unguarded.", SetEnvVarInstance);
+#if _DEBUG
+        Log(L"[%d] SetEnvironmentVariableFixup unguarded.", SetEnvVarInstance);
+#endif
 
         std::wstring eName;
         if constexpr (psf::is_ansi<CharT>)
@@ -255,8 +310,9 @@ BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const 
                 {
                     if (spec.useregistry == true)
                     {
-                        Log("[%d] GetEnvironmentVariableFixup: registry case.", SetEnvVarInstance);
-
+#if _DEBUG
+                        Log(L"[%d] GetEnvironmentVariableFixup: registry case.", SetEnvVarInstance);
+#endif
                         HKEY hKeyCU;
                         if constexpr (psf::is_ansi<CharT>)
                         {
@@ -266,13 +322,17 @@ BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const 
                                 auto ret = RegSetValueExA(hKeyCU, lpName, NULL, REG_SZ, (BYTE*)lpValue, dLen);
                                 if (ret == ERROR_SUCCESS)
                                 {
-                                    Log("[%d] SetEnvironmentVariableFixup: success. %s=%s", SetEnvVarInstance, lpName, lpValue);
+#if _DEBUG
+                                    Log(L"[%d] SetEnvironmentVariableFixup: success. %s=%s", SetEnvVarInstance, lpName, lpValue);
+#endif
                                     result = 1;
                                     return result;
                                 }
                                 else
                                 {
-                                    Log("[%d] SetEnvironmentVariableFixup: Failure 0x%x.", SetEnvVarInstance, GetLastError());
+#if _DEBUG
+                                    Log(L"[%d] SetEnvironmentVariableFixup: Failure 0x%x.", SetEnvVarInstance, GetLastError());
+#endif
                                     result = 0;
                                     return result;
                                 }
@@ -286,13 +346,17 @@ BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const 
                                 auto ret = RegSetValueExW(hKeyCU, lpName, NULL, REG_SZ, (BYTE*)lpValue, dLen);
                                 if (ret == ERROR_SUCCESS)
                                 {
-                                    Log("[%d] SetEnvironmentVariableFixup: success. %ls=%ls", SetEnvVarInstance, lpName, lpValue);
+#if _DEBUG
+                                    Log(L"[%d] SetEnvironmentVariableFixup: success. %ls=%ls", SetEnvVarInstance, lpName, lpValue);
+#endif
                                     result = 1;
                                     return result;
                                 }
                                 else
                                 {
-                                    Log("[%d] SetEnvironmentVariableFixup: Failure 0x%x.", SetEnvVarInstance, GetLastError());
+#if _DEBUG
+                                    Log(L"[%d] SetEnvironmentVariableFixup: Failure 0x%x.", SetEnvVarInstance, GetLastError());
+#endif
                                     result = 0;
                                     return result;
                                 }
@@ -301,7 +365,9 @@ BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const 
                     }
                     else
                     {
-                        Log("[%d] GetEnvironmentVariableFixup: JSON case - return ACCESS_DENIED.", SetEnvVarInstance);
+#if _DEBUG
+                        Log(L"[%d] GetEnvironmentVariableFixup: JSON case - return ACCESS_DENIED.", SetEnvVarInstance);
+#endif
                         // Unable to overwrite json, return ACCESS_DENIED
                         SetLastError(ERROR_ACCESS_DENIED);
                         result = 0;
@@ -311,16 +377,16 @@ BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const 
             }
             catch (...)
             {
-#ifdef _DEBUG
-                Log("[%d] Bad Regex pattern ignored in EnvVarFixup.\n", SetEnvVarInstance);
-#endif
+                Log(L"[%d] Bad Regex pattern ignored in EnvVarFixup.\n", SetEnvVarInstance);
             }
         }
     }
 
     // If still here, make original call
-    Log("[%d] SetEnvironmentVariableFixup: No match - fall through.", SetEnvVarInstance);
 
+#if _DEBUG
+    Log(L"[%d] SetEnvironmentVariableFixup: No match - fall through.", SetEnvVarInstance);
+#endif
     result = SetEnvironmentVariableImpl(lpName, lpValue);
     return result;
 }

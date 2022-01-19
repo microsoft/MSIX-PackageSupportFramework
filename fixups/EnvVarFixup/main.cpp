@@ -6,18 +6,21 @@
 
 #define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
+#include <psf_logging.h>
 
 
 void InitializeFixups();
 void InitializeConfiguration();
-void Log(const char* fmt, ...);
+
 extern "C" {
 
     BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
     {
         if (reason == DLL_PROCESS_ATTACH)
         {
-            Log("Attaching EnvVarFixup");
+#if _DEBUG
+            Log(L"Attaching EnvVarFixup");
+#endif
 
             InitializeFixups();
             InitializeConfiguration();
@@ -27,7 +30,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log("EnvVarFixup attach ERROR");
+        Log(L"EnvVarFixup attach ERROR");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }
