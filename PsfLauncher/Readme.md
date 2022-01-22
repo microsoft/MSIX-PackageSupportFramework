@@ -21,6 +21,40 @@ If you need debugging of the fixup modules, you may include the Debug builds of 
 This debug output is more useful in debugging the fixup itself rather than debugging the app.
 If you are not interested in fixing the PSF, you would be better served to include the PsfTraceFixup for debugging instead.
 
+## About PsfLauncher and Processes needing elevation
+There is an inherent conflict that exists when an un-elevated launcher process 
+wants to start a new process with elevation, plus wants to make sure it starts inside the container,
+plus wants to start it suspended so that dll injection can occur. 
+
+Previously, this caused the target application to launch with the elevation but without the injected dlls.
+
+The internal manifest file has now been removed from PsfLauncher. 
+This change, by itself, will have no impact on any packages.
+However, this change allows someone adding the PSF into a package 
+to detect situationw where the internal manifest file settings of 
+the target executable to be started by the launcher, and to then add an additional external
+manifest file to the PsfLauncher copy inside the package.  
+
+This external manifest file would use the same name 
+as that used for the PsfLauncher copy in the package 
+with a `.manifest` file extension added after the `.exe`.
+The external manifest file only needs the `requestedExecutionLevel` settings for `level` and `uiAccess` (all additional manifest settings from the target should be ignogred).
+
+Here is an example external manifest file:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<assembly xmlns:amsv3="urn:schemas-microsoft-com:asm.v3" manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+	<amsv3:trustInfo>
+		<security>
+			<requestedPrivileges>
+				<requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+			</requestedPrivileges>
+		</security>
+	</amsv3:trustInfo>
+</assembly>
+```
+
+
 ## Configuration
 PSF Launcher uses a config.json file to configure the behavior.
 This file is normally placed in the root folder of the package, however it may be put anywhere in the package.

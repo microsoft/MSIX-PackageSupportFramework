@@ -26,7 +26,8 @@
 
 #include "Config.h"
 #include <StartInfo_helper.h>
-
+#include <TlHelp32.h>
+#include <shellapi.h>
 
 using namespace std::literals;
 
@@ -136,6 +137,136 @@ std::wstring FixDllBitness(std::wstring originalName, USHORT bitness)
         targetDll = std::wstring(originalName);
     }
     return targetDll;
+}
+
+std::string ExtractCommandLine(LPSTR commandline)
+{
+    std::string cmdline = commandline;
+    std::string cmdonly;
+    size_t inx;
+    if (cmdline._Starts_with("\""))
+    {
+        inx = cmdline.substr(1).find_first_of("\"") + 2;
+        cmdonly = cmdline.substr(0, inx);
+    }
+    else if (cmdline._Starts_with("\'"))
+    {
+        inx = cmdline.substr(1).find_first_of("\'") + 2;
+        cmdonly = cmdline.substr(0, inx);
+    }
+    else
+    {
+        inx = cmdline.find_first_of(" ");
+        if (inx != std::string::npos)
+        {
+            cmdonly = cmdline.substr(0, inx - 1);
+        }
+        else
+            cmdonly = cmdline;
+    }
+    return cmdonly;
+}
+std::wstring ExtractCommandLine(LPWSTR commandline)
+{
+    std::wstring cmdline = commandline;
+    std::wstring cmdonly;
+    size_t inx;
+    if (cmdline._Starts_with(L"\""))
+    {
+        inx = cmdline.substr(1).find_first_of(L"\"") + 2;
+        cmdonly = cmdline.substr(0, inx);
+    }
+    else if (cmdline._Starts_with(L"\'"))
+    {
+        inx = cmdline.substr(1).find_first_of(L"\'") + 2;
+        cmdonly = cmdline.substr(0, inx);
+    }
+    else
+    {
+        inx = cmdline.find_first_of(L" ");
+        if (inx != std::wstring::npos)
+        {
+            cmdonly = cmdline.substr(0, inx - 1);
+        }
+        else
+            cmdonly = cmdline;
+    }
+    return cmdonly;
+}
+
+std::string ExtractArgs(LPSTR commandline)
+{
+    std::string cmdline = commandline;
+    std::string args = commandline;
+    size_t inx;
+    if (cmdline._Starts_with("\""))
+    {
+        inx = cmdline.substr(1).find_first_of("\"") + 2;
+        if (cmdline.length() > inx)
+            args = cmdline.substr(inx);
+        else
+            args = "";
+    }
+    else if (cmdline._Starts_with("\'"))
+    {
+        inx = cmdline.substr(1).find_first_of("\'") + 2;
+        if (cmdline.length() > inx)
+            args = cmdline.substr(inx);
+        else
+            args = "";
+    }
+    else
+    {
+        inx = cmdline.find_first_of(" ");
+        if (inx != std::string::npos)
+        {
+            args = cmdline.substr(inx);
+        }
+        else
+        {
+            args = "";
+        }
+    }
+    if (args.compare(" ") == 0)
+        args = "";
+    return args;
+}
+std::wstring ExtractArgs(LPWSTR commandline)
+{
+    std::wstring cmdline = commandline;
+    std::wstring args;
+    size_t inx;
+    if (cmdline._Starts_with(L"\""))
+    {
+        inx = cmdline.substr(1).find_first_of(L"\"") + 2;
+        if (cmdline.length() > inx)
+            args = cmdline.substr(inx);
+        else
+            args = L"";
+    }
+    else if (cmdline._Starts_with(L"\'"))
+    {
+        inx = cmdline.substr(1).find_first_of(L"\'") + 2;
+        if (cmdline.length() > inx)
+            args = cmdline.substr(inx);
+        else
+            args = L"";
+    }
+    else
+    {
+        inx = cmdline.find_first_of(L" ");
+        if (inx != std::wstring::npos)
+        {
+            args = cmdline.substr(inx);
+        }
+        else
+        {
+            args = L"";
+        }
+    }
+    if (args.compare(L" ") == 0)
+        args = L"";
+    return args;
 }
 
 auto CreateProcessImpl = psf::detoured_string_function(&::CreateProcessA, &::CreateProcessW);
@@ -267,6 +398,8 @@ BOOL WINAPI CreateProcessFixup(
         else
         {
             Log(L"\tCreateProcessFixup: Add Extended StartupInfo to force running inside container.");
+            // There are situations where processes jump out of the container and this helps to make them stay within.
+            // Both cmd and powershell are such cases.
             PossiblyModifiedCreationFlags |= EXTENDED_STARTUPINFO_PRESENT;
             if constexpr (psf::is_ansi<CharT>)
             {
@@ -347,11 +480,117 @@ BOOL WINAPI CreateProcessFixup(
         processInformation) == FALSE )
     {
         DWORD err = GetLastError();
-        Log(L"\tCreateProcessFixup: Creation returned false trying to force in container without prot 0x%x retry with prot.", err);
-        Log(L"\tCreateProcessFixup: pid reported as 0x%x", processInformation->dwProcessId);
-        if (processInformation->dwProcessId == 0)
+        if (err == 0x2e4)
         {
-            return FALSE;
+            // The app requires elevation, so try it this way.  Not perfect.
+            // The better solution is to determine the need during packaging and add
+            // an external manifest file to Psflauncher to elevate first.
+            if ((creationFlags & EXTENDED_STARTUPINFO_PRESENT) != 0)
+            {
+                SHELLEXECUTEINFO* shExInfo;
+                SHELLEXECUTEINFOA shExInfoA;
+                SHELLEXECUTEINFOW shExInfoW;
+                std::string cmdA;
+                std::string argsA;
+                std::wstring cmdW;
+                std::wstring argsW;
+                if constexpr (psf::is_ansi<CharT>)
+                {
+                    shExInfoA.cbSize = sizeof(shExInfoA);
+                    shExInfoA.fMask = 0x00000040; // SEE_MASK_NOCLOSEPROCESS;
+                    shExInfoA.hwnd = 0;
+                    shExInfoA.lpVerb = "runas";
+                    cmdA = ExtractCommandLine(commandLine);
+                    shExInfoA.lpFile = cmdA.c_str();
+                    argsA = ExtractArgs(commandLine);
+                    shExInfoA.lpParameters = argsA.c_str();
+                    shExInfoA.lpDirectory = currentDirectory;
+                    shExInfoA.nShow = MyReplacementStartupInfo->StartupInfo.wShowWindow;
+                    shExInfoA.hInstApp = 0;
+                    shExInfo = reinterpret_cast<SHELLEXECUTEINFO*>(&shExInfoA);
+                }
+                else
+                {
+                    shExInfoW.cbSize = sizeof(shExInfoW);
+                    shExInfoW.fMask = 0x00000040; // SEE_MASK_NOCLOSEPROCESS;
+                    shExInfoW.hwnd = 0;
+                    shExInfoW.lpVerb = L"runas";               // Operation to perform
+                    cmdW = ExtractCommandLine(commandLine);
+                    shExInfoW.lpFile = cmdW.c_str();
+                    argsW = ExtractArgs(commandLine);
+                    shExInfoW.lpParameters = argsW.c_str();
+                    shExInfoW.lpDirectory = currentDirectory;
+                    shExInfoW.nShow = MyReplacementStartupInfo->StartupInfo.wShowWindow;
+                    shExInfoW.hInstApp = 0;
+                    shExInfo = reinterpret_cast<SHELLEXECUTEINFO*>(&shExInfoW);
+                }
+
+                BOOL resp;
+                if constexpr (psf::is_ansi<CharT>)
+                {
+                    resp = ::ShellExecuteExA(&shExInfoA);
+                }
+                else
+                {
+                    resp = ::ShellExecuteExW(&shExInfoW);
+                }
+                if (resp)
+                {
+                    processInformation->dwProcessId = GetProcessId(shExInfo->hProcess);
+                    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, processInformation->dwProcessId);
+                    if (hSnap != INVALID_HANDLE_VALUE)
+                    {
+                        THREADENTRY32 lpte;
+                        lpte.dwSize = sizeof(lpte);
+                        BOOL b = Thread32First(hSnap, &lpte);
+                        if (b)
+                        {
+                            processInformation->dwThreadId = lpte.th32ThreadID;
+                            processInformation->hThread = OpenThread(THREAD_SUSPEND_RESUME, false, processInformation->dwThreadId);
+                            if (processInformation->hThread != INVALID_HANDLE_VALUE)
+                            {
+                                DWORD dRet = ::SuspendThread(processInformation->hThread);
+                                if (dRet == 0)
+                                {
+                                    ;
+                                }
+                            }
+                            processInformation->hProcess = shExInfo->hProcess;
+                        }
+                        CloseHandle(hSnap);
+                    }
+                }
+            }
+            else
+            {
+                // just remove the added startup info
+                PossiblyModifiedCreationFlags = creationFlags | CREATE_SUSPENDED;
+                if (::CreateProcessImpl(
+                    applicationName,
+                    commandLine,
+                    processAttributes,
+                    threadAttributes,
+                    inheritHandles,
+                    PossiblyModifiedCreationFlags,
+                    environment,
+                    currentDirectory,
+                    startupInfo,
+                    processInformation) == FALSE)
+                {
+                    // looks bad, have no idea why or what to do here if here.
+                    err = GetLastError();
+                    return FALSE;
+                }
+            }
+        }
+        else
+        {
+            Log(L"\tCreateProcessFixup: Creation returned false trying to force in container without prot 0x%x retry with prot.", err);
+            Log(L"\tCreateProcessFixup: pid reported as 0x%x", processInformation->dwProcessId);
+            if (processInformation->dwProcessId == 0)
+            {
+                return FALSE;
+            }
         }
 #if NONO
         // This is some test code to try starting the process in different ways.  

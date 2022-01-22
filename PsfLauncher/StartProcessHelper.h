@@ -60,7 +60,7 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
 
-    return exitCode; // ERROR_SUCCESS;
+    return ERROR_SUCCESS;  // Some apps return codes even when happy.
 }
 
 void StartWithShellExecute(LPCWSTR verb, std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow, DWORD timeout)
