@@ -22,7 +22,7 @@
 #include <strsafe.h>
 #pragma warning(pop)
 
-// #define DETOUR_DEBUG 1
+//#define DETOUR_DEBUG 1
 #define DETOURS_INTERNAL
 
 #include "detours.h"
@@ -148,7 +148,7 @@ static HMODULE WINAPI EnumerateModulesInProcess(HANDLE hProcess,
 //
 // Find a region of memory in which we can create a replacement import table.
 //
-static PBYTE FindAndAllocateNearBase(HANDLE hProcess, PBYTE pbBase, DWORD cbAlloc)
+static PBYTE FindAndAllocateNearBase(HANDLE hProcess, [[maybe_unused]] PBYTE pbModule, PBYTE pbBase, DWORD cbAlloc)
 {
     MEMORY_BASIC_INFORMATION mbi;
     ZeroMemory(&mbi, sizeof(mbi));
@@ -175,6 +175,14 @@ static PBYTE FindAndAllocateNearBase(HANDLE hProcess, PBYTE pbBase, DWORD cbAllo
         // Skip anything other than a pure free region.
         //
         if (mbi.State != MEM_FREE) {
+            DETOUR_TRACE(("FindAndAllocateNearBase(1) skip because region is not free.\n"));
+            continue;
+        }
+
+        // Not sure why the code never cheked this, but it should
+        if (mbi.RegionSize < cbAlloc)
+        {
+            DETOUR_TRACE(("FindAndAllocateNearBase(1) skip because region is too small.\n"));
             continue;
         }
 
@@ -182,13 +190,16 @@ static PBYTE FindAndAllocateNearBase(HANDLE hProcess, PBYTE pbBase, DWORD cbAllo
 
 #ifdef _WIN64
 
-        // The distance from pbBase to pbAddress must fit in 32 bits.
+        // The distance from the end of memory to allocated to pbModule must fit in 32 bits.
         //
         const size_t GB4 = ((((size_t)1) << 32) - 1);
-        if ((size_t)(pbAddress - pbBase) > GB4) {
+        if ((size_t)(pbAddress + cbAlloc - 1 - pbModule) > GB4) 
+        {
             DETOUR_TRACE(("FindAndAllocateNearBase(1) failing due to distance >4GB %p\n", pbAddress));
             return NULL;
         }
+
+ 
 #endif
 
         DETOUR_TRACE(("Free region %p..%p\n",
@@ -205,7 +216,8 @@ static PBYTE FindAndAllocateNearBase(HANDLE hProcess, PBYTE pbBase, DWORD cbAllo
 #ifdef _WIN64
             // The distance from pbBase to pbAddress must fit in 32 bits.
             //
-            if ((size_t)(pbAddress - pbBase) > GB4) {
+            if ((size_t)(pbAddress + cbAlloc - 1 - pbModule) > GB4) 
+            {
                 DETOUR_TRACE(("FindAndAllocateNearBase(2) failing due to distance >4GB %p\n", pbAddress));
                 return NULL;
             }
