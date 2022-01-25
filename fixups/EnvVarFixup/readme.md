@@ -26,7 +26,9 @@ Each element of the array has the following structure:
 | ------------ | ----------- |
 | `name`| This is the name as requested by the application. This will be the name of the file, without any path information and without the filename extension.|
 | `filepath`| The filepath relative to the root folder of the package. |
+| `achitecure`| An optional value to speficy the 'bitness' of the dll.  Supported values include `x86`, `x64`, and `anyCPU`. When not specified, no checking for archtecture of the process and dll will be made.|
 
+The `architecure` is optional and normally need not be specified for simplicity. It is included because sometimes an app contains both 32 and 64 bit exes for different purposes that need to load the correct version of the same named dll, typically stored in a different folder. When the package has this situation, it is then necessary to specify the architecture.  The fixup for LoadDll will match up the appropriate version of the dll based on the process it is running under.
 
 # JSON Examples
 To make things simpler to understand, here is a potential example configuration object that is not using the optional parameters:
@@ -46,7 +48,14 @@ To make things simpler to understand, here is a potential example configuration 
         ,
         {
             "name" : "DllNameX",
-            "filepath" : "filepathX"
+            "filepath" : "VFS\ProgramFilesX84\Vendor\App\x64\DllNameX.dll",
+            "architecture" : "x64"
+        }
+        ,
+        {
+            "name" : "DllNameX",
+            "filepath" : "VFS\ProgramFilesX84\Vendor\App\32bit\DllNameX.dll",
+            "architecture" : "x86"
         }
     ]
 }

@@ -48,11 +48,51 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
                     {
+                        bool useThis = true;
+                        BOOL procTest = false;
+                        switch (spec.architecture)
+                        {
+                        case x86:
+                            if (IsWow64Process(GetCurrentProcess(), &procTest))
+                            {
+                                if (procTest == FALSE)
+                                {
+                                    // 32 bit process on an x64 OS
+                                    useThis = true;
+                                }
+                            }
+                            else
+                            {
+                                // 32bit OS
+                                useThis = true;
+                            }
+                            break;
+                        case x64:
+                            if (IsWow64Process(GetCurrentProcess(), &procTest))
+                            {
+                                if (procTest == TRUE)
+                                {
+                                    // 64 bit process on an x64 OS
+                                    useThis = true;
+                                }
+                            }
+                            break;
+                        case AnyCPU:
+                            useThis = true;
+                            break;
+                        case NotSpecified:
+                        default:
+                            break;
+                        }
+
+                        if (useThis)
+                        {
 #if _DEBUG
-                        LogString(L"LoadLibraryFixup using", spec.full_filepath.c_str());
+                            LogString(L"LoadLibraryFixup using", spec.full_filepath.c_str());
 #endif
-                        result = LoadLibraryImpl(spec.full_filepath.c_str());
-                        return result;
+                            result = LoadLibraryImpl(spec.full_filepath.c_str());
+                            return result;
+                        }
                     }
                 }
                 catch (...)

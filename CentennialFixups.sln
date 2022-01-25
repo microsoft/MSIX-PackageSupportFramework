@@ -32,6 +32,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FEAB7FE0-E02D-4276-AEF8-BF6E8F48B55D}"
 	ProjectSection(SolutionItems) = preProject
 		MetadataSchema.xsd = MetadataSchema.xsd
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DynamicLibraryFixup", "fixups\DynamicLibraryFixup\DynamicLibraryFixup.vcxproj", "{40F9058D-8059-4ED4-859E-7A548A73CA4F}"

@@ -5,8 +5,16 @@
 //-------------------------------------------------------------------------------------------------------
 #pragma once
 
+typedef enum dllBitness
+{
+    x86,
+    x64,
+    AnyCPU,
+    NotSpecified
+} DllBitness;
 struct dll_location_spec
 {
     std::filesystem::path full_filepath;
     std::wstring_view filename;
+    dllBitness architecture;
 };

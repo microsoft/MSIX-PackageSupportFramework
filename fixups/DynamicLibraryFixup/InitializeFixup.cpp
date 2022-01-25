@@ -85,9 +85,27 @@ void InitializeConfiguration()
                         auto relpath = specObject.get("filepath").as_string().wstring();
                         std::filesystem::path fullpath = g_dynf_packageRootPath / relpath;
 
+                        dllBitness bitness = NotSpecified;
+                        if (auto arch = specObject.try_get("architecture"))
+                        {
+                            auto wArch = arch->as_string().wstring();
+                            if (wArch.compare(L"x86"))
+                            {
+                                bitness = x86;
+                            }
+                            else if (wArch.compare(L"x86"))
+                            {
+                                bitness = x64;
+                            }
+                            else if (wArch.compare(L"anyCPU"))
+                            {
+                                bitness = AnyCPU;
+                            }
+                        }
                         g_dynf_dllSpecs.emplace_back();
                         g_dynf_dllSpecs.back().full_filepath = fullpath;
                         g_dynf_dllSpecs.back().filename = filename;
+                        g_dynf_dllSpecs.back().architecture = bitness;
                         count++;
                     };
 #if _DEBUG
