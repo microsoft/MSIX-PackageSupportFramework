@@ -19,6 +19,10 @@
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
 
+#if _DEBUG
+#define MOREDEBUG 1
+#endif
+
 using namespace std::literals;
 
 std::filesystem::path g_dynf_packageRootPath;
@@ -80,15 +84,16 @@ void InitializeConfiguration()
                     {
                         auto& specObject = spec.as_object();
 
-                        auto filename = specObject.get("name").as_string().wstring();
+                        std::wstring_view filename = specObject.get("name").as_string().wstring();
 
                         auto relpath = specObject.get("filepath").as_string().wstring();
                         std::filesystem::path fullpath = g_dynf_packageRootPath / relpath;
 
                         dllBitness bitness = NotSpecified;
+                        std::wstring wArch = L"";
                         if (auto arch = specObject.try_get("architecture"))
                         {
-                            auto wArch = arch->as_string().wstring();
+                            wArch = arch->as_string().wstring();
                             if (wArch.compare(L"x86"))
                             {
                                 bitness = x86;
@@ -106,6 +111,9 @@ void InitializeConfiguration()
                         g_dynf_dllSpecs.back().full_filepath = fullpath;
                         g_dynf_dllSpecs.back().filename = filename;
                         g_dynf_dllSpecs.back().architecture = bitness;
+#if MOREDEBUG
+                        Log(L"DynamicLibraryFixup: %s : (%s) : %s", filename.data(), wArch.c_str(), fullpath.c_str());
+#endif
                         count++;
                     };
 #if _DEBUG

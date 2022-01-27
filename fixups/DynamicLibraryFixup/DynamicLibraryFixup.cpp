@@ -8,6 +8,10 @@
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
 
+#if _DEBUG
+#define MOREDEBUG 1
+#endif
+
 extern bool                  g_dynf_forcepackagedlluse;
 extern std::vector<dll_location_spec> g_dynf_dllSpecs;
 
@@ -25,7 +29,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     if (guard)
     {
 #if _DEBUG
-        //Log(L"LoadLibraryFixup unguarded.");
+        Log(L"LoadLibraryFixup unguarded.");
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = GetFilenameOnly(InterpretStringW(libFileName));
@@ -42,8 +46,8 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 #endif
                 try
                 {
-#if _DEBUG
-                    //LogString(L"LoadLibraryFixup testing against", spec.filename.data());
+#if MOREDEBUG
+                    LogString(L"LoadLibraryFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
@@ -100,6 +104,10 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                     Log(L"LoadLibraryFixup ERROR");
                 }
             }
+
+#if _DEBUG
+            Log(L"LoadLibraryFixup found no match.");
+#endif
         }
     }
     result = LoadLibraryImpl(libFileName);
