@@ -22,7 +22,7 @@
                   "base": "",
                   "patterns": [
                     ".*\\.txt",
-                    "TestIniFile.ini",
+                    ".*\\.ini",
                     "Tèƨƭ.*"
                   ]
                 }
