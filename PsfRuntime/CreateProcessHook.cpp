@@ -288,12 +288,23 @@ BOOL WINAPI CreateProcessFixup(
             Log("\tAttempt injection into %d using %s", processInformation->dwProcessId, targetDllPath);
             if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
             {
-                Log("\t%ls unable to inject, skipping.", targetDllPath);
+                Log("\t%s not found at target folder, try PsfRunDll.", targetDllPath);
+                // We failed to detour the created process. Assume that the failure was due to an architecture mis-match
+                // and try the launch using PsfRunDll
+                if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
+                {
+                    // Could not detour the target process, so return failure
+                    auto err = ::GetLastError();
+                    Log("\tUnable to inject %ls into PID=%d err=0x%x\n", targetDllPath, processInformation->dwProcessId, err);
+                    ::TerminateProcess(processInformation->hProcess, ~0u);
+                    ::CloseHandle(processInformation->hProcess);
+                    ::CloseHandle(processInformation->hThread);
+
+                    ::SetLastError(err);
+                    return FALSE;
+                }
             }
-            else
-            {
-                Log("\tInjected %ls into PID=%d\n", wtargetDllName.c_str(), processInformation->dwProcessId);
-            }
+            Log("\tInjected %ls into PID=%d\n", wtargetDllName.c_str(), processInformation->dwProcessId);
         }
         else
         {
