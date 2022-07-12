@@ -53,5 +53,12 @@
 							Square44x44Logo="Assets\Logo44x44.png"
 							Description="No description entered" />
 		</Application>
-  </Applications>
+		<Application Id="PSWaitForScriptToFinish" Executable="PsfLauncher.exe" EntryPoint="Windows.FullTrustApplication">
+			<uap:VisualElements BackgroundColor="transparent"
+							DisplayName="PS with WaitForSctiptToFinish field"
+							Square150x150Logo="Assets\Logo150x150.png"
+							Square44x44Logo="Assets\Logo44x44.png"
+							Description="No description entered" />
+		</Application>
+	</Applications>
 </Package>

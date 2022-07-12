@@ -36,7 +36,10 @@
     <Content Include="StartingScriptWrapper.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Text Include="FileMapping.txt" />
+	<Content Include="WaitAndSayHello.ps1">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
+	  <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppxManifest.xml" />

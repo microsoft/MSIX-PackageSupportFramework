@@ -194,7 +194,8 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			pwrShellThread.detach();
 		}
 	}
 
