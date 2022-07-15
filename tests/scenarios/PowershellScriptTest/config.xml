@@ -36,6 +36,15 @@
           <runOnce>false</runOnce>
         </startScript>
       </application>
+      <application>
+        <id>PSWaitForScriptToFinish</id>
+        <executable>PowershellScriptTest.exe</executable>
+        <startScript>
+          <scriptPath>WaitAndSayHello.ps1</scriptPath>
+		  <showWindow>true</showWindow>
+		  <waitForScriptToFinish>false</waitForScriptToFinish>
+		</startScript>
+      </application>
     </applications>
     <processes>
       <process>

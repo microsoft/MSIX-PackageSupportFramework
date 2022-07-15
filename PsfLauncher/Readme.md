@@ -305,7 +305,7 @@ The use of scriptExecutionMode may only be necessary in environments when Group 
 | applications | stopOnScriptError| (Optional) Boolean. Indicates that if a startScript returns an error then the launch of the application should be skipped. |
 | applications | ScriptExecutionMode | (Optional) String value that will be added to the powershell launch of any startScript or endScript. |
 | applications | startScript | (Optional) If present, used to define a PowerShell script that will be run prior running the application executable. |
-| | |  `'waitForScriptToFinish'` - (Optional, default=false) Boolean. When true, PsfLauncher will wait for the script to complete or timeout before running the application executable. |
+| | |  `'waitForScriptToFinish'` - (Optional, default=true) Boolean. When true, PsfLauncher will wait for the script to complete or timeout before running the application executable. |
 | | | `'timeout'` - (Optional, default is none) Expressed in ms.  Only applicable if waitForScriptToFinish is true.  If a timeout occurs it is treated as an error for the purpose of `'stopOnScriptError'`. The value 0 means an immediate timeout, if you do not want a timeout do not specify a value. |
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |

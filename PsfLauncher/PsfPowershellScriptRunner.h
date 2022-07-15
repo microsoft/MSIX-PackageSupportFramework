@@ -194,7 +194,8 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			pwrShellThread.detach();
 		}
 	}
 
@@ -305,7 +306,7 @@ private:
 		}
 		std::wstring commandString = L"Powershell.exe ";
 		commandString.append(scriptExecutionMode);
-		commandString.append(L" -file \'" + SSWrapper.native() + L"\'"); /// StartingScriptWrapper.ps1 ");
+		commandString.append(L" -file \"" + SSWrapper.native() + L"\" "); /// StartingScriptWrapper.ps1 ");
 		commandString.append(L"\"");
 
 
@@ -318,16 +319,16 @@ private:
 		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
 		if (dequotedScriptPath.is_absolute())
 		{
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 		}
 		else
 		{
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 			commandString.append(L".\\");
 			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 		}
 
 		//Script arguments are optional.

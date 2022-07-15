@@ -34,6 +34,7 @@ static constexpr const wchar_t* g_applications[] =
     L"PowershellScriptTest_8wekyb3d8bbwe!PSOnlyStart",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSBothStartingFirst",
     L"PowershellScriptTest_8wekyb3d8bbwe!PSScriptWithArg",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PSWaitForScriptToFinish",
     L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed32",
     L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed64",
     L"RegLegacyTest_8wekyb3d8bbwe!Fixed32",
