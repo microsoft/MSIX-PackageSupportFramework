@@ -92,8 +92,9 @@ int wmain(int argc, const wchar_t** argv)
     }
     else if (testType.compare(L"pswaitforscripttofinish") == 0)
     {
+       result = ERROR_ASSERTION_FAILURE;
        if (!doesHelloExist) 
-        {
+       {
            // wait for 5sec and check if file exists
            Sleep(5000);
            doesHelloExist = DoesFileExist(localAppDataPath, L"Hello.txt");
@@ -101,6 +102,14 @@ int wmain(int argc, const wchar_t** argv)
            {
                result = ERROR_FILE_NOT_FOUND;
            }
+           else
+           {
+               result = ERROR_SUCCESS;
+           }
+       }
+       else
+       {
+           std::wcout << error_text() << L"ERROR: Script executed before application start. \n";
        }
     }
 
