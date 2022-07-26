@@ -310,13 +310,13 @@ The use of scriptExecutionMode may only be necessary in environments when Group 
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
-| | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
+| | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. Multiple arguments(and arguments with space) are provided by enclosing each argument in single quote. ("scriptArguments": "'<Arg1>' '<Arg2>'"). |
 | applications | endScript | (Optional) If present, used to define a PowerShell script that will be run after completion of the application executable. |
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
-| processes | executable | In most cases, this will be the name of the `executable` configured above with the path and file extension removed. |
+| processes | executable | In most cases, this will be the name of the `executable` configured above with the path and file extension removed. Multiple arguments(and arguments with space) are provided by enclosing each argument in single quote. ("scriptArguments": "'<Arg1>' '<Arg2>'").|
 | fixups | dll | Package-relative path to the fixup, .msix/.appx  to load. |
 | fixups | config | (Optional) Controls how the fixup dl behaves. The exact format of this value varies on a fixup-by-fixup basis as each fixup can interpret this "blob" as it wants. |
 
