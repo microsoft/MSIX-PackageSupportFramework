@@ -19,7 +19,7 @@ Currently, there is only one remediation type:
 | `ModifyKeyAccess` | Allows for modification of access parameters in calls to open registry keys.  This remediation targets the `samDesired` parameter that specifies the permissions granted to the application when opening the key. This remediation type does not target calls for registry values.|
 
 ## Configuration
-The configuration for the Registry Legacy Fixups is specified in the element `config` of the fixup structure within the `proceses` section of the json file when RegLegacyFixups.dll is requested.
+The configuration for the Registry Legacy Fixups is specified in the element `config` of the fixup structure within the `processes` section of the json file when RegLegacyFixups.dll is requested.
 
 The `config` element for RegLegacyFixups.dll is an array of remediations.  Each remediation has three elements:
 
