@@ -13,7 +13,8 @@ using namespace std::literals;
 enum  Reg_Remediation_Types
 {
     Reg_Remediation_Type_Unknown = 0,
-    Reg_Remediation_Type_ModifyKeyAccess
+    Reg_Remediation_Type_ModifyKeyAccess,
+    Reg_Remediation_type_FakeDelete
 };
 
 enum Modify_Key_Access_Types
@@ -32,6 +33,7 @@ enum Modify_Key_Hive_Types
     Modify_Key_Hive_Type_HKCU = 1,
     Modify_Key_Hive_Type_HKLM = 2,
 };
+
 struct Modify_Key_Access
 {
     Modify_Key_Hive_Types hive;
@@ -39,16 +41,23 @@ struct Modify_Key_Access
     Modify_Key_Access_Types access;
 };
 
+struct Fake_Delete_Key
+{
+    Modify_Key_Hive_Types hive;
+    std::vector<std::wstring> patterns;
+};
+
 struct Reg_Remediation_Record
 {
-        Modify_Key_Access modifyKeyAccess;
-        // for future types
+    Reg_Remediation_Types remeditaionType;
+    Modify_Key_Access modifyKeyAccess;
+    Fake_Delete_Key fakeDeleteKey;
 };
 
 struct Reg_Remediation_Spec
 {
     Reg_Remediation_Types remeditaionType;
-    std::vector<Reg_Remediation_Record> remediationRecords;   
-}; 
+    std::vector<Reg_Remediation_Record> remediationRecords;
+};
 
 extern std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;

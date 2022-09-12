@@ -13,7 +13,7 @@
 using namespace std::literals;
 
 int wmain(int argc, const wchar_t** argv)
-{
+{    
     std::map<std::wstring_view, std::wstring> allowedArgs;
     allowedArgs.emplace(L"/launchChild"sv, L"true");
     auto result = parse_args(argc, argv, allowedArgs);

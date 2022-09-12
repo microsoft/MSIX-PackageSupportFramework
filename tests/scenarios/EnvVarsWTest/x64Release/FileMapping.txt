@@ -1,0 +1,15 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+"Registry.Dat" "Registry.dat"
+"User.Dat" "User.dat"
+"UserClasses.Dat" "UserClasses.dat"
+
+"..\..\x64\Release\EnvVarsWTest.exe" "EnvVarsWTest.exe"
+
+"..\..\..\x64\Release\PsfLauncher64.exe" "PsfLauncher.exe"
+"..\..\..\x64\Release\PsfRuntime64.dll" "PsfRuntime64.dll"
+"..\..\..\x64\Release\EnvVarFixup64.dll" "EnvVarFixup64.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

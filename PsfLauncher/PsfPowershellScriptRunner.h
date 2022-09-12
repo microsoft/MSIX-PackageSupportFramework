@@ -194,7 +194,8 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			pwrShellThread.detach();
 		}
 	}
 
@@ -202,7 +203,7 @@ private:
 	{
 		ScriptInformation scriptStruct;
 		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
-		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath), packageRoot, packageWritableRoot);
+		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptExecutionMode, scriptStruct.scriptPath, packageRoot), packageRoot, packageWritableRoot);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
@@ -289,12 +290,25 @@ private:
 
 	}
 
-	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath)
+	std::wstring MakeCommandString(const psf::json_object& scriptInformation, const std::wstring& scriptExecutionMode, const std::wstring& scriptPath, const std::filesystem::path packageRoot)
 	{
+		std::filesystem::path SSWrapper = L"StartingScriptWrapper.ps1";
+		if (!std::filesystem::exists(SSWrapper))
+		{
+			// The wrapper isn't in this folder, so we should search for it elewhere in the package.
+			for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
+			{
+				if (file.path().filename().compare(SSWrapper) == 0)
+				{
+					SSWrapper = file.path();
+				}
+			}
+		}
 		std::wstring commandString = L"Powershell.exe ";
 		commandString.append(scriptExecutionMode);
-		commandString.append(L" -file StartingScriptWrapper.ps1 ");
+		commandString.append(L" -file \"" + SSWrapper.native() + L"\" "); /// StartingScriptWrapper.ps1 ");
 		commandString.append(L"\"");
+
 
 		// ScriptWrapper uses invoke-expression so we need the expression to launch another powershell to run a file with arguments.
 		commandString.append(L"Powershell.exe ");
@@ -305,16 +319,16 @@ private:
 		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
 		if (dequotedScriptPath.is_absolute())
 		{
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 		}
 		else
 		{
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 			commandString.append(L".\\");
 			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 		}
 
 		//Script arguments are optional.
@@ -443,7 +457,16 @@ private:
 		}
 		else if (createResult != ERROR_SUCCESS)
 		{
-			THROW_HR_MSG(HRESULT_FROM_WIN32(createResult), "Error with getting the key to see if PowerShell is installed.");
+			// Certain systems lack the 1 key but have the 3 key (both point to same path)
+			createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\3", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+			if (createResult == ERROR_FILE_NOT_FOUND)
+			{
+				return false;
+			}
+			else if (createResult != ERROR_SUCCESS)
+			{
+				THROW_HR_MSG(HRESULT_FROM_WIN32(createResult), "Error with getting the key to see if PowerShell is installed.");
+			}
 		}
 
 		DWORD valueFromRegistry = 0;

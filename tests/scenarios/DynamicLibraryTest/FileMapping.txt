@@ -2,7 +2,7 @@
 "AppxManifest.xml" "AppxManifest.xml"
 "config.json" "config.json"
 
-"..\..\${Architecture}${Configuration}\DynamicLibraryTest${Bitness}.exe" "DynamicLibraryTest.exe"
+"..\..\${Architecture}${Configuration}\DynamicLibraryTest.exe" "DynamicLibraryTest.exe"
 
 "..\..\..\${Architecture}${Configuration}\PsfLauncher${Bitness}.exe" "PsfLauncher.exe"
 "..\..\..\${Architecture}${Configuration}\PsfRuntime${Bitness}.dll" "PsfRuntime${Bitness}.dll"

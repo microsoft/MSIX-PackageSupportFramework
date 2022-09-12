@@ -23,6 +23,7 @@
                               <base></base>
                               <patterns>
                                 <pattern>.*\\.txt</pattern>
+                                <pattern>.*\\.ini</pattern>
                                 <pattern>Tèƨƭ.*</pattern>
                               </patterns>
                             </pathConfig>

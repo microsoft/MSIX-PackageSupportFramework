@@ -1201,6 +1201,12 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     }
     LogString(inst, L"\tFRF Should: for path", widen(path).c_str());
     
+    size_t found = (widen(path)).find(L"WritablePackageRoot", 0);
+    if (found != std::wstring::npos)
+    {
+        LogString(inst, L"Prevent redundant redirection.", widen(path).c_str());
+        return result;
+    }
 
     bool c_presense = flag_set(flags, redirect_flags::check_file_presence);
     bool c_copy = flag_set(flags, redirect_flags::copy_file);
@@ -1263,54 +1269,61 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             // Otherwise exact match. Assume an implicit directory separator at the end (e.g. for matches to satisfy the
             // first call to CreateDirectory
             LogString(inst, L"\t\t\tFRF relativePath",relativePath);
-            if (std::regex_match(relativePath, redirectSpec.pattern))
+            try
             {
-                if (redirectSpec.isExclusion)
+                if (std::regex_match(relativePath, redirectSpec.pattern))
                 {
-                    // The impact on isExclusion is that redirection is not needed.
-                    result.should_redirect = false;
-                    LogString(inst, L"\t\tFRF CASE:Exclusion for path", path);
-                }
-                else
-                {
-                    result.should_redirect = true;
-                    result.shouldReadonly = (redirectSpec.isReadOnly == true);			
-
-                    // Check if file exists as VFS path in the package
-                    if (impl::PathExists(vfspath.drive_absolute_path))
+                    if (redirectSpec.isExclusion)
                     {
-                        Log(L"[%d]\t\t\tFRF CASE:match, existing in package.", inst);
-                        destinationTargetBase = redirectSpec.redirect_targetbase;
-                        result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase,inst);
+                        // The impact on isExclusion is that redirection is not needed.
+                        result.should_redirect = false;
+                        LogString(inst, L"\t\tFRF CASE:Exclusion for path", path);
                     }
                     else
                     {
-                        Log(L"[%d]\t\t\tFRF CASE:match, not existing in package.",inst);
-                        // If the folder above it exists, we might want to redirect anyway?
-                        std::filesystem::path abs = vfspath.drive_absolute_path;
-                        if (impl::PathExists(abs.parent_path().c_str()))
+                        result.should_redirect = true;
+                        result.shouldReadonly = (redirectSpec.isReadOnly == true);
+
+                        // Check if file exists as VFS path in the package
+                        if (impl::PathExists(vfspath.drive_absolute_path))
                         {
-                            Log(L"[%d]\t\t\tFRF SUBCASE: parent folder is in package.",inst);
+                            Log(L"[%d]\t\t\tFRF CASE:match, existing in package.", inst);
                             destinationTargetBase = redirectSpec.redirect_targetbase;
-                            //result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
-                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase,inst);
+                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase, inst);
                         }
                         else
                         {
-                            Log(L"[%d]\t\t\tFRF SUBCASE: parent folder is also not in package, but since relative should redirect.", inst);
-                            //result.should_redirect = false;
-                            destinationTargetBase = redirectSpec.redirect_targetbase;
-                            result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase,inst);
+                            Log(L"[%d]\t\t\tFRF CASE:match, not existing in package.", inst);
+                            // If the folder above it exists, we might want to redirect anyway?
+                            std::filesystem::path abs = vfspath.drive_absolute_path;
+                            if (impl::PathExists(abs.parent_path().c_str()))
+                            {
+                                Log(L"[%d]\t\t\tFRF SUBCASE: parent folder is in package.", inst);
+                                destinationTargetBase = redirectSpec.redirect_targetbase;
+                                //result.redirect_path = RedirectedPath(normalizedPath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase);
+                                result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase, inst);
+                            }
+                            else
+                            {
+                                Log(L"[%d]\t\t\tFRF SUBCASE: parent folder is also not in package, but since relative should redirect.", inst);
+                                //result.should_redirect = false;
+                                destinationTargetBase = redirectSpec.redirect_targetbase;
+                                result.redirect_path = RedirectedPath(vfspath, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase, inst);
+                            }
                         }
+                        if (result.should_redirect)
+                            LogString(inst, L"\t\tFRF CASE:match on redirect_path", result.redirect_path.c_str());
                     }
-                    if (result.should_redirect)
-                        LogString(inst, L"\t\tFRF CASE:match on redirect_path", result.redirect_path.c_str());
+                    break;
                 }
-                break;
+                else
+                {
+                    LogString(inst, L"\t\tFRF no match on parse relativePath", relativePath);
+                }
             }
-            else
+            catch (...)
             {
-                LogString(inst, L"\t\tFRF no match on parse relativePath", relativePath);
+                Log(L"[%d]\tFRF: Regex failure. Likely a bad pattern was supplied.", inst);
             }
         }
         else
