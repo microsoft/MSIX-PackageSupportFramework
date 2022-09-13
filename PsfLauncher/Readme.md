@@ -6,6 +6,8 @@ Based on the manifest's application ID, the `psfLauncher` looks for the app's la
 
 PSF Launcher also supports running an additional "monitor" app, intended for PsfMonitor. You use PsfMonitor to view the output in conjuction with TraceFixup injection configured to output to events.
 
+Finally, PsfLauncher also support some limited PowerShell scripting.
+
 ## Configuration
 PSF Launcher uses a config.json file to configure the behavior.
 
@@ -244,7 +246,9 @@ This example shows an alternative for the json used in the prior example. This m
 In this example, the pseudo-variable %MsixPackageRoot% would be replaced by the folder path that the package was installed to. This pseudo-variable is only available for string replacement by PsfLauncher in the arguments field. The example shows a reference to a file that was placed at the root of the package and another that will exist using VFS pathing. Note that as long as the LOCALAPPDATA file is the only file required from the package LOCALAPPDATA folder, the use of FileRedirectionFixup would not be mandated.
 
 ### Example 4
-This example shows an alternative for the json used in the prior example. This might be used when an additional script is to be run upon first launch of the application. Such scripts are sometimes used for per-user configuration activities that must be made based on local conditions. 
+This example shows an alternative for the json used in the prior example. This might be used when an additional script is to be run upon first launch of the application. Such scripts are sometimes used for per-user configuration activities that must be made based on local conditions.
+
+To implement scripting PsfLauncher uses a PowerShell script as an intermediator.  PshLauncher will expect to find a file StartingScriptWrapper.ps1, which is included as part of the PSF, to call the PowerShell script that is referenced in the Json.  The wrapper script should be placed in the package as the same folder used by the launcher.
 
 
 ```json
@@ -289,6 +293,7 @@ The use of scriptExecutionMode may only be necessary in environments when Group 
 | Array | key | Value |
 |-------|-----------|-------|
 | applications | id |  Use the value of the `Id` attribute of the `Application` element in the package manifest. |
+| applications | waitForDebugger | (Optional, default=false) Boolean. This option is for debugging of the launcher itself and is only available in debug builds of the launcher, it is silently ignored if present in a release build. When set to true, the launcher will wait to receive a signal that a debugger has attached to the process. The wait occurs immediately after reading enough of the json file to detect this setting, before processing other settings, launching scripts, monitor, and target. |
 | applications | executable | The path to the executable that you want to start. This path is typically specified relative to the package root folder. In most cases, you can get this value from your package manifest file before you modify it. It's the value of the `Executable` attribute of the `Application` element. Pseudo-variables and Environment variables are supported for this path. |
 | applications | arguments | (Optional) Command line arguments for the executable.  If the PsfLauncher.exe receives any arguments, these will be appended to the command line after those from the config.json file. Pseudo-variables and Environment variables are supported in the arguments. |
 | applications | workingDirectory | (Optional) A path to use as the working directory of the application that starts. This is typically a relative path of the package root folder, however full paths may be specified. If you don't set this value, the operating system uses the `System32` directory as the application's working directory. If you supply a value in the form of an empty string, it will use the directory of the referenced executable. Pseudo-variables and Environment variables are supported in the workingDirectory. |
@@ -300,18 +305,18 @@ The use of scriptExecutionMode may only be necessary in environments when Group 
 | applications | stopOnScriptError| (Optional) Boolean. Indicates that if a startScript returns an error then the launch of the application should be skipped. |
 | applications | ScriptExecutionMode | (Optional) String value that will be added to the powershell launch of any startScript or endScript. |
 | applications | startScript | (Optional) If present, used to define a PowerShell script that will be run prior running the application executable. |
-| | |  `'waitForScriptToFinish'` - (Optional, default=false) Boolean. When true, PsfLauncher will wait for the script to complete or timeout before running the application executable. |
+| | |  `'waitForScriptToFinish'` - (Optional, default=true) Boolean. When true, PsfLauncher will wait for the script to complete or timeout before running the application executable. |
 | | | `'timeout'` - (Optional, default is none) Expressed in ms.  Only applicable if waitForScriptToFinish is true.  If a timeout occurs it is treated as an error for the purpose of `'stopOnScriptError'`. The value 0 means an immediate timeout, if you do not want a timeout do not specify a value. |
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
-| | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
+| | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. Multiple arguments(and arguments with space) are provided by enclosing each argument in single quote. ("scriptArguments": "'<Arg1>' '<Arg2>'"). |
 | applications | endScript | (Optional) If present, used to define a PowerShell script that will be run after completion of the application executable. |
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
-| processes | executable | In most cases, this will be the name of the `executable` configured above with the path and file extension removed. |
+| processes | executable | In most cases, this will be the name of the `executable` configured above with the path and file extension removed. Multiple arguments(and arguments with space) are provided by enclosing each argument in single quote. ("scriptArguments": "'<Arg1>' '<Arg2>'").|
 | fixups | dll | Package-relative path to the fixup, .msix/.appx  to load. |
 | fixups | config | (Optional) Controls how the fixup dl behaves. The exact format of this value varies on a fixup-by-fixup basis as each fixup can interpret this "blob" as it wants. |
 

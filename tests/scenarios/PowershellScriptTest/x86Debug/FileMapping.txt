@@ -11,6 +11,7 @@
 "SayHi.ps1" "SayHi.ps1"
 "SayWithArgument.ps1" "SayWithArgument.ps1"
 "StartingScriptWrapper.ps1" "StartingScriptWrapper.ps1"
+"WaitAndSayHello.ps1" "WaitAndSayHello.ps1"
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

@@ -23,19 +23,28 @@
               "type": "ModifyKeyAccess",
               "remediation": [
                 {
+                  "type": "ModifyKeyAccess",
                   "hive": "HKCU",
                   "patterns": [
                     "^Software\\\\Vendor_Covered.*"
                   ],
-                  "access":  "Full2RW"
+                  "access": "Full2RW"
                 },
                 {
-                  "hive":  "HKLM",
+                  "type": "ModifyKeyAccess",
+                  "hive": "HKLM",
                   "patterns": [
                     "^SOFTWARE\\\\Vendor_Covered.*",
                     "^SOFTWARE\\\\Wow3264Node\\\\Vendor_Covered.*"
                   ],
                   "access": "RW2R"
+                },
+                {
+                  "type": "FakeDelete",
+                  "hive": "HKCU",
+                  "patterns": [
+                    "^SOFTWARE\\\\Vendor_Covered.*"
+                  ]
                 }
               ]
             }

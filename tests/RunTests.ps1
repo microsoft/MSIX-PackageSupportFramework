@@ -40,7 +40,7 @@ function RunTest($Arch, $Config)
     {
         # Uninstall all packages on exit. Ideally Add-AppxPackage would give us back something that we could use here,
         # but alas we must hard-code it
-        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest")
+        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest", "EnvVarsATest", "EnvVarsWTest")
         foreach ($pkg in $packagesToUninstall)
         {
             Get-AppxPackage $pkg | Remove-AppxPackage
@@ -91,6 +91,7 @@ RunTest "x64" "Release"
 RunTest "x86" "Debug"
 RunTest "x86" "Release"
 
+
 if ($TestConfigFromXML)
 {
     write-host "Making config.json from config.xml"
@@ -137,4 +138,25 @@ if ($TestConfigFromXML)
 }
 Write-Host "$failedTests tests have failed"
 
-Exit $failedTests
+#Write-host "Removing generated json files"
+#foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
+#{
+#    if (Test-Path "$($dir.FullName)\FileMapping.txt")
+#    {
+#        push-location $dir.fullName
+#        
+#        
+#        foreach ($configurationFile in (get-childitem -file "Config*.json_bak"))
+#        {
+#            $configFileName = $configurationFile.baseName
+#            Copy-Item $configurationFile -destination ("$configFileName.json")
+#        }
+#
+#        remove-item "Config*.json_bak"
+#        pop-location
+#    }
+#}
+#
+#Write-Host "$failedTests tests have failed"
+#
+#Exit $failedTests

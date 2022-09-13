@@ -465,6 +465,7 @@ std::string InterpretKeyPath(HKEY key)
                 buffer[size + 1] = 0x0;  // Add string termination character
                 auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
                 sret = InterpretCountedString("", info->Name, info->NameLength / 2);
+                
             }
             else
                 sret = "InterpretKeyPath failure2";

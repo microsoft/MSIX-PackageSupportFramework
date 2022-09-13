@@ -206,7 +206,8 @@ int wmain(int argc, const wchar_t** argv)
                 if (RegGetValue(HKCU_Attempt, L"", TestSubItem, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
                 {
                     trace_message(data, console::color::gray, true);
-                    print_last_error("NO ERROR OCCURED");
+                    trace_messages("HKCU Full Access Rights Request: NO ERROR OCCURED");
+                    //print_last_error("NO ERROR OCCURED");
                     result = 0;
                 }
                 else
@@ -262,6 +263,7 @@ int wmain(int argc, const wchar_t** argv)
                 if (RegGetValue(HKLM_Attempt, L"", TestSubItem, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
                 {
                     trace_message(data, console::color::gray, true);
+                    trace_messages("HKLM RW Access Test: NO ERROR OCCURED");
                     result = 0;
                 }
                 else
@@ -296,7 +298,7 @@ int wmain(int argc, const wchar_t** argv)
     {
         trace_message("Unexpected error.", console::color::red, true);
         result = GetLastError();
-        print_last_error("Failed to MOdify HKCU Full Access case");
+        print_last_error("Failed to MOdify HKCU RW Access case");
     }
 
     test_end(result);
@@ -304,6 +306,6 @@ int wmain(int argc, const wchar_t** argv)
 
 
     test_cleanup();
-    Sleep(60000);
+    Sleep(1000);
     return result;
 }

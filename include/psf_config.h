@@ -53,6 +53,7 @@ namespace psf
 
     struct json_value
     {
+        virtual ~json_value() {}
         virtual const json_type type() const noexcept = 0;
 
         virtual const json_null* try_as_null() const noexcept = 0;

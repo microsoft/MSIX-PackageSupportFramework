@@ -27,42 +27,21 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     };
 
     PROCESS_INFORMATION processInfo{};
-    std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeListLocal;
-    if (attributeList)
+
+    startupInfoEx.lpAttributeList = attributeList;
+    DWORD CreationFlags = 0;
+    if (attributeList != nullptr)
     {
-        startupInfoEx.lpAttributeList = attributeList;
+        CreationFlags = EXTENDED_STARTUPINFO_PRESENT;
     }
-    else
-    {
-        SIZE_T AttributeListSize{};
-        InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-
-        attributeListLocal = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
-
-        RETURN_LAST_ERROR_IF_MSG(
-            !InitializeProcThreadAttributeList(
-                attributeListLocal.get(),
-                1,
-                0,
-                &AttributeListSize),
-            "Could not initialize the proc thread attribute list.");
-        startupInfoEx.lpAttributeList = attributeListLocal.get();
-    }
-    auto deleteAttrList = wil::scope_exit([&]
-    {
-        if (attributeListLocal)
-        {
-            DeleteProcThreadAttributeList(attributeListLocal.get());
-        }
-    });
-
+    
     RETURN_LAST_ERROR_IF_MSG(
         !::CreateProcessW(
             applicationName,
             commandLine,
             nullptr, nullptr, // Process/ThreadAttributes
             true, // InheritHandles
-            EXTENDED_STARTUPINFO_PRESENT, // CreationFlags
+            CreationFlags,
             nullptr, // Environment
             currentDirectory,
             (LPSTARTUPINFO)&startupInfoEx,
@@ -102,8 +81,10 @@ void StartWithShellExecute(std::filesystem::path packageRoot, std::filesystem::p
 
 	THROW_LAST_ERROR_IF(shex.hProcess == INVALID_HANDLE_VALUE);
 	DWORD exitCode = ::WaitForSingleObject(shex.hProcess, timeout);
-	THROW_IF_WIN32_ERROR(GetExitCodeProcess(shex.hProcess, &exitCode));
-	THROW_IF_WIN32_ERROR(exitCode);
+
+    // Don't throw an error as we should assume that the process would have appropriately made indications to the user.  Log for debug purposes only.
+    Log("PsfLauncher: Shell Launch: process returned exit code 0x%x", exitCode);
+
 	CloseHandle(shex.hProcess);
 }
 

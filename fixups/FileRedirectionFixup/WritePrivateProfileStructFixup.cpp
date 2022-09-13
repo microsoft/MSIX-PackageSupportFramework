@@ -20,10 +20,10 @@ BOOL __stdcall WritePrivateProfileStructFixup(
         if (guard)
         {
             DWORD WritePrivateProfileStructInstance = ++g_FileIntceptInstance;
-            LogString(WritePrivateProfileStructInstance,L"WritePrivateProfileStructFixup for fileName", fileName);
 
             if (fileName != NULL)
             {
+                LogString(WritePrivateProfileStructInstance,L"WritePrivateProfileStructFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirect(fileName, redirect_flags::copy_on_read);
