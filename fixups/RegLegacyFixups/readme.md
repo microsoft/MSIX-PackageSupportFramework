@@ -5,7 +5,7 @@ When injected into a process, RegLegacyFixups supports the ability to:
 There is no guarantee that these changes will be enough to allow the application to perform properly, but often the change can solve application compatibility issues by removing request incompatible parameters that the application did not need.
 
 # General Configuration
-The configuration for the Registry Legacy Fixups is specified in the element `config` of the fixup structure within the `proceses` section of the json file when RegLegacyFixups.dll is requested.
+The configuration for the Registry Legacy Fixups is specified in the element `config` of the fixup structure within the `processes` section of the json file when RegLegacyFixups.dll is requested.
 
 The `config` element for RegLegacyFixups.dll is an array of remediations.  Each remediation has two elements:
 
