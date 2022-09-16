@@ -11,7 +11,7 @@
     <releaseNotes></releaseNotes>
     <tags>native, PSF, fixup, Centennial, Bridge</tags>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
-    <licenseUrl>https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE</licenseUrl>
+    <license>https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/Microsoft/MSIX-PackageSupportFramework</projectUrl>
   </metadata>
   <files>
@@ -41,12 +41,12 @@
     <file src="x64\Release\Microsoft.Diagnostics.FastSerialization.dll" target="bin\PsfMonitor\x64"/>
     <file src="x64\Release\Microsoft.Diagnostics.Tracing.TraceEvent.dll" target="bin\PsfMonitor\x64"/>
     <file src="x64\Release\OsExtensions.dll" target="bin\PsfMonitor\x64"/>
-	<file src="Win32\Release\PsfMonitor*.exe" target="bin\PsfMonitor\Win32"/>
-	<file src="Win32\Release\x86\*" target="bin\PsfMonitor\Win32\x86"/>
-	<file src="Win32\Release\amd64\*" target="bin\PsfMonitor\Win32\amd64"/>
-	<file src="Win32\Release\Dia2Lib.dll" target="bin\PsfMonitor\Win32"/>
-	<file src="Win32\Release\Microsoft.Diagnostics.FastSerialization.dll" target="bin\PsfMonitor\Win32"/>
-	<file src="Win32\Release\Microsoft.Diagnostics.Tracing.TraceEvent.dll" target="bin\PsfMonitor\Win32"/>
-	<file src="Win32\Release\OsExtensions.dll" target="bin\PsfMonitor\Win32"/>
+	  <file src="Win32\Release\PsfMonitor*.exe" target="bin\PsfMonitor\Win32"/>
+	  <file src="Win32\Release\x86\*" target="bin\PsfMonitor\Win32\x86"/>
+	  <file src="Win32\Release\amd64\*" target="bin\PsfMonitor\Win32\amd64"/>
+	  <file src="Win32\Release\Dia2Lib.dll" target="bin\PsfMonitor\Win32"/>
+	  <file src="Win32\Release\Microsoft.Diagnostics.FastSerialization.dll" target="bin\PsfMonitor\Win32"/>
+	  <file src="Win32\Release\Microsoft.Diagnostics.Tracing.TraceEvent.dll" target="bin\PsfMonitor\Win32"/>
+	  <file src="Win32\Release\OsExtensions.dll" target="bin\PsfMonitor\Win32"/>
   </files>
 </package>
