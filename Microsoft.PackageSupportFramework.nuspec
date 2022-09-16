@@ -32,12 +32,19 @@
 	<file src="*\Release\DynamicLibraryFixup*.dll" target="bin"/>
 	<file src="x64\Release\StartingScriptWrapper.ps1" target="bin"/>
     <file src="readme.txt" target="" />
-    <file src="*\Release\PsfMonitor*.exe" target="bin\PsfMonitor"/>
-    <file src="*\Release\x86\*" target="bin\PsfMonitor"/>
-    <file src="*\Release\amd64\*" target="bin\PsfMonitor"/>
-    <file src="*\Release\Dia2Lib.dll" target="bin\PsfMonitor"/>
-    <file src="*\Release\Microsoft.Diagnostics.FastSerialization.dll" target="bin\PsfMonitor"/>
-    <file src="*\Release\Microsoft.Diagnostics.Tracing.TraceEvent.dll" target="bin\PsfMonitor"/>
-    <file src="*\Release\OsExtensions.dll" target="bin\PsfMonitor"/>
+    <file src="x64\Release\PsfMonitor*.exe" target="bin\PsfMonitor\x64"/>
+    <file src="x64\Release\x86\*" target="bin\PsfMonitor\x64\x86"/>
+    <file src="x64\Release\amd64\*" target="bin\PsfMonitor\x64\amd64"/>
+    <file src="x64\Release\Dia2Lib.dll" target="bin\PsfMonitor\x64"/>
+    <file src="x64\Release\Microsoft.Diagnostics.FastSerialization.dll" target="bin\PsfMonitor\x64"/>
+    <file src="x64\Release\Microsoft.Diagnostics.Tracing.TraceEvent.dll" target="bin\PsfMonitor\x64"/>
+    <file src="x64\Release\OsExtensions.dll" target="bin\PsfMonitor\x64"/>
+	<file src="Win32\Release\PsfMonitor*.exe" target="bin\PsfMonitor\Win32"/>
+	<file src="Win32\Release\x86\*" target="bin\PsfMonitor\Win32\x86"/>
+	<file src="Win32\Release\amd64\*" target="bin\PsfMonitor\Win32\amd64"/>
+	<file src="Win32\Release\Dia2Lib.dll" target="bin\PsfMonitor\Win32"/>
+	<file src="Win32\Release\Microsoft.Diagnostics.FastSerialization.dll" target="bin\PsfMonitor\Win32"/>
+	<file src="Win32\Release\Microsoft.Diagnostics.Tracing.TraceEvent.dll" target="bin\PsfMonitor\Win32"/>
+	<file src="Win32\Release\OsExtensions.dll" target="bin\PsfMonitor\Win32"/>
   </files>
 </package>
