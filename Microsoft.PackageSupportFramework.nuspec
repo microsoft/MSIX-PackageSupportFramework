@@ -27,10 +27,12 @@
     <file src="*\Release\PsfRunDll*.exe" target="bin"/>
     <file src="*\Release\PsfRuntime*.dll" target="bin"/>
     <file src="*\Release\FileRedirectionFixup*.dll" target="bin"/>
+    <file src="*\Release\RegLegacyFixups*.dll" target="bin"/>
+    <file src="*\Release\EnvVarFixup*.dll" target="bin"/>
     <file src="*\Release\TraceFixup*.dll" target="bin"/>
     <file src="*\Release\WaitForDebuggerFixup*.dll" target="bin"/>
-	<file src="*\Release\DynamicLibraryFixup*.dll" target="bin"/>
-	<file src="x64\Release\StartingScriptWrapper.ps1" target="bin"/>
+    <file src="*\Release\DynamicLibraryFixup*.dll" target="bin"/>
+    <file src="x64\Release\StartingScriptWrapper.ps1" target="bin"/>
     <file src="readme.txt" target="" />
     <file src="x64\Release\PsfMonitor*.exe" target="bin\PsfMonitor\x64"/>
     <file src="x64\Release\x86\*" target="bin\PsfMonitor\x64\x86"/>
