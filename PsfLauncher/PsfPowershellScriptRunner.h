@@ -319,16 +319,16 @@ private:
 		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
 		if (dequotedScriptPath.is_absolute())
 		{
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 		}
 		else
 		{
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 			commandString.append(L".\\");
 			commandString.append(fixed4PowerShell);
-			commandString.append(L"\'");
+			commandString.append(L"\"");
 		}
 
 		//Script arguments are optional.
