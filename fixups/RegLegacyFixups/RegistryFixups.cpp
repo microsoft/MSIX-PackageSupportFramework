@@ -89,6 +89,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                 {
                 case Modify_Key_Hive_Type_HKCU:
                     keystring = "HKEY_CURRENT_USER\\";
+                    keypath = ReplaceRegistrySyntax(keypath);
                     if (keypath._Starts_with(keystring))
                     {
 #ifdef _DEBUG
@@ -165,6 +166,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                     break;
                 case Modify_Key_Hive_Type_HKLM:
                     keystring = "HKEY_LOCAL_MACHINE\\";
+                    keypath = ReplaceRegistrySyntax(keypath);
                     if (keypath._Starts_with(keystring))
                     {
 #ifdef _DEBUG
@@ -269,6 +271,7 @@ bool RegFixupFakeDelete(std::string keypath)
             {
             case Modify_Key_Hive_Type_HKCU:
                 keystring = "HKEY_CURRENT_USER\\";
+                keypath = ReplaceRegistrySyntax(keypath);
                 if (keypath._Starts_with(keystring))
                 {
                     for (auto& pattern : specitem.fakeDeleteKey.patterns)
@@ -294,6 +297,7 @@ bool RegFixupFakeDelete(std::string keypath)
                 break;
             case Modify_Key_Hive_Type_HKLM:
                 keystring = "HKEY_LOCAL_MACHINE\\";
+                keypath = ReplaceRegistrySyntax(keypath);
                 if (keypath._Starts_with(keystring))
                 {
                     for (auto& pattern : specitem.fakeDeleteKey.patterns)
