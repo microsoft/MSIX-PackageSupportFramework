@@ -63,7 +63,7 @@ std::string ReplaceRegistrySyntax(std::string regPath)
 }
 REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstance)
 {
-
+    keypath = ReplaceRegistrySyntax(keypath);
     REGSAM samModified = samDesired;
     std::string keystring;
 
@@ -89,7 +89,6 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                 {
                 case Modify_Key_Hive_Type_HKCU:
                     keystring = "HKEY_CURRENT_USER\\";
-                    keypath = ReplaceRegistrySyntax(keypath);
                     if (keypath._Starts_with(keystring))
                     {
 #ifdef _DEBUG
@@ -166,7 +165,6 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                     break;
                 case Modify_Key_Hive_Type_HKLM:
                     keystring = "HKEY_LOCAL_MACHINE\\";
-                    keypath = ReplaceRegistrySyntax(keypath);
                     if (keypath._Starts_with(keystring))
                     {
 #ifdef _DEBUG
@@ -253,6 +251,7 @@ bool RegFixupFakeDelete(std::string keypath,DWORD RegLocalInstance)
 bool RegFixupFakeDelete(std::string keypath)
 #endif
 {
+    keypath = ReplaceRegistrySyntax(keypath);
 #ifdef _DEBUG
     Log("[%d] RegFixupFakeDelete: path=%s\n", RegLocalInstance, keypath.c_str());
 #endif
@@ -271,7 +270,6 @@ bool RegFixupFakeDelete(std::string keypath)
             {
             case Modify_Key_Hive_Type_HKCU:
                 keystring = "HKEY_CURRENT_USER\\";
-                keypath = ReplaceRegistrySyntax(keypath);
                 if (keypath._Starts_with(keystring))
                 {
                     for (auto& pattern : specitem.fakeDeleteKey.patterns)
@@ -297,7 +295,6 @@ bool RegFixupFakeDelete(std::string keypath)
                 break;
             case Modify_Key_Hive_Type_HKLM:
                 keystring = "HKEY_LOCAL_MACHINE\\";
-                keypath = ReplaceRegistrySyntax(keypath);
                 if (keypath._Starts_with(keystring))
                 {
                     for (auto& pattern : specitem.fakeDeleteKey.patterns)
@@ -546,7 +543,7 @@ LSTATUS __stdcall RegDeleteKeyFixup(
 #if _DEBUG
                 Log("[%d] RegDeleteKey:\n", RegLocalInstance);
 #endif
-                std::string keypath = ReplaceRegistrySyntax( InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
+                std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
 
 #ifdef _DEBUG
                 Log("[%d] RegDeleteKey: Path=%s", RegLocalInstance, keypath.c_str());
@@ -604,7 +601,7 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
 #if _DEBUG
                 Log("[%d] RegDeleteKeyEx:\n", RegLocalInstance);
 #endif
-                std::string keypath = ReplaceRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
+                std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
 #ifdef _DEBUG
                 Log("[%d] RegDeleteKeyEx: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
@@ -662,7 +659,7 @@ LSTATUS __stdcall RegDeleteKeyTransactedFixup(
 #if _DEBUG
                 Log("[%d] RegDeleteKeyTransacted:\n", RegLocalInstance);
 #endif
-                std::string keypath = ReplaceRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
+                std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
 #ifdef _DEBUG
                 Log("[%d] RegDeleteKeyTransacted: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
@@ -717,7 +714,7 @@ LSTATUS __stdcall RegDeleteValueFixup(
 #if _DEBUG
                 Log("[%d] RegDeleteValue:\n", RegLocalInstance);
 #endif
-                std::string keypath = ReplaceRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subValueName));
+                std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subValueName);
 #ifdef _DEBUG
                 Log("[%d] RegDeleteValue: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
