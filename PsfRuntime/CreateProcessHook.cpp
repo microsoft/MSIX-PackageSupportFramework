@@ -24,6 +24,8 @@
 #include <psf_framework.h>
 
 #include "Config.h"
+#include <known_folders.h>
+#include "ArgRedirection.h"
 
 using namespace std::literals;
 
@@ -153,9 +155,17 @@ BOOL WINAPI CreateProcessFixup(
         processInformation = &pi;
     }
 
+    // Redirect createProcess arguments if any in native app data to per user per app data
+    CharT* cnvtCmdLine = new CharT[MAX_CMDLINE_PATH];
+    if (cnvtCmdLine)
+    {
+        cnvtCmdLine[0] = (CharT)nullptr;
+    }
+    convertCmdLineParameters(commandLine, cnvtCmdLine);
+
     if (!CreateProcessImpl(
         applicationName,
-        commandLine,
+        cnvtCmdLine,
         processAttributes,
         threadAttributes,
         inheritHandles,
@@ -165,8 +175,12 @@ BOOL WINAPI CreateProcessFixup(
         startupInfo,
         processInformation))
     {
+        if (cnvtCmdLine != nullptr)
+            delete [] cnvtCmdLine;
         return FALSE;
     }
+    if (cnvtCmdLine != nullptr)
+        delete [] cnvtCmdLine;
 
     iwstring path;
     DWORD size = MAX_PATH;
