@@ -19,7 +19,7 @@ int wmain(int argc, const wchar_t** argv)
     }
     test_initialize("Argument Redirection Tests", 2);
 
-    test_begin("Arg Redirection Test - LocalAppData");
+    test_begin("Arg Redirection Test - CreateProcessA, LocalAppData");
     {
         result = ERROR_SUCCESS;
         auto newAppFolder_Local = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\ArgRedirectionTest)";
@@ -37,19 +37,19 @@ int wmain(int argc, const wchar_t** argv)
         CloseHandle(hFile);
 
         // Launch a cmd.exe application to rename newFile.txt in app data location
-        STARTUPINFO si;
+        STARTUPINFOA si;
         PROCESS_INFORMATION pi;
         ZeroMemory(&si, sizeof(si));
         si.cb = sizeof(si);
         ZeroMemory(&pi, sizeof(pi));
 
-        wchar_t cmdLineArg[MAX_PATH] = L"C:\\Windows\\System32\\cmd.exe /c ren ";
-        wchar_t appDataPath[MAX_PATH];
-        SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appDataPath);
-        wcscat_s(appDataPath, MAX_PATH, L"\\ArgRedirectionTest\\newFile.txt"); // dest
-        wcscat_s(cmdLineArg, appDataPath);
-        wcscat_s(cmdLineArg, L" newFile_renamed.txt");
-        BOOL procRes = ::CreateProcessW(NULL, cmdLineArg, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        char cmdLineArg[MAX_PATH] = "C:\\Windows\\System32\\cmd.exe /c ren ";
+        char appDataPath[MAX_PATH];
+        SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appDataPath);
+        strcat_s(appDataPath, MAX_PATH, "\\ArgRedirectionTest\\newFile.txt"); // dest
+        strcat_s(cmdLineArg, appDataPath);
+        strcat_s(cmdLineArg, " newFile_renamed.txt");
+        BOOL procRes = ::CreateProcessA(NULL, (char*)cmdLineArg, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 
         if (procRes != 0)
         {
@@ -72,7 +72,7 @@ int wmain(int argc, const wchar_t** argv)
     }
     test_end(result);
 
-    test_begin("Arg Redirection Test - RoamingAppData");
+    test_begin("Arg Redirection Test - CreateProcessW, RoamingAppData");
     {
         result = ERROR_SUCCESS;
         auto newAppFolder_Roaming = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Roaming\ArgRedirectionTest)";

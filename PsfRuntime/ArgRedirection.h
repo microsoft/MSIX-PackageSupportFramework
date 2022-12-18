@@ -8,133 +8,58 @@
 auto GetFileAttributesImpl = psf::detoured_string_function(&::GetFileAttributesA, &::GetFileAttributesW);
 
 template <typename CharT>
-errno_t strcatImpl(CharT* dest, rsize_t destBufSize, CharT const* src)
+bool IsUnderUserAppDataAndReplace(const CharT* fileName, CharT* cmdLine, bool AppDataLocal)
 {
-    if (std::is_same<CharT, char>::value)
-    {
-        return strcat_s((char*)dest, destBufSize, (const char*)src);
-    }
-    else if (std::is_same<CharT, wchar_t>::value)
-    {
-        return wcscat_s((wchar_t*)dest, destBufSize, (const wchar_t*)src);
-    }
-}
-
-template <typename CharT>
-CharT* strtokImpl(CharT* inpStr, CharT const* delim, CharT** token)
-{
-    if (std::is_same<CharT, char>::value)
-    {
-        return (CharT*)(strtok_s((char*)inpStr, (const char*)delim, (char**)token));
-    }
-    else if (std::is_same<CharT, wchar_t>::value)
-    {
-        return (CharT*)(wcstok_s((wchar_t*)inpStr, (const wchar_t*)delim, (wchar_t**)token));
-    }
-}
-
-template <typename CharT>
-size_t strlenImpl(CharT const* inpStr)
-{
-    if (std::is_same<CharT, char>::value)
-    {
-        return strlen((const char*)inpStr);
-    }
-    else if (std::is_same<CharT, wchar_t>::value)
-    {
-        return wcslen((const wchar_t*)inpStr);
-    }
-}
-
-template <typename CharT>
-bool is_path_relative(const CharT* path, const std::filesystem::path& basePath)
-{
-    return std::equal(basePath.native().begin(), basePath.native().end(), path, psf::path_compare{});
-}
-
-template <typename CharT>
-bool IsUnderUserAppDataRoamingandReplace(const CharT* fileName, CharT* cnvtCmdLine)
-{
-    bool isUnderAppDataRoaming = false;
+    bool isUnderAppData = false;
     bool result = false;
 
-    if (fileName == NULL)
+    if (!fileName)
     {
         return result;
     }
     constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
     constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
 
-    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+    GUID appDataFolderId = AppDataLocal ? FOLDERID_LocalAppData : FOLDERID_RoamingAppData;
+
+    if (std::equal(root_local_device_prefix, root_local_device_prefix + wcslen(root_local_device_prefix), fileName))
     {
-        isUnderAppDataRoaming = is_path_relative(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
+        isUnderAppData = is_path_relative(fileName + wcslen(root_local_device_prefix), psf::known_folder(appDataFolderId));
     }
-    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
+    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + wcslen(root_local_device_prefix_dot), fileName))
     {
-        isUnderAppDataRoaming = is_path_relative(fileName + 4, psf::known_folder(FOLDERID_RoamingAppData));
+        isUnderAppData = is_path_relative(fileName + wcslen(root_local_device_prefix_dot), psf::known_folder(appDataFolderId));
     }
     else
     {
-        isUnderAppDataRoaming = is_path_relative(fileName, psf::known_folder(FOLDERID_RoamingAppData));
+        isUnderAppData = is_path_relative(fileName, psf::known_folder(appDataFolderId));
     }
 
-    size_t remBufSize = MAX_CMDLINE_PATH - strlenImpl(cnvtCmdLine);
-    if (isUnderAppDataRoaming)
+    size_t remBufSize = MAX_CMDLINE_PATH - strlenImpl(cmdLine);
+    if (isUnderAppData)
     {
-        std::filesystem::path roamingAppData = psf::known_folder(FOLDERID_RoamingAppData);
-        auto packageRoamingAppDataPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Roaming)";
-        std::wstring relativePath = widen(fileName + (roamingAppData.native().length()));
-        std::wstring fullPath = packageRoamingAppDataPath.native() + relativePath;
+        std::filesystem::path strLocalRoaming = AppDataLocal ? std::filesystem::path(L"Local") : std::filesystem::path(L"Roaming");
+        std::filesystem::path appDataPath = psf::known_folder(appDataFolderId);
+        auto packageAppDataPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache)" / strLocalRoaming;
+        std::wstring relativePath = widen(fileName + (appDataPath.native().length()));
+        std::wstring fullPath = packageAppDataPath.native() + relativePath;
 
         if (GetFileAttributesImpl(fullPath.c_str()) != INVALID_FILE_ATTRIBUTES)
         {
             result = true;
-            strcatImpl(cnvtCmdLine, remBufSize, (CharT*)(packageRoamingAppDataPath.c_str()));
-            strcatImpl(cnvtCmdLine, remBufSize, fileName + (roamingAppData.native().length()));
-        }
-    }
-    return result;
-}
-
-template <typename CharT>
-bool IsUnderUserAppDataLocalandReplace(const CharT* fileName, CharT* cnvtCmdLine)
-{
-    bool isUnderAppDataLocal = false;
-    bool result = false;
-
-    if (fileName == NULL)
-    {
-        return result;
-    }
-    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
-    constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
-
-    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
-    {
-        isUnderAppDataLocal = is_path_relative(fileName + 4, psf::known_folder(FOLDERID_LocalAppData));
-    }
-    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
-    {
-        isUnderAppDataLocal = is_path_relative(fileName + 4, psf::known_folder(FOLDERID_LocalAppData));
-    }
-    else
-    {
-        isUnderAppDataLocal = is_path_relative(fileName, psf::known_folder(FOLDERID_LocalAppData));
-    }
-
-    size_t remBufSize = MAX_CMDLINE_PATH - strlenImpl(cnvtCmdLine);
-    if (isUnderAppDataLocal)
-    {
-        std::filesystem::path localAppdata = psf::known_folder(FOLDERID_LocalAppData);
-        auto packageLocalAppDataPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local)";
-        std::wstring relativePath = widen(fileName + (localAppdata.native().length()));
-        std::wstring fullPath = packageLocalAppDataPath.native() + relativePath;
-
-        if (GetFileAttributesImpl(fullPath.c_str()) != INVALID_FILE_ATTRIBUTES)
-        {
-            result = true;
-            strcatImpl(cnvtCmdLine, remBufSize, (CharT*)(packageLocalAppDataPath.c_str()));
-            strcatImpl(cnvtCmdLine, remBufSize, fileName + (localAppdata.native().length()));
+            if (std::is_same<CharT, char>::value)
+            {
+                size_t packageAppDataPathLen = packageAppDataPath.native().length();
+                size_t bytes_written;
+                std::unique_ptr<char[]> packageAppDataPath_char(new char[packageAppDataPathLen + 1]);
+                wcstombs_s(&bytes_written, packageAppDataPath_char.get(), packageAppDataPathLen + 1, packageAppDataPath.c_str(), packageAppDataPathLen);
+                strcatImpl(cmdLine, remBufSize, (const CharT*)(packageAppDataPath_char.get()));
+            }
+            else
+            {
+                strcatImpl(cmdLine, remBufSize, (CharT*)(packageAppDataPath.c_str()));
+            }
+            strcatImpl(cmdLine, remBufSize, fileName + (appDataPath.native().length()));
         }
     }
     return result;
@@ -145,11 +70,11 @@ void convertCmdLineParameters(CharT* inpCmdLine, CharT* cnvtCmdLine)
 {
     CharT* next_token;
     size_t cmdLinelen = strlenImpl(inpCmdLine);
-    CharT* cmdLine = new CharT[cmdLinelen+1];
-    if (cmdLine)
+    std::unique_ptr<CharT[]> cmdLine(new CharT[cmdLinelen+1]);
+    if (cmdLine.get())
     {
-        cmdLine[0] = (CharT)nullptr;
-        strcatImpl(cmdLine, cmdLinelen+1, inpCmdLine);
+        memset(cmdLine.get(), 0, cmdLinelen+1);
+        strcatImpl(cmdLine.get(), cmdLinelen+1, inpCmdLine);
     }
     else
     {
@@ -157,16 +82,16 @@ void convertCmdLineParameters(CharT* inpCmdLine, CharT* cnvtCmdLine)
         return;
     }
 
-    CharT* token = strtokImpl(cmdLine, (CharT*)L" ", &next_token);
+    CharT* token = strtokImpl(cmdLine.get(), (CharT*)L" ", &next_token);
     bool redirectResult = false;
     size_t remBufSize; 
 
     while (token != nullptr)
     {
-        redirectResult = IsUnderUserAppDataLocalandReplace(token, cnvtCmdLine);
+        redirectResult = IsUnderUserAppDataAndReplace(token, cnvtCmdLine, true);
         if (redirectResult == false)
         {
-            redirectResult = IsUnderUserAppDataRoamingandReplace(token, cnvtCmdLine);
+            redirectResult = IsUnderUserAppDataAndReplace(token, cnvtCmdLine, false);
         }
 
         if (!redirectResult)
@@ -181,6 +106,5 @@ void convertCmdLineParameters(CharT* inpCmdLine, CharT* cnvtCmdLine)
             strcatImpl(cnvtCmdLine, remBufSize, (CharT*)L" ");
         }
     }
-    delete[] cmdLine;
     return;
 }

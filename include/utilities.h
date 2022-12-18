@@ -11,6 +11,7 @@
 #include <string_view>
 
 #include "win32_error.h"
+#include "known_folders.h"
 
 template <typename CharT>
 struct case_insensitive_char_traits : std::char_traits<CharT>
@@ -222,4 +223,49 @@ inline wide_argument_string_with_buffer widen_argument(const char* str)
 inline wide_argument_string widen_argument(const wchar_t* str) noexcept
 {
     return wide_argument_string{ str };
+}
+
+template <typename CharT>
+errno_t strcatImpl(CharT* dest, rsize_t destBufSize, CharT const* src)
+{
+    if (std::is_same<CharT, char>::value)
+    {
+        return strcat_s((char*)dest, destBufSize, (const char*)src);
+    }
+    else
+    {
+        return wcscat_s((wchar_t*)dest, destBufSize, (const wchar_t*)src);
+    }
+}
+
+template <typename CharT>
+CharT* strtokImpl(CharT* inpStr, CharT const* delim, CharT** token)
+{
+    if (std::is_same<CharT, char>::value)
+    {
+        return (CharT*)(strtok_s((char*)inpStr, (const char*)delim, (char**)token));
+    }
+    else
+    {
+        return (CharT*)(wcstok_s((wchar_t*)inpStr, (const wchar_t*)delim, (wchar_t**)token));
+    }
+}
+
+template <typename CharT>
+size_t strlenImpl(CharT const* inpStr)
+{
+    if (std::is_same<CharT, char>::value)
+    {
+        return strlen((const char*)inpStr);
+    }
+    else
+    {
+        return wcslen((const wchar_t*)inpStr);
+    }
+}
+
+template <typename CharT>
+bool is_path_relative(const CharT* path, const std::filesystem::path& basePath)
+{
+    return std::equal(basePath.native().begin(), basePath.native().end(), path, psf::path_compare{});
 }

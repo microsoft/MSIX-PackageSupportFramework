@@ -154,18 +154,18 @@ BOOL WINAPI CreateProcessFixup(
     {
         processInformation = &pi;
     }
-
     // Redirect createProcess arguments if any in native app data to per user per app data
-    CharT* cnvtCmdLine = new CharT[MAX_CMDLINE_PATH];
+    std::unique_ptr<CharT[]> cnvtCmdLine(new CharT[MAX_CMDLINE_PATH]);
+
     if (cnvtCmdLine)
     {
-        cnvtCmdLine[0] = (CharT)nullptr;
+        memset(cnvtCmdLine.get(), 0, MAX_CMDLINE_PATH);
     }
-    convertCmdLineParameters(commandLine, cnvtCmdLine);
+    convertCmdLineParameters(commandLine, cnvtCmdLine.get());
 
     if (!CreateProcessImpl(
         applicationName,
-        cnvtCmdLine,
+        cnvtCmdLine.get(),
         processAttributes,
         threadAttributes,
         inheritHandles,
@@ -175,12 +175,8 @@ BOOL WINAPI CreateProcessFixup(
         startupInfo,
         processInformation))
     {
-        if (cnvtCmdLine != nullptr)
-            delete [] cnvtCmdLine;
         return FALSE;
     }
-    if (cnvtCmdLine != nullptr)
-        delete [] cnvtCmdLine;
 
     iwstring path;
     DWORD size = MAX_PATH;
