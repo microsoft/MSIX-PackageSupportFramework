@@ -1,0 +1,12 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\x64\Debug\PreventBreakAwayTest.exe" "PreventBreakAwayTest.exe"
+
+"..\..\..\x64\Debug\PsfLauncher64.exe" "PsfLauncher.exe"
+"..\..\..\x64\Debug\PsfRuntime64.dll" "PsfRuntime64.dll"
+
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

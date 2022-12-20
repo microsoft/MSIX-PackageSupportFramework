@@ -17,7 +17,6 @@
 #include "StartProcessHelper.h"
 #include "Telemetry.h"
 #include "PsfPowershellScriptRunner.h"
-#include "Globals.h"
 #include <TraceLoggingProvider.h>
 #include <psf_constants.h>
 #include <psf_runtime.h>

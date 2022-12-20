@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<applications>
+		<application>
+			<id>Fixed32</id>
+			<executable>PreventBreakAwayTest.exe</executable>
+		</application>
+		<application>
+			<id>Fixed64</id>
+			<executable>PreventBreakAwayTest.exe</executable>
+		</application>
+	</applications>
+</configuration>

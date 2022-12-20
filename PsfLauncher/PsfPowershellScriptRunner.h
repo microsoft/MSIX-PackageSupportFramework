@@ -1,9 +1,9 @@
 #pragma once
 #include "psf_runtime.h"
 #include "StartProcessHelper.h"
-#include "Globals.h"
 #include <wil\resource.h>
 #include <known_folders.h>
+#include "proc_helper.h"
 
 #ifndef SW_SHOW
 	#define SW_SHOW 5
@@ -89,64 +89,6 @@ public:
 	}
 
 private:
-   struct MyProcThreadAttributeList
-    {
-    private:
-        // To make sure the attribute value persists we cache it here.
-        // 0x02 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
-        // The documentation can be found here:
-        //https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
-        // This attribute tells PSF to
-        // 1. Create Powershell in the same container as PSF.
-        // 2. Any windows Powershell makes will also be in the same container as PSF.
-        // This means that powershell, and any windows it makes, will have the same restrictions as PSF.
-        DWORD createInContainerAttribute = 0x02;
-        std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
-
-    public:
-
-        MyProcThreadAttributeList()
-        {
-            SIZE_T AttributeListSize{};
-            InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-
-            attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
-
-            THROW_LAST_ERROR_IF_MSG(
-                !InitializeProcThreadAttributeList(
-                    attributeList.get(),
-                    1,
-                    0,
-                    &AttributeListSize),
-                "Could not initialize the proc thread attribute list.");
-
-            // 18 stands for
-            // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
-            // this is the attribute value we want to add
-            THROW_LAST_ERROR_IF_MSG(
-                !UpdateProcThreadAttribute(
-                    attributeList.get(),
-                    0,
-                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
-                    &createInContainerAttribute,
-                    sizeof(createInContainerAttribute),
-                    nullptr,
-                    nullptr),
-                "Could not update Proc thread attribute.");
-        }
-
-        ~MyProcThreadAttributeList()
-        {
-            DeleteProcThreadAttributeList(attributeList.get());
-        }
-
-        LPPROC_THREAD_ATTRIBUTE_LIST get()
-        {
-            return attributeList.get();
-        }
-
-    };
-  
 	struct ScriptInformation
 	{
 		std::wstring scriptPath;
