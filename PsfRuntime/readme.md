@@ -61,5 +61,5 @@ As a part of its initialization, the PSF Runtime queries information about its e
 ## Argument Redirection
 This feature helps to redirect any createProcess call arguments from native appdata to per user per app data when the target file provided in arguments is actually present in per user per app data folder. When any child process that's not running in package context is triggered, detoured createProcess will check each argument passed and will convert it to corresponding path in per user per appdata folder. 
 
-For example to convert CreateProcess with argument `"C:\Windows\System32\notepad.exe C:\Users\UserName\AppData\Local\AppName\settings.txt"` to `"C:\Windows\System32\notepad.exe C:\Users\UserName\AppData\Local\Packages\packageFamiltyName\LocalCache\Local\AppName\settings.txt"`
+For example to convert CreateProcess with argument `"C:\Windows\System32\notepad.exe C:\Users\UserName\AppData\Local\AppName\ settings.txt"` to `"C:\Windows\System32\notepad.exe C:\Users\UserName\AppData\Local\Packages\packageFamilyName\LocalCache\Local\ AppName\settings.txt"`
 

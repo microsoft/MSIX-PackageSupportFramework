@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 
-#define MAX_CMDLINE_PATH 32767
+constexpr int MAX_CMDLINE_PATH = 32767;
 auto GetFileAttributesImpl = psf::detoured_string_function(&::GetFileAttributesA, &::GetFileAttributesW);
 
 template <typename CharT>
@@ -66,19 +66,19 @@ bool IsUnderUserAppDataAndReplace(const CharT* fileName, CharT* cmdLine, bool Ap
 }
 
 template <typename CharT>
-void convertCmdLineParameters(CharT* inpCmdLine, CharT* cnvtCmdLine)
+void convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
 {
     CharT* next_token;
-    size_t cmdLinelen = strlenImpl(inpCmdLine);
+    size_t cmdLinelen = strlenImpl(inputCmdLine);
     std::unique_ptr<CharT[]> cmdLine(new CharT[cmdLinelen+1]);
     if (cmdLine.get())
     {
         memset(cmdLine.get(), 0, cmdLinelen+1);
-        strcatImpl(cmdLine.get(), cmdLinelen+1, inpCmdLine);
+        strcatImpl(cmdLine.get(), cmdLinelen+1, inputCmdLine);
     }
     else
     {
-        strcatImpl(cnvtCmdLine, MAX_CMDLINE_PATH, inpCmdLine);
+        strcatImpl(cnvtCmdLine, MAX_CMDLINE_PATH, inputCmdLine);
         return;
     }
 
