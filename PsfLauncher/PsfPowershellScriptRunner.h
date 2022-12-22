@@ -105,7 +105,7 @@ private:
 
 	ScriptInformation m_startingScriptInformation;
 	ScriptInformation m_endingScriptInformation;
-	MyProcThreadAttributeList m_AttributeList;
+	ProcThreadAttributeList m_AttributeList;
 
 	void RunScript(ScriptInformation& script)
 	{

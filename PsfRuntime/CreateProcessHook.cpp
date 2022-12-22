@@ -24,7 +24,6 @@
 #include <psf_framework.h>
 
 #include "Config.h"
-#include "proc_helper.h"
 
 using namespace std::literals;
 
@@ -157,68 +156,19 @@ BOOL WINAPI CreateProcessFixup(
         processInformation = &pi;
     }
 
-    auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
-    bool preventBreakAway = false;
-    auto preventBreakAwayPtr = appConfig->try_get("InPackageContext");
-    if (preventBreakAwayPtr)
+    if (!CreateProcessImpl(
+        applicationName,
+        commandLine,
+        processAttributes,
+        threadAttributes,
+        inheritHandles,
+        creationFlags | CREATE_SUSPENDED,
+        environment,
+        currentDirectory,
+        startupInfo,
+        processInformation))
     {
-        preventBreakAway = preventBreakAwayPtr->as_boolean().get();
-    }
-
-    if (preventBreakAway)
-    {
-        STARTUPINFOEX startupInfoEx =
-        {
-            {
-            sizeof(STARTUPINFOEX)
-            , nullptr // lpReserved
-            , nullptr // lpDesktop
-            , nullptr // lpTitle
-            , 0 // dwX
-            , 0 // dwY
-            , 0 // dwXSize
-            , 0 // swYSize
-            , 0 // dwXCountChar
-            , 0 // dwYCountChar
-            , 0 // dwFillAttribute
-            , STARTF_USESHOWWINDOW // dwFlags
-            , static_cast<WORD>(startupInfo->wShowWindow) // wShowWindow
-            }
-        };
-
-        MyProcThreadAttributeList m_AttributeList;
-        startupInfoEx.lpAttributeList = m_AttributeList.get();
-        if (!CreateProcessImpl(
-            applicationName,
-            commandLine,
-            processAttributes,
-            threadAttributes,
-            inheritHandles,
-            creationFlags | CREATE_SUSPENDED | EXTENDED_STARTUPINFO_PRESENT,
-            environment,
-            currentDirectory,
-            (startup_info_extended_t<CharT>) & startupInfoEx,
-            processInformation))
-        {
-            return FALSE;
-        }
-    }
-    else
-    {
-        if (!CreateProcessImpl(
-            applicationName,
-            commandLine,
-            processAttributes,
-            threadAttributes,
-            inheritHandles,
-            creationFlags | CREATE_SUSPENDED,
-            environment,
-            currentDirectory,
-            startupInfo,
-            processInformation))
-        {
-            return FALSE;
-        }
+        return FALSE;
     }
 
     iwstring path;
@@ -263,12 +213,20 @@ BOOL WINAPI CreateProcessFixup(
     fixupPath(finalPackagePath);
     fixupPath(exePath);
 
+    auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
+    bool createProcessesInContainer = false;
+    auto createProcessesInContainerPtr = appConfig->try_get("InPackageContext");
+    if (createProcessesInContainerPtr)
+    {
+        createProcessesInContainer = createProcessesInContainerPtr->as_boolean().get();
+    }
+
 #if _DEBUG
     Log("\tPossible injection to process %ls %d.\n", exePath.data(), processInformation->dwProcessId);
 #endif
     if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
         ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)) ||
-        (preventBreakAway))
+        (createProcessesInContainer))
     {
         // The target executable is in the package, so we _do_ want to fixup it
 #if _DEBUG

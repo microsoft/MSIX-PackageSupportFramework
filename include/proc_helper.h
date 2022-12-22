@@ -9,7 +9,7 @@
 // Define _PROC_THREAD_ATTRIBUTE_LIST as an empty struct because it's internal-only and variable-sized
 struct _PROC_THREAD_ATTRIBUTE_LIST {};
 
-struct MyProcThreadAttributeList
+struct ProcThreadAttributeList
 {
 private:
 	// To make sure the attribute value persists we cache it here.
@@ -20,13 +20,13 @@ private:
 	// 1. Create Powershell in the same container as PSF.
 	// 2. Any windows Powershell makes will also be in the same container as PSF.
 	// This means that powershell, and any windows it makes, will have the same restrictions as PSF.
-	// 3. Any child process that is run with "InPckgContext" field as true will run in same context of package
+	// 3. Any child process that is run with "InPackageContext" field as true will run in same context of package
 	DWORD createInContainerAttribute = 0x02;
 	std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
 
 public:
 
-	MyProcThreadAttributeList()
+	ProcThreadAttributeList()
 	{
 		SIZE_T AttributeListSize{};
 		InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
@@ -56,7 +56,7 @@ public:
 			"Could not update Proc thread attribute.");
 	}
 
-	~MyProcThreadAttributeList()
+	~ProcThreadAttributeList()
 	{
 		DeleteProcThreadAttributeList(attributeList.get());
 	}
