@@ -3,7 +3,7 @@
     {
       "id": "Fixed64",
       "executable": "PreventBreakAwayTest.exe",
-      "InPackageContext":  true
+      "InPackageContext": true
     },
     {
       "id": "Fixed32",

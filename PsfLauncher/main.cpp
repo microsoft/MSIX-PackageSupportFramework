@@ -155,11 +155,11 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         if (createProcessesInContainer)
         {
             ProcThreadAttributeList m_AttributeList;
-            StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE, m_AttributeList.get());
+            hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE, m_AttributeList.get());
         }
         else
         {
-            StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
+            hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
         }
 
         if (hr != ERROR_SUCCESS)
