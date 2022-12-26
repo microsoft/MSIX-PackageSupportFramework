@@ -132,9 +132,6 @@ template <typename CharT>
 using startup_info_t = std::conditional_t<std::is_same_v<CharT, char>, STARTUPINFOA, STARTUPINFOW>;
 
 template <typename CharT>
-using startup_info_extended_t = std::conditional_t<std::is_same_v<CharT, char>, LPSTARTUPINFOA, LPSTARTUPINFOW>;
-
-template <typename CharT>
 BOOL WINAPI CreateProcessFixup(
     _In_opt_ const CharT* applicationName,
     _Inout_opt_ CharT* commandLine,
@@ -214,11 +211,11 @@ BOOL WINAPI CreateProcessFixup(
     fixupPath(exePath);
 
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
-    bool createProcessesInContainer = false;
-    auto createProcessesInContainerPtr = appConfig->try_get("InPackageContext");
-    if (createProcessesInContainerPtr)
+    bool createProcessInAppContext = false;
+    auto createProcessInAppContextPtr = appConfig->try_get("InPackageContext");
+    if (createProcessInAppContextPtr)
     {
-        createProcessesInContainer = createProcessesInContainerPtr->as_boolean().get();
+        createProcessInAppContext = createProcessInAppContextPtr->as_boolean().get();
     }
 
 #if _DEBUG
@@ -226,7 +223,7 @@ BOOL WINAPI CreateProcessFixup(
 #endif
     if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
         ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)) ||
-        (createProcessesInContainer))
+        (createProcessInAppContext))
     {
         // The target executable is in the package, so we _do_ want to fixup it
 #if _DEBUG

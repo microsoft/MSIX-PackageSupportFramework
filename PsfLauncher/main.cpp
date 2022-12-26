@@ -146,22 +146,21 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
         //THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
         HRESULT hr = ERROR_SUCCESS;
-        bool createProcessesInContainer = false;
-        auto createProcessesInContainerPtr = appConfig->try_get("InPackageContext");
-        if (createProcessesInContainerPtr)
+        bool createProcessesInAppContext = false;
+        auto createProcessesInAppContextPtr = appConfig->try_get("InPackageContext");
+        ProcThreadAttributeList m_AttributeList;
+        if (createProcessesInAppContextPtr)
         {
-            createProcessesInContainer = createProcessesInContainerPtr->as_boolean().get();
+            createProcessesInAppContext = createProcessesInAppContextPtr->as_boolean().get();
         }
-        if (createProcessesInContainer)
+        if (createProcessesInAppContext)
         {
-            ProcThreadAttributeList m_AttributeList;
             hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE, m_AttributeList.get());
         }
         else
         {
             hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
         }
-
         if (hr != ERROR_SUCCESS)
         {
             Log("Error return from launching process 0x%x.", GetLastError());
