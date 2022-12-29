@@ -230,11 +230,11 @@ errno_t strcatImpl(CharT* dest, rsize_t destBufSize, CharT const* src)
 {
     if (std::is_same<CharT, char>::value)
     {
-        return strcat_s((char*)dest, destBufSize, (const char*)src);
+        return strcat_s(reinterpret_cast<char*>(dest), destBufSize, reinterpret_cast<const char*>(src));
     }
     else
     {
-        return wcscat_s((wchar_t*)dest, destBufSize, (const wchar_t*)src);
+        return wcscat_s(reinterpret_cast<wchar_t*>(dest), destBufSize, reinterpret_cast<const wchar_t*>(src));
     }
 }
 
@@ -243,11 +243,11 @@ CharT* strtokImpl(CharT* inpStr, CharT const* delim, CharT** token)
 {
     if (std::is_same<CharT, char>::value)
     {
-        return (CharT*)(strtok_s((char*)inpStr, (const char*)delim, (char**)token));
+        return reinterpret_cast<CharT*>(strtok_s(reinterpret_cast<char*>(inpStr), reinterpret_cast<const char*>(delim), reinterpret_cast<char**>(token)));
     }
     else
     {
-        return (CharT*)(wcstok_s((wchar_t*)inpStr, (const wchar_t*)delim, (wchar_t**)token));
+        return reinterpret_cast<CharT*>(wcstok_s(reinterpret_cast<wchar_t*>(inpStr), reinterpret_cast<const wchar_t*>(delim), reinterpret_cast<wchar_t**>(token)));
     }
 }
 
@@ -256,11 +256,11 @@ size_t strlenImpl(CharT const* inpStr)
 {
     if (std::is_same<CharT, char>::value)
     {
-        return strlen((const char*)inpStr);
+        return strlen(reinterpret_cast<const char*>(inpStr));
     }
     else
     {
-        return wcslen((const wchar_t*)inpStr);
+        return wcslen(reinterpret_cast<const wchar_t*>(inpStr));
     }
 }
 

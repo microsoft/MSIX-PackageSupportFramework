@@ -2,7 +2,7 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
-
+#include <known_folders.h>
 
 constexpr int MAX_CMDLINE_PATH = 32767;
 auto GetFileAttributesImpl = psf::detoured_string_function(&::GetFileAttributesA, &::GetFileAttributesW);
@@ -65,6 +65,7 @@ bool IsUnderUserAppDataAndReplace(const CharT* fileName, CharT* cmdLine, bool Ap
     return result;
 }
 
+// checks each command line parameter and changes from native local app data folder to per user per app data folder if the file referred in command line parameter is present in per user per app data folder
 template <typename CharT>
 void convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
 {
