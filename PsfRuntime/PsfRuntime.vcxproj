@@ -29,6 +29,7 @@
   <ItemGroup>
     <ClInclude Include="Config.h" />
     <ClInclude Include="JsonConfig.h" />
+    <ClInclude Include="ArgRedirection.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Detours\Detours.vcxproj">
