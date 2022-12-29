@@ -1,0 +1,13 @@
+{
+  "applications": [
+    {
+      "id": "Fixed64",
+      "executable": "ArgRedirectionTest.exe"
+    },
+    {
+      "id": "Fixed32",
+      "executable": "ArgRedirectionTest.exe"
+    }
+
+  ]
+}

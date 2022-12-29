@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnvVarsATest", "scenarios\E
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnvVarsWTest", "scenarios\EnvVarsWTest\EnvVarsWTest.vcxproj", "{9585E26E-F1D0-4199-B07F-A46257327CA9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArgRedirectionTest", "scenarios\ArgRedirectionTest\ArgRedirectionTest.vcxproj", "{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -123,6 +125,14 @@ Global
 		{9585E26E-F1D0-4199-B07F-A46257327CA9}.Release|x64.Build.0 = Release|x64
 		{9585E26E-F1D0-4199-B07F-A46257327CA9}.Release|x86.ActiveCfg = Release|Win32
 		{9585E26E-F1D0-4199-B07F-A46257327CA9}.Release|x86.Build.0 = Release|Win32
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Debug|x64.ActiveCfg = Debug|x64
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Debug|x64.Build.0 = Debug|x64
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Debug|x86.ActiveCfg = Debug|Win32
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Debug|x86.Build.0 = Debug|Win32
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Release|x64.ActiveCfg = Release|x64
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Release|x64.Build.0 = Release|x64
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Release|x86.ActiveCfg = Release|Win32
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -138,6 +148,7 @@ Global
 		{90719DF5-F8FC-49DF-B7C7-75EB247D9E8D} = {51D2A935-9355-4DFD-882C-2FE3F39CB4CC}
 		{434BCA70-2E41-4BE4-A030-92A5D351800E} = {51D2A935-9355-4DFD-882C-2FE3F39CB4CC}
 		{9585E26E-F1D0-4199-B07F-A46257327CA9} = {51D2A935-9355-4DFD-882C-2FE3F39CB4CC}
+		{5AA28A28-6BE4-46E8-89C4-794137BBFEDA} = {51D2A935-9355-4DFD-882C-2FE3F39CB4CC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3873DE95-AB16-4C4B-848A-1BCE9BD8444F}
