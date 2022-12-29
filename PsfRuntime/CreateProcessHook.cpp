@@ -154,7 +154,14 @@ BOOL WINAPI CreateProcessFixup(
         processInformation = &pi;
     }
 
-    std::unique_ptr<CharT[]> cnvtCmdLine(new CharT[MAX_CMDLINE_PATH]);
+    DWORD cnvtCmdLinePathLen = 0;
+    if (commandLine)
+    {
+        size_t cmdLineLen = strlenImpl(reinterpret_cast<const CharT*>(commandLine));
+        cnvtCmdLinePathLen = (cmdLineLen ? MAX_CMDLINE_PATH : 0); // avoid allocation when no cmdLine is passed
+    }
+
+    std::unique_ptr<CharT[]> cnvtCmdLine(new CharT[cnvtCmdLinePathLen]);
     if (commandLine && cnvtCmdLine.get())
     {
         // Redirect createProcess arguments if any in native app data to per user per app data

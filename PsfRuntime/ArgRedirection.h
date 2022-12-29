@@ -49,23 +49,22 @@ bool IsUnderUserAppDataAndReplace(const CharT* fileName, CharT* cmdLine, bool Ap
             result = true;
             if (std::is_same<CharT, char>::value)
             {
-                size_t packageAppDataPathLen = packageAppDataPath.native().length();
+                size_t fullPathLen = fullPath.length();
                 size_t bytes_written;
-                std::unique_ptr<char[]> packageAppDataPath_char(new char[packageAppDataPathLen + 1]);
-                wcstombs_s(&bytes_written, packageAppDataPath_char.get(), packageAppDataPathLen + 1, packageAppDataPath.c_str(), packageAppDataPathLen);
-                strcatImpl(cmdLine, remBufSize, (const CharT*)(packageAppDataPath_char.get()));
+                std::unique_ptr<char[]> fullPath_char(new char[fullPathLen + 1]);
+                wcstombs_s(&bytes_written, fullPath_char.get(), fullPathLen + 1, fullPath.c_str(), fullPathLen);
+                strcatImpl(cmdLine, remBufSize, (const CharT*)(fullPath_char.get()));
             }
             else
             {
-                strcatImpl(cmdLine, remBufSize, (CharT*)(packageAppDataPath.c_str()));
+                strcatImpl(cmdLine, remBufSize, (CharT*)(fullPath.c_str()));
             }
-            strcatImpl(cmdLine, remBufSize, fileName + (appDataPath.native().length()));
         }
     }
     return result;
 }
 
-// checks each command line parameter and changes from native local app data folder to per user per app data folder if the file referred in command line parameter is present in per user per app data folder
+// checks each space separated command line parameter and changes from native local app data folder to per user per app data folder if the file referred in command line parameter is present in per user per app data folder, else it remains the same
 template <typename CharT>
 void convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
 {
