@@ -29,5 +29,9 @@
     <ClInclude Include="JsonConfig.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="ArgRedirection.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
+
