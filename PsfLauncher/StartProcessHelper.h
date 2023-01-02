@@ -4,7 +4,7 @@
 #include "Globals.h"
 #include <wil\resource.h>
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, DWORD *exitCode = nullptr)
 {
 
     STARTUPINFOEXW startupInfoEx =
@@ -25,7 +25,6 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
         , static_cast<WORD>(cmdShow) // wShowWindow
         }
     };
-
     PROCESS_INFORMATION processInfo{};
 
     startupInfoEx.lpAttributeList = attributeList;
@@ -48,6 +47,12 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
             &processInfo),
         "ERROR: Failed to create a process for %ws",
         applicationName);
+
+    if (exitCode != nullptr)
+    {
+        WaitForSingleObject(processInfo.hProcess, INFINITE);
+        GetExitCodeProcess(processInfo.hProcess, exitCode);
+    }
 
     RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);

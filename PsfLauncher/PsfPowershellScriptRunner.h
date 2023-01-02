@@ -182,9 +182,10 @@ private:
 			return;
 		}
 
+		DWORD exitCode = ERROR_SUCCESS;
 		if (script.waitForScriptToFinish)
 		{
-			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get(), &exitCode);
 
 			if (script.stopOnScriptError)
 			{
@@ -194,8 +195,18 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get(), &exitCode);
 			pwrShellThread.detach();
+		}
+		DWORD execPolicyFailExitCode = 0x01;
+		if (exitCode == execPolicyFailExitCode)
+		{
+			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" execution faildue to an execution policy restriction. To run the script, you may need to change the execution policy. For more information, see about_Execution_Policies at https://go.microsoft.com/fwlink/?LinkID=135170.  ")).c_str(), L"Warning", MB_OK | MB_ICONWARNING, 0);
+		}
+		else if (exitCode != ERROR_SUCCESS)
+		{
+			std::wstring exitCodeStr = std::to_wstring(exitCode);
+			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" execution fails. ExitCode:  ") + exitCodeStr).c_str(), L"Warning", MB_OK | MB_ICONWARNING, 0);
 		}
 	}
 
