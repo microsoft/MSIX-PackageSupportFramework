@@ -48,15 +48,14 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
         "ERROR: Failed to create a process for %ws",
         applicationName);
 
-    if (exitCode != nullptr)
-    {
-        WaitForSingleObject(processInfo.hProcess, INFINITE);
-        GetExitCodeProcess(processInfo.hProcess, exitCode);
-    }
 
     RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
     RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
+    if (exitCode != nullptr)
+    {
+        GetExitCodeProcess(processInfo.hProcess, exitCode);
+    }
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
 
