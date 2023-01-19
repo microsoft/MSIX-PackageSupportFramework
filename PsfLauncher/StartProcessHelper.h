@@ -4,7 +4,7 @@
 #include "Globals.h"
 #include <wil\resource.h>
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, DWORD *exitCode = nullptr)
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, _Out_ DWORD *exitCode = nullptr)
 {
 
     STARTUPINFOEXW startupInfoEx =
