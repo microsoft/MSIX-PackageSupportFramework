@@ -212,7 +212,7 @@ BOOL WINAPI CreateProcessFixup(
 
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     bool createProcessInAppContext = false;
-    auto createProcessInAppContextPtr = appConfig->try_get("InPackageContext");
+    auto createProcessInAppContextPtr = appConfig->try_get("inPackageContext");
     if (createProcessInAppContextPtr)
     {
         createProcessInAppContext = createProcessInAppContextPtr->as_boolean().get();
@@ -223,7 +223,7 @@ BOOL WINAPI CreateProcessFixup(
 #endif
     if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
         ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)) ||
-        (createProcessInAppContext))
+        (createProcessInAppContext)) // Inject psfRuntime into an external process that is run in package context 
     {
         // The target executable is in the package, so we _do_ want to fixup it
 #if _DEBUG
