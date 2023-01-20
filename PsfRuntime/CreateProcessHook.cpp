@@ -24,6 +24,7 @@
 #include <psf_framework.h>
 
 #include "Config.h"
+#include "ArgRedirection.h"
 
 using namespace std::literals;
 
@@ -153,9 +154,24 @@ BOOL WINAPI CreateProcessFixup(
         processInformation = &pi;
     }
 
+    DWORD cnvtCmdLinePathLen = 0;
+    if (commandLine)
+    {
+        size_t cmdLineLen = strlenImpl(reinterpret_cast<const CharT*>(commandLine));
+        cnvtCmdLinePathLen = (cmdLineLen ? MAX_CMDLINE_PATH : 0); // avoid allocation when no cmdLine is passed
+    }
+
+    std::unique_ptr<CharT[]> cnvtCmdLine(new CharT[cnvtCmdLinePathLen]);
+    if (commandLine && cnvtCmdLine.get())
+    {
+        // Redirect createProcess arguments if any in native app data to per user per app data
+        memset(cnvtCmdLine.get(), 0, MAX_CMDLINE_PATH);
+        convertCmdLineParameters(commandLine, cnvtCmdLine.get());
+    }
+
     if (!CreateProcessImpl(
         applicationName,
-        commandLine,
+        (commandLine && cnvtCmdLine.get()) ? cnvtCmdLine.get() : commandLine,
         processAttributes,
         threadAttributes,
         inheritHandles,
