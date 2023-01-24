@@ -144,8 +144,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         LogString("     Arguments: ", fullargs.data());
         LogString("Working Directory: ", currentDirectory.c_str());
 
-        //THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
-        HRESULT hr = ERROR_SUCCESS;
+        HRESULT hr = S_OK;
         bool createProcessesInAppContext = false;
         auto createProcessesInAppContextPtr = appConfig->try_get("inPackageContext");
         ProcThreadAttributeList m_AttributeList;
