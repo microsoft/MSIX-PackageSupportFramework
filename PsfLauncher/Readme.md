@@ -369,7 +369,7 @@ This Configuration allows all created process from a running executable to opera
 
 When an external process is launched by an executable, all of its app data is stored in its native app data folder and hence not containerized. This feature allows the app data of the external process to be virtualized in per user per app data folder of the package.
 
-This configuration is not needed when process spanned by the executable are already part of the current or some other package. This feature can be enabled when there is a need of running external process in the current package context.
+This configuration is not needed when process spanned by the executable are already part of the current package. This feature can be enabled when there is a need of running external process in the current package context.
 
 =======
 Submit your own fixup(s) to the community:
