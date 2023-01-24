@@ -199,6 +199,12 @@ private:
 			pwrShellThread.detach();
 		}
 
+		if (exitCode != ERROR_SUCCESS)
+		{
+			// when powershell fails to run, reset first run of the powershell(when "runOnce" is set) till powershell successfully runs once
+			THROW_IF_FAILED(resetFirstRunStatus(script.shouldRunOnce));
+		}
+
 		DWORD execPolicyFailExitCode = 0x01;
 		if (exitCode == execPolicyFailExitCode)
 		{
@@ -454,6 +460,26 @@ private:
 			}
 		}
 		
+		return S_OK;
+	}
+
+	// resets first run status of powershell by deleting "PSFScriptHasRun" registry key in appplication package hive. 
+	HRESULT resetFirstRunStatus(bool shouldRunOnce)
+	{
+		if (shouldRunOnce)
+		{
+			std::wstring runOnceSubKey = L"SOFTWARE\\";
+			runOnceSubKey.append(psf::current_package_full_name());
+			runOnceSubKey.append(L"\\PSFScriptHasRun ");
+
+			LSTATUS deleteResult = RegDeleteKeyExW(HKEY_CURRENT_USER, runOnceSubKey.c_str(), KEY_WOW64_64KEY, 0);
+
+			if (deleteResult != ERROR_SUCCESS)
+			{
+				return deleteResult;
+			}
+		}
+
 		return S_OK;
 	}
 
