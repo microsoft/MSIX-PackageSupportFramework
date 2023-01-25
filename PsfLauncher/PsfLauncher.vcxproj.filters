@@ -28,9 +28,6 @@
     <ClInclude Include="Logger.h">
       <Filter>inc</Filter>
     </ClInclude>
-    <ClInclude Include="Globals.h">
-      <Filter>inc</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="StartingScriptWrapper.ps1" />
