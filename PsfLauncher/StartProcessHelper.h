@@ -1,8 +1,8 @@
 #pragma once
 #include <windows.h>
 #include "Logger.h"
-#include "Globals.h"
 #include <wil\resource.h>
+#include "proc_helper.h"
 
 HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
 {
