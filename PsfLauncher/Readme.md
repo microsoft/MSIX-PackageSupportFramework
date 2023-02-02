@@ -338,12 +338,12 @@ This allows every process spanned by Sample.exe to run in the same package conte
 | applications | startScript | (Optional) If present, used to define a PowerShell script that will be run prior running the application executable. |
 | | |  `'waitForScriptToFinish'` - (Optional, default=true) Boolean. When true, PsfLauncher will wait for the script to complete or timeout before running the application executable. |
 | | | `'timeout'` - (Optional, default is none) Expressed in ms.  Only applicable if waitForScriptToFinish is true.  If a timeout occurs it is treated as an error for the purpose of `'stopOnScriptError'`. The value 0 means an immediate timeout, if you do not want a timeout do not specify a value. |
-| | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
+| | | `'runOnce'` - (Optional, default=true) Boolean. When true, the script will only be run the first time the user runs the application. If script fails to run, it will be run on every launch of application till it runs successfully once. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. Multiple arguments(and arguments with space) are provided by enclosing each argument in single quote. ("scriptArguments": "'<Arg1>' '<Arg2>'"). |
 | applications | endScript | (Optional) If present, used to define a PowerShell script that will be run after completion of the application executable. |
-| | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
+| | | `'runOnce'` - (Optional, default=true) Boolean. When true, the script will only be run the first time the user runs the application. If script fails to run, it will be run on every launch of application till it runs successfully once. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
