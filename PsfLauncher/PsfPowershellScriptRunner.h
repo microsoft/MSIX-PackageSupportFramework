@@ -124,9 +124,10 @@ private:
 			return;
 		}
 
+		DWORD exitCode = ERROR_SUCCESS;
 		if (script.waitForScriptToFinish)
 		{
-			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get(), &exitCode);
 
 			if (script.stopOnScriptError)
 			{
@@ -136,8 +137,19 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get(), &exitCode);
 			pwrShellThread.detach();
+		}
+
+		DWORD execPolicyFailExitCode = 0x01;
+		if (exitCode == execPolicyFailExitCode)
+		{
+			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" failed due to an execution policy restriction. To change the executing policy, execute \"Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine\" and re-run the application.")).c_str(), L"Package Support Framework", MB_OK | MB_ICONWARNING, 0);
+		}
+		else if (exitCode != ERROR_SUCCESS) 
+		{
+			std::wstring exitCodeStr = std::to_wstring(exitCode);
+			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" execution failed with Exit Code ") + exitCodeStr + std::wstring(L". To fix this, please run ") + script.scriptPath + std::wstring(L" standalone in a PowerShell window and confirm that the value of $LASTEXITCODE is 0 (Success) before using it with PSF.")).c_str(), L"Package Support Framework", MB_OK | MB_ICONWARNING, 0);
 		}
 	}
 
