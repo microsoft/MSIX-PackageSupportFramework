@@ -4,6 +4,15 @@
 //-------------------------------------------------------------------------------------------------------
 
 #include <psf_framework.h>
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 void InitializePaths();
 void InitializeConfiguration();
@@ -18,6 +27,14 @@ int __stdcall PSFInitialize() noexcept try
 }
 catch (...)
 {
+    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+        "Exceptions",
+        TraceLoggingWideString(L"FileRedirectionFixupException", "Type"),
+        TraceLoggingWideString(L"FileRedirectionFixup configuration intialization exception", "Message"),
+        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+    );
     return win32_from_caught_exception();
 }
 
@@ -43,10 +60,14 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
+        TraceLoggingRegister(g_Log_ETW_ComponentProvider);
         ::OutputDebugStringA("FileRedirectionFixup attached");
         InitializePaths();
     }
-
+    else if (reason == DLL_PROCESS_DETACH)
+    {
+        TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+    }
     return TRUE;
 }
 catch (...)

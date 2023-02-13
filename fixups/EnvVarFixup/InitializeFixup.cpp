@@ -18,6 +18,10 @@
 
 #include "FunctionImplementations.h"
 #include "EnvVar_spec.h"
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 
 using namespace std::literals;
 
@@ -138,16 +142,18 @@ void InitializeFixups()
 
 void InitializeConfiguration()
 {
+    std::wstringstream traceDataStream;
     Log("EnvVarFixup InitializeConfiguration()");
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         auto& rootObject = rootConfig->as_object();
-
+        traceDataStream << " config:\n";
 
         if (auto EnvVarsValue = rootObject.try_get("envVars"))
         {
             if (EnvVarsValue)
             {
+                traceDataStream << " envVars:\n";
                 const psf::json_array& dllArray = EnvVarsValue->as_array();
                 int count = 0;
                 for (auto& spec : dllArray)
@@ -155,10 +161,13 @@ void InitializeConfiguration()
                     auto& specObject = spec.as_object();
 
                     auto variablenamePattern = specObject.get("name").as_string().wstring();
+                    traceDataStream << " name: " << variablenamePattern << " ;";
 
                     auto variablevalue = specObject.get("value").as_string().wstring();
+                    traceDataStream << " value: " << variablevalue << " ;";
 
                     auto useregistry = specObject.get("useregistry").as_string().wstring();
+                    traceDataStream << " useregistry: " << useregistry << " ;";
                     LogString(0, "GetEnvFixup Config: name", variablenamePattern.data());
                     LogString(0, "GetEnvFixup Config: value", variablevalue.data());
                     LogString(0, "GetEnvFixup Config: useregistry", useregistry.data());
@@ -184,5 +193,12 @@ void InitializeConfiguration()
         {
             Log("EnvVarFixup: Zero config items read.");
         }
+        TraceLoggingWrite(
+            g_Log_ETW_ComponentProvider,
+            "EnvVarFixupConfigdata",
+            TraceLoggingWideString(traceDataStream.str().c_str(), "EnvVarFixupConfig"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
     }
 }

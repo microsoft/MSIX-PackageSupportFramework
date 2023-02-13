@@ -55,7 +55,7 @@ extern "C" {
                     TraceLoggingWideString(traceDataStream.str().c_str(), "WaitForDebuggerFixupConfig"),
                     TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                     TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+                    TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
 
                 waitForDebugger = enabledValue->as_boolean().get();
             }

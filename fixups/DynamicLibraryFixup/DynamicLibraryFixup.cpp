@@ -7,6 +7,10 @@
 #include <psf_framework.h>
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 
 extern bool                  g_dynf_forcepackagedlluse;
 extern std::vector<dll_location_spec> g_dynf_dllSpecs;
@@ -55,6 +59,14 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                 }
                 catch (...)
                 {
+                    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+                        "Exceptions",
+                        TraceLoggingWideString(L"DynamicLibraryFixupException", "Type"),
+                        TraceLoggingWideString(L"LoadLibraryFixup ERROR", "Message"),
+                        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+                    );
                     Log("LoadLibraryFixup ERROR");
                 }
             }
@@ -104,6 +116,14 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 }
                 catch (...)
                 {
+                    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+                        "Exceptions",
+                        TraceLoggingWideString(L"DynamicLibraryFixupException", "Type"),
+                        TraceLoggingWideString(L"LoadLibraryFixup ERROR", "Message"),
+                        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+                    );
                     Log("LoadLibraryExFixup Error");
                 }
             }

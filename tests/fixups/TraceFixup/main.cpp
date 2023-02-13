@@ -194,7 +194,10 @@ void Log_ETW_PostMsgOperationA(const char* operation, const char* inputs, const 
             TraceLoggingValue(outputs, "Outputs"),
             TraceLoggingValue(callingmodule, "Caller"),
             TraceLoggingInt64(TickStart.QuadPart, "Start"),
-            TraceLoggingInt64(TickEnd.QuadPart, "End")
+            TraceLoggingInt64(TickEnd.QuadPart, "End"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
         ); // Field for your event in the form of (value, field name).
     }
     catch (...)
@@ -325,7 +328,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
                     TraceLoggingWideString(traceDataStream.str().c_str(), "TraceFixupConfig"),
                     TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                     TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+                    TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
             }
             catch (...)
             {
@@ -348,6 +351,14 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 }
 catch (...)
 {
+    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+        "Exceptions",
+        TraceLoggingWideString(L"TraceFixupException", "Type"),
+        TraceLoggingWideString(L"TraceFixup attach ERROR", "Message"),
+        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+    );
     ::SetLastError(win32_from_caught_exception());
     return FALSE;
 }

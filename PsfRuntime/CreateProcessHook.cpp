@@ -25,6 +25,10 @@
 
 #include "Config.h"
 #include "ArgRedirection.h"
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
+
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 
 using namespace std::literals;
 
@@ -166,7 +170,19 @@ BOOL WINAPI CreateProcessFixup(
     {
         // Redirect createProcess arguments if any in native app data to per user per app data
         memset(cnvtCmdLine.get(), 0, MAX_CMDLINE_PATH);
-        convertCmdLineParameters(commandLine, cnvtCmdLine.get());
+        bool cmdLineConverted = convertCmdLineParameters(commandLine, cnvtCmdLine.get());
+        if (cmdLineConverted == true)
+        {
+            TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+                "ArgumentRedirection",              
+                TraceLoggingValue(commandLine, "commandLine"),
+                TraceLoggingValue(cnvtCmdLine.get(), "Converted commandLine"),
+                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+            ); 
+
+        }
     }
 
     if (!CreateProcessImpl(
@@ -181,6 +197,14 @@ BOOL WINAPI CreateProcessFixup(
         startupInfo,
         processInformation))
     {
+        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+            "Exceptions",
+            TraceLoggingWideString(L"PSFRuntimeException", "Type"),
+            TraceLoggingWideString(L"Create Process failure", "Message"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+        );
         return FALSE;
     }
 
@@ -301,6 +325,14 @@ BOOL WINAPI CreateProcessFixup(
                     }
                     catch (...)
                     {
+                        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+                            "Exceptions",
+                            TraceLoggingWideString(L"PSFRuntimeException", "Type"),
+                            TraceLoggingWideString(L"Non-fatal error enumerating directories while looking for PsfRuntime", "Message"),
+                            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+                        );
                         Log("Non-fatal error enumerating directories while looking for PsfRuntime.");
                     }
                 }
@@ -354,6 +386,14 @@ BOOL WINAPI CreateProcessFixup(
 catch (...)
 {
     ::SetLastError(win32_from_caught_exception());
+    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+        "Exceptions",
+        TraceLoggingWideString(L"PSFRuntimeException", "Type"),
+        TraceLoggingWideString(L"Create Process Hook failure", "Message"),
+        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+    );
     return FALSE;
 }
 

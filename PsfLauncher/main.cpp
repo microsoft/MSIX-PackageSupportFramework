@@ -23,7 +23,7 @@
 #include <wil\result.h>
 #include <wil\resource.h>
 #include <debug.h>
-
+#include "RemovePII.h"
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -33,6 +33,8 @@ TRACELOGGING_DEFINE_PROVIDER(
     TraceLoggingOptionMicrosoftTelemetry());
 
 using namespace std::literals;
+
+LARGE_INTEGER psfLoad_startCounter;
 
 // Forward declarations
 void LogApplicationAndProcessesCollection();
@@ -45,7 +47,8 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
 int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
-{
+{    
+    QueryPerformanceCounter(&psfLoad_startCounter);
     return launcher_main(args, cmdShow);
 }
 
@@ -53,6 +56,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
     Log("\tIn Launcher_main()");
 
+    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     THROW_HR_IF_MSG(ERROR_NOT_FOUND, !appConfig, "Error: could not find matching appid in config.json and appx manifest");
 
@@ -180,12 +184,31 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         powershellScriptRunner.RunEndingScript();
         Log("Process Launch complete.");
     }
+    LARGE_INTEGER psfLoad_endCounter, frequency;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&psfLoad_endCounter);
+    double elapsedTime = (psfLoad_endCounter.QuadPart - psfLoad_startCounter.QuadPart) / (double)frequency.QuadPart;
+    TraceLoggingWrite(
+        g_Log_ETW_ComponentProvider,
+        "PSFLoadRunTime",
+        TraceLoggingFloat64(elapsedTime, "ElapsedTimeInMs"),
+        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+        TelemetryPrivacyDataTag(PDT_ProductAndServicePerformance),
+        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
 
+    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
     return 0;
 }
 catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
+    TraceLoggingWrite(
+        g_Log_ETW_ComponentProvider,
+        "Exceptions",
+        TraceLoggingWideString(L"PSFLauncherException", "Type"),
+        TraceLoggingWideString(widen(message_from_caught_exception()).c_str(), "Message"),
+        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
     return win32_from_caught_exception();
 }
 
@@ -313,11 +336,22 @@ void LogApplicationAndProcessesCollection()
         {
             auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
             auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
+            auto workingDirStr = applicationsConfig.as_object().try_get("workingDirectory") ? RemovePIIfromFilePath(applicationsConfig.as_object().try_get("workingDirectory")->as_string().wide()) : L"Null";
+            auto argStr = applicationsConfig.as_object().try_get("arguments") ? RemovePIIfromFilePath(applicationsConfig.as_object().try_get("arguments")->as_string().wide()) : L"Null";
+            bool inPackageCtxt = applicationsConfig.as_object().try_get("inPackageContext") ? applicationsConfig.as_object().try_get("inPackageContext")->as_boolean().get() : false;
+            bool isScriptUsed = (applicationsConfig.as_object().try_get("startScript") || applicationsConfig.as_object().try_get("endScript")) ? true : false;
+            bool isPsfMonitorUsed = applicationsConfig.as_object().try_get("monitor") ? true : false;
+
             TraceLoggingWrite(
                 g_Log_ETW_ComponentProvider,
                 "ApplicationsConfigdata",
                 TraceLoggingWideString(exeStr, "applications_executable"),
                 TraceLoggingWideString(idStr, "applications_id"),
+                TraceLoggingWideString(workingDirStr, "workingDirectory"),
+                TraceLoggingWideString(argStr, "arguments"),
+                TraceLoggingBoolean(inPackageCtxt, "inPackageContext"),
+                TraceLoggingBoolean(isScriptUsed, "scriptIncluded"),
+                TraceLoggingBoolean(isPsfMonitorUsed, "psfMonitorUsed"),
                 TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                 TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                 TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
@@ -329,14 +363,6 @@ void LogApplicationAndProcessesCollection()
         for (auto& processConfig : processes->as_array())
         {
             auto exeStr = processConfig.as_object().get("executable").as_string().wide();
-            TraceLoggingWrite(
-                g_Log_ETW_ComponentProvider,
-                "ProcessesExecutableConfigdata",
-                TraceLoggingWideString(exeStr, "processes_executable"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-
             if (auto fixups = processConfig.as_object().try_get("fixups"))
             {
                 for (auto& fixupConfig : fixups->as_array())
@@ -345,6 +371,7 @@ void LogApplicationAndProcessesCollection()
                     TraceLoggingWrite(
                         g_Log_ETW_ComponentProvider,
                         "ProcessesFixUpConfigdata",
+                        TraceLoggingWideString(exeStr, "processes_executable"),
                         TraceLoggingWideString(dllStr, "processes_fixups"),
                         TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                         TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),

@@ -6,7 +6,15 @@
 
 #define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
+#include <TraceLoggingProvider.h>
+#include "Telemetry.h"
 
+TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 void InitializeFixups();
 void InitializeConfiguration();
@@ -18,16 +26,29 @@ extern "C" {
     {
         if (reason == DLL_PROCESS_ATTACH)
         {
+            TraceLoggingRegister(g_Log_ETW_ComponentProvider);
             Log("Attaching DynamicLibraryFixup");
 
             InitializeFixups();
             InitializeConfiguration();
         }
-
+        else if (reason == DLL_PROCESS_DETACH)
+        {
+            TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+        }
         return TRUE;
     }
     catch (...)
     {
+        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+            "Exceptions",
+            TraceLoggingWideString(L"DynamicLibraryFixupException", "Type"),
+            TraceLoggingWideString(L"DynamicLibraryFixup attach ERROR", "Message"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
+        );
+        TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
         Log("RuntDynamicLibraryFixup attach ERROR");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
