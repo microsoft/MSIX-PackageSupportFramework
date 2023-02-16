@@ -324,11 +324,14 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
             {
                 TraceLoggingWrite(
                     g_Log_ETW_ComponentProvider,
-                    "TraceFixupConfigdata",
-                    TraceLoggingWideString(traceDataStream.str().c_str(), "TraceFixupConfig"),
+                    "FixupConfig",
+                    TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
+                    TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationId"),
+                    TraceLoggingWideString(L"TraceFixup", "FixupType"),
+                    TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
                     TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                     TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                    TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
             }
             catch (...)
             {

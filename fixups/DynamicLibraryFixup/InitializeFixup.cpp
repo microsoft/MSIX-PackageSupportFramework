@@ -186,12 +186,16 @@ void InitializeConfiguration()
             else
                 Log("DynamicLibraryFixup ForcePacageDllUse=false");
         }
+
         TraceLoggingWrite(
             g_Log_ETW_ComponentProvider,
-            "DynamicLibraryFixupConfigdata",
-            TraceLoggingWideString(traceDataStream.str().c_str(), "DynamicLibraryFixupConfig"),
+            "FixupConfig",
+            TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
+            TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationID"),
+            TraceLoggingWideString(L"DynamicLibraryFixup", "FixupType"),
+            TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
             TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
             TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
     }
 }

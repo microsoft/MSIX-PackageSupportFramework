@@ -62,7 +62,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                     TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                         "Exceptions",
                         TraceLoggingWideString(L"DynamicLibraryFixupException", "Type"),
-                        TraceLoggingWideString(L"LoadLibraryFixup ERROR", "Message"),
+                        TraceLoggingWideString(L"LoadLibraryFixup: LoadLibraryFixup ERROR", "Message"),
                         TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                         TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                         TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
@@ -119,7 +119,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                     TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                         "Exceptions",
                         TraceLoggingWideString(L"DynamicLibraryFixupException", "Type"),
-                        TraceLoggingWideString(L"LoadLibraryFixup ERROR", "Message"),
+                        TraceLoggingWideString(L"LoadLibraryExFixup: LoadLibraryExFixup ERROR", "Message"),
                         TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                         TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                         TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)

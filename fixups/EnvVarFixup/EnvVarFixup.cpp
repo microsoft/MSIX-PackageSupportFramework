@@ -214,7 +214,7 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                 TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                     "Exceptions",
                     TraceLoggingWideString(L"EnvVarFixupException", "Type"),
-                    TraceLoggingWideString(L"Bad Regex pattern ignored in EnvVarFixup", "Message"),
+                    TraceLoggingWideString(L"GetEnvironmentVariableFixup: Bad Regex pattern ignored in EnvVarFixup", "Message"),
                     TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                     TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                     TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
@@ -325,7 +325,7 @@ BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const 
                 TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                     "Exceptions",
                     TraceLoggingWideString(L"EnvVarFixupException", "Type"),
-                    TraceLoggingWideString(L"Bad Regex pattern ignored in EnvVarFixup", "Message"),
+                    TraceLoggingWideString(L"SetEnvironmentVariableFixup: Bad Regex pattern ignored in EnvVarFixup", "Message"),
                     TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                     TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                     TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)

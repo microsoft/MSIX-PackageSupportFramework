@@ -214,22 +214,35 @@ catch (...)
 
 void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
 {
+    std::wstringstream traceDataStream;
+    traceDataStream << " config:\n";
     bool asAdmin = false;
     bool wait = false;
     auto monitorExecutable = monitor.try_get("executable");
+    traceDataStream << " executable: " << monitorExecutable->as_string().wide() << " ;";
     auto monitorArguments = monitor.try_get("arguments");
+    traceDataStream << " arguments: " << monitorArguments->as_string().wide() << " ;";
     auto monitorAsAdmin = monitor.try_get("asadmin");
     auto monitorWait = monitor.try_get("wait");
     if (monitorAsAdmin)
     {
         asAdmin = monitorAsAdmin->as_boolean().get();
     }
+    traceDataStream << " asadmin: " << (asAdmin ? "true" : "false") << " ;";
 
     if (monitorWait)
     {
         wait = monitorWait->as_boolean().get();
     }
+    traceDataStream << " wait: " << (wait ? "true" : "false") << " ;";
 
+    TraceLoggingWrite(
+        g_Log_ETW_ComponentProvider,
+        "PSFMonitorConfigData",
+        TraceLoggingWideString(traceDataStream.str().c_str(), "PSFMonitorConfig"),
+        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
     Log("\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
     LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asAdmin, cmdShow, dirStr);
 }
@@ -340,44 +353,23 @@ void LogApplicationAndProcessesCollection()
             auto argStr = applicationsConfig.as_object().try_get("arguments") ? RemovePIIfromFilePath(applicationsConfig.as_object().try_get("arguments")->as_string().wide()) : L"Null";
             bool inPackageCtxt = applicationsConfig.as_object().try_get("inPackageContext") ? applicationsConfig.as_object().try_get("inPackageContext")->as_boolean().get() : false;
             bool isScriptUsed = (applicationsConfig.as_object().try_get("startScript") || applicationsConfig.as_object().try_get("endScript")) ? true : false;
-            bool isPsfMonitorUsed = applicationsConfig.as_object().try_get("monitor") ? true : false;
+            auto PsfMonitorExecutable = applicationsConfig.as_object().try_get("monitor") ? (applicationsConfig.as_object().try_get("monitor")->as_object().try_get("executable")->as_string().wide()) : L"Null";
 
             TraceLoggingWrite(
                 g_Log_ETW_ComponentProvider,
                 "ApplicationsConfigdata",
+                TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
                 TraceLoggingWideString(exeStr, "applications_executable"),
                 TraceLoggingWideString(idStr, "applications_id"),
                 TraceLoggingWideString(workingDirStr, "workingDirectory"),
                 TraceLoggingWideString(argStr, "arguments"),
                 TraceLoggingBoolean(inPackageCtxt, "inPackageContext"),
                 TraceLoggingBoolean(isScriptUsed, "scriptIncluded"),
-                TraceLoggingBoolean(isPsfMonitorUsed, "psfMonitorUsed"),
+                TraceLoggingWideString(PsfMonitorExecutable, "psfMonitor"),
+                TraceLoggingWideString(psf::current_version, "psfVersion"),
                 TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                 TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                 TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-        }
-    }
-
-    if (auto processes = configRoot->as_object().try_get("processes"))
-    {
-        for (auto& processConfig : processes->as_array())
-        {
-            auto exeStr = processConfig.as_object().get("executable").as_string().wide();
-            if (auto fixups = processConfig.as_object().try_get("fixups"))
-            {
-                for (auto& fixupConfig : fixups->as_array())
-                {
-                    auto dllStr = fixupConfig.as_object().try_get("dll")->as_string().wide();
-                    TraceLoggingWrite(
-                        g_Log_ETW_ComponentProvider,
-                        "ProcessesFixUpConfigdata",
-                        TraceLoggingWideString(exeStr, "processes_executable"),
-                        TraceLoggingWideString(dllStr, "processes_fixups"),
-                        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                        TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-                }
-            }
         }
     }
 }

@@ -537,7 +537,7 @@ catch (...)
         g_Log_ETW_ComponentProvider,
         "Exceptions",
         TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"No matching app config found for appId " + std::wstring(applicationId)).c_str(), "Message"),
+        TraceLoggingWideString((L"PSFQueryAppLaunchConfig Exception " + std::wstring(applicationId)).c_str(), "Message"),
         TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
         TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
     return nullptr;
@@ -555,12 +555,6 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppMonitorConfig() noexcept
 
     if (mon)
     {
-        TraceLoggingWrite(
-            g_Log_ETW_ComponentProvider,
-            "PSFMonitorConfigData",
-            TraceLoggingWideString(mon->as_string().wide(), "RegLegacyFixupConfig"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
         auto& monObj = mon->as_object();
         return &monObj;
     }
@@ -637,7 +631,7 @@ catch (...)
         g_Log_ETW_ComponentProvider,
         "Exceptions",
         TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"No matching exe config found for " + std::wstring(executable)).c_str(), "Message"),
+        TraceLoggingWideString((L"PSFQueryExeConfig Exception " + std::wstring(executable)).c_str(), "Message"),
         TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
         TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
     return nullptr;

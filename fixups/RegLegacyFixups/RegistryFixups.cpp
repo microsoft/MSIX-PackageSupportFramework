@@ -165,7 +165,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                 TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                                     "Exceptions",
                                     TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                    TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups", "Message"),
+                                    TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU", "Message"),
                                     TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                                     TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                                     TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
@@ -245,7 +245,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                 TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                                     "Exceptions",
                                     TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                    TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups", "Message"),
+                                    TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM", "Message"),
                                     TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                                     TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                                     TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
@@ -309,7 +309,7 @@ bool RegFixupFakeDelete(std::string keypath)
                             TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                                 "Exceptions",
                                 TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups", "Message"),
+                                TraceLoggingWideString(L"RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU", "Message"),
                                 TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                                 TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                                 TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
@@ -342,7 +342,7 @@ bool RegFixupFakeDelete(std::string keypath)
                             TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
                                 "Exceptions",
                                 TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups", "Message"),
+                                TraceLoggingWideString(L"RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM", "Message"),
                                 TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                                 TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                                 TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)

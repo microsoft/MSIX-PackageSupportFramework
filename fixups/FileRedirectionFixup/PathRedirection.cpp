@@ -539,7 +539,8 @@ void InitializeConfiguration()
                           g_redirectionSpecs.back().isReadOnly = IsReadOnlyValue;
                         }
                     }
-                    traceDataStream << "redirectTargetBase:" << RemovePIIfromFilePath(specObject.get("base").as_string().wide()) << " ;";
+                    if (specObject.try_get("redirectTargetBase"))
+                        traceDataStream << "redirectTargetBase: " << RemovePIIfromFilePath(specObject.get("redirectTargetBase").as_string().wide()) << " ;";
                     traceDataStream << "isExclusion:" << (IsExclusionValue ? L"true" : L"false") << " ;";
                     traceDataStream << "isReadOnly:" << (IsReadOnlyValue ? L"true" : L"false") << " ;";
                     Log("\t\tFRF RULE: Path=%ls retarget=%ls", path.c_str(), redirectTargetBaseValue.c_str());
@@ -575,11 +576,14 @@ void InitializeConfiguration()
 
         TraceLoggingWrite(
             g_Log_ETW_ComponentProvider,
-            "FileRedirectionFixupConfigdata",
-            TraceLoggingWideString(traceDataStream.str().c_str(), "FileRedirectionFixupConfig"),
+            "FixupConfig",
+            TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
+            TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationId"),
+            TraceLoggingWideString(L"FileRedirectionFixup", "FixupType"),
+            TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
             TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
             TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
     }
 
 }

@@ -195,10 +195,13 @@ void InitializeConfiguration()
         }
         TraceLoggingWrite(
             g_Log_ETW_ComponentProvider,
-            "EnvVarFixupConfigdata",
-            TraceLoggingWideString(traceDataStream.str().c_str(), "EnvVarFixupConfig"),
+            "FixupConfig",
+            TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
+            TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationId"),
+            TraceLoggingWideString(L"EnvVarFixup", "FixupType"),
+            TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
             TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
             TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
     }
 }
