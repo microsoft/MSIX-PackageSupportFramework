@@ -12,10 +12,7 @@
 #include "Reg_Remediation_Spec.h"
 #include "Logging.h"
 #include <regex>
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
-
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+#include "psf_tracelogging.h"
 
 DWORD g_RegIntceptInstance = 0;
 
@@ -162,14 +159,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             }
                             catch (...)
                             {
-                                TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-                                    "Exceptions",
-                                    TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                    TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU", "Message"),
-                                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                                    TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-                                );
+                                psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU");
                                 Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
                             }
                         }
@@ -242,14 +232,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             }
                             catch (...)
                             {
-                                TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-                                    "Exceptions",
-                                    TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                    TraceLoggingWideString(L"Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM", "Message"),
-                                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                                    TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-                                );
+                                psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM");
                                 Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
                             }
                         }
@@ -306,14 +289,7 @@ bool RegFixupFakeDelete(std::string keypath)
                         }
                         catch (...)
                         {
-                            TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-                                "Exceptions",
-                                TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                TraceLoggingWideString(L"RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU", "Message"),
-                                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                                TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-                            );
+                            psf::TraceLogExceptions("RegLegacyFixupException", "RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU");
 #ifdef _DEBUG
                             Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
 #endif
@@ -339,14 +315,7 @@ bool RegFixupFakeDelete(std::string keypath)
                         }
                         catch (...)
                         {
-                            TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-                                "Exceptions",
-                                TraceLoggingWideString(L"RegLegacyFixupException", "Type"),
-                                TraceLoggingWideString(L"RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM", "Message"),
-                                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                                TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-                            );
+                            psf::TraceLogExceptions("RegLegacyFixupException", "RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM");
 #ifdef _DEBUG
                             Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
 #endif

@@ -18,10 +18,7 @@
 
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
-
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+#include "psf_tracelogging.h"
 
 using namespace std::literals;
 
@@ -187,15 +184,6 @@ void InitializeConfiguration()
                 Log("DynamicLibraryFixup ForcePacageDllUse=false");
         }
 
-        TraceLoggingWrite(
-            g_Log_ETW_ComponentProvider,
-            "FixupConfig",
-            TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
-            TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationID"),
-            TraceLoggingWideString(L"DynamicLibraryFixup", "FixupType"),
-            TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
-            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+        psf::TraceLogFixupConfig("DynamicLibraryFixup", traceDataStream.str().c_str());
     }
 }

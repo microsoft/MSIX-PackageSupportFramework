@@ -19,10 +19,7 @@ using namespace std::literals;
 
 #include "FunctionImplementations.h"
 #include "Reg_Remediation_spec.h"
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
-
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
+#include "psf_tracelogging.h"
 
 std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
 
@@ -266,16 +263,7 @@ void InitializeConfiguration()
                     }
                 }
             }
-            TraceLoggingWrite(
-                g_Log_ETW_ComponentProvider,
-                "FixupConfig",
-                TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
-                TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationId"),
-                TraceLoggingWideString(L"RegLegacyFixup", "FixupType"),
-                TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+            psf::TraceLogFixupConfig("RegLegacyFixup", traceDataStream.str().c_str());
         }
         else
         {

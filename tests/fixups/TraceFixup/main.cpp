@@ -13,15 +13,13 @@
 #include "Config.h"
 
 //////// Need to undefine Preprocessor definition for NONAMELESSUNION on this .cpp file only for this to work
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 
 #include "Logging.h"
 
 // This handles event logging via ETW
 // NOTE: The provider name and GUID must be kept in sync with PsfShimMonitor/MainWindow.xaml.cs
 //       The format of the provider name uses dots here and dashes in C#.
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
     "Microsoft.Windows.PSFRuntime",
@@ -322,16 +320,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
             }
             try
             {
-                TraceLoggingWrite(
-                    g_Log_ETW_ComponentProvider,
-                    "FixupConfig",
-                    TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
-                    TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationId"),
-                    TraceLoggingWideString(L"TraceFixup", "FixupType"),
-                    TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
-                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+                psf::TraceLogFixupConfig("TraceFixup", traceDataStream.str().c_str());
             }
             catch (...)
             {
@@ -354,14 +343,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 }
 catch (...)
 {
-    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-        "Exceptions",
-        TraceLoggingWideString(L"TraceFixupException", "Type"),
-        TraceLoggingWideString(L"TraceFixup attach ERROR", "Message"),
-        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-    );
+    psf::TraceLogExceptions("TraceFixupException", "TraceFixup attach ERROR");
     ::SetLastError(win32_from_caught_exception());
     return FALSE;
 }

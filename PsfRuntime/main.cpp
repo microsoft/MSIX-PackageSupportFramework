@@ -11,10 +11,8 @@
 #include <psf_runtime.h>
 
 #include "Config.h"
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
     "Microsoft.Windows.PSFRuntime",
@@ -111,14 +109,7 @@ void load_fixups()
                             }
                             catch (...)
                             {
-                                TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-                                    "Exceptions",
-                                    TraceLoggingWideString(L"PSFRuntimeException", "Type"),
-                                    TraceLoggingWideString(L"Non-fatal error enumerating directories while looking for fixup", "Message"),
-                                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                                    TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-                                );
+                                psf::TraceLogExceptions("PSFRuntimeException", "Non-fatal error enumerating directories while looking for fixup");
                                 Log("Non-fatal error enumerating directories while looking for fixup.");
                             }
                         }
@@ -186,14 +177,7 @@ static int __stdcall FixupEntryPoint() noexcept try
 }
 catch (...)
 {
-    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-        "Exceptions",
-        TraceLoggingWideString(L"PSFRuntimeException", "Type"),
-        TraceLoggingWideString(L"FixupEntryPoint failure", "Message"),
-        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-    );
+    psf::TraceLogExceptions("PSFRuntimeException", L"FixupEntryPoint failure");
     return win32_from_caught_exception();
 }
 
@@ -260,14 +244,7 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
         }
         catch (...)
         {
-            TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-                "Exceptions",
-                TraceLoggingWideString(L"PSFRuntimeException", "Type"),
-                TraceLoggingWideString(L"PsfRuntime DLL PROCESS ATTACH FAILURE", "Message"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-            );
+            psf::TraceLogExceptions("PSFRuntimeException", L"PsfRuntime DLL PROCESS ATTACH FAILURE");
             unload_fixups();
             throw;
         }
@@ -285,14 +262,7 @@ catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     ::SetLastError(win32_from_caught_exception());
-    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-        "Exceptions",
-        TraceLoggingWideString(L"PSFRuntimeException", "Type"),
-        TraceLoggingWideString(widen(message_from_caught_exception()).c_str(), "Message"),
-        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-    );
+    psf::TraceLogExceptions("PSFRuntimeException", widen(message_from_caught_exception()).c_str());
     TraceLoggingRegister(g_Log_ETW_ComponentProvider);
     return false;
 }

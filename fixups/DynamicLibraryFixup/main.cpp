@@ -6,10 +6,8 @@
 
 #define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
     "Microsoft.Windows.PSFRuntime",
@@ -40,14 +38,7 @@ extern "C" {
     }
     catch (...)
     {
-        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-            "Exceptions",
-            TraceLoggingWideString(L"DynamicLibraryFixupException", "Type"),
-            TraceLoggingWideString(L"DynamicLibraryFixup attach ERROR", "Message"),
-            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-        );
+        psf::TraceLogExceptions("DynamicLibraryFixupException", L"DynamicLibraryFixup attach ERROR");
         TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
         Log("RuntDynamicLibraryFixup attach ERROR");
         ::SetLastError(win32_from_caught_exception());

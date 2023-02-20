@@ -13,11 +13,9 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 #include "RemovePII.h"
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 
 using namespace std::literals;
 
@@ -574,16 +572,7 @@ void InitializeConfiguration()
             }
         }
 
-        TraceLoggingWrite(
-            g_Log_ETW_ComponentProvider,
-            "FixupConfig",
-            TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
-            TraceLoggingWideString(psf::current_application_id().c_str(), "ApplicationId"),
-            TraceLoggingWideString(L"FileRedirectionFixup", "FixupType"),
-            TraceLoggingWideString(traceDataStream.str().c_str(), "FixupConfigData"),
-            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+        psf::TraceLogFixupConfig("FileRedirectionFixup", traceDataStream.str().c_str());
     }
 
 }
@@ -1323,14 +1312,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             }
             catch (...)
             {
-                TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-                    "Exceptions",
-                    TraceLoggingWideString(L"FileRedirectionFixupException", "Type"),
-                    TraceLoggingWideString(L"Regex Failure. Likely a bad pattern was supplied", "Message"),
-                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                    TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-                );
+                psf::TraceLogExceptions("FileRedirectionFixupException", "Regex Failure. Likely a bad pattern was supplied");
                 Log(L"[%d]\tFRF: Regex failure. Likely a bad pattern was supplied.", inst);
             }
         }

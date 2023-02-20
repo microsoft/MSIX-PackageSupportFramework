@@ -4,7 +4,7 @@
 #include <wil\resource.h>
 #include <known_folders.h>
 #include "proc_helper.h"
-#include <TraceLoggingProvider.h>
+#include "psf_tracelogging.h"
 
 #ifndef SW_SHOW
 	#define SW_SHOW 5
@@ -14,7 +14,6 @@
 	#define SW_HIDE 0
 #endif
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 
 class PsfPowershellScriptRunner
 {
@@ -161,20 +160,9 @@ private:
 			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" execution failed with Exit Code ") + exitCodeStr + std::wstring(L". To fix this, please run ") + script.scriptPath + std::wstring(L" standalone in a PowerShell window and confirm that the value of $LASTEXITCODE is 0 (Success) before using it with PSF.")).c_str(), L"Package Support Framework", MB_OK | MB_ICONWARNING, 0);
 		}
 
-		TraceLoggingWrite(
-			g_Log_ETW_ComponentProvider,
-			"ScriptInformation",
-			TraceLoggingWideString((&script == &(this->m_startingScriptInformation)) ? L"StartScript" : L"EndScript", "ScriptType"),
-			TraceLoggingWideString(script.scriptPath.c_str(), "ScriptPath"),
-			TraceLoggingWideString(script.commandString.c_str(), "ScriptArguments"),
-			TraceLoggingBoolean(script.waitForScriptToFinish, "WaitForScriptToFinish"),
-			TraceLoggingULong(script.timeout, "Timeout"),
-			TraceLoggingBoolean(script.shouldRunOnce, "RunOnce"),
-			TraceLoggingInt32(script.showWindowAction, "ShowWindow"),
-			TraceLoggingULong(exitCode, "ExitCode"),
-			TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-			TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-			TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+		const wchar_t* scriptType = (&script == &(this->m_startingScriptInformation)) ? L"StartScript" : L"EndScript";
+		psf::TraceLogScriptInformation(scriptType, script.scriptPath.c_str(), script.commandString.c_str(), script.waitForScriptToFinish,
+										script.timeout, script.shouldRunOnce, script.showWindowAction, exitCode);
 	}
 
 	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)

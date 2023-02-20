@@ -7,7 +7,6 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-
 #include <windows.h>
 #include <shellapi.h>
 #include <combaseapi.h>
@@ -18,12 +17,12 @@
 #include "Telemetry.h"
 #include "PsfPowershellScriptRunner.h"
 #include <TraceLoggingProvider.h>
+#include "psf_tracelogging.h"
 #include <psf_constants.h>
 #include <psf_runtime.h>
 #include <wil\result.h>
 #include <wil\resource.h>
 #include <debug.h>
-#include "RemovePII.h"
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -76,7 +75,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     } 
 #endif
 
-    LogApplicationAndProcessesCollection();
+    std::string currentExeFixes;
+    psf::TraceLogApplicationsConfigdata(currentExeFixes);
 
     auto dirPtr = appConfig->try_get("workingDirectory");
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
@@ -188,13 +188,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&psfLoad_endCounter);
     double elapsedTime = (psfLoad_endCounter.QuadPart - psfLoad_startCounter.QuadPart) / (double)frequency.QuadPart;
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "PSFLoadRunTime",
-        TraceLoggingFloat64(elapsedTime, "ElapsedTimeInMs"),
-        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServicePerformance),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+
+    psf::TraceLogPerformance(currentExeFixes,elapsedTime);
 
     TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
     return 0;
@@ -202,13 +197,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "Exceptions",
-        TraceLoggingWideString(L"PSFLauncherException", "Type"),
-        TraceLoggingWideString(widen(message_from_caught_exception()).c_str(), "Message"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+    psf::TraceLogExceptions("PSFLauncherException", widen(message_from_caught_exception()).c_str());;
     return win32_from_caught_exception();
 }
 
@@ -236,13 +225,7 @@ void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path 
     }
     traceDataStream << " wait: " << (wait ? "true" : "false") << " ;";
 
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "PSFMonitorConfigData",
-        TraceLoggingWideString(traceDataStream.str().c_str(), "PSFMonitorConfig"),
-        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+    psf::TraceLogPSFMonitorConfigData(traceDataStream.str().c_str());
     Log("\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
     LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asAdmin, cmdShow, dirStr);
 }
@@ -337,41 +320,6 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept
 {
     return ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix));
-}
-
-void LogApplicationAndProcessesCollection()
-{
-    auto configRoot = PSFQueryConfigRoot();
-
-    if (auto applications = configRoot->as_object().try_get("applications"))
-    {
-        for (auto& applicationsConfig : applications->as_array())
-        {
-            auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
-            auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
-            auto workingDirStr = applicationsConfig.as_object().try_get("workingDirectory") ? RemovePIIfromFilePath(applicationsConfig.as_object().try_get("workingDirectory")->as_string().wide()) : L"Null";
-            auto argStr = applicationsConfig.as_object().try_get("arguments") ? RemovePIIfromFilePath(applicationsConfig.as_object().try_get("arguments")->as_string().wide()) : L"Null";
-            bool inPackageCtxt = applicationsConfig.as_object().try_get("inPackageContext") ? applicationsConfig.as_object().try_get("inPackageContext")->as_boolean().get() : false;
-            bool isScriptUsed = (applicationsConfig.as_object().try_get("startScript") || applicationsConfig.as_object().try_get("endScript")) ? true : false;
-            auto PsfMonitorExecutable = applicationsConfig.as_object().try_get("monitor") ? (applicationsConfig.as_object().try_get("monitor")->as_object().try_get("executable")->as_string().wide()) : L"Null";
-
-            TraceLoggingWrite(
-                g_Log_ETW_ComponentProvider,
-                "ApplicationsConfigdata",
-                TraceLoggingWideString(psf::current_package_full_name().c_str(), "PackageName"),
-                TraceLoggingWideString(exeStr, "applications_executable"),
-                TraceLoggingWideString(idStr, "applications_id"),
-                TraceLoggingWideString(workingDirStr, "workingDirectory"),
-                TraceLoggingWideString(argStr, "arguments"),
-                TraceLoggingBoolean(inPackageCtxt, "inPackageContext"),
-                TraceLoggingBoolean(isScriptUsed, "scriptIncluded"),
-                TraceLoggingWideString(PsfMonitorExecutable, "psfMonitor"),
-                TraceLoggingWideString(psf::current_version, "psfVersion"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-        }
-    }
 }
 
 bool IsCurrentOSRS2OrGreater()

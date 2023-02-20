@@ -4,10 +4,8 @@
 //-------------------------------------------------------------------------------------------------------
 
 #include <psf_framework.h>
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
     "Microsoft.Windows.PSFRuntime",
@@ -27,14 +25,7 @@ int __stdcall PSFInitialize() noexcept try
 }
 catch (...)
 {
-    TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
-        "Exceptions",
-        TraceLoggingWideString(L"FileRedirectionFixupException", "Type"),
-        TraceLoggingWideString(L"FileRedirectionFixup configuration intialization exception", "Message"),
-        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
-    );
+    psf::TraceLogExceptions("FileRedirectionFixupException", "FileRedirectionFixup configuration intialization exception");
     return win32_from_caught_exception();
 }
 

@@ -27,8 +27,7 @@
 
 #include "Config.h"
 #include "JsonConfig.h"
-#include "Telemetry.h"
-#include <TraceLoggingProvider.h>
+#include "psf_tracelogging.h"
 
 using namespace std::literals;
 
@@ -39,8 +38,6 @@ static std::wstring g_ApplicationId;
 static std::filesystem::path g_PackageRootPath;
 static std::filesystem::path g_FinalPackageRootPath;
 static std::filesystem::path g_CurrentExecutable;
-
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 
 // The object that constructs the JSON DOM and holds the root
 static struct
@@ -298,13 +295,7 @@ void load_json()
                 catch (...)
                 {
                     Log("Non-fatal error enumerating directories while looking for config.json.");
-                    TraceLoggingWrite(
-                        g_Log_ETW_ComponentProvider,
-                        "Exceptions",
-                        TraceLoggingWideString(L"PSFConfigException", "Type"),
-                        TraceLoggingWideString(L"Non-fatal error enumerating directories while looking for config.json.", "Message"),
-                        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+                    psf::TraceLogExceptions("PSFConfigException", L"Non-fatal error enumerating directories while looking for config.json.");
                 }
             }
         }
@@ -332,24 +323,12 @@ void load_json()
             msgStream << "Error: " << g_JsonHandler.error_message << "\n";
         }
         msgStream << "File Offest: " << result.Offset();
-        TraceLoggingWrite(
-            g_Log_ETW_ComponentProvider,
-            "Exceptions",
-            TraceLoggingWideString(L"PSFConfigException", "Type"),
-            TraceLoggingString(msgStream.str().c_str(), "Message"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+        psf::TraceLogExceptions("PSFConfigException", msgStream.str().c_str());
         throw std::runtime_error(msgStream.str());
     }
     else if (!g_JsonHandler.root)
     {
-        TraceLoggingWrite(
-            g_Log_ETW_ComponentProvider,
-            "Exceptions",
-            TraceLoggingWideString(L"PSFConfigException", "Type"),
-            TraceLoggingString("config.json has no contents", "Message"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+        psf::TraceLogExceptions("PSFConfigException", "config.json has no contents");
         throw std::runtime_error("config.json has no contents");
     }
 
@@ -522,24 +501,12 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
     {
         Log("\tNo Matches");
     }
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "Exceptions",
-        TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"No matching app config found for appId " + std::wstring(applicationId)).c_str(), "Message"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+    psf::TraceLogExceptions("PSFConfigException", (L"No matching app config found for appId " + std::wstring(applicationId)).c_str());
     return nullptr;
 }
 catch (...)
 {
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "Exceptions",
-        TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"PSFQueryAppLaunchConfig Exception " + std::wstring(applicationId)).c_str(), "Message"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+    psf::TraceLogExceptions("PSFConfigException", (L"PSFQueryAppLaunchConfig Exception " + std::wstring(applicationId)).c_str());
     return nullptr;
 }
 
@@ -616,24 +583,11 @@ PSFAPI const psf::json_object* __stdcall PSFQueryExeConfig(const wchar_t* execut
             }
         }
     }
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "Exceptions",
-        TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"No matching exe config found for " + std::wstring(executable)).c_str(), "Message"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
     return nullptr;
 }
 catch (...)
 {
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "Exceptions",
-        TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"PSFQueryExeConfig Exception " + std::wstring(executable)).c_str(), "Message"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+    psf::TraceLogExceptions("PSFConfigException", (L"PSFQueryExeConfig Exception " + std::wstring(executable)).c_str());
     return nullptr;
 }
 
@@ -680,13 +634,7 @@ PSFAPI const psf::json_value* __stdcall PSFQueryConfig(const wchar_t* executable
 }
 catch (...)
 {
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "Exceptions",
-        TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"PSFQueryConfig failed. executable: " + std::wstring(executable) + L"dll: " + std::wstring(dll)).c_str(), "Message"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+    psf::TraceLogExceptions("PSFConfigException", (L"PSFQueryConfig failed. executable: " + std::wstring(executable) + L"dll: " + std::wstring(dll)).c_str());
     return nullptr;
 }
 
@@ -696,13 +644,7 @@ PSFAPI const psf::json_value* __stdcall PSFQueryDllConfig(const wchar_t* dll) no
 }
 catch (...)
 {
-    TraceLoggingWrite(
-        g_Log_ETW_ComponentProvider,
-        "Exceptions",
-        TraceLoggingWideString(L"PSFConfigException", "Type"),
-        TraceLoggingWideString((L"PSFQueryConfig failed. dll: " + std::wstring(dll)).c_str(), "Message"),
-        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-        TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
+    psf::TraceLogExceptions("PSFConfigException", (L"PSFQueryConfig failed. dll: " + std::wstring(dll)).c_str());
     return nullptr;
 }
 
