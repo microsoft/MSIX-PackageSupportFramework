@@ -19,7 +19,7 @@ using namespace std::literals;
 
 #include "FunctionImplementations.h"
 #include "Reg_Remediation_spec.h"
-
+#include "psf_tracelogging.h"
 
 std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
 
@@ -128,14 +128,17 @@ void InitializeFixups()
 
 void InitializeConfiguration()
 {
+    std::wstringstream traceDataStream;
     Log("RegLegacyFixups Start InitializeConfiguration()\n");
     
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         if (rootConfig != NULL)
         {
+            traceDataStream << " config:\n";
             Log("RegLegacyFixups process config\n");
             const psf::json_array& rootConfigArray = rootConfig->as_array();
+
             for (auto& spec : rootConfigArray)
             {
                 Log("RegLegacyFixups: process spec\n");
@@ -143,6 +146,7 @@ void InitializeConfiguration()
                 auto& specObject = spec.as_object();
                 if (auto regItems = specObject.try_get("remediation"))
                 {
+                    traceDataStream << " remediation:\n";
                     Log("RegLegacyFixups:  remediation array:\n");
                     const psf::json_array& remediationArray = regItems->as_array();
                     for (auto& regItem : remediationArray)
@@ -151,6 +155,7 @@ void InitializeConfiguration()
                         auto& regItemObject = regItem.as_object();
                         Reg_Remediation_Record recordItem;
                         auto type = regItemObject.get("type").as_string().wstring();
+                        traceDataStream << " type: " << type << " ;";
                         Log("RegLegacyFixups: have type");
                         Log(L"Type: %Ls\n", type.data());
                         //Reg_Remediation_Spec specItem;
@@ -160,6 +165,7 @@ void InitializeConfiguration()
                             recordItem.remeditaionType = Reg_Remediation_Type_ModifyKeyAccess;
 
                             auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
+                            traceDataStream << " hive: " << hiveType << " ;";
                             Log(L"Hive: %Ls\n", hiveType.data());
                             if (hiveType.compare(L"HKCU") == 0)
                             {
@@ -174,10 +180,12 @@ void InitializeConfiguration()
                                 recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_Unknown;
                             }
                             Log("RegLegacyFixups:      have hive\n");
+                            traceDataStream << " patterns:\n";
                             for (auto& pattern : regItemObject.get("patterns").as_array())
                             {
+                                
                                 auto patternString = pattern.as_string().wstring();
-
+                                traceDataStream << patternString << " ;";
                                 Log(L"Pattern:      %Ls\n", patternString.data());
                                 recordItem.modifyKeyAccess.patterns.push_back(patternString.data());
 
@@ -185,6 +193,7 @@ void InitializeConfiguration()
                             Log("RegLegacyFixups:      have patterns\n");
 
                             auto accessType = regItemObject.try_get("access")->as_string().wstring();
+                            traceDataStream << " access: " << accessType << " ;";
                             Log(L"Access: %Ls\n", accessType.data());
                             if (accessType.compare(L"Full2RW") == 0)
                             {
@@ -219,6 +228,7 @@ void InitializeConfiguration()
                             recordItem.remeditaionType = Reg_Remediation_type_FakeDelete;
 
                             auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
+                            traceDataStream << " hive: " << hiveType << " ;";
                             Log(L"Hive:      %Ls\n", hiveType.data());
                             if (hiveType.compare(L"HKCU") == 0)
                             {
@@ -234,9 +244,11 @@ void InitializeConfiguration()
                             }
                             Log("RegLegacyFixups:      have hive\n");
 
+                            traceDataStream << " patterns:\n";
                             for (auto& pattern : regItemObject.get("patterns").as_array())
                             {
                                 auto patternString = pattern.as_string().wstring();
+                                traceDataStream << patternString << " ;";
                                 Log(L"Pattern:        %Ls\n", patternString.data());
                                 recordItem.fakeDeleteKey.patterns.push_back(patternString.data());
                             }
@@ -251,6 +263,7 @@ void InitializeConfiguration()
                     }
                 }
             }
+            psf::TraceLogFixupConfig("RegLegacyFixup", traceDataStream.str().c_str());
         }
         else
         {

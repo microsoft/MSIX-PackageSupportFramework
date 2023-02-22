@@ -11,6 +11,13 @@
 #include <psf_runtime.h>
 
 #include "Config.h"
+#include "psf_tracelogging.h"
+
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 void Log(const char* fmt, ...);
 
@@ -102,6 +109,7 @@ void load_fixups()
                             }
                             catch (...)
                             {
+                                psf::TraceLogExceptions("PSFRuntimeException", "Non-fatal error enumerating directories while looking for fixup");
                                 Log("Non-fatal error enumerating directories while looking for fixup.");
                             }
                         }
@@ -169,6 +177,7 @@ static int __stdcall FixupEntryPoint() noexcept try
 }
 catch (...)
 {
+    psf::TraceLogExceptions("PSFRuntimeException", L"FixupEntryPoint failure");
     return win32_from_caught_exception();
 }
 
@@ -230,16 +239,19 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
     case DLL_PROCESS_ATTACH:
         try
         {
+            TraceLoggingRegister(g_Log_ETW_ComponentProvider);
             attach();
         }
         catch (...)
         {
+            psf::TraceLogExceptions("PSFRuntimeException", L"PsfRuntime DLL PROCESS ATTACH FAILURE");
             unload_fixups();
             throw;
         }
         break;
 
     case DLL_PROCESS_DETACH:
+        TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
         detach();
         break;
     }
@@ -250,5 +262,7 @@ catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     ::SetLastError(win32_from_caught_exception());
+    psf::TraceLogExceptions("PSFRuntimeException", widen(message_from_caught_exception()).c_str());
+    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
     return false;
 }

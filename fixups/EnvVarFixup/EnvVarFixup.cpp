@@ -8,7 +8,7 @@
 #include <psf_framework.h>
 #include "FunctionImplementations.h"
 #include "EnvVar_spec.h"
-
+#include "psf_tracelogging.h"
 
 extern std::vector<env_var_spec> g_envvar_envVarSpecs;
 
@@ -208,6 +208,7 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
             }
             catch (...)
             {
+                psf::TraceLogExceptions("EnvVarFixupException", "GetEnvironmentVariableFixup: Bad Regex pattern ignored in EnvVarFixup");
                 Log("[%d] Bad Regex pattern ignored in EnvVarFixup.\n", GetEnvVarInstance);
             }
         }
@@ -311,6 +312,7 @@ BOOL __stdcall SetEnvironmentVariableFixup(_In_ const CharT* lpName, _In_ const 
             }
             catch (...)
             {
+                psf::TraceLogExceptions("EnvVarFixupException", "SetEnvironmentVariableFixup: Bad Regex pattern ignored in EnvVarFixup");
 #ifdef _DEBUG
                 Log("[%d] Bad Regex pattern ignored in EnvVarFixup.\n", SetEnvVarInstance);
 #endif

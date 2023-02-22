@@ -4,6 +4,7 @@
 #include <wil\resource.h>
 #include <known_folders.h>
 #include "proc_helper.h"
+#include "psf_tracelogging.h"
 
 #ifndef SW_SHOW
 	#define SW_SHOW 5
@@ -12,6 +13,7 @@
 #ifndef SW_HIDE
 	#define SW_HIDE 0
 #endif
+
 
 class PsfPowershellScriptRunner
 {
@@ -157,6 +159,10 @@ private:
 			std::wstring exitCodeStr = std::to_wstring(exitCode);
 			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" execution failed with Exit Code ") + exitCodeStr + std::wstring(L". To fix this, please run ") + script.scriptPath + std::wstring(L" standalone in a PowerShell window and confirm that the value of $LASTEXITCODE is 0 (Success) before using it with PSF.")).c_str(), L"Package Support Framework", MB_OK | MB_ICONWARNING, 0);
 		}
+
+		const wchar_t* scriptType = (&script == &(this->m_startingScriptInformation)) ? L"StartScript" : L"EndScript";
+		psf::TraceLogScriptInformation(scriptType, script.scriptPath.c_str(), script.commandString.c_str(), script.waitForScriptToFinish,
+										script.timeout, script.shouldRunOnce, script.showWindowAction, exitCode);
 	}
 
 	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)

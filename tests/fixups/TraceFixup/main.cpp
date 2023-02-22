@@ -13,15 +13,13 @@
 #include "Config.h"
 
 //////// Need to undefine Preprocessor definition for NONAMELESSUNION on this .cpp file only for this to work
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 
 #include "Logging.h"
 
 // This handles event logging via ETW
 // NOTE: The provider name and GUID must be kept in sync with PsfShimMonitor/MainWindow.xaml.cs
 //       The format of the provider name uses dots here and dashes in C#.
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
     "Microsoft.Windows.PSFRuntime",
@@ -186,7 +184,7 @@ void Log_ETW_PostMsgOperationA(const char* operation, const char* inputs, const 
 {
     try
     {
-        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+        TraceLoggingWrite(0x00, // handle to my provider
             "TraceEvent",              // Event Name that should uniquely identify your event.
             TraceLoggingValue(operation, "Operation"),
             TraceLoggingValue(inputs, "Inputs"),
@@ -194,7 +192,10 @@ void Log_ETW_PostMsgOperationA(const char* operation, const char* inputs, const 
             TraceLoggingValue(outputs, "Outputs"),
             TraceLoggingValue(callingmodule, "Caller"),
             TraceLoggingInt64(TickStart.QuadPart, "Start"),
-            TraceLoggingInt64(TickEnd.QuadPart, "End")
+            TraceLoggingInt64(TickEnd.QuadPart, "End"),
+            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+            TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES)
         ); // Field for your event in the form of (value, field name).
     }
     catch (...)
@@ -202,7 +203,7 @@ void Log_ETW_PostMsgOperationA(const char* operation, const char* inputs, const 
         // Unable to log should not crash an app. 
         ::OutputDebugStringA("Unable to write to trace.");
     }
-}
+} 
 
 void Log_ETW_PostMsgW(const wchar_t* s)
 {
@@ -319,13 +320,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
             }
             try
             {
-                TraceLoggingWrite(
-                    g_Log_ETW_ComponentProvider,
-                    "TraceFixupConfigdata",
-                    TraceLoggingWideString(traceDataStream.str().c_str(), "TraceFixupConfig"),
-                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+                psf::TraceLogFixupConfig("TraceFixup", traceDataStream.str().c_str());
             }
             catch (...)
             {
@@ -348,6 +343,7 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 }
 catch (...)
 {
+    psf::TraceLogExceptions("TraceFixupException", "TraceFixup attach ERROR");
     ::SetLastError(win32_from_caught_exception());
     return FALSE;
 }
