@@ -184,7 +184,7 @@ void Log_ETW_PostMsgOperationA(const char* operation, const char* inputs, const 
 {
     try
     {
-        TraceLoggingWrite(g_Log_ETW_ComponentProvider, // handle to my provider
+        TraceLoggingWrite(0x00, // handle to my provider
             "TraceEvent",              // Event Name that should uniquely identify your event.
             TraceLoggingValue(operation, "Operation"),
             TraceLoggingValue(inputs, "Inputs"),
@@ -203,7 +203,7 @@ void Log_ETW_PostMsgOperationA(const char* operation, const char* inputs, const 
         // Unable to log should not crash an app. 
         ::OutputDebugStringA("Unable to write to trace.");
     }
-}
+} 
 
 void Log_ETW_PostMsgW(const wchar_t* s)
 {

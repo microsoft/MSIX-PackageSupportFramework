@@ -100,6 +100,7 @@ namespace psf
                 "Exceptions",
                 TraceLoggingString(Type, "Type"),
                 TraceLoggingString((char*)Message, "Message"),
+                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                 TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                 TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
         }
@@ -110,6 +111,7 @@ namespace psf
                 "Exceptions",
                 TraceLoggingString(Type, "Type"),
                 TraceLoggingWideString((wchar_t*)Message, "Message"),
+                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
                 TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
                 TraceLoggingKeyword(MICROSOFT_KEYWORD_MEASURES));
         }
