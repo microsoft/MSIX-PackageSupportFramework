@@ -13,16 +13,9 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 #include "RemovePII.h"
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
-TRACELOGGING_DEFINE_PROVIDER(
-    g_Log_ETW_ComponentProvider,
-    "Microsoft.Windows.PSFRuntime",
-    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
-    TraceLoggingOptionMicrosoftTelemetry());
 
 using namespace std::literals;
 
@@ -496,7 +489,6 @@ std::filesystem::path GetPackageVFSPath(const char* fileName)
 
 void InitializeConfiguration()
 {
-    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
     std::wstringstream traceDataStream;
 
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
@@ -545,6 +537,10 @@ void InitializeConfiguration()
                           g_redirectionSpecs.back().isReadOnly = IsReadOnlyValue;
                         }
                     }
+                    if (specObject.try_get("redirectTargetBase"))
+                        traceDataStream << "redirectTargetBase: " << RemovePIIfromFilePath(specObject.get("redirectTargetBase").as_string().wide()) << " ;";
+                    traceDataStream << "isExclusion:" << (IsExclusionValue ? L"true" : L"false") << " ;";
+                    traceDataStream << "isReadOnly:" << (IsReadOnlyValue ? L"true" : L"false") << " ;";
                     Log("\t\tFRF RULE: Path=%ls retarget=%ls", path.c_str(), redirectTargetBaseValue.c_str());
                 }
             };
@@ -576,16 +572,9 @@ void InitializeConfiguration()
             }
         }
 
-        TraceLoggingWrite(
-            g_Log_ETW_ComponentProvider,
-            "FileRedirectionFixupConfigdata",
-            TraceLoggingWideString(traceDataStream.str().c_str(), "FileRedirectionFixupConfig"),
-            TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-            TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-            TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+        psf::TraceLogFixupConfig("FileRedirectionFixup", traceDataStream.str().c_str());
     }
 
-    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
 }
 
 template <typename CharT>
@@ -1323,6 +1312,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             }
             catch (...)
             {
+                psf::TraceLogExceptions("FileRedirectionFixupException", "Regex Failure. Likely a bad pattern was supplied");
                 Log(L"[%d]\tFRF: Regex failure. Likely a bad pattern was supplied.", inst);
             }
         }

@@ -7,6 +7,7 @@
 #include <psf_framework.h>
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
+#include "psf_tracelogging.h"
 
 extern bool                  g_dynf_forcepackagedlluse;
 extern std::vector<dll_location_spec> g_dynf_dllSpecs;
@@ -55,6 +56,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                 }
                 catch (...)
                 {
+                    psf::TraceLogExceptions("DynamicLibraryFixupException", L"LoadLibraryFixup: LoadLibraryFixup ERROR");
                     Log("LoadLibraryFixup ERROR");
                 }
             }
@@ -104,6 +106,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 }
                 catch (...)
                 {
+                    psf::TraceLogExceptions("DynamicLibraryFixupException", L"LoadLibraryExFixup: LoadLibraryExFixup ERROR");
                     Log("LoadLibraryExFixup Error");
                 }
             }

@@ -66,7 +66,7 @@ bool IsUnderUserAppDataAndReplace(const CharT* fileName, CharT* cmdLine, bool Ap
 
 // checks each space separated command line parameter and changes from native local app data folder to per user per app data folder if the file referred in command line parameter is present in per user per app data folder, else it remains the same
 template <typename CharT>
-void convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
+bool convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
 {
     CharT* next_token;
     size_t cmdLinelen = strlenImpl(inputCmdLine);
@@ -79,12 +79,13 @@ void convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
     else
     {
         strcatImpl(cnvtCmdLine, MAX_CMDLINE_PATH, inputCmdLine);
-        return;
+        return false;
     }
 
     CharT* token = strtokImpl(cmdLine.get(), (CharT*)L" ", &next_token);
     bool redirectResult = false;
     size_t remBufSize; 
+    bool isCmdLineRedirected = false;
 
     while (token != nullptr)
     {
@@ -99,6 +100,10 @@ void convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
             remBufSize = MAX_CMDLINE_PATH - strlenImpl(cnvtCmdLine);
             strcatImpl(cnvtCmdLine, remBufSize, token);
         }
+        else
+        {
+            isCmdLineRedirected = true;
+        }
         token = strtokImpl((CharT*)nullptr, (CharT*)L" ", &next_token);
         if (token != nullptr)
         {
@@ -106,5 +111,5 @@ void convertCmdLineParameters(CharT* inputCmdLine, CharT* cnvtCmdLine)
             strcatImpl(cnvtCmdLine, remBufSize, (CharT*)L" ");
         }
     }
-    return;
+    return isCmdLineRedirected;
 }

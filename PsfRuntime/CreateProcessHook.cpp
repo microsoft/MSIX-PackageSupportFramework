@@ -25,6 +25,7 @@
 
 #include "Config.h"
 #include "ArgRedirection.h"
+#include "psf_tracelogging.h"
 
 using namespace std::literals;
 
@@ -166,7 +167,11 @@ BOOL WINAPI CreateProcessFixup(
     {
         // Redirect createProcess arguments if any in native app data to per user per app data
         memset(cnvtCmdLine.get(), 0, MAX_CMDLINE_PATH);
-        convertCmdLineParameters(commandLine, cnvtCmdLine.get());
+        bool cmdLineConverted = convertCmdLineParameters(commandLine, cnvtCmdLine.get());
+        if (cmdLineConverted == true)
+        {
+            psf::TraceLogArgumentRedirection(commandLine, cnvtCmdLine.get());
+        }
     }
 
     if (!CreateProcessImpl(
@@ -181,6 +186,7 @@ BOOL WINAPI CreateProcessFixup(
         startupInfo,
         processInformation))
     {
+        psf::TraceLogExceptions("PSFRuntimeException", "Create Process failure");
         return FALSE;
     }
 
@@ -301,6 +307,7 @@ BOOL WINAPI CreateProcessFixup(
                     }
                     catch (...)
                     {
+                        psf::TraceLogExceptions("PSFRuntimeException", "Non-fatal error enumerating directories while looking for PsfRuntime");
                         Log("Non-fatal error enumerating directories while looking for PsfRuntime.");
                     }
                 }
@@ -354,6 +361,7 @@ BOOL WINAPI CreateProcessFixup(
 catch (...)
 {
     ::SetLastError(win32_from_caught_exception());
+    psf::TraceLogExceptions("PSFRuntimeException", "Create Process Hook failure");
     return FALSE;
 }
 
