@@ -7,6 +7,13 @@
 
 #define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
+#include "psf_tracelogging.h"
+
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 bool trace_function_entry = false;
 bool m_inhibitOutput = false;
@@ -36,6 +43,7 @@ extern "C" {
         switch (ul_reason_for_call)
         {
         case DLL_PROCESS_ATTACH:
+            TraceLoggingRegister(g_Log_ETW_ComponentProvider);
             Log("Attaching RegLegacyFixups\n");
 
             InitializeFixups();
@@ -44,12 +52,15 @@ extern "C" {
         case DLL_THREAD_ATTACH:
         case DLL_THREAD_DETACH:
         case DLL_PROCESS_DETACH:
+            TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
             break;
         }
         return TRUE;
     }
     catch (...)
     {
+        psf::TraceLogExceptions("RegLegacyFixupException", "RegLegacyFixups attach ERROR");
+        TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
         Log("RegLegacyFixups attach ERROR\n");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;

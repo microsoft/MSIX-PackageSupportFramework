@@ -1,9 +1,10 @@
 #pragma once
 #include "psf_runtime.h"
 #include "StartProcessHelper.h"
-#include "Globals.h"
 #include <wil\resource.h>
 #include <known_folders.h>
+#include "proc_helper.h"
+#include "psf_tracelogging.h"
 
 #ifndef SW_SHOW
 	#define SW_SHOW 5
@@ -12,6 +13,7 @@
 #ifndef SW_HIDE
 	#define SW_HIDE 0
 #endif
+
 
 class PsfPowershellScriptRunner
 {
@@ -89,64 +91,6 @@ public:
 	}
 
 private:
-   struct MyProcThreadAttributeList
-    {
-    private:
-        // To make sure the attribute value persists we cache it here.
-        // 0x02 is equivalent to PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE
-        // The documentation can be found here:
-        //https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
-        // This attribute tells PSF to
-        // 1. Create Powershell in the same container as PSF.
-        // 2. Any windows Powershell makes will also be in the same container as PSF.
-        // This means that powershell, and any windows it makes, will have the same restrictions as PSF.
-        DWORD createInContainerAttribute = 0x02;
-        std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
-
-    public:
-
-        MyProcThreadAttributeList()
-        {
-            SIZE_T AttributeListSize{};
-            InitializeProcThreadAttributeList(nullptr, 1, 0, &AttributeListSize);
-
-            attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
-
-            THROW_LAST_ERROR_IF_MSG(
-                !InitializeProcThreadAttributeList(
-                    attributeList.get(),
-                    1,
-                    0,
-                    &AttributeListSize),
-                "Could not initialize the proc thread attribute list.");
-
-            // 18 stands for
-            // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
-            // this is the attribute value we want to add
-            THROW_LAST_ERROR_IF_MSG(
-                !UpdateProcThreadAttribute(
-                    attributeList.get(),
-                    0,
-                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
-                    &createInContainerAttribute,
-                    sizeof(createInContainerAttribute),
-                    nullptr,
-                    nullptr),
-                "Could not update Proc thread attribute.");
-        }
-
-        ~MyProcThreadAttributeList()
-        {
-            DeleteProcThreadAttributeList(attributeList.get());
-        }
-
-        LPPROC_THREAD_ATTRIBUTE_LIST get()
-        {
-            return attributeList.get();
-        }
-
-    };
-  
 	struct ScriptInformation
 	{
 		std::wstring scriptPath;
@@ -163,7 +107,7 @@ private:
 
 	ScriptInformation m_startingScriptInformation;
 	ScriptInformation m_endingScriptInformation;
-	MyProcThreadAttributeList m_AttributeList;
+	ProcThreadAttributeList m_AttributeList;
 
 	void RunScript(ScriptInformation& script)
 	{
@@ -182,9 +126,10 @@ private:
 			return;
 		}
 
+		DWORD exitCode = ERROR_SUCCESS;
 		if (script.waitForScriptToFinish)
 		{
-			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get(), &exitCode);
 
 			if (script.stopOnScriptError)
 			{
@@ -194,9 +139,30 @@ private:
 		else
 		{
 			//We don't want to stop on an error and we want to run async
-			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get());
+			std::thread pwrShellThread = std::thread(StartProcess, nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeList.get(), &exitCode);
 			pwrShellThread.detach();
 		}
+
+		if (exitCode != ERROR_SUCCESS)
+		{
+			// when powershell fails to run, reset first run of the powershell(when "runOnce" is set) till powershell successfully runs once
+			THROW_IF_FAILED(resetFirstRunStatus(script.shouldRunOnce));
+		}
+
+		DWORD execPolicyFailExitCode = 0x01;
+		if (exitCode == execPolicyFailExitCode)
+		{
+			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" failed due to an execution policy restriction. To change the executing policy, execute \"Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine\" and re-run the application.")).c_str(), L"Package Support Framework", MB_OK | MB_ICONWARNING, 0);
+		}
+		else if (exitCode != ERROR_SUCCESS) 
+		{
+			std::wstring exitCodeStr = std::to_wstring(exitCode);
+			MessageBoxEx(NULL, (script.scriptPath + std::wstring(L" execution failed with Exit Code ") + exitCodeStr + std::wstring(L". To fix this, please run ") + script.scriptPath + std::wstring(L" standalone in a PowerShell window and confirm that the value of $LASTEXITCODE is 0 (Success) before using it with PSF.")).c_str(), L"Package Support Framework", MB_OK | MB_ICONWARNING, 0);
+		}
+
+		const wchar_t* scriptType = (&script == &(this->m_startingScriptInformation)) ? L"StartScript" : L"EndScript";
+		psf::TraceLogScriptInformation(scriptType, script.scriptPath.c_str(), script.commandString.c_str(), script.waitForScriptToFinish,
+										script.timeout, script.shouldRunOnce, script.showWindowAction, exitCode);
 	}
 
 	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
@@ -442,6 +408,26 @@ private:
 			}
 		}
 		
+		return S_OK;
+	}
+
+	// resets first run status of powershell by deleting "PSFScriptHasRun" registry key in appplication package hive. 
+	HRESULT resetFirstRunStatus(bool shouldRunOnce)
+	{
+		if (shouldRunOnce)
+		{
+			std::wstring runOnceSubKey = L"SOFTWARE\\";
+			runOnceSubKey.append(psf::current_package_full_name());
+			runOnceSubKey.append(L"\\PSFScriptHasRun ");
+
+			LSTATUS deleteResult = RegDeleteKeyExW(HKEY_CURRENT_USER, runOnceSubKey.c_str(), KEY_WOW64_64KEY, 0);
+
+			if (deleteResult != ERROR_SUCCESS)
+			{
+				return deleteResult;
+			}
+		}
+
 		return S_OK;
 	}
 

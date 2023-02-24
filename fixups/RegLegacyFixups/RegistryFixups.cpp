@@ -12,6 +12,7 @@
 #include "Reg_Remediation_Spec.h"
 #include "Logging.h"
 #include <regex>
+#include "psf_tracelogging.h"
 
 DWORD g_RegIntceptInstance = 0;
 
@@ -158,6 +159,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             }
                             catch (...)
                             {
+                                psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU");
                                 Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
                             }
                         }
@@ -230,6 +232,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             }
                             catch (...)
                             {
+                                psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM");
                                 Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
                             }
                         }
@@ -286,6 +289,7 @@ bool RegFixupFakeDelete(std::string keypath)
                         }
                         catch (...)
                         {
+                            psf::TraceLogExceptions("RegLegacyFixupException", "RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU");
 #ifdef _DEBUG
                             Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
 #endif
@@ -311,6 +315,7 @@ bool RegFixupFakeDelete(std::string keypath)
                         }
                         catch (...)
                         {
+                            psf::TraceLogExceptions("RegLegacyFixupException", "RegFixupFakeDelete: Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM");
 #ifdef _DEBUG
                             Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
 #endif

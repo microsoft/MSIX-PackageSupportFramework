@@ -18,6 +18,7 @@
 
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
+#include "psf_tracelogging.h"
 
 using namespace std::literals;
 
@@ -134,10 +135,12 @@ void InitializeFixups()
 
 void InitializeConfiguration()
 {
+    std::wstringstream traceDataStream;
     Log("DynamicLibraryFixup InitializeConfiguration()");
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         auto& rootObject = rootConfig->as_object();
+        traceDataStream << " config:\n";
 
         if (auto forceValue = rootObject.try_get("forcePackageDllUse"))  
         {
@@ -145,6 +148,7 @@ void InitializeConfiguration()
                 g_dynf_forcepackagedlluse = forceValue->as_boolean().get();
             else
                 g_dynf_forcepackagedlluse = false;
+            traceDataStream << " forcePackageDllUse:" << (g_dynf_forcepackagedlluse ? L"true" : L"false") << " ;";
         }
 
         if (g_dynf_forcepackagedlluse == true)
@@ -154,6 +158,7 @@ void InitializeConfiguration()
             {
                 if (relativeDllsValue)
                 {
+                    traceDataStream << " relativeDllPaths:\n" ;
                     const psf::json_array& dllArray = relativeDllsValue->as_array();
                     int count = 0;
                     for (auto& spec : dllArray)
@@ -161,8 +166,10 @@ void InitializeConfiguration()
                         auto& specObject = spec.as_object();
 
                         auto filename = specObject.get("name").as_string().wstring();
+                        traceDataStream << " name: " << filename << " ;";
 
                         auto relpath = specObject.get("filepath").as_string().wstring();
+                        traceDataStream << " filepath: " << relpath << " ;";
                         std::filesystem::path fullpath = g_dynf_packageRootPath / relpath;
 
                         g_dynf_dllSpecs.emplace_back();
@@ -176,5 +183,7 @@ void InitializeConfiguration()
             else
                 Log("DynamicLibraryFixup ForcePacageDllUse=false");
         }
+
+        psf::TraceLogFixupConfig("DynamicLibraryFixup", traceDataStream.str().c_str());
     }
 }

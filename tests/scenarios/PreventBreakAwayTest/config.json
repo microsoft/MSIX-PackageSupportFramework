@@ -1,0 +1,15 @@
+{
+  "applications": [
+    {
+      "id": "Fixed64",
+      "executable": "PreventBreakAwayTest.exe",
+      "inPackageContext": true
+    },
+    {
+      "id": "Fixed32",
+      "executable": "PreventBreakAwayTest.exe",
+      "inPackageContext": true
+    }
+
+  ]
+}

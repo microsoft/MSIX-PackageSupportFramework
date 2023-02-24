@@ -6,6 +6,8 @@ Based on the manifest's application ID, the `psfLauncher` looks for the app's la
 
 PSF Launcher also supports running an additional "monitor" app, intended for PsfMonitor. You use PsfMonitor to view the output in conjuction with TraceFixup injection configured to output to events.
 
+PSF Launcher also supports running external processes in package context which can be enabled by setting "inPackageContext" field. 
+
 Finally, PsfLauncher also support some limited PowerShell scripting.
 
 ## Configuration
@@ -288,6 +290,35 @@ Note that the scriptPath must point to a powershell ps1 file; it may be a full p
 
 The use of scriptExecutionMode may only be necessary in environments when Group Policy setting of default PowerShell ExecutionPolicy is expressed. 
 
+### Example 5
+This example shows using "inPackageContext" feature to run every process spanned by an executable in same package context. 
+
+```json
+{
+        "applications": [
+        {
+            "id": "Sample",
+            "executable": "Sample.exe",
+            "inPackageContext": true
+    	}
+  	    ]
+}
+```
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <applications>
+        <application>
+            <id>Sample</id>
+            <executable>Sample.exe</executable>
+            <inPackageContext>true</inPackageContext>
+        </application>
+    </applications>
+</configuration>
+```
+This allows every process spanned by Sample.exe to run in the same package context. For example, if Sample.exe triggers cmd.exe outside of the package(C:\Windows\System32\cmd.exe). This configuration allows to create cmd.exe in the same package context of current application.
+
 ### Json Schema
 
 | Array | key | Value |
@@ -307,15 +338,16 @@ The use of scriptExecutionMode may only be necessary in environments when Group 
 | applications | startScript | (Optional) If present, used to define a PowerShell script that will be run prior running the application executable. |
 | | |  `'waitForScriptToFinish'` - (Optional, default=true) Boolean. When true, PsfLauncher will wait for the script to complete or timeout before running the application executable. |
 | | | `'timeout'` - (Optional, default is none) Expressed in ms.  Only applicable if waitForScriptToFinish is true.  If a timeout occurs it is treated as an error for the purpose of `'stopOnScriptError'`. The value 0 means an immediate timeout, if you do not want a timeout do not specify a value. |
-| | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
+| | | `'runOnce'` - (Optional, default=true) Boolean. When true, the script will only be run the first time the user runs the application. If script fails to run, it will be run on every launch of application till it runs successfully once. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. Multiple arguments(and arguments with space) are provided by enclosing each argument in single quote. ("scriptArguments": "'<Arg1>' '<Arg2>'"). |
 | applications | endScript | (Optional) If present, used to define a PowerShell script that will be run after completion of the application executable. |
-| | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
+| | | `'runOnce'` - (Optional, default=true) Boolean. When true, the script will only be run the first time the user runs the application. If script fails to run, it will be run on every launch of application till it runs successfully once. |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
+| applications | inPackageContext | (Optional, default=false) Boolean. When true, all the processes spanned by this executable will be run in the same package context. |
 | processes | executable | In most cases, this will be the name of the `executable` configured above with the path and file extension removed. Multiple arguments(and arguments with space) are provided by enclosing each argument in single quote. ("scriptArguments": "'<Arg1>' '<Arg2>'").|
 | fixups | dll | Package-relative path to the fixup, .msix/.appx  to load. |
 | fixups | config | (Optional) Controls how the fixup dl behaves. The exact format of this value varies on a fixup-by-fixup basis as each fixup can interpret this "blob" as it wants. |
@@ -331,6 +363,13 @@ The PSF Launcher supports the use of two special purpose "pseudo-variables". The
 |---------|-------|
 | %MsixPackageRoot% | The root folder of the package. While nominally this would be a subfolder under "C:\\Program Files\\WindowsApps" it is possible for the volume to be mounted in other locations. |
 | %MsixWritablePackageRoot% | The package specific redirection location for this user when the FileRedirectionFixup is in use. | 
+
+### inPackageContext
+This Configuration allows all created process from a running executable to operate in same package context. This includes any child processes that might not be part of the package. This might be useful in situations where applications span processes that are outside package but needs to be run in the same package context, or when PSF fixups need to be applied to processes external to the package.
+
+When an external process is launched by an executable, all of its app data is stored in its native app data folder and hence not containerized. This feature allows the app data of the external process to be virtualized in per user per app data folder of the package.
+
+This configuration is not needed when process spanned by the executable are already part of the current package. This feature can be enabled when there is a need of running external process in the current package context.
 
 =======
 Submit your own fixup(s) to the community:

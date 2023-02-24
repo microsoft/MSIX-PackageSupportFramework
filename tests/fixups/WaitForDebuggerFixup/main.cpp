@@ -5,10 +5,8 @@
 
 #include <debug.h>
 #include <psf_framework.h>
-#include <TraceLoggingProvider.h>
-#include "Telemetry.h"
+#include "psf_tracelogging.h"
 
-TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
     "Microsoft.Windows.PSFRuntime",
@@ -49,14 +47,7 @@ extern "C" {
                 traceDataStream << " config:\n";
                 traceDataStream << " enabled:" << static_cast<bool>(enabledValue->as_boolean()) << " ;";
 
-                TraceLoggingWrite(
-                    g_Log_ETW_ComponentProvider,
-                    "WaitForDebuggerFixupConfigdata",
-                    TraceLoggingWideString(traceDataStream.str().c_str(), "WaitForDebuggerFixupConfig"),
-                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-
+                psf::TraceLogExceptions("WaitForDebuggerFixup", traceDataStream.str().c_str());
                 waitForDebugger = enabledValue->as_boolean().get();
             }
         }

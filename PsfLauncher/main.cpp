@@ -7,7 +7,6 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-
 #include <windows.h>
 #include <shellapi.h>
 #include <combaseapi.h>
@@ -17,14 +16,13 @@
 #include "StartProcessHelper.h"
 #include "Telemetry.h"
 #include "PsfPowershellScriptRunner.h"
-#include "Globals.h"
 #include <TraceLoggingProvider.h>
+#include "psf_tracelogging.h"
 #include <psf_constants.h>
 #include <psf_runtime.h>
 #include <wil\result.h>
 #include <wil\resource.h>
 #include <debug.h>
-
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -34,6 +32,8 @@ TRACELOGGING_DEFINE_PROVIDER(
     TraceLoggingOptionMicrosoftTelemetry());
 
 using namespace std::literals;
+
+LARGE_INTEGER psfLoad_startCounter;
 
 // Forward declarations
 void LogApplicationAndProcessesCollection();
@@ -46,7 +46,8 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
 int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
-{
+{    
+    QueryPerformanceCounter(&psfLoad_startCounter);
     return launcher_main(args, cmdShow);
 }
 
@@ -54,6 +55,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
     Log("\tIn Launcher_main()");
 
+    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
     THROW_HR_IF_MSG(ERROR_NOT_FOUND, !appConfig, "Error: could not find matching appid in config.json and appx manifest");
 
@@ -73,7 +75,8 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     } 
 #endif
 
-    LogApplicationAndProcessesCollection();
+    std::string currentExeFixes;
+    psf::TraceLogApplicationsConfigdata(currentExeFixes);
 
     auto dirPtr = appConfig->try_get("workingDirectory");
     auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
@@ -145,8 +148,22 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         LogString("     Arguments: ", fullargs.data());
         LogString("Working Directory: ", currentDirectory.c_str());
 
-        //THROW_IF_FAILED(StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
-        HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
+        HRESULT hr = S_OK;
+        bool createProcessesInAppContext = false;
+        auto createProcessesInAppContextPtr = appConfig->try_get("inPackageContext");
+        ProcThreadAttributeList m_AttributeList;
+        if (createProcessesInAppContextPtr)
+        {
+            createProcessesInAppContext = createProcessesInAppContextPtr->as_boolean().get();
+        }
+        if (createProcessesInAppContext)
+        {
+            hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE, m_AttributeList.get());
+        }
+        else
+        {
+            hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE);
+        }
         if (hr != ERROR_SUCCESS)
         {
             Log("Error return from launching process 0x%x.", GetLastError());
@@ -167,33 +184,48 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         powershellScriptRunner.RunEndingScript();
         Log("Process Launch complete.");
     }
+    LARGE_INTEGER psfLoad_endCounter, frequency;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&psfLoad_endCounter);
+    double elapsedTime = (psfLoad_endCounter.QuadPart - psfLoad_startCounter.QuadPart) / (double)frequency.QuadPart;
 
+    psf::TraceLogPerformance(currentExeFixes,elapsedTime);
+
+    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
     return 0;
 }
 catch (...)
 {
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
+    psf::TraceLogExceptions("PSFLauncherException", widen(message_from_caught_exception()).c_str());;
     return win32_from_caught_exception();
 }
 
 void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr)
 {
+    std::wstringstream traceDataStream;
+    traceDataStream << " config:\n";
     bool asAdmin = false;
     bool wait = false;
     auto monitorExecutable = monitor.try_get("executable");
+    traceDataStream << " executable: " << monitorExecutable->as_string().wide() << " ;";
     auto monitorArguments = monitor.try_get("arguments");
+    traceDataStream << " arguments: " << monitorArguments->as_string().wide() << " ;";
     auto monitorAsAdmin = monitor.try_get("asadmin");
     auto monitorWait = monitor.try_get("wait");
     if (monitorAsAdmin)
     {
         asAdmin = monitorAsAdmin->as_boolean().get();
     }
+    traceDataStream << " asadmin: " << (asAdmin ? "true" : "false") << " ;";
 
     if (monitorWait)
     {
         wait = monitorWait->as_boolean().get();
     }
+    traceDataStream << " wait: " << (wait ? "true" : "false") << " ;";
 
+    psf::TraceLogPSFMonitorConfigData(traceDataStream.str().c_str());
     Log("\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
     LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asAdmin, cmdShow, dirStr);
 }
@@ -288,58 +320,6 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept
 {
     return ((str.length() >= suffix.length()) && (str.substr(str.length() - suffix.length()) == suffix));
-}
-
-void LogApplicationAndProcessesCollection()
-{
-    auto configRoot = PSFQueryConfigRoot();
-
-    if (auto applications = configRoot->as_object().try_get("applications"))
-    {
-        for (auto& applicationsConfig : applications->as_array())
-        {
-            auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
-            auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
-            TraceLoggingWrite(
-                g_Log_ETW_ComponentProvider,
-                "ApplicationsConfigdata",
-                TraceLoggingWideString(exeStr, "applications_executable"),
-                TraceLoggingWideString(idStr, "applications_id"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-        }
-    }
-
-    if (auto processes = configRoot->as_object().try_get("processes"))
-    {
-        for (auto& processConfig : processes->as_array())
-        {
-            auto exeStr = processConfig.as_object().get("executable").as_string().wide();
-            TraceLoggingWrite(
-                g_Log_ETW_ComponentProvider,
-                "ProcessesExecutableConfigdata",
-                TraceLoggingWideString(exeStr, "processes_executable"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-
-            if (auto fixups = processConfig.as_object().try_get("fixups"))
-            {
-                for (auto& fixupConfig : fixups->as_array())
-                {
-                    auto dllStr = fixupConfig.as_object().try_get("dll")->as_string().wide();
-                    TraceLoggingWrite(
-                        g_Log_ETW_ComponentProvider,
-                        "ProcessesFixUpConfigdata",
-                        TraceLoggingWideString(dllStr, "processes_fixups"),
-                        TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                        TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                        TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
-                }
-            }
-        }
-    }
 }
 
 bool IsCurrentOSRS2OrGreater()

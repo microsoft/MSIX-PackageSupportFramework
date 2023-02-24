@@ -4,6 +4,13 @@
 //-------------------------------------------------------------------------------------------------------
 
 #include <psf_framework.h>
+#include "psf_tracelogging.h"
+
+TRACELOGGING_DEFINE_PROVIDER(
+    g_Log_ETW_ComponentProvider,
+    "Microsoft.Windows.PSFRuntime",
+    (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
+    TraceLoggingOptionMicrosoftTelemetry());
 
 void InitializePaths();
 void InitializeConfiguration();
@@ -18,6 +25,7 @@ int __stdcall PSFInitialize() noexcept try
 }
 catch (...)
 {
+    psf::TraceLogExceptions("FileRedirectionFixupException", "FileRedirectionFixup configuration intialization exception");
     return win32_from_caught_exception();
 }
 
@@ -43,10 +51,14 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
+        TraceLoggingRegister(g_Log_ETW_ComponentProvider);
         ::OutputDebugStringA("FileRedirectionFixup attached");
         InitializePaths();
     }
-
+    else if (reason == DLL_PROCESS_DETACH)
+    {
+        TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+    }
     return TRUE;
 }
 catch (...)

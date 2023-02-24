@@ -19,6 +19,8 @@ namespace psf
 
     constexpr char arch_string[] = "32";
     constexpr wchar_t warch_string[] = L"32";
+
+    constexpr wchar_t current_version[] = L"0.0.000000.0";
 #else
     // 64 bit
     constexpr wchar_t runtime_dll_name[] = L"PsfRuntime64.dll";
@@ -29,5 +31,7 @@ namespace psf
 
     constexpr char arch_string[] = "64";
     constexpr wchar_t warch_string[] = L"64";
+
+    constexpr wchar_t current_version[] = L"0.0.000000.0";
 #endif
 }

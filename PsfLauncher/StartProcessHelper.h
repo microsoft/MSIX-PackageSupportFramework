@@ -1,10 +1,10 @@
 #pragma once
 #include <windows.h>
 #include "Logger.h"
-#include "Globals.h"
 #include <wil\resource.h>
+#include "proc_helper.h"
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, _Out_ DWORD *exitCode = nullptr)
 {
 
     STARTUPINFOEXW startupInfoEx =
@@ -25,7 +25,6 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
         , static_cast<WORD>(cmdShow) // wShowWindow
         }
     };
-
     PROCESS_INFORMATION processInfo{};
 
     startupInfoEx.lpAttributeList = attributeList;
@@ -49,9 +48,14 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
         "ERROR: Failed to create a process for %ws",
         applicationName);
 
+
     RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
     RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
+    if (exitCode != nullptr)
+    {
+        GetExitCodeProcess(processInfo.hProcess, exitCode);
+    }
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
 
