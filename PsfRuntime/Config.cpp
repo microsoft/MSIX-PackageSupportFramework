@@ -303,6 +303,7 @@ void load_json()
         {
             MessageBoxEx(NULL, L"'Config.json' was not found. We recommend you to add it under the package root folder and re-install the application.", L"MSIX Packet Support Framework", MB_OK | MB_ICONERROR, 0);
             psf::TraceLogExceptions("PSFConfigException", "config.json was not found");
+            Log("config.json was not found");
             return;
         }
     }
