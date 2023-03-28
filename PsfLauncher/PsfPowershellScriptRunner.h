@@ -271,7 +271,7 @@ private:
 			}
 			if (!std::filesystem::exists(SSWrapper))
 			{
-				MessageBoxEx(NULL, L"'StartingScriptWrapper.ps1' was not found. This is required to run the PowerShell scripts through PSF. Kindly add it under the package root folder and re-install the application.", L"MSIX Packet Support Framework", MB_OK | MB_ICONWARNING, 0);
+				MessageBoxEx(NULL, L"'StartingScriptWrapper.ps1' was not found. This is required to run the PowerShell scripts through PSF. We recommend you to add it under the package root folder and re-install the application.", L"MSIX Packet Support Framework", MB_OK | MB_ICONWARNING, 0);
 			}
 		}
 		std::wstring commandString = L"Powershell.exe ";
