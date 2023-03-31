@@ -299,6 +299,13 @@ void load_json()
                 }
             }
         }
+
+        if (!file)
+        {
+            psf::TraceLogExceptions("PSFConfigException", "config.json was not found");
+            Log("config.json was not found");
+            throw std::runtime_error("'Config.json' was not found. Kindly add it inside the package and re-install the application.");
+        }
     }
 
 
