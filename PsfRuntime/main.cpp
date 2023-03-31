@@ -263,6 +263,6 @@ catch (...)
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     ::SetLastError(win32_from_caught_exception());
     psf::TraceLogExceptions("PSFRuntimeException", widen(message_from_caught_exception()).c_str());
-    TraceLoggingRegister(g_Log_ETW_ComponentProvider);
+    TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
     return false;
 }
