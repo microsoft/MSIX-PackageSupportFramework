@@ -269,6 +269,11 @@ private:
 					SSWrapper = file.path();
 				}
 			}
+
+			if (!std::filesystem::exists(SSWrapper))
+			{				
+				MessageBoxEx(NULL, L"'StartingScriptWrapper.ps1' was not found. This is required to run the PowerShell scripts through PSF. The app might continue to run but not behave as expected. Kindly add it inside the package and re-install the application.", L"MSIX Packet Support Framework", MB_OK | MB_ICONWARNING, 0);
+			}
 		}
 		std::wstring commandString = L"Powershell.exe ";
 		commandString.append(scriptExecutionMode);
