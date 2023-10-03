@@ -47,7 +47,7 @@ namespace PsfMonitor
         // NOTE: The provider name and GUID must be kept in sync with PsfTrace/main.cpp
         //       The format of the provider name uses dashes here and dots in C++.
         //public Provider etwprovider = new Provider("Microsoft-Windows-PSFTrace",  new Guid(0x61F777A1, 0x1E59, 0x4BFC, 0xA6, 0x1A, 0xEF, 0x19, 0xC7, 0x16, 0xDD, 0xC0));
-        public Provider etwprovider = new Provider("Microsoft-Windows-PSFRuntime",  new Guid(0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1));
+        public Provider etwprovider = new Provider("Microsoft-Windows-PSFTraceFixup", new Guid(0x7c1d7c1c, 0x544b, 0x5179, 0x28, 0x01, 0x39, 0x29, 0xf0, 0x01, 0x78, 0x02));
         public int EventCounter = 1;
         public bool EventTraceProviderEnablementResultCode, EventTraceProviderSourceResultCode;
         public int LastSearchIndex = -1;
