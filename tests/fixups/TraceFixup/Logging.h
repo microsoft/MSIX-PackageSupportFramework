@@ -348,6 +348,7 @@ inline std::string InterpretReturn(function_result functionResult, DWORD resultc
     results += "\n(";
     results += InterpretFrom_win32(resultcode);
     results += ")";
+    results += "-" + std::to_string(resultcode);
     return results;
 }
 
@@ -358,6 +359,7 @@ inline std::string InterpretReturn(function_result functionResult, BOOL bresultc
     results += "\n(";	
     results += bresultcode ? "Success" : InterpretFrom_win32(GetLastError());
     results += ")";
+    results += "-" + std::to_string(bresultcode);
     return results;
 }
 
@@ -375,6 +377,7 @@ inline std::string InterpretReturn(function_result functionResult, HRESULT hr)
         results += InterpretFrom_win32(HRESULT_CODE(hr));
     }
     results += ")";
+    results += "-" + std::to_string(hr);
     return results;
 }
 
@@ -392,6 +395,7 @@ inline std::string InterpretReturn(function_result functionResult, HANDLE hand)
         results += InterpretFrom_win32(GetLastError());
     }
     results += ")";
+    results += "-" + std::to_string(GetLastError());
     return results;
 }
 
