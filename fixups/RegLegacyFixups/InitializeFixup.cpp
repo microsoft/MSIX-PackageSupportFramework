@@ -256,6 +256,56 @@ void InitializeConfiguration()
 
                             specItem.remediationRecords.push_back(recordItem);
                         }
+
+                        // Look for DeletionMarker remediation
+                        else if (type.compare(L"DeletionMarker") == 0)
+                        {
+                            Log("RegLegacyFixups:      is DeletionMarker\n");
+                            recordItem.remeditaionType = Reg_Remediation_type_DeletionMarker;
+
+                            // Look for hive - data
+                            auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
+                            traceDataStream << " hive: " << hiveType << " ;";
+                            Log(L"Hive:      %Ls\n", hiveType.data());
+
+                            if (hiveType.compare(L"HKCU") == 0 || hiveType.compare(L"HKEY_CURRENT_USER") == 0)
+                            {
+                                recordItem.deletionMarker.hive = Modify_Key_Hive_Type_HKCU;
+                            }
+                            else if (hiveType.compare(L"HKLM") == 0 || hiveType.compare(L"HKEY_LOCAL_MACHINE") == 0)
+                            {
+                                recordItem.deletionMarker.hive = Modify_Key_Hive_Type_HKLM;
+                            }
+                            else
+                            {
+                                recordItem.deletionMarker.hive = Modify_Key_Hive_Type_Unknown;
+                            }
+                            Log("RegLegacyFixups:      have hive\n");
+
+                            // Look for Key - data
+                            traceDataStream << " key:\n";
+                            for (auto& key : regItemObject.get("key").as_array())
+                            {
+                                auto keyString = key.as_string().wstring();
+                                traceDataStream << keyString << " ;";
+                                Log(L"key:        %Ls\n", keyString.data());
+                                recordItem.deletionMarker.key.push_back(keyString.data());
+                            }
+                            Log("RegLegacyFixups:      have key\n");
+
+                            // Look for Value - data
+                            traceDataStream << " value:\n";
+                            for (auto& value : regItemObject.get("key").as_array())
+                            {
+                                auto valueString = value.as_string().wstring();
+                                traceDataStream << valueString << " ;";
+                                Log(L"key:        %Ls\n", valueString.data());
+                                recordItem.deletionMarker.value.push_back(valueString.data());
+                            }
+                            Log("RegLegacyFixups:      have value\n");
+
+                            specItem.remediationRecords.push_back(recordItem);
+                        }
                         else
                         {
                         }
