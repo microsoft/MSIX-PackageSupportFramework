@@ -130,7 +130,6 @@ void InitializeConfiguration()
 {
     std::wstringstream traceDataStream;
     Log("RegLegacyFixups Start InitializeConfiguration()\n");
-    MessageBoxExW(NULL, L"Config", L"InitializeFixup", 0, 0);
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         if (rootConfig != NULL)
