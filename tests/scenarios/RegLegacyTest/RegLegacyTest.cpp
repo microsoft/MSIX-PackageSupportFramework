@@ -55,6 +55,50 @@ void NotCoveredTests()
     DWORD retval = 0;
     test_begin("RegLegacy Test without changes HKCU");
 
+
+    //============================================================
+    HKEY hKey;
+    DWORD dwType;
+    //DWORD dwSize = sizeof(DWORD);
+    //DWORD dwValue;
+    LPCWSTR regPath = TEXT("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\");
+    TCHAR szData[256];
+    DWORD dwDataSize = sizeof(szData);
+
+    LPCWSTR regVal = TEXT("Zmridul");
+    //LPCWSTR regValNew = TEXT("ZmridulNew");
+
+    std::string type = "";
+
+
+    // Open the registry key
+
+
+
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+    {
+        // Query the registry value
+        MessageBoxExW (NULL, L"Inside Test RegOpenKey Success MRIDUL", L"IF SUCCESS, making call", 0, 0);
+        LONG result = RegQueryValueEx(hKey, regVal, NULL, &dwType, (LPBYTE)szData, &dwDataSize);
+        if (result == ERROR_SUCCESS)
+        {
+            MessageBoxExW(NULL, L"Inside Test RegOpenKey Success MRIDUL", L"result = ERROR SUCCESS", 0, 0);
+        }
+        else if (result == ERROR_FILE_NOT_FOUND)
+        {
+            MessageBoxExW(NULL, L"Inside Test RegOpenKey Success MRIDUL", L"result = ERROR_FILE_NOT_FOUND", 0, 0);
+        }
+        else
+        {
+            MessageBoxExW(NULL, L"Inside Test RegOpenKey Success MRIDUL", L"result = others", 0, 0);
+        }
+        
+        type = std::to_string(result);
+    }
+
+    //==========================================================
+
+
     REGSAM samFull = FULL_RIGHTS_ACCESS_REQUEST;
     REGSAM sam2R = samFull & ~(DELETE|WRITE_DAC|WRITE_OWNER|KEY_CREATE_SUB_KEY|KEY_CREATE_LINK| KEY_SET_VALUE);
     REGSAM samRW = READ_CONTROL | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY;

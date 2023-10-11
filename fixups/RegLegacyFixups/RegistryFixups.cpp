@@ -14,6 +14,24 @@
 #include <regex>
 #include "psf_tracelogging.h"
 
+
+//===========================
+
+#include <windows.h>
+#include <string>
+
+typedef LONG NTSTATUS;
+
+#ifndef STATUS_SUCCESS
+#define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
+#endif
+
+#ifndef STATUS_BUFFER_TOO_SMALL
+#define STATUS_BUFFER_TOO_SMALL ((NTSTATUS)0xC0000023L)
+#endif
+//===========================
+
+
 DWORD g_RegIntceptInstance = 0;
 
 std::string ReplaceRegistrySyntax(std::string regPath)
@@ -398,6 +416,93 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 }
 DECLARE_STRING_FIXUP(RegCreateKeyExImpl, RegCreateKeyExFixup);
 
+/// <summary>
+/// Method to Extract Key Path from HKEY
+/// </summary>
+/// <param name="key"></param>
+/// <returns></returns>
+std::wstring GetKeyPathFromKKEY(HKEY key)
+{
+    
+    std::wstring keyPath;   
+    if (key != NULL)
+    {
+        HMODULE dll = LoadLibrary(L"ntdll.dll");
+        if (dll != NULL) {
+            typedef DWORD(__stdcall* NtQueryKeyType)(
+                HANDLE  KeyHandle,
+                int KeyInformationClass,
+                PVOID  KeyInformation,
+                ULONG  Length,
+                PULONG  ResultLength);
+
+            NtQueryKeyType func = reinterpret_cast<NtQueryKeyType>(::GetProcAddress(dll, "NtQueryKey"));
+
+            if (func != NULL) {
+                DWORD size = 0;
+                DWORD result = 0;
+                result = func(key, 3, 0, 0, &size);
+                if (result == STATUS_BUFFER_TOO_SMALL)
+                {
+                    size = size + 2;
+                    wchar_t* buffer = new (std::nothrow) wchar_t[size / sizeof(wchar_t)]; // size is in bytes
+                    if (buffer != NULL)
+                    {
+                        result = func(key, 3, buffer, size, &size);
+                        if (result == ERROR_SUCCESS)
+                        {
+                            buffer[size / sizeof(wchar_t)] = L'\0';
+                            keyPath = std::wstring(buffer + 2);
+                        }
+
+                        delete[] buffer;
+                    }
+                }
+            }
+
+            FreeLibrary(dll);
+        }
+    }
+    return keyPath;
+}
+
+
+/// <summary>
+///  [mridul] PSF to achieve deletion marker
+/// </summary>
+auto RegQueryValueExImpl = psf::detoured_string_function(&::RegQueryValueExA, &::RegQueryValueExW);
+template <typename CharT>
+LSTATUS __stdcall RegQueryValueExFixup(
+    _In_ HKEY hKey,
+    _In_opt_ const CharT* lpValueName,
+    _Reserved_ LPDWORD lpReserved,
+    _Out_opt_ LPDWORD lpType,
+    _Out_writes_bytes_to_opt_(*lpcbData, *lpcbData) __out_data_source(REGISTRY) LPBYTE lpData,
+    _When_(lpData == NULL, _Out_opt_) _When_(lpData != NULL, _Inout_opt_) LPDWORD lpcbData
+)
+{
+    std::string keypath = InterpretKeyPath(hKey);
+
+
+    MessageBoxExW(NULL, L"keyPath = ", (LPCWSTR) keypath.c_str(), 0, 0);
+
+    //auto keyPath = GetKeyPathFromKKEY(hKey);
+    
+    //MessageBoxExW(NULL,  keyPath.c_str(), L"Check brkpoint", 0, 0);
+    
+
+    auto result1 = RegQueryValueExImpl(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+
+
+    if (result1 == 1){}
+    //auto result2 = ERROR_FILE_NOT_FOUND;
+    return result1;
+
+    //return result2;
+}
+DECLARE_STRING_FIXUP(RegQueryValueExImpl, RegQueryValueExFixup);
+
+
 
 auto RegOpenKeyExImpl = psf::detoured_string_function(&::RegOpenKeyExA, &::RegOpenKeyExW);
 template <typename CharT>
@@ -408,6 +513,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     _In_ REGSAM samDesired,
     _Out_ PHKEY resultKey)
 {
+    //MessageBoxExW(NULL, L"RegistryFixups.cpp", L"RegOpenKeyExFixup", 0, 0);
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
     DWORD RegLocalInstance = ++g_RegIntceptInstance;
@@ -467,7 +573,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     _In_ HANDLE hTransaction,
     _In_ PVOID  pExtendedParameter)  // reserved
 {
-
+    //MessageBoxExW(NULL, L"RegistryFixups.cpp", L"RegOpenKeyTransactedFixup", 0, 0);
 
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
