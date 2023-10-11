@@ -268,11 +268,11 @@ void InitializeConfiguration()
                             traceDataStream << " hive: " << hiveType << " ;";
                             Log(L"Hive:      %Ls\n", hiveType.data());
 
-                            if (hiveType.compare(L"HKCU") == 0 || hiveType.compare(L"HKEY_CURRENT_USER") == 0)
+                            if (hiveType.compare(L"HKCU") == 0)
                             {
                                 recordItem.deletionMarker.hive = Modify_Key_Hive_Type_HKCU;
                             }
-                            else if (hiveType.compare(L"HKLM") == 0 || hiveType.compare(L"HKEY_LOCAL_MACHINE") == 0)
+                            else if (hiveType.compare(L"HKLM") == 0)
                             {
                                 recordItem.deletionMarker.hive = Modify_Key_Hive_Type_HKLM;
                             }
