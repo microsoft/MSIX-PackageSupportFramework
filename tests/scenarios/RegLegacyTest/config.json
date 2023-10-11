@@ -22,6 +22,18 @@
             {
               "remediation": [
                 {
+                  "type": "DeletionMarker",
+                  "hive": "HKLM",
+                  "key": "^TestKey",
+                  "value": "^TestValue"
+                },
+                {
+                  "type": "DeletionMarker",
+                  "hive": "HKCU",
+                  "key": "^TestKey",
+                  "value": "^TestValue"
+                },
+                {
                   "type": "ModifyKeyAccess",
                   "hive": "HKCU",
                   "patterns": [

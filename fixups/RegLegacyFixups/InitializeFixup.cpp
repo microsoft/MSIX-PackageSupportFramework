@@ -130,7 +130,7 @@ void InitializeConfiguration()
 {
     std::wstringstream traceDataStream;
     Log("RegLegacyFixups Start InitializeConfiguration()\n");
-    
+    MessageBoxExW(NULL, L"Config", L"InitializeFixup", 0, 0);
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         if (rootConfig != NULL)
@@ -282,26 +282,20 @@ void InitializeConfiguration()
                             }
                             Log("RegLegacyFixups:      have hive\n");
 
-                            // Look for Key - data
-                            traceDataStream << " key:\n";
-                            for (auto& key : regItemObject.get("key").as_array())
-                            {
-                                auto keyString = key.as_string().wstring();
-                                traceDataStream << keyString << " ;";
-                                Log(L"key:        %Ls\n", keyString.data());
-                                recordItem.deletionMarker.key.push_back(keyString.data());
-                            }
+                            // Look for key - data
+                            auto keyString = regItemObject.get("key").as_string().wstring();
+                            traceDataStream << keyString << " ;";
+                            Log(L"key:        %Ls\n", keyString.data());
+                            recordItem.deletionMarker.key.push_back(keyString.data());
+                            
                             Log("RegLegacyFixups:      have key\n");
 
-                            // Look for Value - data
-                            traceDataStream << " value:\n";
-                            for (auto& value : regItemObject.get("value").as_array())
-                            {
-                                auto valueString = value.as_string().wstring();
-                                traceDataStream << valueString << " ;";
-                                Log(L"value:        %Ls\n", valueString.data());
-                                recordItem.deletionMarker.value.push_back(valueString.data());
-                            }
+                            // Look for value - data
+                            auto valueString = regItemObject.get("value").as_string().wstring();
+                            traceDataStream << valueString << " ;";
+                            Log(L"value:        %Ls\n", valueString.data());
+                            recordItem.deletionMarker.value.push_back(valueString.data());
+
                             Log("RegLegacyFixups:      have value\n");
 
                             specItem.remediationRecords.push_back(recordItem);
