@@ -295,11 +295,11 @@ void InitializeConfiguration()
 
                             // Look for Value - data
                             traceDataStream << " value:\n";
-                            for (auto& value : regItemObject.get("key").as_array())
+                            for (auto& value : regItemObject.get("value").as_array())
                             {
                                 auto valueString = value.as_string().wstring();
                                 traceDataStream << valueString << " ;";
-                                Log(L"key:        %Ls\n", valueString.data());
+                                Log(L"value:        %Ls\n", valueString.data());
                                 recordItem.deletionMarker.value.push_back(valueString.data());
                             }
                             Log("RegLegacyFixups:      have value\n");
