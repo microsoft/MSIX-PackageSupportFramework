@@ -292,3 +292,4 @@ __pycache__/
 
 # Visual Studio Code configuration/settings
 .vscode/
+/tests/scenarios/Appx

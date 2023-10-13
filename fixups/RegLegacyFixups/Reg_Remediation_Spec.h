@@ -51,8 +51,8 @@ struct Fake_Delete_Key
 struct Deletion_Marker
 {
     Modify_Key_Hive_Types hive;
-    std::vector<std::wstring> key;
-    std::vector<std::wstring> value;
+    std::wstring key;
+    std::wstring value;
 };
 
 struct Reg_Remediation_Record
