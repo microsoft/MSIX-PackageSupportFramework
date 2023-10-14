@@ -52,7 +52,7 @@ std::string ReplaceRegistrySyntax(std::string regPath)
             }
             else
             {
-                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(18);
+                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(18);
             }
         }
         else
