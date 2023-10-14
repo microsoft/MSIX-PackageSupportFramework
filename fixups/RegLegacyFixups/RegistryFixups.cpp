@@ -48,11 +48,11 @@ std::string ReplaceRegistrySyntax(std::string regPath)
             size_t offsetAfterSid = regPath.find('\\', 19);
             if (offsetAfterSid != std::string::npos)
             {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterSid);
             }
             else
             {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(18);
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(18);
             }
         }
         else
