@@ -48,7 +48,7 @@ std::string ReplaceRegistrySyntax(std::string regPath)
             size_t offsetAfterSid = regPath.find('\\', 19);
             if (offsetAfterSid != std::string::npos)
             {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterSid);
             }
             else
             {
@@ -322,7 +322,6 @@ bool RegFixupFakeDelete(std::string keypath)
                             Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
 #endif
                         }
-
                     }
                 }
                 break;
@@ -535,6 +534,7 @@ bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue, DWORD Re
 bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
 #endif 
 {
+
     bool isKeyDeletionMarker = false;
     std::string keystring;
 
@@ -639,6 +639,59 @@ bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
     return isKeyDeletionMarker;
 }
 
+/// <summary>
+/// Method to interpret Regitry Path
+/// </summary>
+/// <param name="regPath"></param>
+/// <returns></returns>
+std::string InterpretRegistryPath(std::string regPath)
+{
+    
+    std::string returnPath = regPath;
+
+    // string returned is for pattern matching purposes, to keep consistent for the patterns,
+    // revert to strings that look like HKEY_....
+    if (regPath._Starts_with("=\\REGISTRY\\USER"))
+    {
+        if (regPath.length() > 15)
+        {
+            size_t offsetAfterSid = regPath.find('\\', 16);
+            if (offsetAfterSid != std::string::npos)
+            {
+                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
+            }
+            else
+            {
+                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(15);
+            }
+        }
+        else
+        {
+            returnPath = InterpretStringA("HKEY_CURRENT_USER");
+        }
+    }
+    else if (regPath._Starts_with("=\\REGISTRY\\MACHINE"))
+    {
+        if (regPath.length() > 18)
+        {
+            size_t offsetAfterSid = regPath.find('\\', 18);
+            if (offsetAfterSid != std::string::npos)
+            {
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterSid);
+            }
+            else
+            {
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(18);
+            }
+        }
+        else
+        {
+            returnPath = InterpretStringA("HKEY_LOCAL_MACHINE");
+        }
+    }
+    return returnPath;
+}
+
 
 /// <summary>
 /// detour RegQueryValueExA & RegQueryValueExW
@@ -655,7 +708,7 @@ LSTATUS __stdcall RegQueryValueExFixup(
     _When_(lpData == NULL, _Out_opt_) _When_(lpData != NULL, _Inout_opt_) LPDWORD lpcbData
 )
 {
-
+    
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
     DWORD RegLocalInstance = ++g_RegIntceptInstance;
@@ -668,10 +721,9 @@ LSTATUS __stdcall RegQueryValueExFixup(
 #ifdef _DEBUG
         Log("[%d] RegQueryValueEx:\n", RegLocalInstance);
 #endif
-
         //Get Registry Path from hkey
         std::string keypath = InterpretKeyPath(key);
-        keypath = ReplaceRegistrySyntax(keypath);
+        keypath = InterpretRegistryPath(keypath);
 
 #ifdef _DEBUG
         Log("[%d] RegQueryValueEx: path=%s", RegLocalInstance, keypath.c_str());
