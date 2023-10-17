@@ -52,7 +52,7 @@ struct Deletion_Marker
 {
     Modify_Key_Hive_Types hive;
     std::wstring key;
-    std::wstring value;
+    std::vector<std::wstring> values;
 };
 
 struct Reg_Remediation_Record

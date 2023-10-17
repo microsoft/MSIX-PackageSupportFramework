@@ -534,8 +534,6 @@ bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue, DWORD Re
 bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
 #endif 
 {
-
-    bool isKeyDeletionMarker = false;
     std::string keystring;
 
     Log("[%d] RegFixupDeletionMarker: keyPath=%s keyValue=%s \n", RegLocalInstance, keyPath.c_str(), keyValue);
@@ -574,15 +572,18 @@ bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
                             {
 #ifdef _DEBUG
                                 Log("[%d] RegFixupDeletionMarker: is HKCU key match.\n", RegLocalInstance);
-                                Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, specitem.deletionMarker.value.c_str());
 #endif
-                                if (std::regex_match(widen(keyValue), std::wregex(specitem.deletionMarker.value)))
+                                for (auto& value : specitem.deletionMarker.values)
                                 {
+                                    Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
+                                    if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                    {
 #ifdef _DEBUG
-                                    Log("[%d] RegFixupDeletionMarker: is HKCU key-value match.\n", RegLocalInstance);
-                                    Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+                                        Log("[%d] RegFixupDeletionMarker: is HKCU key-value match.\n", RegLocalInstance);
+                                        Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
 #endif
-                                    isKeyDeletionMarker = true;
+                                        return true;
+                                    }
                                 }
                             }
                         }
@@ -609,15 +610,18 @@ bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
                             {
 #ifdef _DEBUG
                                 Log("[%d] RegFixupDeletionMarker: is HKLM key match.\n", RegLocalInstance);
-                                Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, specitem.deletionMarker.value.c_str());
 #endif
-                                if (std::regex_match(widen(keyValue), std::wregex(specitem.deletionMarker.value)))
+                                for (auto& value : specitem.deletionMarker.values)
                                 {
+                                    Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
+                                    if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                    {
 #ifdef _DEBUG
-                                    Log("[%d] RegFixupDeletionMarker: is HKLM key-value match.\n", RegLocalInstance);
-                                    Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+                                        Log("[%d] RegFixupDeletionMarker: is HKLM key-value match.\n", RegLocalInstance);
+                                        Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
 #endif
-                                    isKeyDeletionMarker = true;
+                                        return true;
+                                    }
                                 }
                             }
                         }
@@ -636,7 +640,7 @@ bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
             }
         }
     }
-    return isKeyDeletionMarker;
+    return false;
 }
 
 /// <summary>
@@ -692,6 +696,52 @@ std::string InterpretRegistryPath(std::string regPath)
     return returnPath;
 }
 
+/// <summary>
+/// detour RegGetValueA & RegGetValueW
+/// for deletion marker fixup
+/// </summary>
+auto RegGetValueImpl = psf::detoured_string_function(&::RegGetValueA, &::RegGetValueW);
+template <typename CharT>
+LSTATUS __stdcall  RegGetValueFixup(
+    _In_ HKEY hkey,
+    _In_opt_ const CharT* lpSubKey,
+    _In_opt_ const CharT* lpValue,
+    _In_ DWORD dwFlags,
+    _Out_opt_ LPDWORD pdwType,
+    _When_((dwFlags & 0x7F) == RRF_RT_REG_SZ ||
+        (dwFlags & 0x7F) == RRF_RT_REG_EXPAND_SZ ||
+        (dwFlags & 0x7F) == (RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ) ||
+        *pdwType == REG_SZ ||
+        *pdwType == REG_EXPAND_SZ, _Post_z_)
+    _When_((dwFlags & 0x7F) == RRF_RT_REG_MULTI_SZ ||
+        *pdwType == REG_MULTI_SZ, _Post_ _NullNull_terminated_)
+    _Out_writes_bytes_to_opt_(*pcbData, *pcbData) PVOID pvData,
+    _Inout_opt_ LPDWORD pcbData
+)
+{
+    // To Do : Add Logic for deletion marker
+}
+DECLARE_STRING_FIXUP(RegGetValueImpl, RegGetValueFixup);
+
+
+/// <summary>
+/// detour RegQueryMultipleValuesA & RegQueryMultipleValuesW
+/// for deletion marker fixup
+/// </summary>
+auto RegQueryMultipleValuesImpl = psf::detoured_string_function(&::RegQueryMultipleValuesA, &::RegQueryMultipleValuesW);
+template <typename CharT, typename VALENT>
+LSTATUS __stdcall RegQueryMultipleValuesFixup(
+    _In_ HKEY hKey,
+    _Out_writes_(num_vals) VALENT* val_list,
+    _In_ DWORD num_vals,
+    _Out_writes_bytes_to_opt_(*ldwTotsize, *ldwTotsize) __out_data_source(REGISTRY) CharT* lpValueBuf,
+    _Inout_opt_ LPDWORD ldwTotsize
+)
+{
+    // To Do : Add Logic for deletion marker
+
+}
+DECLARE_STRING_FIXUP(RegQueryMultipleValuesImpl, RegQueryMultipleValuesFixup);
 
 /// <summary>
 /// detour RegQueryValueExA & RegQueryValueExW
@@ -708,13 +758,11 @@ LSTATUS __stdcall RegQueryValueExFixup(
     _When_(lpData == NULL, _Out_opt_) _When_(lpData != NULL, _Inout_opt_) LPDWORD lpcbData
 )
 {
-    
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
     DWORD RegLocalInstance = ++g_RegIntceptInstance;
     auto entry = LogFunctionEntry();
     auto result = ERROR_SUCCESS;
-    
 
     try
     {
