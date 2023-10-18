@@ -24,14 +24,14 @@
                 {
                   "type": "DeletionMarker",
                   "hive": "HKLM",
-                  "key": "^TestKey",
-                  "value": "^TestValue"
+                  "key": "^SOFTWARE.*",
+                  "values": [ "DeletionMarker" ]
                 },
                 {
                   "type": "DeletionMarker",
                   "hive": "HKCU",
-                  "key": "^TestKey",
-                  "value": "^TestValue"
+                  "key": "^Software.*",
+                  "values": [ ".*" ]
                 },
                 {
                   "type": "ModifyKeyAccess",

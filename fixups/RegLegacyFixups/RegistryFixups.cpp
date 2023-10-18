@@ -720,6 +720,7 @@ LSTATUS __stdcall  RegGetValueFixup(
 )
 {
     // To Do : Add Logic for deletion marker
+    return RegGetValueImpl(hkey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData);
 }
 DECLARE_STRING_FIXUP(RegGetValueImpl, RegGetValueFixup);
 
@@ -739,6 +740,7 @@ LSTATUS __stdcall RegQueryMultipleValuesFixup(
 )
 {
     // To Do : Add Logic for deletion marker
+    return RegQueryMultipleValuesImpl(hKey, val_list, num_vals, lpValueBuf, ldwTotsize);
 
 }
 DECLARE_STRING_FIXUP(RegQueryMultipleValuesImpl, RegQueryMultipleValuesFixup);

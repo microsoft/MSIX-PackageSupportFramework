@@ -1,0 +1,279 @@
+#pragma region Include
+#include <test_config.h>
+#include <appmodel.h>
+#include <algorithm>
+#include <filesystem>
+#pragma endregion
+
+#pragma region Using
+using namespace std::literals;
+#pragma endregion
+
+#pragma region Define
+// The folllowing strings must match with registry keys present in the appropriate section of the package Registry.dat file.
+#define TestKeyName_HKCU_Covered        L"Software\\Vendor_Covered"
+#define TestKeyName_HKCU_NotCovered     L"Software\\Vendor_NotCovered"
+
+#define TestKeyName_HKLM_Covered        L"SOFTWARE\\Vendor_Covered"        // Registry contains both regular and wow entries so this works.
+#define TestKeyName_HKLM_NotCovered     L"SOFTWARE\\Vendor_NotCovered"
+#define TestKeyName_Covered_SubKey      L"SOFTWARE\\Vendor_Covered\\SubKey"
+
+#define TestSubSubKey                   L"SubKey"
+#define TestSubItem                     L"SubItem"
+#define TestSubItem_FILENOTFOUND        L"DeletionMarker"
+#pragma endregion
+
+namespace Helper
+{
+    /// <summary>
+    /// Test for RegQueryValueExW
+    /// hive : HKCU
+    /// Deletion Marker Not Found
+    /// </summary>
+    /// <param name="result"></param>
+    inline void RegQueryValueEx_SUCCESS_HKCU(int result)
+    {
+        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
+
+        test_begin("RegLegacy Test DeletionMarker HKCU (SUCCESS)");
+
+        try
+        {
+            HKEY hKey;
+
+            if (RegOpenKeyEx(HKEY_CURRENT_USER, TestKeyName_HKCU_Covered, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+            {
+                DWORD dwType;
+                TCHAR szData[256];
+                DWORD dwDataSize = sizeof(szData);
+
+                auto response = RegQueryValueExW(hKey, TestSubItem, NULL, &dwType, (LPBYTE)szData, &dwDataSize);
+
+                if (response == ERROR_SUCCESS)
+                {
+                    trace_message(szData, console::color::gray, true);
+                    trace_messages("HKCU Deletion Marker Not Found");
+                    result = 0;
+                }
+                else if (response == ERROR_FILE_NOT_FOUND)
+                {
+                    trace_messages("HKCU Deletion Marker Found");
+                    result = ERROR_FILE_NOT_FOUND;
+                }
+                else
+                {
+                    trace_message("Failed to find read subItem.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_FILE_NOT_FOUND;
+                    print_last_error("Failed to find read subItem");
+                }
+                RegCloseKey(hKey);
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKCU case (SUCCESS)");
+        }
+        test_end(result);
+    }
+
+    /// <summary>
+    /// Test for RegQueryValueExW
+    /// hive : HKLM
+    /// Deletion Marker Not Found
+    /// </summary>
+    /// <param name="result"></param>
+    inline void RegQueryValueEx_SUCCESS_HKLM(int result)
+    {
+        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
+
+        test_begin("RegLegacy Test DeletionMarker HKLM (SUCCESS)");
+
+        try
+        {
+            HKEY hKey;
+
+            if (RegOpenKey(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_Covered, &hKey) == ERROR_SUCCESS)
+            {
+                DWORD dwType;
+                TCHAR szData[256];
+                DWORD dwDataSize = sizeof(szData);
+
+                auto response = RegQueryValueExW(hKey, TestSubItem, NULL, &dwType, (LPBYTE)szData, &dwDataSize);
+
+                if (response == ERROR_SUCCESS)
+                {
+                    trace_message(szData, console::color::gray, true);
+                    trace_messages("HKLM Deletion Marker Not Found");
+                    result = 0;
+                }
+                else if (response == ERROR_FILE_NOT_FOUND)
+                {
+                    trace_messages("HKLM Deletion Marker Found");
+                    result = ERROR_FILE_NOT_FOUND;
+                }
+                else
+                {
+                    trace_message("Failed to find read subItem.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_FILE_NOT_FOUND;
+                    print_last_error("Failed to find read subItem");
+                }
+                RegCloseKey(hKey);
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKLM case (SUCCESS)");
+        }
+        test_end(result);
+    }
+
+    /// <summary>
+    /// Test for RegQueryValueExW
+    /// hive : HKCU
+    /// Deletion Marker Found
+    /// </summary>
+    /// <param name="result"></param>
+    inline void RegQueryValueEx_FILENOTFOUND_HKCU(int result)
+    {
+        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
+
+        test_begin("RegLegacy Test DeletionMarker HKCU (FILE_NOT_FOUND)");
+
+        try
+        {
+            HKEY hKey;
+
+            if (RegOpenKeyEx(HKEY_CURRENT_USER, TestKeyName_Covered_SubKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+            {
+                DWORD dwType;
+                TCHAR szData[256];
+                DWORD dwDataSize = sizeof(szData);
+
+                auto response = RegQueryValueExW(hKey, TestSubItem_FILENOTFOUND, NULL, &dwType, (LPBYTE)szData, &dwDataSize);
+
+                if (response == ERROR_SUCCESS)
+                {
+                    trace_message(szData, console::color::gray, true);
+                    trace_messages("HKCU Deletion Marker Not Found");
+                    result = ERROR_CURRENT_DIRECTORY;
+                }
+                else if (response == ERROR_FILE_NOT_FOUND)
+                {
+                    trace_messages("HKCU Deletion Marker Found");
+                    result = 0;
+                }
+                else
+                {
+                    trace_message("Failed to find read subItem.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_CURRENT_DIRECTORY;
+                    print_last_error("Failed to find read subItem");
+                }
+                RegCloseKey(hKey);
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKCU case (FILE_NOT_FOUND)");
+        }
+        test_end(result);
+    }
+
+    /// <summary>
+    /// Test for RegQueryValueExW
+    /// hive : HKLM
+    /// Deletion Marker Found
+    /// </summary>
+    /// <param name="result"></param>
+    inline void RegQueryValueEx_FILENOTFOUND_HKLM(int result)
+    {
+        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
+
+        test_begin("RegLegacy Test DeletionMarker HKLM (FILE_NOT_FOUND)");
+
+        try
+        {
+            HKEY hKey;
+
+            if (RegOpenKey(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_Covered, &hKey) == ERROR_SUCCESS)
+            {
+                DWORD dwType;
+                TCHAR szData[256];
+                DWORD dwDataSize = sizeof(szData);
+
+                auto response = RegQueryValueExW(hKey, TestSubItem_FILENOTFOUND, NULL, &dwType, (LPBYTE)szData, &dwDataSize);
+
+                if (response == ERROR_SUCCESS)
+                {
+                    trace_message(szData, console::color::gray, true);
+                    trace_messages("HKLM Deletion Marker Not Found");
+                    result = ERROR_CURRENT_DIRECTORY;
+                }
+                else if (response == ERROR_FILE_NOT_FOUND)
+                {
+                    trace_messages("HKLM Deletion Marker Found");
+                    result = 0;
+                }
+                else
+                {
+                    trace_message("Failed to find read subItem.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_CURRENT_DIRECTORY;
+                    print_last_error("Failed to find read subItem");
+                }
+                RegCloseKey(hKey);
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKLM case (FILE_NOT_FOUND)");
+        }
+        test_end(result);
+    }
+}
