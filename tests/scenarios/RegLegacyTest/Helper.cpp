@@ -33,8 +33,6 @@ namespace Helper
     /// <param name="result"></param>
     inline void RegQueryValueEx_SUCCESS_HKCU(int result)
     {
-        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
-
         test_begin("RegLegacy Test DeletionMarker HKCU (SUCCESS)");
 
         try
@@ -96,8 +94,6 @@ namespace Helper
     /// <param name="result"></param>
     inline void RegQueryValueEx_SUCCESS_HKLM(int result)
     {
-        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
-
         test_begin("RegLegacy Test DeletionMarker HKLM (SUCCESS)");
 
         try
@@ -159,8 +155,6 @@ namespace Helper
     /// <param name="result"></param>
     inline void RegQueryValueEx_FILENOTFOUND_HKCU(int result)
     {
-        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
-
         test_begin("RegLegacy Test DeletionMarker HKCU (FILE_NOT_FOUND)");
 
         try
@@ -222,8 +216,6 @@ namespace Helper
     /// <param name="result"></param>
     inline void RegQueryValueEx_FILENOTFOUND_HKLM(int result)
     {
-        MessageBoxExW(NULL, L"inside DeletionMarkerTests", L"Tests", 0, 0);
-
         test_begin("RegLegacy Test DeletionMarker HKLM (FILE_NOT_FOUND)");
 
         try

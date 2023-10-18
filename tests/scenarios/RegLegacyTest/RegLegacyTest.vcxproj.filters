@@ -21,12 +21,6 @@
     <ClCompile Include="RegLegacyTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DeletionMarkerTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Helper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppXManifest.xml">
@@ -37,10 +31,7 @@
     <None Include="config.json">
       <Filter>pkg</Filter>
     </None>
-    <None Include="RegistryOld.dat">
-      <Filter>pkg</Filter>
-    </None>
-    <None Include="Registry">
+    <None Include="Registry.dat">
       <Filter>pkg</Filter>
     </None>
   </ItemGroup>
