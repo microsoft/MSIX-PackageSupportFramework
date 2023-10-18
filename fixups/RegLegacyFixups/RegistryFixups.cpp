@@ -703,9 +703,9 @@ std::string InterpretRegistryPath(std::string regPath)
 auto RegGetValueImpl = psf::detoured_string_function(&::RegGetValueA, &::RegGetValueW);
 template <typename CharT>
 LSTATUS __stdcall  RegGetValueFixup(
-    _In_ HKEY hkey,
-    _In_opt_ const CharT* lpSubKey,
-    _In_opt_ const CharT* lpValue,
+    _In_ HKEY key,
+    _In_opt_ const CharT* SubKey,
+    _In_opt_ const CharT* Value,
     _In_ DWORD dwFlags,
     _Out_opt_ LPDWORD pdwType,
     _When_((dwFlags & 0x7F) == RRF_RT_REG_SZ ||
@@ -719,8 +719,50 @@ LSTATUS __stdcall  RegGetValueFixup(
     _Inout_opt_ LPDWORD pcbData
 )
 {
-    // To Do : Add Logic for deletion marker
-    return RegGetValueImpl(hkey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    auto entry = LogFunctionEntry();
+    auto result = ERROR_SUCCESS;
+
+    try
+    {
+#ifdef _DEBUG
+        Log("[%d] RegGetValue:\n", RegLocalInstance);
+#endif
+        //Get Registry Path from hkey
+        std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(SubKey);
+        keypath = InterpretRegistryPath(keypath);
+
+#ifdef _DEBUG
+        Log("[%d] RegGetValue: path=%s", RegLocalInstance, keypath.c_str());
+        bool isDeletionMarker = RegFixupDeletionMarker(keypath, Value, RegLocalInstance);
+#else
+        bool isDeletionMarker = RegFixupDeletionMarker(keypath, lpValueName);
+#endif
+        if (isDeletionMarker == true)
+        {
+#ifdef _DEBUG
+            Log("[%d] RegGetValue:Deletion Marker Success\n", RegLocalInstance);
+#endif 
+            result = ERROR_FILE_NOT_FOUND;
+            LogCallingModule();
+        }
+        else
+        {
+            result = RegGetValueImpl(key, SubKey, Value, dwFlags, pdwType, pvData, pcbData);
+        }
+    }
+    catch (...)
+    {
+        Log("[%d] RegQueryValueEx logging failure.\n", RegLocalInstance);
+    }
+
+    QueryPerformanceCounter(&TickEnd);
+#if _DEBUG
+    Log("[%d] RegQueryValueEx: returns %d\n", RegLocalInstance, result);
+#endif
+    return result;
 }
 DECLARE_STRING_FIXUP(RegGetValueImpl, RegGetValueFixup);
 
