@@ -33,6 +33,46 @@ namespace DeletionMarkerTest
 	}
 
 	/// <summary>
+	/// Test for RegGetValue
+	/// Deletion Marker NOT found
+	/// </summary>
+	/// <param name="result"></param>
+	inline void RegGetValue_SUCCESS(int result)
+	{
+		RegGetValue_SUCCESS_HKCU(result);
+	}
+
+	/// <summary>
+	/// Test for RegGetValue
+	/// Deletion Marker Found
+	/// </summary>
+	/// <param name="result"></param>
+	inline void RegGetValue_FILENOTFOUND(int result)
+	{
+		RegGetValue_FILENOTFOUND_HKLM(result);
+	}
+
+	/// <summary>
+	/// Test for RegQueryMultipleValues
+	/// Deletion Marker Not Found
+	/// </summary>
+	/// <param name="result"></param>
+	inline void RegQueryMultipleValues_SUCCESS(int result)
+	{
+		RegQueryMultipleValues_SUCCESS_HKCU(result);
+	}
+
+	/// <summary>
+	/// Test for RegQueryMultipleValues
+	/// Deletion Marker Found
+	/// </summary>
+	/// <param name="result"></param>
+	inline void RegQueryMultipleValues_FILENOTFOUND(int result)
+	{
+		RegQueryMultipleValues_FILENOTFOUND_HKLM(result);
+	}
+
+	/// <summary>
 	/// Test for Deletion Marker Fixup
 	/// </summary>
 	/// <param name="result"></param>
@@ -41,5 +81,13 @@ namespace DeletionMarkerTest
 		RegQueryValueEx_SUCCESS(result);
 
 		RegQueryValueEx_FILENOTFOUND(result);
+
+		RegGetValue_SUCCESS(result);
+
+		RegGetValue_FILENOTFOUND(result);
+
+		RegQueryMultipleValues_SUCCESS(result);
+
+		RegQueryMultipleValues_FILENOTFOUND(result);
 	}
 }

@@ -774,18 +774,75 @@ DECLARE_STRING_FIXUP(RegGetValueImpl, RegGetValueFixup);
 auto RegQueryMultipleValuesImpl = psf::detoured_string_function(&::RegQueryMultipleValuesA, &::RegQueryMultipleValuesW);
 template <typename CharT, typename VALENT>
 LSTATUS __stdcall RegQueryMultipleValuesFixup(
-    _In_ HKEY hKey,
+    _In_ HKEY key,
     _Out_writes_(num_vals) VALENT* val_list,
     _In_ DWORD num_vals,
     _Out_writes_bytes_to_opt_(*ldwTotsize, *ldwTotsize) __out_data_source(REGISTRY) CharT* lpValueBuf,
     _Inout_opt_ LPDWORD ldwTotsize
 )
 {
-    // To Do : Add Logic for deletion marker
-    return RegQueryMultipleValuesImpl(hKey, val_list, num_vals, lpValueBuf, ldwTotsize);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    auto entry = LogFunctionEntry();
+    auto result = ERROR_SUCCESS;
 
+    try
+    {
+#ifdef _DEBUG
+        Log("[%d] RegQueryMultipleValues:\n", RegLocalInstance);
+#endif
+        //Get Registry Path from hkey
+        std::string keypath = InterpretKeyPath(key);
+        keypath = InterpretRegistryPath(keypath);
+
+#ifdef _DEBUG
+        Log("[%d] RegQueryMultipleValues: path=%s", RegLocalInstance, keypath.c_str());
+#endif
+        bool isDeletionMarker = false;
+
+        for (DWORD itr = 0; itr < num_vals; itr++)
+        {
+            CharT* value = val_list[itr].ve_valuename;
+#ifdef _DEBUG
+            Log("[%d] RegQueryMultipleValues: value=%s", RegLocalInstance, value);
+            if (RegFixupDeletionMarker(keypath, value, RegLocalInstance) == true)
+#else
+            if (RegFixupDeletionMarker(keypath, value->ve_valuename) == true)
+#endif
+            {
+                isDeletionMarker = true;
+                break;
+            }
+        }
+
+        if (isDeletionMarker == true)
+        {
+#ifdef _DEBUG
+            Log("[%d] RegGetValue:Deletion Marker Success\n", RegLocalInstance);
+#endif 
+            result = ERROR_FILE_NOT_FOUND;
+            LogCallingModule();
+        }
+        else
+        {
+            result = RegQueryMultipleValuesImpl(key, val_list, num_vals, lpValueBuf, ldwTotsize);
+        }
+    }
+    catch (...)
+    {
+        Log("[%d] RegQueryValueEx logging failure.\n", RegLocalInstance);
+    }
+
+    QueryPerformanceCounter(&TickEnd);
+#if _DEBUG
+    Log("[%d] RegQueryValueEx: returns %d\n", RegLocalInstance, result);
+#endif
+    return result;
 }
 DECLARE_STRING_FIXUP(RegQueryMultipleValuesImpl, RegQueryMultipleValuesFixup);
+
+
 
 /// <summary>
 /// detour RegQueryValueExA & RegQueryValueExW
