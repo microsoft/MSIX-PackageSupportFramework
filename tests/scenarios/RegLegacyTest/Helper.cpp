@@ -387,6 +387,12 @@ namespace Helper
         test_end(result);
     }
 
+    /// <summary>
+    /// Test for RegQueryMultipleValues
+    /// hive : HKCU
+    /// Deletion Marker Not Found
+    /// </summary>
+    /// <param name="result"></param>
     inline void RegQueryMultipleValues_SUCCESS_HKCU(int result)
     {
         test_begin("RegLegacy Test DeletionMarker - RegQueryMultipleValues HKCU (SUCCESS)");
@@ -448,6 +454,12 @@ namespace Helper
         test_end(result);
     }
 
+    /// <summary>
+    /// Test for RegQueryMultipleValues
+    /// hive : HKLM
+    /// Deletion Marker Found
+    /// </summary>
+    /// <param name="result"></param>
     inline void RegQueryMultipleValues_FILENOTFOUND_HKLM(int result)
     {
         test_begin("RegLegacy Test DeletionMarker - RegQueryMultipleValues HKLM (FILENOTFOUND)");

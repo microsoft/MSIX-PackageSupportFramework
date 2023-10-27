@@ -696,6 +696,119 @@ std::string InterpretRegistryPath(std::string regPath)
     return returnPath;
 }
 
+
+
+/// <summary>
+/// detour RegEnumValueA & RegEnumValueW
+/// for deletion marker fixup
+/// </summary>
+auto RegEnumValueImpl = psf::detoured_string_function(&::RegEnumValueA, &::RegEnumValueW);
+template <typename CharT>
+LSTATUS __stdcall RegEnumValueFixup(
+    _In_ HKEY hKey,
+    _In_ DWORD dwIndex,
+    _Out_writes_to_opt_(*lpcchValueName, *lpcchValueName + 1)  CharT* lpValueName,
+    _Inout_ LPDWORD lpcchValueName,
+    _Reserved_ LPDWORD lpReserved,
+    _Out_opt_ LPDWORD lpType,
+    _Out_writes_bytes_to_opt_(*lpcbData, *lpcbData) __out_data_source(REGISTRY) LPBYTE lpData,
+    _Inout_opt_ LPDWORD lpcbData
+)
+{
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    auto entry = LogFunctionEntry();
+    auto response = ERROR_NO_MORE_ITEMS;
+
+    try
+    {
+#ifdef _DEBUG
+        Log("[%d] RegEnumValue:\n", RegLocalInstance);
+
+#endif
+        DWORD Index = 0;
+        DWORD CountDeletionMarkerValues = 0;
+        
+        do
+        {
+            response = RegEnumValueImpl(hKey, Index, lpValueName, lpcchValueName, lpReserved, lpType, lpData, lpcbData);
+            
+            if (response == ERROR_SUCCESS)
+            {
+                //Get Registry Path from hkey
+                std::string keyPath = InterpretKeyPath(hKey);
+                keyPath = InterpretRegistryPath(keyPath);
+#ifdef _DEBUG
+                Log("[%d] RegEnumValue: path=%s", RegLocalInstance, keyPath.c_str());
+                if (RegFixupDeletionMarker(keyPath, lpValueName, RegLocalInstance) == true)
+#else
+                if (RegFixupDeletionMarker(keyPath, lpValueName) == true)
+#endif
+                {
+#ifdef _DEBUG
+                    Log("[%d] RegEnumValue:Deletion Marker Success\n", RegLocalInstance);
+#endif 
+                    CountDeletionMarkerValues++;
+                }
+
+                if (Index - CountDeletionMarkerValues == dwIndex)
+                {
+#ifdef _DEBUG
+                    Log("[%d] RegEnumValue:Index Found\n", RegLocalInstance);
+#endif 
+                    return response;
+                }
+            }
+            else
+            {
+#ifdef _DEBUG
+                Log("[%d] RegEnumValue: function failure\n", RegLocalInstance);
+#endif 
+                return response;
+            }
+            
+            Index++;
+        } while (response == ERROR_SUCCESS);
+    }
+    catch (...)
+    {
+        Log("[%d] RegEnumValue logging failure.\n", RegLocalInstance);
+    }
+    QueryPerformanceCounter(&TickEnd);
+#if _DEBUG
+    Log("[%d] RegEnumValue: returns %d\n", RegLocalInstance, response);
+#endif
+    return response;
+}
+DECLARE_STRING_FIXUP(RegEnumValueImpl, RegEnumValueFixup);
+
+
+/// <summary>
+/// detour RegQueryInfoKeyA & RegQueryInfoKeyW
+/// for deletion marker fixup
+/// </summary>
+auto RegQueryInfoKeyImpl = psf::detoured_string_function(&::RegQueryInfoKeyA, &::RegQueryInfoKeyW);
+template <typename CharT>
+LSTATUS __stdcall RegQueryInfoKeyFixup(
+    _In_ HKEY hKey,
+    _Out_writes_to_opt_(*lpcchClass, *lpcchClass + 1) CharT* lpClass,
+    _Inout_opt_ LPDWORD lpcchClass,
+    _Reserved_ LPDWORD lpReserved,
+    _Out_opt_ LPDWORD lpcSubKeys,
+    _Out_opt_ LPDWORD lpcbMaxSubKeyLen,
+    _Out_opt_ LPDWORD lpcbMaxClassLen,
+    _Out_opt_ LPDWORD lpcValues,
+    _Out_opt_ LPDWORD lpcbMaxValueNameLen,
+    _Out_opt_ LPDWORD lpcbMaxValueLen,
+    _Out_opt_ LPDWORD lpcbSecurityDescriptor,
+    _Out_opt_ PFILETIME lpftLastWriteTime
+)
+{
+    return RegQueryInfoKeyImpl(hKey, lpClass, lpcchClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
+}
+DECLARE_STRING_FIXUP(RegQueryInfoKeyImpl, RegQueryInfoKeyFixup);
+
 /// <summary>
 /// detour RegGetValueA & RegGetValueW
 /// for deletion marker fixup
