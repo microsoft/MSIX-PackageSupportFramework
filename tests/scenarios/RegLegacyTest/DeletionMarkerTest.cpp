@@ -73,6 +73,16 @@ namespace DeletionMarkerTest
 	}
 
 	/// <summary>
+	/// Test for RegEnumValue
+	/// Deletion Marker Found
+	/// </summary>
+	/// <param name="result"></param>
+	inline void RegEnumValue_DeletionMarkerFound(int result)
+	{
+		RegEnumValue_DeletionMarkerFound_HKLM(result);
+	}
+
+	/// <summary>
 	/// Test for Deletion Marker Fixup
 	/// </summary>
 	/// <param name="result"></param>
@@ -89,5 +99,7 @@ namespace DeletionMarkerTest
 		RegQueryMultipleValues_SUCCESS(result);
 
 		RegQueryMultipleValues_FILENOTFOUND(result);
+
+		RegEnumValue_DeletionMarkerFound(result);
 	}
 }
