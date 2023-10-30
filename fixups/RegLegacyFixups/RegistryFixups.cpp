@@ -725,14 +725,15 @@ LSTATUS __stdcall RegEnumValueFixup(
     {
 #ifdef _DEBUG
         Log("[%d] RegEnumValue:\n", RegLocalInstance);
-
 #endif
         DWORD Index = 0;
         DWORD CountDeletionMarkerValues = 0;
         
         do
         {
-            response = RegEnumValueImpl(hKey, Index, lpValueName, lpcchValueName, lpReserved, lpType, lpData, lpcbData);
+            CharT ValueName[INT16_MAX];
+            DWORD lpdValueName = INT16_MAX;
+            response = RegEnumValueImpl(hKey, Index, ValueName, &lpdValueName, nullptr, nullptr, nullptr, nullptr);
             
             if (response == ERROR_SUCCESS)
             {
@@ -741,7 +742,7 @@ LSTATUS __stdcall RegEnumValueFixup(
                 keyPath = InterpretRegistryPath(keyPath);
 #ifdef _DEBUG
                 Log("[%d] RegEnumValue: path=%s", RegLocalInstance, keyPath.c_str());
-                if (RegFixupDeletionMarker(keyPath, lpValueName, RegLocalInstance) == true)
+                if (RegFixupDeletionMarker(keyPath, ValueName, RegLocalInstance) == true)
 #else
                 if (RegFixupDeletionMarker(keyPath, lpValueName) == true)
 #endif
@@ -757,7 +758,7 @@ LSTATUS __stdcall RegEnumValueFixup(
 #ifdef _DEBUG
                     Log("[%d] RegEnumValue:Index Found\n", RegLocalInstance);
 #endif 
-                    return response;
+                    return RegEnumValueImpl(hKey, Index, lpValueName, lpcchValueName, lpReserved, lpType, lpData, lpcbData);
                 }
             }
             else

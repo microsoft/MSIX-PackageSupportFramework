@@ -179,7 +179,7 @@ int wmain(int argc, const wchar_t** argv)
 {
     auto result = parse_args(argc, argv);
     //std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
-    test_initialize("RegLegacy Tests", 11);
+    test_initialize("RegLegacy Tests", 12);
 
     NotCoveredTests();
 

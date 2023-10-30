@@ -535,15 +535,15 @@ namespace Helper
             if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_Covered, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
             {
                 DWORD dwIndex = 1;
-                WCHAR lpValueName[MAX_PATH];
-                DWORD lpcValueName = MAX_PATH;
+                WCHAR lpValueName[INT16_MAX];
+                DWORD lpcValueName = INT16_MAX;
 
                 auto response = RegEnumValue(hKey, dwIndex, lpValueName, &lpcValueName, NULL, NULL, NULL, NULL);
 
                 if (response == ERROR_SUCCESS)
                 {
                     trace_message(lpValueName, console::color::gray, true);
-                    result = 0;
+                    result = ERROR_CURRENT_DIRECTORY;
                 }
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
