@@ -291,16 +291,25 @@ void InitializeConfiguration()
 
                             // Look for value - data
                             traceDataStream << " values:\n";
-                            for (auto& value : regItemObject.get("values").as_array())
+
+                            auto values = regItemObject.try_get("values");
+                            if (values != nullptr)
                             {
-                                auto valueString = value.as_string().wstring();
-                                traceDataStream << valueString << " ;";
-                                Log(L"Value:        %Ls\n", valueString.data());
-                                recordItem.deletionMarker.values.push_back(valueString.data());
+                                for (auto& value : values->as_array())
+                                {
+                                    auto valueString = value.as_string().wstring();
+                                    traceDataStream << valueString << " ;";
+                                    Log(L"Value:        %Ls\n", valueString.data());
+                                    recordItem.deletionMarker.values.push_back(valueString.data());
+                                }
+
+                                Log("RegLegacyFixups:      have value\n");
                             }
-
-                            Log("RegLegacyFixups:      have value\n");
-
+                            else
+                            {
+                                Log("RegLegacyFixups:      have no value\n");
+                            }
+                            
                             specItem.remediationRecords.push_back(recordItem);
                         }
                         else

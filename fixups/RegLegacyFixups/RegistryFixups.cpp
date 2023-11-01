@@ -531,12 +531,13 @@ template <typename CharT>
 #ifdef _DEBUG
 bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue, DWORD RegLocalInstance)
 #else
-bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
+bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue)
 #endif 
 {
     std::string keystring;
-
+#ifdef _DEBUG
     Log("[%d] RegFixupDeletionMarker: keyPath=%s keyValue=%s \n", RegLocalInstance, keyPath.c_str(), keyValue);
+#endif  
 
     for (auto& spec : g_regRemediationSpecs)
     {
@@ -573,24 +574,41 @@ bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
 #ifdef _DEBUG
                                 Log("[%d] RegFixupDeletionMarker: is HKCU key match.\n", RegLocalInstance);
 #endif
-                                for (auto& value : specitem.deletionMarker.values)
+                                if (specitem.deletionMarker.values.empty())
                                 {
-                                    Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
-                                    if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                    // Deletion Marker for Key Found
+#ifdef _DEBUG
+                                    Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
+#endif
+                                    return true;
+                                }
+                                else
+                                {
+                                    // Check for Deletion Marker for Value
+                                    for (auto& value : specitem.deletionMarker.values)
                                     {
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupDeletionMarker: is HKCU key-value match.\n", RegLocalInstance);
-                                        Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+                                        Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
 #endif
-                                        return true;
+                                        if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                        {
+                                            //Deletion Marker for Value Found
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupDeletionMarker: is HKCU key-value match.\n", RegLocalInstance);
+                                            Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+#endif
+                                            return true;
+                                        }
                                     }
-                                }
+                                } 
                             }
                         }
                         catch (...)
                         {
                             psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU");
+#ifdef _DEBUG
                             Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
+#endif
                         }
                     }
                     break;
@@ -611,16 +629,29 @@ bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
 #ifdef _DEBUG
                                 Log("[%d] RegFixupDeletionMarker: is HKLM key match.\n", RegLocalInstance);
 #endif
-                                for (auto& value : specitem.deletionMarker.values)
+                                if (specitem.deletionMarker.values.empty())
                                 {
-                                    Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
-                                    if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                    // Deletion Marker for Key Found
+#ifdef _DEBUG
+                                    Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
+#endif
+                                    return true;
+                                }
+                                else
+                                {
+                                    for (auto& value : specitem.deletionMarker.values)
                                     {
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupDeletionMarker: is HKLM key-value match.\n", RegLocalInstance);
-                                        Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+                                        Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
 #endif
-                                        return true;
+                                        if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                        {
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupDeletionMarker: is HKLM key-value match.\n", RegLocalInstance);
+                                            Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+#endif
+                                            return true;
+                                        }
                                     }
                                 }
                             }
@@ -628,7 +659,9 @@ bool RegFixupDeletionMarker(std::string keyPath, std::string keyValue)
                         catch (...)
                         {
                             psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM");
+#ifdef _DEBUG
                             Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
+#endif
                         }
                     }
                     break;
@@ -744,7 +777,7 @@ LSTATUS __stdcall RegEnumValueFixup(
                 Log("[%d] RegEnumValue: path=%s", RegLocalInstance, keyPath.c_str());
                 if (RegFixupDeletionMarker(keyPath, ValueName, RegLocalInstance) == true)
 #else
-                if (RegFixupDeletionMarker(keyPath, lpValueName) == true)
+                if (RegFixupDeletionMarker(keyPath, ValueName) == true)
 #endif
                 {
 #ifdef _DEBUG
@@ -806,7 +839,71 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
     _Out_opt_ PFILETIME lpftLastWriteTime
 )
 {
-    return RegQueryInfoKeyImpl(hKey, lpClass, lpcchClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    auto entry = LogFunctionEntry();
+
+    auto result = RegQueryInfoKeyImpl(hKey, lpClass, lpcchClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
+
+    if (result == ERROR_SUCCESS)
+    {
+        // Modify lpcValues & lpcbMaxValueNameLen , lpcbMaxValueLen
+        // Since Deletion Markers for values may be present
+        try
+        {
+            DWORD Index = 0;
+            auto response = ERROR_SUCCESS;
+            while (response == ERROR_SUCCESS)
+            {
+                WCHAR ValueName[INT16_MAX];
+                DWORD lpdValueName = INT16_MAX;
+                LPBYTE lpData = new BYTE[INT16_MAX];
+                DWORD lpdData = INT16_MAX;
+
+                response = RegEnumValueW(hKey, Index, ValueName, &lpdValueName, NULL, NULL, lpData, &lpdData);
+
+                if (response == ERROR_SUCCESS)
+                {
+                    // To Do : Add logic to calculate lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
+                }
+                else if (response == ERROR_NO_MORE_ITEMS)
+                {
+                    // To Do : Add logic to update lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
+                    break;
+                }
+                else
+                {
+#if _DEBUG
+                    Log("[%d] RegQueryInfoKey logging fixup failure.\n", RegLocalInstance);
+#endif
+                    return response;
+                }
+            }
+        }
+        catch (...)
+        {
+#if _DEBUG
+            Log("[%d] RegQueryInfoKey logging failure.\n", RegLocalInstance);
+#endif
+        }
+
+        // To Do : Add Logic to modify lpcSubKeys, lpcbMaxSubKeyLen
+        // Since Deletion Markers for values may be present
+
+    }
+    else
+    {
+#if _DEBUG
+        Log("[%d] RegQueryInfoKey: Error %d\n", RegLocalInstance, result);
+#endif
+    }
+
+    QueryPerformanceCounter(&TickEnd);
+#if _DEBUG
+    Log("[%d] RegQueryInfoKey: returns %d\n", RegLocalInstance, result);
+#endif
+    return result;
 }
 DECLARE_STRING_FIXUP(RegQueryInfoKeyImpl, RegQueryInfoKeyFixup);
 
@@ -852,7 +949,7 @@ LSTATUS __stdcall  RegGetValueFixup(
         Log("[%d] RegGetValue: path=%s", RegLocalInstance, keypath.c_str());
         bool isDeletionMarker = RegFixupDeletionMarker(keypath, Value, RegLocalInstance);
 #else
-        bool isDeletionMarker = RegFixupDeletionMarker(keypath, lpValueName);
+        bool isDeletionMarker = RegFixupDeletionMarker(keypath, Value);
 #endif
         if (isDeletionMarker == true)
         {
@@ -869,12 +966,12 @@ LSTATUS __stdcall  RegGetValueFixup(
     }
     catch (...)
     {
-        Log("[%d] RegQueryValueEx logging failure.\n", RegLocalInstance);
+        Log("[%d] RegGetValue logging failure.\n", RegLocalInstance);
     }
 
     QueryPerformanceCounter(&TickEnd);
 #if _DEBUG
-    Log("[%d] RegQueryValueEx: returns %d\n", RegLocalInstance, result);
+    Log("[%d] RegGetValue: returns %d\n", RegLocalInstance, result);
 #endif
     return result;
 }
@@ -922,7 +1019,7 @@ LSTATUS __stdcall RegQueryMultipleValuesFixup(
             Log("[%d] RegQueryMultipleValues: value=%s", RegLocalInstance, value);
             if (RegFixupDeletionMarker(keypath, value, RegLocalInstance) == true)
 #else
-            if (RegFixupDeletionMarker(keypath, value->ve_valuename) == true)
+            if (RegFixupDeletionMarker(keypath, value) == true)
 #endif
             {
                 isDeletionMarker = true;
@@ -933,7 +1030,7 @@ LSTATUS __stdcall RegQueryMultipleValuesFixup(
         if (isDeletionMarker == true)
         {
 #ifdef _DEBUG
-            Log("[%d] RegGetValue:Deletion Marker Success\n", RegLocalInstance);
+            Log("[%d] RegQueryMultipleValues:Deletion Marker Success\n", RegLocalInstance);
 #endif 
             result = ERROR_FILE_NOT_FOUND;
             LogCallingModule();
@@ -945,12 +1042,12 @@ LSTATUS __stdcall RegQueryMultipleValuesFixup(
     }
     catch (...)
     {
-        Log("[%d] RegQueryValueEx logging failure.\n", RegLocalInstance);
+        Log("[%d] RegQueryMultipleValues logging failure.\n", RegLocalInstance);
     }
 
     QueryPerformanceCounter(&TickEnd);
 #if _DEBUG
-    Log("[%d] RegQueryValueEx: returns %d\n", RegLocalInstance, result);
+    Log("[%d] RegQueryMultipleValues: returns %d\n", RegLocalInstance, result);
 #endif
     return result;
 }
