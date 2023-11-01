@@ -16,6 +16,12 @@
 
 DWORD g_RegIntceptInstance = 0;
 
+#pragma region Declarations
+std::string InterpretRegistryPath(std::string regPath);
+#pragma endregion
+
+
+
 std::string ReplaceRegistrySyntax(std::string regPath)
 {
     std::string returnPath = regPath;
@@ -333,6 +339,164 @@ bool RegFixupFakeDelete(std::string keypath)
 
 
 
+/// <summary>
+/// Method to check if given keyValue is a deletion-marker
+/// </summary>
+/// <param name="keypath"></param>
+/// <param name="keyValue"></param>
+/// <param name="RegLocalInstance"></param>
+/// <returns></returns>
+
+template <typename CharT>
+#ifdef _DEBUG
+bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue, DWORD RegLocalInstance)
+#else
+bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue)
+#endif 
+{
+    std::string keystring;
+#ifdef _DEBUG
+    Log("[%d] RegFixupDeletionMarker: keyPath=%s keyValue=%s \n", RegLocalInstance, keyPath.c_str(), keyValue);
+#endif  
+
+    for (auto& spec : g_regRemediationSpecs)
+    {
+#ifdef _DEBUG
+        Log("[%d] RegFixupDeletionMarker: spec\n", RegLocalInstance);
+#endif        
+        for (auto& specitem : spec.remediationRecords)
+        {
+#ifdef _DEBUG
+            Log("[%d] RegFixupDeletionMarker: specitem.type=%d\n", RegLocalInstance, specitem.remeditaionType);
+#endif   
+            switch (specitem.remeditaionType)
+            {
+            case Reg_Remediation_type_DeletionMarker:
+#ifdef _DEBUG
+                Log("[%d] RegFixupDeletionMarker: is Check DeletionMarker...\n", RegLocalInstance);
+#endif  
+                switch (specitem.deletionMarker.hive)
+                {
+                case Modify_Key_Hive_Type_HKCU:
+                    keystring = "HKEY_CURRENT_USER\\";
+                    if (keyPath._Starts_with(keystring))
+                    {
+#ifdef _DEBUG
+                        Log("[%d] RegFixupDeletionMarker: is HKCU hive\n", RegLocalInstance);
+#endif
+                        try
+                        {
+#ifdef _DEBUG
+                            Log("[%d] RegFixupDeletionMarker: key: %LS\n", RegLocalInstance, specitem.deletionMarker.key.c_str());
+#endif
+                            if (std::regex_match(widen(keyPath.substr(keystring.size())), std::wregex(specitem.deletionMarker.key)))
+                            {
+#ifdef _DEBUG
+                                Log("[%d] RegFixupDeletionMarker: is HKCU key match.\n", RegLocalInstance);
+#endif
+                                if (specitem.deletionMarker.values.empty() || keyValue == NULL)
+                                {
+                                    // Deletion Marker for Key Found
+#ifdef _DEBUG
+                                    Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
+#endif
+                                    return true;
+                                }
+                                else
+                                {
+                                    // Check for Deletion Marker for Value
+                                    for (auto& value : specitem.deletionMarker.values)
+                                    {
+#ifdef _DEBUG
+                                        Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
+#endif
+                                        if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                        {
+                                            //Deletion Marker for Value Found
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupDeletionMarker: is HKCU key-value match.\n", RegLocalInstance);
+                                            Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+#endif
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (...)
+                        {
+                            psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU");
+#ifdef _DEBUG
+                            Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
+#endif
+                        }
+                    }
+                    break;
+                case Modify_Key_Hive_Type_HKLM:
+                    keystring = "HKEY_LOCAL_MACHINE\\";
+                    if (keyPath._Starts_with(keystring))
+                    {
+#ifdef _DEBUG
+                        Log("[%d] RegFixupDeletionMarker: is HKLM hive\n", RegLocalInstance);
+#endif
+                        try
+                        {
+#ifdef _DEBUG
+                            Log("[%d] RegFixupDeletionMarker: key: %LS\n", RegLocalInstance, specitem.deletionMarker.key.c_str());
+#endif
+                            if (std::regex_match(widen(keyPath.substr(keystring.size())), std::wregex(specitem.deletionMarker.key)))
+                            {
+#ifdef _DEBUG
+                                Log("[%d] RegFixupDeletionMarker: is HKLM key match.\n", RegLocalInstance);
+#endif
+                                if (specitem.deletionMarker.values.empty() || keyValue == NULL)
+                                {
+                                    // Deletion Marker for Key Found
+#ifdef _DEBUG
+                                    Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
+#endif
+                                    return true;
+                                }
+                                else
+                                {
+                                    for (auto& value : specitem.deletionMarker.values)
+                                    {
+#ifdef _DEBUG
+                                        Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
+#endif
+                                        if (std::regex_match(widen(keyValue), std::wregex(value)))
+                                        {
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupDeletionMarker: is HKLM key-value match.\n", RegLocalInstance);
+                                            Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
+#endif
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (...)
+                        {
+                            psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM");
+#ifdef _DEBUG
+                            Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
+#endif
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            default:
+                break;
+            }
+        }
+    }
+    return false;
+}
+
+
 
 auto RegCreateKeyExImpl = psf::detoured_string_function(&::RegCreateKeyExA, &::RegCreateKeyExW);
 template <typename CharT>
@@ -420,6 +584,22 @@ LSTATUS __stdcall RegOpenKeyExFixup(
 
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
+    std::string registryPath = InterpretRegistryPath(keypath);
+
+#ifdef _DEBUG
+    Log("[%d] RegOpenKeyEx: Path=%s", RegLocalInstance, registryPath.c_str());
+    if (RegFixupDeletionMarker<char>(registryPath, NULL, RegLocalInstance) == true)
+#else
+    if (RegFixupDeletionMarker<char>(registryPath, NULL) == true)
+#endif
+    {
+#ifdef _DEBUG
+        Log("[%d] RegOpenKeyEx: Key Deletion Marker", RegLocalInstance);
+        Log("[%d] RegOpenKeyEx: return = ERROR_FILE_NOT_FOUND", RegLocalInstance);
+#endif
+        return ERROR_FILE_NOT_FOUND;
+    }
+
     REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
 
     auto result = RegOpenKeyExImpl(key, subKey, options, samModified,  resultKey);
@@ -481,6 +661,22 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
 #endif
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
+    std::string registryPath = InterpretRegistryPath(keypath);
+
+#ifdef _DEBUG
+    Log("[%d] RegOpenKeyTransacted: Path=%s", RegLocalInstance, registryPath.c_str());
+    if (RegFixupDeletionMarker<char>(registryPath,NULL, RegLocalInstance) == true)
+#else
+    if (RegFixupDeletionMarker<char>(registryPath, NULL) == true)
+#endif
+    {
+#ifdef _DEBUG
+        Log("[%d] RegOpenKeyTransacted: Key Deletion Marker", RegLocalInstance);
+        Log("[%d] RegOpenKeyTransacted: return = ERROR_FILE_NOT_FOUND", RegLocalInstance);
+#endif
+        return ERROR_FILE_NOT_FOUND;
+    }
+
     REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
 
     auto result = RegOpenKeyTransactedImpl(key, subKey, options, samModified, resultKey, hTransaction, pExtendedParameter);
@@ -519,162 +715,6 @@ DECLARE_STRING_FIXUP(RegOpenKeyTransactedImpl, RegOpenKeyTransactedFixup);
 
 
 
-/// <summary>
-/// Method to check if given keyValue is a deletion-marker
-/// </summary>
-/// <param name="keypath"></param>
-/// <param name="keyValue"></param>
-/// <param name="RegLocalInstance"></param>
-/// <returns></returns>
-
-template <typename CharT>
-#ifdef _DEBUG
-bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue, DWORD RegLocalInstance)
-#else
-bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue)
-#endif 
-{
-    std::string keystring;
-#ifdef _DEBUG
-    Log("[%d] RegFixupDeletionMarker: keyPath=%s keyValue=%s \n", RegLocalInstance, keyPath.c_str(), keyValue);
-#endif  
-
-    for (auto& spec : g_regRemediationSpecs)
-    {
-#ifdef _DEBUG
-        Log("[%d] RegFixupDeletionMarker: spec\n", RegLocalInstance);
-#endif        
-        for (auto& specitem : spec.remediationRecords)
-        {
-#ifdef _DEBUG
-            Log("[%d] RegFixupDeletionMarker: specitem.type=%d\n", RegLocalInstance, specitem.remeditaionType);
-#endif   
-            switch (specitem.remeditaionType)
-            {
-            case Reg_Remediation_type_DeletionMarker:
-#ifdef _DEBUG
-                Log("[%d] RegFixupDeletionMarker: is Check DeletionMarker...\n", RegLocalInstance);
-#endif  
-                switch (specitem.deletionMarker.hive)
-                {
-                case Modify_Key_Hive_Type_HKCU:
-                    keystring = "HKEY_CURRENT_USER\\";
-                    if (keyPath._Starts_with(keystring))
-                    {
-#ifdef _DEBUG
-                        Log("[%d] RegFixupDeletionMarker: is HKCU hive\n", RegLocalInstance);
-#endif
-                        try
-                        {
-#ifdef _DEBUG
-                            Log("[%d] RegFixupDeletionMarker: key: %LS\n", RegLocalInstance, specitem.deletionMarker.key.c_str());
-#endif
-                            if (std::regex_match(widen(keyPath.substr(keystring.size())), std::wregex(specitem.deletionMarker.key)))
-                            {
-#ifdef _DEBUG
-                                Log("[%d] RegFixupDeletionMarker: is HKCU key match.\n", RegLocalInstance);
-#endif
-                                if (specitem.deletionMarker.values.empty())
-                                {
-                                    // Deletion Marker for Key Found
-#ifdef _DEBUG
-                                    Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
-#endif
-                                    return true;
-                                }
-                                else
-                                {
-                                    // Check for Deletion Marker for Value
-                                    for (auto& value : specitem.deletionMarker.values)
-                                    {
-#ifdef _DEBUG
-                                        Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
-#endif
-                                        if (std::regex_match(widen(keyValue), std::wregex(value)))
-                                        {
-                                            //Deletion Marker for Value Found
-#ifdef _DEBUG
-                                            Log("[%d] RegFixupDeletionMarker: is HKCU key-value match.\n", RegLocalInstance);
-                                            Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
-#endif
-                                            return true;
-                                        }
-                                    }
-                                } 
-                            }
-                        }
-                        catch (...)
-                        {
-                            psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKCU");
-#ifdef _DEBUG
-                            Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
-#endif
-                        }
-                    }
-                    break;
-                case Modify_Key_Hive_Type_HKLM:
-                    keystring = "HKEY_LOCAL_MACHINE\\";
-                    if (keyPath._Starts_with(keystring))
-                    {
-#ifdef _DEBUG
-                        Log("[%d] RegFixupDeletionMarker: is HKLM hive\n", RegLocalInstance);
-#endif
-                        try
-                        {
-#ifdef _DEBUG
-                            Log("[%d] RegFixupDeletionMarker: key: %LS\n", RegLocalInstance, specitem.deletionMarker.key.c_str());
-#endif
-                            if (std::regex_match(widen(keyPath.substr(keystring.size())), std::wregex(specitem.deletionMarker.key)))
-                            {
-#ifdef _DEBUG
-                                Log("[%d] RegFixupDeletionMarker: is HKLM key match.\n", RegLocalInstance);
-#endif
-                                if (specitem.deletionMarker.values.empty())
-                                {
-                                    // Deletion Marker for Key Found
-#ifdef _DEBUG
-                                    Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
-#endif
-                                    return true;
-                                }
-                                else
-                                {
-                                    for (auto& value : specitem.deletionMarker.values)
-                                    {
-#ifdef _DEBUG
-                                        Log("[%d] RegFixupDeletionMarker: value: %LS\n", RegLocalInstance, value.c_str());
-#endif
-                                        if (std::regex_match(widen(keyValue), std::wregex(value)))
-                                        {
-#ifdef _DEBUG
-                                            Log("[%d] RegFixupDeletionMarker: is HKLM key-value match.\n", RegLocalInstance);
-                                            Log("[%d] RegFixupDeletionMarker: Deletion-Marker true.\n", RegLocalInstance);
-#endif
-                                            return true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        catch (...)
-                        {
-                            psf::TraceLogExceptions("RegLegacyFixupException", "Bad Regex pattern ignored in RegLegacyFixups. Hive: HKLM");
-#ifdef _DEBUG
-                            Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
-#endif
-                        }
-                    }
-                    break;
-                default:
-                    break;
-                }
-            default:
-                break;
-            }
-        }
-    }
-    return false;
-}
 
 /// <summary>
 /// Method to interpret Regitry Path
