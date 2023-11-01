@@ -3,6 +3,7 @@
 #include <appmodel.h>
 #include <algorithm>
 #include <filesystem>
+#include < Ktmw32.h>
 #pragma endregion
 
 #pragma region Using
@@ -593,6 +594,50 @@ namespace Helper
         {
             HKEY hKey;
             auto response = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey);
+            if (response == ERROR_SUCCESS)
+            {
+                trace_message("Key Opened", console::color::gray, true);
+                result = ERROR_CURRENT_DIRECTORY;
+                RegCloseKey(hKey);
+            }
+            else if (response == ERROR_FILE_NOT_FOUND)
+            {
+                trace_messages("Key doesn't exists");
+                result = 0;
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKLM case (Deletion Marker Found)");
+        }
+        test_end(result);
+    }
+
+    /// <summary>
+    /// Test for RegOpenKeyTransacted
+    /// hive : HKLM
+    /// Deletion Marker Found
+    /// </summary>
+    /// <param name="result"></param>
+    inline void RegOpenKeyTransacted_FILENOTFOUND_HKLM(int result)
+    {
+        test_begin("RegLegacy Test DeletionMarker - RegOpenKeyTransacted HKLM (Deletion Marker Found)");
+
+        try
+        {
+            HKEY hKey;
+            HANDLE hTransaction = CreateTransaction(NULL, 0, 0, 0, 0, 0, NULL);
+            auto response = RegOpenKeyTransacted(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey, hTransaction, NULL);
             if (response == ERROR_SUCCESS)
             {
                 trace_message("Key Opened", console::color::gray, true);
