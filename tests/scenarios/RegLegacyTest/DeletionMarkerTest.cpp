@@ -83,6 +83,16 @@ namespace DeletionMarkerTest
 	}
 
 	/// <summary>
+	/// Test for RegOpenKeyEx
+	/// Deletion Marker Found
+	/// </summary>
+	/// <param name="result"></param>
+	inline void RegOpenKeyEx_DeletionMarkerFound(int result)
+	{
+		RegOpenKeyEx_FILENOTFOUND_HKLM(result);
+	}
+
+	/// <summary>
 	/// Test for Deletion Marker Fixup
 	/// </summary>
 	/// <param name="result"></param>
@@ -101,5 +111,7 @@ namespace DeletionMarkerTest
 		RegQueryMultipleValues_FILENOTFOUND(result);
 
 		RegEnumValue_DeletionMarkerFound(result);
+
+		RegOpenKeyEx_DeletionMarkerFound(result);
 	}
 }

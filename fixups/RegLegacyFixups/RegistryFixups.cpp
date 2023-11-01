@@ -394,13 +394,17 @@ bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue)
 #ifdef _DEBUG
                                 Log("[%d] RegFixupDeletionMarker: is HKCU key match.\n", RegLocalInstance);
 #endif
-                                if (specitem.deletionMarker.values.empty() || keyValue == NULL)
+                                if (specitem.deletionMarker.values.empty())
                                 {
                                     // Deletion Marker for Key Found
 #ifdef _DEBUG
                                     Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
 #endif
                                     return true;
+                                }
+                                else if (keyValue == NULL)
+                                {
+                                    return false;
                                 }
                                 else
                                 {
@@ -449,13 +453,17 @@ bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue)
 #ifdef _DEBUG
                                 Log("[%d] RegFixupDeletionMarker: is HKLM key match.\n", RegLocalInstance);
 #endif
-                                if (specitem.deletionMarker.values.empty() || keyValue == NULL)
+                                if (specitem.deletionMarker.values.empty())
                                 {
                                     // Deletion Marker for Key Found
 #ifdef _DEBUG
                                     Log("[%d] RegFixupDeletionMarker: No Values\n", RegLocalInstance);
 #endif
                                     return true;
+                                }
+                                else if (keyValue == NULL)
+                                {
+                                    return false;
                                 }
                                 else
                                 {
@@ -881,9 +889,10 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
 {
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
     auto entry = LogFunctionEntry();
-
+#if _DEBUG
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+#endif
     auto result = RegQueryInfoKeyImpl(hKey, lpClass, lpcchClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
 
     if (result == ERROR_SUCCESS)

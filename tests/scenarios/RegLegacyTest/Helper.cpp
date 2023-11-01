@@ -14,6 +14,7 @@ using namespace std::literals;
 #define TestKeyName_HKCU_Covered        L"Software\\Vendor_Covered"
 #define TestKeyName_HKCU_NotCovered     L"Software\\Vendor_NotCovered"
 
+#define TestKeyName_HKLM_SYSTEM         L"SYSTEM"
 #define TestKeyName_HKLM_Covered        L"SOFTWARE\\Vendor_Covered"        // Registry contains both regular and wow entries so this works.
 #define TestKeyName_HKLM_NotCovered     L"SOFTWARE\\Vendor_NotCovered"
 #define TestKeyName_Covered_SubKey      L"SOFTWARE\\Vendor_Covered\\SubKey"
@@ -559,6 +560,49 @@ namespace Helper
                     print_last_error("Failed to find read subItem");
                 }
                 RegCloseKey(hKey);
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKLM case (Deletion Marker Found)");
+        }
+        test_end(result);
+    }
+
+    /// <summary>
+    /// Test for RegOpenKeyEx
+    /// hive : HKLM
+    /// Deletion Marker Found
+    /// </summary>
+    /// <param name="result"></param>
+    inline void RegOpenKeyEx_FILENOTFOUND_HKLM(int result)
+    {
+        test_begin("RegLegacy Test DeletionMarker - RegOpenKeyEx HKLM (Deletion Marker Found)");
+
+        try
+        {
+            HKEY hKey;
+            auto response = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey);
+            if (response == ERROR_SUCCESS)
+            {
+                trace_message("Key Opened", console::color::gray, true);
+                result = ERROR_CURRENT_DIRECTORY;
+                RegCloseKey(hKey);
+            }
+            else if (response == ERROR_FILE_NOT_FOUND)
+            {
+                trace_messages("Key doesn't exists");
+                result = 0;
             }
             else
             {

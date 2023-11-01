@@ -24,6 +24,11 @@
                 {
                   "type": "DeletionMarker",
                   "hive": "HKLM",
+                  "key": "^SYSTEM"
+                },
+                {
+                  "type": "DeletionMarker",
+                  "hive": "HKLM",
                   "key": "^SOFTWARE.*",
                   "values": [ "DeletionMarker" ]
                 },
