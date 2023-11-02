@@ -19,6 +19,7 @@ using namespace std::literals;
 #define TestKeyName_HKLM_Covered        L"SOFTWARE\\Vendor_Covered"        // Registry contains both regular and wow entries so this works.
 #define TestKeyName_HKLM_NotCovered     L"SOFTWARE\\Vendor_NotCovered"
 #define TestKeyName_Covered_SubKey      L"SOFTWARE\\Vendor_Covered\\SubKey"
+#define TestKeyName_HKLM_ControlSet     L"SYSTEM\\CurrentControlSet"
 
 #define TestSubSubKey                   L"SubKey"
 #define TestSubItem                     L"SubItem"
@@ -522,6 +523,65 @@ namespace Helper
     }
 
     /// <summary>
+    /// Test for RegEnumKeyEx
+    /// hive : HKLM
+    /// Deletion Marker Found
+    /// </summary>
+    /// <param name="result"></param>
+    inline void RegEnumKeyEx_FILENOTFOUND_HKLM(int result)
+    {
+        test_begin("RegLegacy Test DeletionMarker - RegEnumKeyEx HKLM (Deletion Marker Found)");
+
+        try
+        {
+            HKEY hKey;
+            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+            {
+                TCHAR szSubKey[INT16_MAX];
+                DWORD cbName = INT16_MAX;
+                DWORD Index = 0;
+
+                auto response = RegEnumKeyEx(hKey, Index, szSubKey, &cbName, NULL, NULL, NULL, NULL);
+
+                if (response == ERROR_SUCCESS)
+                {
+                    trace_message(szSubKey, console::color::gray, true);
+                    result = ERROR_CURRENT_DIRECTORY;
+                }
+                else if (response == ERROR_NO_MORE_ITEMS)
+                {
+                    trace_messages("Index item doesn't exists");
+                    result = 0;
+                }
+                else
+                {
+                    trace_message("Failed to find read subKey.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_CURRENT_DIRECTORY;
+                    print_last_error("Failed to find read subKey");
+                }
+                RegCloseKey(hKey);
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKLM case (Deletion Marker Found)");
+        }
+        test_end(result);
+    }
+
+    /// <summary>
     /// Test for RegEnumValue
     /// hive : HKLM
     /// Deletion Marker Found
@@ -534,9 +594,9 @@ namespace Helper
         try
         {
             HKEY hKey;
-            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_Covered, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
             {
-                DWORD dwIndex = 1;
+                DWORD dwIndex = 0;
                 WCHAR lpValueName[INT16_MAX];
                 DWORD lpcValueName = INT16_MAX;
 
@@ -593,7 +653,7 @@ namespace Helper
         try
         {
             HKEY hKey;
-            auto response = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey);
+            auto response = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_ControlSet, 0, KEY_READ, &hKey);
             if (response == ERROR_SUCCESS)
             {
                 trace_message("Key Opened", console::color::gray, true);
@@ -637,7 +697,7 @@ namespace Helper
         {
             HKEY hKey;
             HANDLE hTransaction = CreateTransaction(NULL, 0, 0, 0, 0, 0, NULL);
-            auto response = RegOpenKeyTransacted(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey, hTransaction, NULL);
+            auto response = RegOpenKeyTransacted(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_ControlSet, 0, KEY_READ, &hKey, hTransaction, NULL);
             if (response == ERROR_SUCCESS)
             {
                 trace_message("Key Opened", console::color::gray, true);

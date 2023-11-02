@@ -24,7 +24,7 @@
                 {
                   "type": "DeletionMarker",
                   "hive": "HKLM",
-                  "key": "^SYSTEM"
+                  "key": "^SYSTEM\\\\.*"
                 },
                 {
                   "type": "DeletionMarker",
