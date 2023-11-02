@@ -780,6 +780,94 @@ std::string InterpretRegistryPath(std::string regPath)
 
 
 /// <summary>
+/// detour RegEnumKeyExA & RegEnumKeyExW
+/// for deletion marker fixup
+/// </summary>
+auto RegEnumKeyExImpl = psf::detoured_string_function(&::RegEnumKeyExA, &::RegEnumKeyExW);
+template <typename CharT>
+LSTATUS __stdcall RegEnumKeyExFixup(
+    _In_ HKEY hKey,
+    _In_ DWORD dwIndex,
+    _Out_writes_to_opt_(*lpcchName, *lpcchName + 1) CharT* lpName,
+    _Inout_ LPDWORD lpcchName,
+    _Reserved_ LPDWORD lpReserved,
+    _Out_writes_to_opt_(*lpcchClass, *lpcchClass + 1) CharT* lpClass,
+    _Inout_opt_ LPDWORD lpcchClass,
+    _Out_opt_ PFILETIME lpftLastWriteTime
+)
+{
+    LARGE_INTEGER TickStart, TickEnd;
+    QueryPerformanceCounter(&TickStart);
+    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    auto entry = LogFunctionEntry();
+    auto response = ERROR_NO_MORE_ITEMS;
+
+    try
+    {
+#ifdef _DEBUG
+        Log("[%d] RegEnumKeyEx:\n", RegLocalInstance);
+#endif
+        DWORD Index = 0;
+        DWORD CountDeletionMarkerKeys = 0;
+
+        do
+        {
+            CharT KeyName[INT16_MAX];
+            DWORD lpdKeyName = INT16_MAX;
+            response = RegEnumKeyExImpl(hKey, Index, KeyName, &lpdKeyName, nullptr, nullptr, nullptr, nullptr);
+
+            if (response == ERROR_SUCCESS)
+            {
+                //Get Registry Path from hkey
+                std::string keyPath = InterpretKeyPath(hKey) + +"\\" + InterpretStringA(KeyName);
+                keyPath = InterpretRegistryPath(keyPath);
+#ifdef _DEBUG
+                Log("[%d] RegEnumKeyEx: path=%s", RegLocalInstance, keyPath.c_str());
+                if (RegFixupDeletionMarker<char>(keyPath, NULL, RegLocalInstance) == true)
+#else
+                if (RegFixupDeletionMarker<char>(keyPath, NULL) == true)
+#endif
+                {
+#ifdef _DEBUG
+                    Log("[%d] RegEnumKeyEx:Deletion Marker Success\n", RegLocalInstance);
+#endif 
+                    CountDeletionMarkerKeys++;
+                }
+
+                if (Index - CountDeletionMarkerKeys == dwIndex)
+                {
+#ifdef _DEBUG
+                    Log("[%d] RegEnumKeyEx:Index Found\n", RegLocalInstance);
+#endif 
+                    return RegEnumKeyExImpl(hKey, Index, lpName, lpcchName, lpReserved, lpClass, lpcchClass, lpftLastWriteTime);
+                }
+            }
+            else
+            {
+#ifdef _DEBUG
+                Log("[%d] RegEnumKeyEx: function failure\n", RegLocalInstance);
+#endif 
+                return response;
+            }
+
+            Index++;
+        } while (response == ERROR_SUCCESS);
+    }
+    catch (...)
+    {
+        Log("[%d] RegEnumKeyEx logging failure.\n", RegLocalInstance);
+    }
+    QueryPerformanceCounter(&TickEnd);
+#if _DEBUG
+    Log("[%d] RegEnumKeyEx: returns %d\n", RegLocalInstance, response);
+#endif
+    return response;
+}
+DECLARE_STRING_FIXUP(RegEnumKeyExImpl, RegEnumKeyExFixup);
+
+
+
+/// <summary>
 /// detour RegEnumValueA & RegEnumValueW
 /// for deletion marker fixup
 /// </summary>
