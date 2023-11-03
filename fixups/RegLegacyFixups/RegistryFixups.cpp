@@ -1034,9 +1034,9 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
                     // Update lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
-                    lpcValues = &CountValues;
-                    lpcbMaxValueNameLen = &dValueName;
-                    lpcbMaxValueLen = &dData;
+                    *lpcValues = CountValues;
+                    *lpcbMaxValueNameLen = MaxValueNameLen;
+                    *lpcbMaxValueLen = MaxDataLen;
 #if _DEBUG
                     Log("[%d] RegQueryInfoKey: lpcValues=  %d, lpcbMaxValueNameLen= %d, lpcbMaxValueLen= %d\n", RegLocalInstance, CountValues, dValueName, dData);
 #endif
@@ -1085,27 +1085,17 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
                 if (response == ERROR_SUCCESS)
                 {
                     CountSubKeys++;
-
-                    //Remove size of null character from MaxSubKeyLen
-                    if constexpr (psf::is_ansi<CharT>)
-                    {
-                        NameLen = NameLen - sizeof(CHAR);
-                    }
-                    else
-                    {
-                        NameLen = NameLen - sizeof(WCHAR);
-                    }
-
                     MaxSubKeyLen = max(MaxSubKeyLen, NameLen);
                 }
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
                     // Update lpcSubKeys & lpcbMaxSubKeyLen
-                    lpcSubKeys = &CountSubKeys;
-                    lpcbMaxSubKeyLen = &MaxSubKeyLen;
+                    *lpcSubKeys = CountSubKeys;
+                    *lpcbMaxSubKeyLen = MaxSubKeyLen;
 #if _DEBUG
                     Log("[%d] RegQueryInfoKey: lpcSubKeys=  %d, lpcbMaxSubKeyLen= %d\n", RegLocalInstance, CountSubKeys, MaxSubKeyLen);
 #endif
+                    break;
                 }
                 else
                 {

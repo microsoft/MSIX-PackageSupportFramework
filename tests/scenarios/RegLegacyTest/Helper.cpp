@@ -726,4 +726,70 @@ namespace Helper
         }
         test_end(result);
     }
+
+    /// <summary>
+    /// Test for RegQueryInfoKey
+    /// hive : HKCU
+    /// </summary>
+    /// <param name="result"></param>
+    void inline RegQueryInfoKey_SUCCESS_HKCU(int result)
+    {
+        test_begin("RegLegacy Test DeletionMarker - RegQueryInfoKey HKLM (SUCCESS)");
+
+        try
+        {
+            HKEY hkey;
+            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_ALL_ACCESS, &hkey) == ERROR_SUCCESS)
+            {
+                DWORD dwSubKeyCount = 0;
+                DWORD dwMaxSubKeyNameLen = 0;
+                DWORD dwValueCount = 0;
+                DWORD dwMaxValueNameLen = 0;
+                DWORD dwMaxValueLen = 0;
+
+                auto response = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, &dwSubKeyCount, &dwMaxSubKeyNameLen, NULL, &dwValueCount, &dwMaxValueNameLen, &dwMaxValueLen, NULL, NULL);
+                MessageBoxExW(NULL, L"Test", L"", 0, 0);
+                if (response == ERROR_SUCCESS)
+                {
+                    trace_message("Query Key Success", console::color::gray, true);
+                    result = 0;
+                    if ((dwSubKeyCount || dwMaxSubKeyNameLen || dwValueCount || dwMaxValueNameLen || dwMaxValueLen) != 0)
+                    {
+                        trace_message("Data does not match");
+                        result = ERROR_CURRENT_DIRECTORY;
+                    }
+                    
+                    RegCloseKey(hkey);
+                }
+                else if (response == ERROR_MORE_DATA)
+                {
+                    trace_messages("Buffer is too small to receive the name of the class,");
+                    result = response;
+                }
+                else
+                {
+                    trace_message("Function Failed.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_PATH_NOT_FOUND;
+                    print_last_error("Failed to find key");
+                }
+            }
+            else
+            {
+                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_PATH_NOT_FOUND;
+                print_last_error("Failed to find key");
+            }
+        }
+        catch (...)
+        {
+            trace_message("Unexpected error.", console::color::red, true);
+            result = GetLastError();
+            print_last_error("Failed Deletion Marker HKLM case (SUCCESS)");
+        }
+        test_end(result);
+    }
 }

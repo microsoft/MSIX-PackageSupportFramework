@@ -113,6 +113,16 @@ namespace DeletionMarkerTest
 	}
 
 	/// <summary>
+	/// Test for RegQueryInfoKey
+	/// Deletion Marker Found
+	/// </summary>
+	/// <param name="result"></param>
+	inline void RegQueryInfoKey_SUCCESS(int result)
+	{
+		RegQueryInfoKey_SUCCESS_HKCU(result);
+	}
+
+	/// <summary>
 	/// Test for Deletion Marker Fixup
 	/// </summary>
 	/// <param name="result"></param>
@@ -137,5 +147,7 @@ namespace DeletionMarkerTest
 		RegOpenKeyTransacted_DeletionMarkerFound(result);
 
 		RegEnumKeyEx_DeletionMarkerFound(result);
+
+		RegQueryInfoKey_SUCCESS(result);
 	}
 }
