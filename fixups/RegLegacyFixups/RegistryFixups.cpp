@@ -978,8 +978,10 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
     auto entry = LogFunctionEntry();
+
 #if _DEBUG
     DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    Log("[%d] RegQueryInfoKey:\n", RegLocalInstance);
 #endif
     auto result = RegQueryInfoKeyImpl(hKey, lpClass, lpcchClass, lpReserved, lpcSubKeys, lpcbMaxSubKeyLen, lpcbMaxClassLen, lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen, lpcbSecurityDescriptor, lpftLastWriteTime);
 
@@ -990,23 +992,54 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
         try
         {
             DWORD Index = 0;
+            DWORD CountValues = 0;
+            DWORD MaxValueNameLen = 0;
+            DWORD MaxDataLen = 0;
             auto response = ERROR_SUCCESS;
+            
             while (response == ERROR_SUCCESS)
             {
-                WCHAR ValueName[INT16_MAX];
-                DWORD lpdValueName = INT16_MAX;
+                CharT ValueName[INT16_MAX];
+                DWORD dValueName = INT16_MAX;
                 LPBYTE lpData = new BYTE[INT16_MAX];
-                DWORD lpdData = INT16_MAX;
+                DWORD dData = INT16_MAX;
 
-                response = RegEnumValueW(hKey, Index, ValueName, &lpdValueName, NULL, NULL, lpData, &lpdData);
+                if constexpr (psf::is_ansi<CharT>)
+                {
+                    response = RegEnumValueA(hKey, Index, ValueName, &dValueName, NULL, NULL, lpData, &dData);
+                }
+                else
+                {
+                    response = RegEnumValueW(hKey, Index, ValueName, &dValueName, NULL, NULL, lpData, &dData);
+                }
 
                 if (response == ERROR_SUCCESS)
                 {
-                    // To Do : Add logic to calculate lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
+                    CountValues++;
+
+                    MaxValueNameLen = max(MaxValueNameLen, dValueName);
+
+                    //Remove size of null character from dData
+                    if constexpr (psf::is_ansi<CharT>)
+                    {
+                        dData = dData - sizeof(CHAR);
+                    }
+                    else
+                    {
+                        dData = dData - sizeof(WCHAR);
+                    }
+
+                    MaxDataLen = max(MaxDataLen, dData);
                 }
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
-                    // To Do : Add logic to update lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
+                    // Update lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
+                    lpcValues = &CountValues;
+                    lpcbMaxValueNameLen = &dValueName;
+                    lpcbMaxValueLen = &dData;
+#if _DEBUG
+                    Log("[%d] RegQueryInfoKey: lpcValues=  %d, lpcbMaxValueNameLen= %d, lpcbMaxValueLen= %d\n", RegLocalInstance, CountValues, dValueName, dData);
+#endif
                     break;
                 }
                 else
@@ -1016,18 +1049,80 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
 #endif
                     return response;
                 }
+                Index++;
             }
         }
         catch (...)
         {
 #if _DEBUG
-            Log("[%d] RegQueryInfoKey logging failure.\n", RegLocalInstance);
+            Log("[%d] RegQueryInfoKey logging failure in RegEnumValue.\n", RegLocalInstance);
 #endif
         }
 
-        // To Do : Add Logic to modify lpcSubKeys, lpcbMaxSubKeyLen
+        // Modify lpcSubKeys, lpcbMaxSubKeyLen
         // Since Deletion Markers for values may be present
+        try
+        {
+            DWORD Index = 0;
+            DWORD CountSubKeys = 0;
+            DWORD MaxSubKeyLen = 0;
+            auto response = ERROR_SUCCESS;
 
+            while (response == ERROR_SUCCESS)
+            {
+                CharT SubKey[INT16_MAX];
+                DWORD NameLen = INT16_MAX;
+
+                if constexpr (psf::is_ansi<CharT>)
+                {
+                    response = RegEnumKeyExA(hKey, Index, SubKey, &NameLen, NULL, NULL, NULL, NULL);
+                }
+                else
+                {
+                    response = RegEnumKeyExW(hKey, Index, SubKey, &NameLen, NULL, NULL, NULL, NULL);
+                }
+
+                if (response == ERROR_SUCCESS)
+                {
+                    CountSubKeys++;
+
+                    //Remove size of null character from MaxSubKeyLen
+                    if constexpr (psf::is_ansi<CharT>)
+                    {
+                        NameLen = NameLen - sizeof(CHAR);
+                    }
+                    else
+                    {
+                        NameLen = NameLen - sizeof(WCHAR);
+                    }
+
+                    MaxSubKeyLen = max(MaxSubKeyLen, NameLen);
+                }
+                else if (response == ERROR_NO_MORE_ITEMS)
+                {
+                    // Update lpcSubKeys & lpcbMaxSubKeyLen
+                    lpcSubKeys = &CountSubKeys;
+                    lpcbMaxSubKeyLen = &MaxSubKeyLen;
+#if _DEBUG
+                    Log("[%d] RegQueryInfoKey: lpcSubKeys=  %d, lpcbMaxSubKeyLen= %d\n", RegLocalInstance, CountSubKeys, MaxSubKeyLen);
+#endif
+                }
+                else
+                {
+#if _DEBUG
+                    Log("[%d] RegQueryInfoKey logging fixup failure.\n", RegLocalInstance);
+#endif
+                    return response;
+                }
+                Index++;
+            }
+        }
+        catch (...)
+        {
+#if _DEBUG
+            Log("[%d] RegQueryInfoKey logging failure in RegEnumKeyEx.\n", RegLocalInstance);
+#endif
+        }
     }
     else
     {
