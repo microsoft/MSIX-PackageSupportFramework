@@ -748,7 +748,6 @@ namespace Helper
                 DWORD dwMaxValueLen = 0;
 
                 auto response = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, &dwSubKeyCount, &dwMaxSubKeyNameLen, NULL, &dwValueCount, &dwMaxValueNameLen, &dwMaxValueLen, NULL, NULL);
-                MessageBoxExW(NULL, L"Test", L"", 0, 0);
                 if (response == ERROR_SUCCESS)
                 {
                     trace_message("Query Key Success", console::color::gray, true);
