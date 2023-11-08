@@ -14,7 +14,8 @@ enum  Reg_Remediation_Types
 {
     Reg_Remediation_Type_Unknown = 0,
     Reg_Remediation_Type_ModifyKeyAccess,
-    Reg_Remediation_type_FakeDelete
+    Reg_Remediation_type_FakeDelete,
+    Reg_Remediation_type_DeletionMarker
 };
 
 enum Modify_Key_Access_Types
@@ -31,7 +32,7 @@ enum Modify_Key_Hive_Types
 {
     Modify_Key_Hive_Type_Unknown = 0,
     Modify_Key_Hive_Type_HKCU = 1,
-    Modify_Key_Hive_Type_HKLM = 2,
+    Modify_Key_Hive_Type_HKLM = 2
 };
 
 struct Modify_Key_Access
@@ -47,11 +48,19 @@ struct Fake_Delete_Key
     std::vector<std::wstring> patterns;
 };
 
+struct Deletion_Marker
+{
+    Modify_Key_Hive_Types hive;
+    std::wstring key;
+    std::vector<std::wstring> values;
+};
+
 struct Reg_Remediation_Record
 {
     Reg_Remediation_Types remeditaionType;
     Modify_Key_Access modifyKeyAccess;
     Fake_Delete_Key fakeDeleteKey;
+    Deletion_Marker deletionMarker;
 };
 
 struct Reg_Remediation_Spec

@@ -22,6 +22,29 @@
             {
               "remediation": [
                 {
+                  "type": "DeletionMarker",
+                  "hive": "HKLM",
+                  "key": "^SYSTEM\\\\.*",
+                  "values": [ ]
+                },
+                {
+                  "type": "DeletionMarker",
+                  "hive": "HKLM",
+                  "key": "^SYSTEM\\\\.*"
+                },
+                {
+                  "type": "DeletionMarker",
+                  "hive": "HKLM",
+                  "key": "^SOFTWARE.*",
+                  "values": [ "DeletionMarker" ]
+                },
+                {
+                  "type": "DeletionMarker",
+                  "hive": "HKCU",
+                  "key": "^Software.*",
+                  "values": [ "DeletionMarker" ]
+                },
+                {
                   "type": "ModifyKeyAccess",
                   "hive": "HKCU",
                   "patterns": [
