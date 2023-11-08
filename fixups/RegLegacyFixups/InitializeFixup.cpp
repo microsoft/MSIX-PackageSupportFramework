@@ -259,7 +259,7 @@ void InitializeConfiguration()
                         // Look for DeletionMarker remediation
                         else if (type.compare(L"DeletionMarker") == 0)
                         {
-                            Log("RegLegacyFixups:      is DeletionMarker\n");
+                            Log("RegLegacyFixups: \t is DeletionMarker\n");
                             recordItem.remeditaionType = Reg_Remediation_type_DeletionMarker;
 
                             // Look for hive - data
@@ -279,7 +279,7 @@ void InitializeConfiguration()
                             {
                                 recordItem.deletionMarker.hive = Modify_Key_Hive_Type_Unknown;
                             }
-                            Log("RegLegacyFixups:      have hive\n");
+                            Log("RegLegacyFixups: \t have hive\n");
 
                             // Look for key - data
                             auto keyString = regItemObject.get("key").as_string().wstring();
@@ -287,7 +287,7 @@ void InitializeConfiguration()
                             Log(L"key:        %Ls\n", keyString.data());
                             recordItem.deletionMarker.key = keyString.data();
                             
-                            Log("RegLegacyFixups:      have key\n");
+                            Log("RegLegacyFixups: \t have key\n");
 
                             // Look for value - data
                             traceDataStream << " values:\n";
@@ -299,15 +299,15 @@ void InitializeConfiguration()
                                 {
                                     auto valueString = value.as_string().wstring();
                                     traceDataStream << valueString << " ;";
-                                    Log(L"Value:        %Ls\n", valueString.data());
+                                    Log(L"Value: \t %Ls\n", valueString.data());
                                     recordItem.deletionMarker.values.push_back(valueString.data());
                                 }
 
-                                Log("RegLegacyFixups:      have value\n");
+                                Log("RegLegacyFixups: \t have value\n");
                             }
                             else
                             {
-                                Log("RegLegacyFixups:      have no value\n");
+                                Log("RegLegacyFixups: \t have no value\n");
                             }
                             
                             specItem.remediationRecords.push_back(recordItem);

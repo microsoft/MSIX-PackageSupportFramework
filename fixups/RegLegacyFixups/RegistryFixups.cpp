@@ -16,9 +16,6 @@
 
 DWORD g_RegIntceptInstance = 0;
 
-#pragma region Declarations
-std::string InterpretRegistryPath(std::string regPath);
-#pragma endregion
 
 enum Action {
     Continue,
@@ -55,10 +52,10 @@ std::string ReplaceRegistrySyntax(std::string regPath)
     {
         if (regPath.length() > 18)
         {
-            size_t offsetAfterSid = regPath.find('\\', 19);
+            size_t offsetAfterSid = regPath.find('\\', 18);
             if (offsetAfterSid != std::string::npos)
             {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterSid);
             }
             else
             {
@@ -182,7 +179,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                     if (keypath._Starts_with(keystring))
                     {
 #ifdef _DEBUG
-                        Log("[%d] RegFixupSam:  is HKLM key\n", RegLocalInstance);
+                        Log("[%d] RegFixupSam: is HKLM key\n", RegLocalInstance);
 #endif
                         for (auto& pattern : specitem.modifyKeyAccess.patterns)
                         {
@@ -574,7 +571,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
 
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
-    std::string registryPath = InterpretRegistryPath(keypath);
+    std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
     Log("[%d] RegOpenKeyEx: Path=%s", RegLocalInstance, registryPath.c_str());
@@ -651,7 +648,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
 #endif
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
-    std::string registryPath = InterpretRegistryPath(keypath);
+    std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
     Log("[%d] RegOpenKeyTransacted: Path=%s", RegLocalInstance, registryPath.c_str());
@@ -705,62 +702,6 @@ DECLARE_STRING_FIXUP(RegOpenKeyTransactedImpl, RegOpenKeyTransactedFixup);
 
 
 
-
-/// <summary>
-/// Method to interpret Regitry Path
-/// </summary>
-/// <param name="regPath"></param>
-/// <returns></returns>
-std::string InterpretRegistryPath(std::string regPath)
-{
-    
-    std::string returnPath = regPath;
-
-    // string returned is for pattern matching purposes, to keep consistent for the patterns,
-    // revert to strings that look like HKEY_....
-    if (regPath._Starts_with("=\\REGISTRY\\USER"))
-    {
-        if (regPath.length() > 15)
-        {
-            size_t offsetAfterSid = regPath.find('\\', 16);
-            if (offsetAfterSid != std::string::npos)
-            {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
-            }
-            else
-            {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(15);
-            }
-        }
-        else
-        {
-            returnPath = InterpretStringA("HKEY_CURRENT_USER");
-        }
-    }
-    else if (regPath._Starts_with("=\\REGISTRY\\MACHINE"))
-    {
-        if (regPath.length() > 18)
-        {
-            size_t offsetAfterSid = regPath.find('\\', 18);
-            if (offsetAfterSid != std::string::npos)
-            {
-                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterSid);
-            }
-            else
-            {
-                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(18);
-            }
-        }
-        else
-        {
-            returnPath = InterpretStringA("HKEY_LOCAL_MACHINE");
-        }
-    }
-    return returnPath;
-}
-
-
-
 /// <summary>
 /// detour RegEnumKeyExA & RegEnumKeyExW
 /// for deletion marker fixup
@@ -802,7 +743,7 @@ LSTATUS __stdcall RegEnumKeyExFixup(
             {
                 //Get Registry Path from hkey
                 std::string keyPath = InterpretKeyPath(hKey) + +"\\" + InterpretStringA(KeyName);
-                keyPath = InterpretRegistryPath(keyPath);
+                keyPath = ReplaceRegistrySyntax(keyPath);
 #ifdef _DEBUG
                 Log("[%d] RegEnumKeyEx: path=%s", RegLocalInstance, keyPath.c_str());
                 if (RegFixupDeletionMarker<char>(keyPath, NULL, RegLocalInstance) == true)
@@ -890,7 +831,7 @@ LSTATUS __stdcall RegEnumValueFixup(
             {
                 //Get Registry Path from hkey
                 std::string keyPath = InterpretKeyPath(hKey);
-                keyPath = InterpretRegistryPath(keyPath);
+                keyPath = ReplaceRegistrySyntax(keyPath);
 #ifdef _DEBUG
                 Log("[%d] RegEnumValue: path=%s", RegLocalInstance, keyPath.c_str());
                 if (RegFixupDeletionMarker(keyPath, ValueName, RegLocalInstance) == true)
@@ -1147,7 +1088,7 @@ LSTATUS __stdcall  RegGetValueFixup(
 #endif
         //Get Registry Path from hkey
         std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(SubKey);
-        keypath = InterpretRegistryPath(keypath);
+        keypath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
         Log("[%d] RegGetValue: path=%s", RegLocalInstance, keypath.c_str());
@@ -1209,7 +1150,7 @@ LSTATUS __stdcall RegQueryMultipleValuesFixup(
 #endif
         //Get Registry Path from hkey
         std::string keypath = InterpretKeyPath(key);
-        keypath = InterpretRegistryPath(keypath);
+        keypath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
         Log("[%d] RegQueryMultipleValues: path=%s", RegLocalInstance, keypath.c_str());
@@ -1287,7 +1228,7 @@ LSTATUS __stdcall RegQueryValueExFixup(
 #endif
         //Get Registry Path from hkey
         std::string keypath = InterpretKeyPath(key);
-        keypath = InterpretRegistryPath(keypath);
+        keypath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
         Log("[%d] RegQueryValueEx: path=%s", RegLocalInstance, keypath.c_str());
