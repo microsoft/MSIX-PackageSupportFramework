@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <ShlObj.h>
 #include <filesystem>
+#include "DeletionMarkerTest.cpp"
 
+using namespace DeletionMarkerTest;
 using namespace std::literals;
 
 namespace details
@@ -36,15 +38,7 @@ namespace details
 // The RegLegacyFixup supports only a few intercepts.
 // The tests here make routine registry calls that might have once worked but do not when running under MSIX without remediation.
 
-// THe folllowing strings must match with registry keus present in the appropriate section of the package Registry.dat file.
-#define TestKeyName_HKCU_Covered         L"Software\\Vendor_Covered"
-#define TestKeyName_HKCU_NotCovered      L"Software\\Vendor_NotCovered"
 
-#define TestKeyName_HKLM_Covered         L"SOFTWARE\\Vendor_Covered"        // Registry contains both regular and wow entries so this works.
-#define TestKeyName_HKLM_NotCovered      L"SOFTWARE\\Vendor_NotCovered"
-
-#define TestSubSubKey L"SubKey"
-#define TestSubItem  L"SubItem"
 
 
 #define FULL_RIGHTS_ACCESS_REQUEST   KEY_ALL_ACCESS
@@ -185,9 +179,10 @@ int wmain(int argc, const wchar_t** argv)
 {
     auto result = parse_args(argc, argv);
     //std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
-    test_initialize("RegLegacy Tests", 3);
-
+    test_initialize("RegLegacy Tests", 16);
     NotCoveredTests();
+
+    DeletionMarkerTests(result);
 
     test_begin("RegLegacy Test ModifyKeyAccess HKCU");
     try
