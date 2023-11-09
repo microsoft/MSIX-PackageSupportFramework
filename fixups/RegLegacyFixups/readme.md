@@ -20,6 +20,7 @@ Each remediation array object starts with a type field:
 | --------------- | ------- |
 | `ModifyKeyAccess` | Allows for modification of access parameters in calls to open registry keys.  This remediation targets the `samDesired` parameter that specifies the permissions granted to the application when opening the key. This remediation type does not target calls for registry values.|
 | `FakeDelete`      | Returns success to the application if it attempts to delete a key or registry item and "ACCESS_DENIED" occurs.  The app may or may not depend upon the delete occuring at some later point of running the application, so significant testing of the app is suggested when attempting this fixup.|
+| `DeletionMarker`  | Allows for the hiding of specific registry keys or registry values in the virtual environment.|
 
 ## ModifyKeyAccess Remediation Type
 The following Windows API calls are supported for this fixup type. 
@@ -32,6 +33,8 @@ The following Windows API calls are supported for this fixup type.
 ### Configuration for ModifyKeyAccess
 When the `type` is specified as `ModifyKeyAccess`, the `remediation` element is an array of remediations with a structure shown here:
 
+| Tag | Purpose |
+| ------ | ------------------------------------- |
 | `hive` | Specifies the registry hive targeted. |
 | `patterns` | An array of regex strings. The pattern will be used against the path of the registry key being processed. |
 | `access` | Defines the type of access to be modified and what it should be modified to. |
@@ -39,6 +42,7 @@ When the `type` is specified as `ModifyKeyAccess`, the `remediation` element is 
 The value of the `hive` element may specified as shown in this table:
 
 | Value | Purpose |
+| ----- | ------- |
 | HKCU  | HKEY_CURRENT_USER |
 | HKLM  | HKEY_LOCAL_MACHINE |
 
@@ -65,16 +69,50 @@ The following Windows API calls are supported for this fixup type.
 ### Configuration for FakeDelete
 When the `type` is specified as `FakeDelete`, the `remediation` element is an array of remediations with a structure shown here:
 
+| Tag | Purpose |
+| --- | ------- |
 | `hive` | Specifies the registry hive targeted. |
 | `patterns` | An array of regex strings. The pattern will be used against the path of the registry key being processed. |
 
 The value of the `hive` element may specified as shown in this table:
 
 | Value | Purpose |
+| ----- | ------- |
 | HKCU  | HKEY_CURRENT_USER |
 | HKLM  | HKEY_LOCAL_MACHINE |
 
 The value for the element `patterns` is a regex pattern string that specifies the registry paths to be affected.  This regex string is applied against the path of the key/subkey combination without the hive.
+
+## DeletionMarker Remediation Type
+The following Windows API calls are supported for this fixup type. 
+
+> * RegGetValue
+> * RegQueryValueEx
+> * RegQueryMultipleValues
+> * RegQueryInfoKey
+> * RegEnumValue
+> * RegEnumKeyEx
+> * RegOpenKeyEx
+> * RegOpenKeyTransacted
+
+### Configuration for DeletionMarker
+When the `type` is specified as `DeletionMarker`, the `remediation` element is an array of remediations with a structure shown here:
+| Tag | Purpose |
+| --- | ------- |
+| `hive` | Specifies the registry hive targeted. |
+| `key` | Contains a regex string. The key will be used against the path of the registry key being processed. |
+| `values` | Contains an array of regex strings. The value will be used against the name of the registry value being processed in the key specified. This is an optional field. Omitting this field would hide the key specified. |
+
+The value of the `hive` element may specified as shown in this table:
+
+| Value | Purpose |
+| ----- | ------- |
+| HKCU  | HKEY_CURRENT_USER |
+| HKLM  | HKEY_LOCAL_MACHINE |
+
+The value for the element `key` is a regex pattern string that specifies the registry path to be affected.  This regex string is applied against the path of the key/subkey combination without the hive.
+
+The value for the element `values` is a regex pattern string that specifies the registry-value to be affected.  This regex string is applied against the name of the registry value in the pattern key specified.
 
 # JSON Example
 Here is an example of using this fixup to address an application that contains a vendor key under the HKEY_CURRENT_USER hive and the application requests for full access control to that key. While permissible in a native installation of the application, such a request is denied by some versions of the MSIX runtime (OS version specific) because the request would allow the applicaiton make modifications. The json file shown could address this by causing a change to the requested access to give the application contol for read/write purposes only.
@@ -108,6 +146,19 @@ Here is an example of using this fixup to address an application that contains a
 					"patterns": [
 						"^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"
 					],
+				},
+				{
+					"type": "DeletionMarker",
+					"hive": "HKCU",
+					"key": "^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"
+				},
+				{
+					"type": "DeletionMarker",
+					"hive": "HKLM",
+					"key": "^Software\\\\Vendor.*",
+					"values": [
+						"^SubKey"
+					]
 				}
 			]
 		  }
@@ -148,6 +199,19 @@ Here is the equivalent config section when using XML to specify.
 						<patern>^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*</pattern>
 					</patterns>
 					<access>RW2R</access>
+				</remediation>
+				<remediation>
+					<type>DeletionMarker</type>
+					<hive>HKCU</hive>
+					<key>"^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"</key>
+				</remediation>
+				<remediation>
+					<type>DeletionMarker</type>
+					<hive>HKLM</hive>
+					<key>"^Software\\\\Vendor.*"</key>
+					<values>
+						<value>"^SubKey"</value>
+					</values>
 				</remediation>
 			</remediations>
 		</config>
