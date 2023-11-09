@@ -34,12 +34,14 @@ The following Windows API calls are supported for this fixup type.
 When the `type` is specified as `ModifyKeyAccess`, the `remediation` element is an array of remediations with a structure shown here:
 
 | `hive` | Specifies the registry hive targeted. |
+| ------ | ------------------------------------- |
 | `patterns` | An array of regex strings. The pattern will be used against the path of the registry key being processed. |
 | `access` | Defines the type of access to be modified and what it should be modified to. |
 
 The value of the `hive` element may specified as shown in this table:
 
 | Value | Purpose |
+| ----- | ------- |
 | HKCU  | HKEY_CURRENT_USER |
 | HKLM  | HKEY_LOCAL_MACHINE |
 
@@ -91,10 +93,12 @@ The following Windows API calls are supported for this fixup type.
 > * RegOpenKeyTransacted
 
 ### Configuration for DeletionMarker
-When the `type` is specified as `DeletionMarkers`, the `remediation` element is an array of remediations with a structure shown here:
+When the `type` is specified as `DeletionMarker`, the `remediation` element is an array of remediations with a structure shown here:
 
 | `hive` | Specifies the registry hive targeted. |
+
 | `key` | Contains a regex string. The key will be used against the path of the registry key being processed. |
+
 | `values` | Contains an array of regex strings. The value will be used against the name of the registry value being processed in the key specified. This is an optional field. Omitting this field would hide the key specified. |
 
 
