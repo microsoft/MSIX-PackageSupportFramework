@@ -202,12 +202,12 @@ Here is the equivalent config section when using XML to specify.
 				<remediation>
 					<type>DeletionMarker</type>
 					<hive>HKCU</hive>
-					<patterns>"^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"</patterns>
+					<key>"^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"</key>
 				</remediation>
 				<remediation>
 					<type>DeletionMarker</type>
 					<hive>HKLM</hive>
-					<patterns>"^Software\\\\Vendor.*"</patterns>
+					<key>"^Software\\\\Vendor.*"</key>
 					<values>
 						<value>"^SubKey"</value>
 					</values>
