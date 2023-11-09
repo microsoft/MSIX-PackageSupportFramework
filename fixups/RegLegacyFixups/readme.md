@@ -150,12 +150,12 @@ Here is an example of using this fixup to address an application that contains a
 				{
 					"type": "DeletionMarker",
 					"hive": "HKCU",
-					"patterns": "^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"
+					"key": "^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"
 				},
 				{
 					"type": "DeletionMarker",
 					"hive": "HKLM",
-					"patterns": "^Software\\\\Vendor.*",
+					"key": "^Software\\\\Vendor.*",
 					"values": [
 						"^SubKey"
 					]
