@@ -52,10 +52,10 @@ std::string ReplaceRegistrySyntax(std::string regPath)
     {
         if (regPath.length() > 18)
         {
-            size_t offsetAfterSid = regPath.find('\\', 18);
-            if (offsetAfterSid != std::string::npos)
+            size_t offsetAfterMachine = regPath.find('\\', 18);
+            if (offsetAfterMachine != std::string::npos)
             {
-                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterMachine);
             }
             else
             {
@@ -742,7 +742,7 @@ LSTATUS __stdcall RegEnumKeyExFixup(
             if (response == ERROR_SUCCESS)
             {
                 //Get Registry Path from hkey
-                std::string keyPath = InterpretKeyPath(hKey) + +"\\" + InterpretStringA(KeyName);
+                std::string keyPath = InterpretKeyPath(hKey) + "\\" + InterpretStringA(KeyName);
                 keyPath = ReplaceRegistrySyntax(keyPath);
 #ifdef _DEBUG
                 Log("[%d] RegEnumKeyEx: path=%s", RegLocalInstance, keyPath.c_str());
@@ -957,9 +957,12 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
                     // Update lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
-                    *lpcValues = CountValues;
-                    *lpcbMaxValueNameLen = MaxValueNameLen;
-                    *lpcbMaxValueLen = MaxDataLen;
+                    if (lpcValues != nullptr)
+                        *lpcValues = CountValues;
+                    if (lpcbMaxValueNameLen != nullptr)
+                        *lpcbMaxValueNameLen = MaxValueNameLen;
+                    if (lpcbMaxValueLen != nullptr)
+                        *lpcbMaxValueLen = MaxDataLen;
 #if _DEBUG
                     Log("[%d] RegQueryInfoKey: lpcValues=  %d, lpcbMaxValueNameLen= %d, lpcbMaxValueLen= %d\n", RegLocalInstance, CountValues, dValueName, dData);
 #endif
@@ -1013,8 +1016,10 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
                     // Update lpcSubKeys & lpcbMaxSubKeyLen
-                    *lpcSubKeys = CountSubKeys;
-                    *lpcbMaxSubKeyLen = MaxSubKeyLen;
+                    if (lpcSubKeys != nullptr)
+                        *lpcSubKeys = CountSubKeys;
+                    if (lpcbMaxSubKeyLen != nullptr)
+                        *lpcbMaxSubKeyLen = MaxSubKeyLen;
 #if _DEBUG
                     Log("[%d] RegQueryInfoKey: lpcSubKeys=  %d, lpcbMaxSubKeyLen= %d\n", RegLocalInstance, CountSubKeys, MaxSubKeyLen);
 #endif
