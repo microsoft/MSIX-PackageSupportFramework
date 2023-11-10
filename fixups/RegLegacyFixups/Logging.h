@@ -481,14 +481,15 @@ std::string InterpretKeyPath(HKEY key)
         }
         else
             sret = "InterpretKeyPath failure1" + InterpretAsHex("status", (DWORD)status);
+
+        if (!sret.empty() && sret.back() == '\\')
+        {
+            sret.pop_back();
+        }
     }
     catch (...)
     {
         Log("InterpretKeyPath failure.");
-    }
-    if (!sret.empty() && sret.back() == '\\')
-    {
-        sret.pop_back();
     }
     return sret;
 }
