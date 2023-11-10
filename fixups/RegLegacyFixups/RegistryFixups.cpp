@@ -52,10 +52,10 @@ std::string ReplaceRegistrySyntax(std::string regPath)
     {
         if (regPath.length() > 18)
         {
-            size_t offsetAfterSid = regPath.find('\\', 18);
-            if (offsetAfterSid != std::string::npos)
+            size_t offsetAfterMachine = regPath.find('\\', 18);
+            if (offsetAfterMachine != std::string::npos)
             {
-                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(offsetAfterMachine);
             }
             else
             {
@@ -570,7 +570,12 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     Log("[%d] RegOpenKeyEx:\n", RegLocalInstance);
 
 
-    std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
+    std::string keypath = InterpretKeyPath(key);
+    if (keypath.size() && keypath.back() != '\\')
+    {
+        keypath = keypath + '\\';
+    }
+    keypath = keypath + InterpretStringA(subKey);
     std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
@@ -647,7 +652,12 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     Log("[%d] RegOpenKeyTransacted:\n", RegLocalInstance);
 #endif
 
-    std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
+    std::string keypath = InterpretKeyPath(key);
+    if (keypath.size() && keypath.back() != '\\')
+    {
+        keypath = keypath + '\\';
+    }
+    keypath = keypath + InterpretStringA(subKey);
     std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
@@ -742,7 +752,12 @@ LSTATUS __stdcall RegEnumKeyExFixup(
             if (response == ERROR_SUCCESS)
             {
                 //Get Registry Path from hkey
-                std::string keyPath = InterpretKeyPath(hKey) + +"\\" + InterpretStringA(KeyName);
+                std::string keyPath = InterpretKeyPath(hKey);
+                if (keyPath.size() && keyPath.back() != '\\')
+                {
+                    keyPath = keyPath + '\\';
+                }
+                keyPath = keyPath + InterpretStringA(KeyName);
                 keyPath = ReplaceRegistrySyntax(keyPath);
 #ifdef _DEBUG
                 Log("[%d] RegEnumKeyEx: path=%s", RegLocalInstance, keyPath.c_str());
@@ -957,9 +972,12 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
                     // Update lpcValues, lpcbMaxValueNameLen, lpcbMaxValueLen
-                    *lpcValues = CountValues;
-                    *lpcbMaxValueNameLen = MaxValueNameLen;
-                    *lpcbMaxValueLen = MaxDataLen;
+                    if (lpcValues != nullptr)
+                        *lpcValues = CountValues;
+                    if (lpcbMaxValueNameLen != nullptr)
+                        *lpcbMaxValueNameLen = MaxValueNameLen;
+                    if (lpcbMaxValueLen != nullptr)
+                        *lpcbMaxValueLen = MaxDataLen;
 #if _DEBUG
                     Log("[%d] RegQueryInfoKey: lpcValues=  %d, lpcbMaxValueNameLen= %d, lpcbMaxValueLen= %d\n", RegLocalInstance, CountValues, dValueName, dData);
 #endif
@@ -1013,8 +1031,10 @@ LSTATUS __stdcall RegQueryInfoKeyFixup(
                 else if (response == ERROR_NO_MORE_ITEMS)
                 {
                     // Update lpcSubKeys & lpcbMaxSubKeyLen
-                    *lpcSubKeys = CountSubKeys;
-                    *lpcbMaxSubKeyLen = MaxSubKeyLen;
+                    if (lpcSubKeys != nullptr)
+                        *lpcSubKeys = CountSubKeys;
+                    if (lpcbMaxSubKeyLen != nullptr)
+                        *lpcbMaxSubKeyLen = MaxSubKeyLen;
 #if _DEBUG
                     Log("[%d] RegQueryInfoKey: lpcSubKeys=  %d, lpcbMaxSubKeyLen= %d\n", RegLocalInstance, CountSubKeys, MaxSubKeyLen);
 #endif
@@ -1087,7 +1107,12 @@ LSTATUS __stdcall  RegGetValueFixup(
         Log("[%d] RegGetValue:\n", RegLocalInstance);
 #endif
         //Get Registry Path from hkey
-        std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(SubKey);
+        std::string keypath = InterpretKeyPath(key);
+        if (keypath.size() && keypath.back() != '\\')
+        {
+            keypath = keypath + '\\';
+        } 
+        keypath = keypath + InterpretStringA(SubKey);
         keypath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
