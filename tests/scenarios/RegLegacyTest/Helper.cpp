@@ -12,14 +12,15 @@ using namespace std::literals;
 
 #pragma region Define
 // The folllowing strings must match with registry keys present in the appropriate section of the package Registry.dat file.
-#define TestKeyName_HKCU_Covered        L"Software\\Vendor_Covered"
+#define TestKeyName_HKCU_Covered        L"Software\\Vendor_Covered\\"
 #define TestKeyName_HKCU_NotCovered     L"Software\\Vendor_NotCovered"
 
-#define TestKeyName_HKLM_SYSTEM         L"SYSTEM"
+#define TestKeyName_HKLM_SYSTEM         L"SYSTEM\\"
 #define TestKeyName_HKLM_Covered        L"SOFTWARE\\Vendor_Covered"        // Registry contains both regular and wow entries so this works.
 #define TestKeyName_HKLM_NotCovered     L"SOFTWARE\\Vendor_NotCovered"
 #define TestKeyName_Covered_SubKey      L"SOFTWARE\\Vendor_Covered\\SubKey"
 #define TestKeyName_HKLM_ControlSet     L"SYSTEM\\CurrentControlSet"
+#define TestKeyName_CurrentControlSet   L"CurrentControlSet"
 
 #define TestSubSubKey                   L"SubKey"
 #define TestSubItem                     L"SubItem"
@@ -653,21 +654,33 @@ namespace Helper
         try
         {
             HKEY hKey;
-            auto response = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_ControlSet, 0, KEY_READ, &hKey);
+            auto response = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_READ, &hKey);
             if (response == ERROR_SUCCESS)
             {
-                trace_message("Key Opened", console::color::gray, true);
-                result = ERROR_CURRENT_DIRECTORY;
-                RegCloseKey(hKey);
-            }
-            else if (response == ERROR_FILE_NOT_FOUND)
-            {
-                trace_messages("Key doesn't exists");
-                result = 0;
+                response = RegOpenKeyEx(hKey, TestKeyName_HKLM_ControlSet, 0, KEY_READ, &hKey);
+                if (response == ERROR_SUCCESS)
+                {
+                    trace_message("Key Opened", console::color::gray, true);
+                    result = ERROR_CURRENT_DIRECTORY;
+                    RegCloseKey(hKey);
+                }
+                else if (response == ERROR_FILE_NOT_FOUND)
+                {
+                    trace_messages("Key doesn't exists");
+                    result = 0;
+                }
+                else
+                {
+                    trace_message("Failed to find key ControlSet . Most likely a bug in the testing tool.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_PATH_NOT_FOUND;
+                    print_last_error("Failed to find key");
+                }
             }
             else
             {
-                trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+                trace_message("Failed to find key System . Most likely a bug in the testing tool.", console::color::red, true);
                 result = GetLastError();
                 if (result == 0)
                     result = ERROR_PATH_NOT_FOUND;
@@ -742,17 +755,16 @@ namespace Helper
             if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_SYSTEM, 0, KEY_ALL_ACCESS, &hkey) == ERROR_SUCCESS)
             {
                 DWORD dwSubKeyCount = 0;
-                DWORD dwMaxSubKeyNameLen = 0;
                 DWORD dwValueCount = 0;
                 DWORD dwMaxValueNameLen = 0;
                 DWORD dwMaxValueLen = 0;
 
-                auto response = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, &dwSubKeyCount, &dwMaxSubKeyNameLen, NULL, &dwValueCount, &dwMaxValueNameLen, &dwMaxValueLen, NULL, NULL);
+                auto response = RegQueryInfoKeyW(hkey, NULL, NULL, NULL, &dwSubKeyCount, NULL, NULL, &dwValueCount, &dwMaxValueNameLen, &dwMaxValueLen, NULL, NULL);
                 if (response == ERROR_SUCCESS)
                 {
                     trace_message("Query Key Success", console::color::gray, true);
                     result = 0;
-                    if ((dwSubKeyCount || dwMaxSubKeyNameLen || dwValueCount || dwMaxValueNameLen || dwMaxValueLen) != 0)
+                    if ((dwSubKeyCount || dwValueCount || dwMaxValueNameLen || dwMaxValueLen) != 0)
                     {
                         trace_message("Data does not match");
                         result = ERROR_CURRENT_DIRECTORY;
