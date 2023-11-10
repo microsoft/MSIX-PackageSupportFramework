@@ -486,6 +486,10 @@ std::string InterpretKeyPath(HKEY key)
     {
         Log("InterpretKeyPath failure.");
     }
+    if (!sret.empty() && sret.back() == '\\')
+    {
+        sret.pop_back();
+    }
     return sret;
 }
 
