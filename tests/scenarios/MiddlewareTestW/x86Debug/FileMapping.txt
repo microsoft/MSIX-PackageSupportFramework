@@ -1,0 +1,16 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+
+"..\..\Win32\Debug\MiddlewareTestW.exe" "MiddlewareTestW.exe"
+
+
+"..\..\..\Win32\Debug\PsfLauncher32.exe" "PsfLauncher.exe"
+"..\..\..\Win32\Debug\PsfRuntime32.dll" "PsfRuntime32.dll"
+"..\..\..\Win32\Debug\RegLegacyFixups32.dll" "RegLegacyFixups32.dll"
+"..\..\..\Win32\Debug\EnvVarFixup32.dll" "EnvVarFixup32.dll"
+
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

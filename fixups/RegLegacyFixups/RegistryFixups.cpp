@@ -13,8 +13,12 @@
 #include "Logging.h"
 #include <regex>
 #include "psf_tracelogging.h"
+#include "pch.h"
+
 
 DWORD g_RegIntceptInstance = 0;
+std::unordered_set<std::string> g_regRedirectedHivePaths;
+std::vector<std::wstring> g_regCreatedKeysOrdered;
 
 
 enum Action {
@@ -256,6 +260,28 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
     }
     return samModified;
 }
+
+template <typename CharT>
+const char* ReplaceRegistryQueryPath(PHKEY key, const CharT* subKey)
+{
+    std::string keypath = InterpretKeyPath(*key) + "\\" + InterpretStringA(subKey);
+
+    std::string normalizedKeypath = ReplaceRegistrySyntax(keypath);
+    size_t subkeyOffset = normalizedKeypath.find_first_of('\\');
+    if (subkeyOffset != std::wstring_view::npos)
+    {
+        std::string requestedSubkey = normalizedKeypath.substr(subkeyOffset + 1);
+        auto it = g_regRedirectedHivePaths.find(requestedSubkey);
+        if (it != g_regRedirectedHivePaths.end())
+        {
+            *key = HKEY_CURRENT_USER;
+            return it->c_str();
+        }
+    }
+
+    return nullptr;
+}
+
 
 #ifdef _DEBUG
 bool RegFixupFakeDelete(std::string keypath,DWORD RegLocalInstance)
@@ -564,13 +590,17 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     LARGE_INTEGER TickStart, TickEnd;
     QueryPerformanceCounter(&TickStart);
     DWORD RegLocalInstance = ++g_RegIntceptInstance;
-
     auto entry = LogFunctionEntry();
 
     Log("[%d] RegOpenKeyEx:\n", RegLocalInstance);
-
+    const char* updatedSubKey = ReplaceRegistryQueryPath(&key, subKey);
+    if (updatedSubKey)
+    {
+        return RegOpenKeyExImpl(key, updatedSubKey, options, samDesired, resultKey);
+    }
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
+
     std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
@@ -647,7 +677,14 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     Log("[%d] RegOpenKeyTransacted:\n", RegLocalInstance);
 #endif
 
+    const char* updatedSubKey = ReplaceRegistryQueryPath(&key, subKey);
+    if (updatedSubKey)
+    {
+        return RegOpenKeyTransactedImpl(key, updatedSubKey, options, samDesired, resultKey, hTransaction, pExtendedParameter);
+    }
+
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
+
     std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
@@ -1091,6 +1128,22 @@ LSTATUS __stdcall  RegGetValueFixup(
 #ifdef _DEBUG
         Log("[%d] RegGetValue:\n", RegLocalInstance);
 #endif
+
+        // If subkey is in redirected path, use it to get Registry Value
+		const char* updatedSubKey = ReplaceRegistryQueryPath(&key, SubKey);
+		if (updatedSubKey)
+		{
+			if constexpr (psf::is_ansi<CharT>) 
+			{
+				return RegGetValueImpl(key, updatedSubKey, Value, dwFlags, pdwType, pvData, pcbData);
+			}
+			else
+			{
+				auto wideSubKey = widen(updatedSubKey);
+				return RegGetValueImpl(key, wideSubKey.c_str(), Value, dwFlags, pdwType, pvData, pcbData);
+			}
+		}
+
         //Get Registry Path from hkey
         std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(SubKey);
         keypath = ReplaceRegistrySyntax(keypath);

@@ -163,23 +163,53 @@ void InitializeConfiguration()
                     auto variablevalue = specObject.get("value").as_string().wstring();
                     traceDataStream << " value: " << variablevalue << " ;";
 
-                    auto useregistry = specObject.get("useregistry").as_string().wstring();
-                    traceDataStream << " useregistry: " << useregistry << " ;";
-                    LogString(0, "GetEnvFixup Config: name", variablenamePattern.data());
-                    LogString(0, "GetEnvFixup Config: value", variablevalue.data());
-                    LogString(0, "GetEnvFixup Config: useregistry", useregistry.data());
-                    g_envvar_envVarSpecs.emplace_back();
-                    g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
-                    g_envvar_envVarSpecs.back().variablevalue = variablevalue;
-                    if (useregistry.compare(L"true") == 0 ||
-                        useregistry.compare(L"True") == 0 ||
-                        useregistry.compare(L"TRUE") == 0)
+                    auto registry = specObject.try_get("useregistry");
+                    auto dependency = specObject.try_get("dependency");
+
+                    if (registry && dependency)
                     {
-                        g_envvar_envVarSpecs.back().useregistry = true;
+                        Log("EnvVarFixup: Bad config. Both 'useregistry' and 'dependency' specified");
+                        continue;
+                    }
+                    else if (!registry && !dependency)
+                    {
+                        Log("EnvVarFixup: Bad config. Neither 'useregistry' and 'dependency' specified");
+                        continue;
+                    }
+                    else if (registry)
+                    {
+                        auto useregistry = registry->as_string().wstring();
+                        traceDataStream << " useregistry: " << useregistry << " ;";
+                        LogString(0, "GetEnvFixup Config: name", variablenamePattern.data());
+                        LogString(0, "GetEnvFixup Config: value", variablevalue.data());
+                        LogString(0, "GetEnvFixup Config: useregistry", useregistry.data());
+                        g_envvar_envVarSpecs.emplace_back();
+                        g_envvar_envVarSpecs.back().remediationType = Env_Remediation_Type_Registry;
+                        g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
+                        g_envvar_envVarSpecs.back().variablevalue = variablevalue;
+                        if (useregistry.compare(L"true") == 0 ||
+                            useregistry.compare(L"True") == 0 ||
+                            useregistry.compare(L"TRUE") == 0)
+                        {
+                            g_envvar_envVarSpecs.back().useregistry = true;
+                        }
+                        else
+                        {
+                            g_envvar_envVarSpecs.back().useregistry = false;
+                        }
                     }
                     else
                     {
-                        g_envvar_envVarSpecs.back().useregistry = false;
+                        auto dep = dependency->as_string().wstring();
+                        traceDataStream << " dependency: " << dep << " ;";
+                        LogString(0, "GetEnvFixup Config: name", variablenamePattern.data());
+                        LogString(0, "GetEnvFixup Config: value", variablevalue.data());
+                        LogString(0, "GetEnvFixup Config: dependency", dep.data());
+                        g_envvar_envVarSpecs.emplace_back();
+                        g_envvar_envVarSpecs.back().remediationType = Env_Remediation_Type_Dependency;
+                        g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
+                        g_envvar_envVarSpecs.back().variablevalue = variablevalue;
+                        g_envvar_envVarSpecs.back().dependency = dep;
                     }
                     count++;
                 };

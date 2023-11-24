@@ -4,6 +4,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
+#include <unordered_map>
+#include <unordered_set>
 #include <string_view>
 #include <vector>
 
@@ -14,7 +16,7 @@ enum  Reg_Remediation_Types
 {
     Reg_Remediation_Type_Unknown = 0,
     Reg_Remediation_Type_ModifyKeyAccess,
-    Reg_Remediation_type_FakeDelete,
+    Reg_Remediation_Type_FakeDelete,
     Reg_Remediation_type_DeletionMarker
 };
 
@@ -69,3 +71,5 @@ struct Reg_Remediation_Spec
 };
 
 extern std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
+extern std::unordered_set<std::string> g_regRedirectedHivePaths;
+extern std::vector<std::wstring> g_regCreatedKeysOrdered;

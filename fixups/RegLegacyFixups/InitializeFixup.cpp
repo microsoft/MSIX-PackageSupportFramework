@@ -21,6 +21,10 @@ using namespace std::literals;
 #include "Reg_Remediation_spec.h"
 #include "psf_tracelogging.h"
 
+using namespace winrt::Windows::Management::Deployment;
+using namespace winrt::Windows::ApplicationModel;
+using namespace winrt::Windows::Foundation::Collections;
+
 std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
 
 #if _DEBUG 
@@ -117,12 +121,102 @@ void LogString(const wchar_t* name, const wchar_t* value)
     Log(L"%ls=%ls\n", name, value);
 }
 
-
-void InitializeFixups()
+struct EntryToCreate 
 {
+    std::wstring path;
+    std::unordered_map<std::wstring, std::wstring> values;
+};
 
-    Log("Initializing RegLegacyFixups\n");
-    
+
+void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vector<EntryToCreate> entries)
+{
+    Log("RegLegacyFixups Create redirected registry values\n");
+
+    Package pkg = Package::Current();
+    IVectorView<Package> dependencies = pkg.Dependencies();
+
+    std::wregex dependency_version_regex = std::wregex(L"%dependency_version%");
+    std::wregex dependency_path_regex = std::wregex(L"%dependency_root_path%");
+
+    Package dependency = nullptr;
+
+#ifdef _DEBUG
+    Log("Filtering required dependency\n");
+#endif
+    for (auto&& dep : dependencies) {
+        std::wstring_view name = dep.Id().Name();
+#ifdef _DEBUG
+        Log("Checking package dependency %.*LS\n", name.length(), name.data());
+#endif
+
+        if (name.find(dependency_name) != std::wstring::npos) {
+#ifdef _DEBUG
+            Log("Found required dependency\n");
+#endif
+            dependency = dep;
+            break;
+        }
+    }
+    if (dependency == nullptr) 
+    {
+        Log("No package with name %.*LS found\n", static_cast<int>(dependency_name.length()), dependency_name.data());
+        return;
+    }
+
+    std::wstring dependency_path(dependency.EffectivePath());
+    auto version = dependency.Id().Version();
+    std::wstring dependency_version = std::to_wstring(version.Major) + L"." + std::to_wstring(version.Minor) + L"." + std::to_wstring(version.Build) + L"." + std::to_wstring(version.Revision);
+    Log("Dependency path: %LS, version: %LS\n", dependency_path.c_str(), dependency_version.c_str());
+
+    for (const auto& reg_entry : entries)
+    {
+        HKEY res;
+        std::wstring reg_path = std::regex_replace(reg_entry.path, dependency_version_regex, dependency_version);
+
+        LSTATUS st = ::RegCreateKeyExW(HKEY_CURRENT_USER, reg_path.c_str(), 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &res, NULL);
+        if (st != ERROR_SUCCESS)
+        {
+            Log("Create key %LS failed\n", reg_entry.path.c_str());
+            return;
+        }
+
+        g_regRedirectedHivePaths.insert(narrow(reg_path));
+        g_regCreatedKeysOrdered.push_back(reg_path);
+
+        for (const auto& it : reg_entry.values)
+        {
+            std::wstring value_data = std::regex_replace(it.second, dependency_path_regex, dependency_path);
+            value_data = std::regex_replace(value_data, dependency_version_regex, dependency_version);
+
+            st = ::RegSetValueExW(res, it.first.c_str(), 0, REG_SZ, (LPBYTE)value_data.c_str(),
+                (DWORD)(value_data.size() + 1 /* for null termination char */) * sizeof(wchar_t));
+
+            if (st != ERROR_SUCCESS)
+            {
+#ifdef _DEBUG
+                Log("set value %s failed\n", it.first.c_str());
+#endif
+            }
+        }
+    }
+}
+
+void CleanupFixups()
+{
+    Log("RegLegacyFixups CleanupFixups()\n");
+
+    // Deleted the created keys in reverse order
+    std::vector<std::wstring>::reverse_iterator redirected_path = g_regCreatedKeysOrdered.rbegin();
+
+    while (redirected_path != g_regCreatedKeysOrdered.rend())
+    {
+        LSTATUS st = ::RegDeleteTreeW(HKEY_CURRENT_USER, redirected_path->c_str());
+        if (st != ERROR_SUCCESS)
+        {
+            Log("Delete key %LS failed\n", redirected_path->c_str());
+        }
+        redirected_path++;
+    }
 }
 
 
@@ -224,7 +318,7 @@ void InitializeConfiguration()
                         else if (type.compare(L"FakeDelete") == 0)
                         {
                             Log("RegLegacyFixups:      is FakeDelete\n");
-                            recordItem.remeditaionType = Reg_Remediation_type_FakeDelete;
+                            recordItem.remeditaionType = Reg_Remediation_Type_FakeDelete;
 
                             auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
                             traceDataStream << " hive: " << hiveType << " ;";
@@ -255,7 +349,35 @@ void InitializeConfiguration()
 
                             specItem.remediationRecords.push_back(recordItem);
                         }
+                        else if (type.compare(L"Redirect") == 0)
+                        {
+                            std::wstring_view dependency = regItemObject.get("dependency").as_string().wstring();
+                            const psf::json_array& data = regItemObject.get("data").as_array();
 
+                            std::vector<EntryToCreate>entriesTtoCreate;
+
+                            for (auto& entry : data)
+                            {
+                                auto& obj = entry.as_object();
+
+                                EntryToCreate toCreate;
+                                std::wstring_view key = obj.get("key").as_string().wstring();
+                                toCreate.path = key;
+
+                                for (const auto& it : obj.get("values").as_object())
+                                {
+                                    // RegSetValueExW expected null terminated strings. string_view cannot guarantee a null terminated string. Need to copy to a std::wstring
+                                    std::wstring value_name(it.first.begin(), it.first.end());
+                                    std::wstring value_data(it.second.as_string().wstring());
+
+                                    toCreate.values.insert({ value_name, value_data });
+                                }
+
+                                entriesTtoCreate.push_back(toCreate);
+                            }
+
+                            CreateRegistryRedirectEntries(dependency, entriesTtoCreate);
+                        }
                         // Look for DeletionMarker remediation
                         else if (type.compare(L"DeletionMarker") == 0)
                         {
