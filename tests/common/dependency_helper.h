@@ -24,7 +24,7 @@ struct PackageModel
     std::wstring pkg_install_path;
 };
 
-inline std::optional<PackageModel> query_package_with_name(std::wstring_view pkgFamilyName)
+inline const std::optional<PackageModel> queryPackageWithName(std::wstring_view pkgFamilyName)
 {
     auto currPkgArchitecture = Package::Current().Id().Architecture();
 

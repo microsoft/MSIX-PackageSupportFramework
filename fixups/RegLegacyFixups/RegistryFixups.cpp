@@ -1130,19 +1130,19 @@ LSTATUS __stdcall  RegGetValueFixup(
 #endif
 
         // If subkey is in redirected path, use it to get Registry Value
-		const char* updatedSubKey = ReplaceRegistryQueryPath(&key, SubKey);
-		if (updatedSubKey)
-		{
-			if constexpr (psf::is_ansi<CharT>) 
-			{
-				return RegGetValueImpl(key, updatedSubKey, Value, dwFlags, pdwType, pvData, pcbData);
-			}
-			else
-			{
-				auto wideSubKey = widen(updatedSubKey);
-				return RegGetValueImpl(key, wideSubKey.c_str(), Value, dwFlags, pdwType, pvData, pcbData);
-			}
-		}
+        const char* updatedSubKey = ReplaceRegistryQueryPath(&key, SubKey);
+        if (updatedSubKey)
+        {
+            if constexpr (psf::is_ansi<CharT>) 
+            {
+                return RegGetValueImpl(key, updatedSubKey, Value, dwFlags, pdwType, pvData, pcbData);
+            }
+            else
+            {
+                auto wideSubKey = widen(updatedSubKey);
+                return RegGetValueImpl(key, wideSubKey.c_str(), Value, dwFlags, pdwType, pvData, pcbData);
+            }
+        }
 
         //Get Registry Path from hkey
         std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(SubKey);

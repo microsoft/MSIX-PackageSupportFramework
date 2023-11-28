@@ -236,30 +236,32 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                                 break;
                             }
                         }
-                        if (depedency == nullptr)
+                        if (!depedency)
                         {
                             Log("No package with name %LS found\n", spec.dependency.c_str());
                             continue;
                         }
 
+                        std::wstring dependency_path(depedency.EffectivePath());
+                        auto version = depedency.Id().Version();
+                        std::wstring dependency_version = std::to_wstring(version.Major) + L"." + std::to_wstring(version.Minor) + L"." + std::to_wstring(version.Build) + L"." + std::to_wstring(version.Revision);
+                        Log("Dependency path: %LS, version: %LS\n", dependency_path.c_str(), dependency_version.c_str());
+
+                        std::wregex dependency_version_regex = std::wregex(L"%dependency_version%");
+                        std::wregex dependency_path_regex(L"%dependency_root_path%");
+
+                        std::wstring value_data = std::regex_replace(std::wstring(spec.variablevalue), dependency_path_regex, dependency_path);
+                        value_data = std::regex_replace(value_data, dependency_version_regex, dependency_version);
+
                         if constexpr (psf::is_ansi<CharT>)
                         {
-                            std::string dependency_path(narrow(depedency.EffectivePath()));
-                            auto version = depedency.Id().Version();
-                            std::string dependency_version = std::to_string(version.Major) + "." + std::to_string(version.Minor) + "." + std::to_string(version.Build) + "." + std::to_string(version.Revision);
-                            Log("Dependency path: %S, version: %S\n", dependency_path.c_str(), dependency_version.c_str());
+                            std::string value_data_ansi = narrow(value_data);
 
-                            std::regex dependency_version_regex = std::regex("%dependency_version%");
-                            std::regex dependency_path_regex = std::regex("%dependency_root_path%");
-
-                            std::string value_data = std::regex_replace(narrow(spec.variablevalue), dependency_path_regex, dependency_path);
-                            value_data = std::regex_replace(value_data, dependency_version_regex, dependency_version);
-
-                            if (lenBuf > value_data.size())
+                            if (lenBuf > value_data_ansi.size())
                             {
                                 ZeroMemory(lpValue, lenBuf);
-                                value_data.copy(lpValue, lenBuf);
-                                return (DWORD)value_data.size();
+                                value_data_ansi.copy(lpValue, lenBuf);
+                                return (DWORD)value_data_ansi.size();
                             }
                             else
                             {
@@ -269,17 +271,6 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                         }
                         else
                         {
-                            std::wstring dependency_path(depedency.EffectivePath());
-                            auto version = depedency.Id().Version();
-                            std::wstring dependency_version = std::to_wstring(version.Major) + L"." + std::to_wstring(version.Minor) + L"." + std::to_wstring(version.Build) + L"." + std::to_wstring(version.Revision);
-                            Log("Dependency path: %LS, version: %LS\n", dependency_path.c_str(), dependency_version.c_str());
-
-                            std::wregex dependency_version_regex = std::wregex(L"%dependency_version%");
-                            std::wregex dependency_path_regex(L"%dependency_root_path%");
-
-                            std::wstring value_data = std::regex_replace(std::wstring(spec.variablevalue), dependency_path_regex, dependency_path);
-                            value_data = std::regex_replace(value_data, dependency_version_regex, dependency_version);
-
                             if (lenBuf > value_data.size())
                             {
                                 ZeroMemory(lpValue, lenBuf * sizeof(wchar_t));

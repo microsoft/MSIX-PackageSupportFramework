@@ -143,7 +143,8 @@ void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vecto
 #ifdef _DEBUG
     Log("Filtering required dependency\n");
 #endif
-    for (auto&& dep : dependencies) {
+    for (auto&& dep : dependencies)
+    {
         std::wstring_view name = dep.Id().Name();
 #ifdef _DEBUG
         Log("Checking package dependency %.*LS\n", name.length(), name.data());
@@ -157,7 +158,7 @@ void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vecto
             break;
         }
     }
-    if (dependency == nullptr) 
+    if (!dependency) 
     {
         Log("No package with name %.*LS found\n", static_cast<int>(dependency_name.length()), dependency_name.data());
         return;
@@ -188,7 +189,7 @@ void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vecto
             std::wstring value_data = std::regex_replace(it.second, dependency_path_regex, dependency_path);
             value_data = std::regex_replace(value_data, dependency_version_regex, dependency_version);
 
-            st = ::RegSetValueExW(res, it.first.c_str(), 0, REG_SZ, (LPBYTE)value_data.c_str(),
+            st = ::RegSetValueExW(res, it.first.c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(value_data.c_str()),
                 (DWORD)(value_data.size() + 1 /* for null termination char */) * sizeof(wchar_t));
 
             if (st != ERROR_SUCCESS)
@@ -206,16 +207,13 @@ void CleanupFixups()
     Log("RegLegacyFixups CleanupFixups()\n");
 
     // Deleted the created keys in reverse order
-    std::vector<std::wstring>::reverse_iterator redirected_path = g_regCreatedKeysOrdered.rbegin();
-
-    while (redirected_path != g_regCreatedKeysOrdered.rend())
+    for (auto redirected_path = g_regCreatedKeysOrdered.rbegin(); redirected_path != g_regCreatedKeysOrdered.rend(); ++redirected_path)
     {
         LSTATUS st = ::RegDeleteTreeW(HKEY_CURRENT_USER, redirected_path->c_str());
         if (st != ERROR_SUCCESS)
         {
             Log("Delete key %LS failed\n", redirected_path->c_str());
         }
-        redirected_path++;
     }
 }
 

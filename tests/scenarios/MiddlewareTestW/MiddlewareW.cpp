@@ -27,182 +27,181 @@ int wmain(int argc, const wchar_t** argv)
 
     test_initialize("MiddlewareW Tests", 4);
 
-    if (auto vclib_package = query_package_with_name(VCLibsName))
+    auto vclib_package = queryPackageWithName(VCLibsName);
+    if (!vclib_package)
     {
-        {
-            test_begin("Middleware test RegQueryValue able to fetch HKLM data created by the fixup with proper replacements");
+		trace_message(L"VCLibs package not found", console::color::red, true);
+		return ERROR_FILE_NOT_FOUND;
+	}
 
-            HKEY res;
-            if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, Registry_Key_1, 0, KEY_ALL_ACCESS, &res) == ERROR_SUCCESS)
-            {
-                DWORD dataSize;
-                if (RegQueryValueExW(res, Registry_Value_Full_Path, NULL, NULL, NULL, &dataSize) == ERROR_SUCCESS)
-                {
-                    trace_message(L"RegQueryValueEx successfully got size", console::color::blue, true);
+	{
+		test_begin("Middleware test RegQueryValue able to fetch HKLM data created by the fixup with proper replacements");
 
-                    wchar_t* data = new wchar_t[dataSize];
+		HKEY res;
+		if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, Registry_Key_1, 0, KEY_ALL_ACCESS, &res) == ERROR_SUCCESS)
+		{
+			DWORD dataSize;
+			if (RegQueryValueExW(res, Registry_Value_Full_Path, NULL, NULL, NULL, &dataSize) == ERROR_SUCCESS)
+			{
+				trace_message(L"RegQueryValueEx successfully got size", console::color::blue, true);
 
-                    if (RegQueryValueExW(res, Registry_Value_Full_Path, NULL, NULL, (LPBYTE) data, &dataSize) == ERROR_SUCCESS)
-                    {
-                        std::wstring expected = L"\\\\?\\" + vclib_package->pkg_install_path + L"\\bin";
+				wchar_t* data = new wchar_t[dataSize];
 
-                        if (expected.compare(data) == 0) {
-                            trace_message(L"RegQueryValueEx successfully got expected data", console::color::blue, true);
-                            result = ERROR_SUCCESS;
-                        }
-                        else {
-                            std::wstring msg = L"RegQueryValueEx got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
-                            trace_message(msg, console::color::red, true);
-                            result = 1;
-                        }
-                    }
-                    else
-                    {
-                        trace_message(L"RegQueryValueEx failed to get value data", console::color::red, true);
-                        result = ERROR_FILE_NOT_FOUND;
-                    }
-                    delete data;
-                }
-                else 
-                {
-                    trace_message(L"RegQueryValueEx failed to get value data size", console::color::red, true);
-                    result = 2;
-                }
+				if (RegQueryValueExW(res, Registry_Value_Full_Path, NULL, NULL, (LPBYTE) data, &dataSize) == ERROR_SUCCESS)
+				{
+					std::wstring expected = L"\\\\?\\" + vclib_package->pkg_install_path + L"\\bin";
 
-                RegCloseKey(res);
-            }
-            else
-            {
-                trace_message(L"RegOpenKeyEx HKLM on a generated key failed", console::color::red, true);
-                result = ERROR_FILE_NOT_FOUND;
-            }
+					if (expected.compare(data) == 0) {
+						trace_message(L"RegQueryValueEx successfully got expected data", console::color::blue, true);
+						result = ERROR_SUCCESS;
+					}
+					else {
+						std::wstring msg = L"RegQueryValueEx got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
+						trace_message(msg, console::color::red, true);
+						result = 1;
+					}
+				}
+				else
+				{
+					trace_message(L"RegQueryValueEx failed to get value data", console::color::red, true);
+					result = ERROR_FILE_NOT_FOUND;
+				}
+				delete data;
+			}
+			else 
+			{
+				trace_message(L"RegQueryValueEx failed to get value data size", console::color::red, true);
+				result = 2;
+			}
 
-            test_end(result);
-        }
+			RegCloseKey(res);
+		}
+		else
+		{
+			trace_message(L"RegOpenKeyEx HKLM on a generated key failed", console::color::red, true);
+			result = ERROR_FILE_NOT_FOUND;
+		}
 
-        {
-            test_begin("Middleware test RegGetValue able to fetch HKCU data created by the fixup with proper replacements");
+		test_end(result);
+	}
 
-            std::wstring keyName = Registry_Key_2(vclib_package->pkg_version);
+	{
+		test_begin("Middleware test RegGetValue able to fetch HKCU data created by the fixup with proper replacements");
 
-            DWORD dataSize;
-            if (RegGetValueW(HKEY_CURRENT_USER, keyName.c_str(), Registry_Value_Version, RRF_RT_ANY, NULL, NULL, &dataSize) == ERROR_SUCCESS)
-            {
-                trace_message(L"RegGetValue successfully got size", console::color::blue, true);
+		std::wstring keyName = Registry_Key_2(vclib_package->pkg_version);
 
-                wchar_t* data = new wchar_t[dataSize];
+		DWORD dataSize;
+		if (RegGetValueW(HKEY_CURRENT_USER, keyName.c_str(), Registry_Value_Version, RRF_RT_ANY, NULL, NULL, &dataSize) == ERROR_SUCCESS)
+		{
+			trace_message(L"RegGetValue successfully got size", console::color::blue, true);
 
-                if (RegGetValueW(HKEY_CURRENT_USER, keyName.c_str(), Registry_Value_Version, RRF_RT_ANY, NULL, data, &dataSize) == ERROR_SUCCESS)
-                {
-                    std::wstring expected = vclib_package->pkg_version + L"-SNAPSHOT";
+			wchar_t* data = new wchar_t[dataSize];
 
-                    if (expected.compare(data) == 0)
-                    {
-                        trace_message(L"RegGetValue successfully got expected data", console::color::blue, true);
-                        result = ERROR_SUCCESS;
-                    }
-                    else
-                    {
-                        std::wstring msg = L"RegGetValue got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
-                        trace_message(msg, console::color::red, true);
-                        result = 1;
-                    }
-                }
-                else
-                {
-                    trace_message(L"RegGetValue failed to get value data", console::color::red, true);
-                    result = ERROR_FILE_NOT_FOUND;
-                }
+			if (RegGetValueW(HKEY_CURRENT_USER, keyName.c_str(), Registry_Value_Version, RRF_RT_ANY, NULL, data, &dataSize) == ERROR_SUCCESS)
+			{
+				std::wstring expected = vclib_package->pkg_version + L"-SNAPSHOT";
 
-                delete data;
-            }
-            else
-            {
-                trace_message(L"RegGetValue failed to get value data size", console::color::red, true);
-                result = 2;
-            }
-            test_end(result);
-        }
+				if (expected.compare(data) == 0)
+				{
+					trace_message(L"RegGetValue successfully got expected data", console::color::blue, true);
+					result = ERROR_SUCCESS;
+				}
+				else
+				{
+					std::wstring msg = L"RegGetValue got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
+					trace_message(msg, console::color::red, true);
+					result = 1;
+				}
+			}
+			else
+			{
+				trace_message(L"RegGetValue failed to get value data", console::color::red, true);
+				result = ERROR_FILE_NOT_FOUND;
+			}
 
-        {
-            test_begin("Middleware test GetEnvironmentVariable able to get data created by the fixup with proper replacements");
+			delete data;
+		}
+		else
+		{
+			trace_message(L"RegGetValue failed to get value data size", console::color::red, true);
+			result = 2;
+		}
+		test_end(result);
+	}
 
-            wchar_t data[512];
+	{
+		test_begin("Middleware test GetEnvironmentVariable able to get data created by the fixup with proper replacements");
 
-            DWORD dataSize = GetEnvironmentVariableW(Environment_Variable_1, data, 512);
-            if (dataSize > 0)
-            {
-                std::wstring expected = vclib_package->pkg_install_path + L"\\lib";
+		wchar_t data[512];
 
-                if (expected.compare(data) == 0)
-                {
-                    trace_message(L"GetEnvironmentVariable successfully got expected data", console::color::blue, true);
-                    result = ERROR_SUCCESS;
-                }
-                else
-                {
-                    std::wstring msg = L"GetEnvironmentVariable got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
-                    trace_message(msg, console::color::red, true);
-                    result = 1;
-                }
-            }
-            else
-            {
-                trace_message(L"GetEnvironmentVariable failed to get data", console::color::red, true);
-                result = 2;
-            }
-            
-            test_end(result);
-        }
+		DWORD dataSize = GetEnvironmentVariableW(Environment_Variable_1, data, 512);
+		if (dataSize > 0)
+		{
+			std::wstring expected = vclib_package->pkg_install_path + L"\\lib";
 
-        {
-            test_begin("Middleware test GetEnvironmentVariable able to get data created by the fixup with proper replacements with dynamic buffer");
+			if (expected.compare(data) == 0)
+			{
+				trace_message(L"GetEnvironmentVariable successfully got expected data", console::color::blue, true);
+				result = ERROR_SUCCESS;
+			}
+			else
+			{
+				std::wstring msg = L"GetEnvironmentVariable got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
+				trace_message(msg, console::color::red, true);
+				result = 1;
+			}
+		}
+		else
+		{
+			trace_message(L"GetEnvironmentVariable failed to get data", console::color::red, true);
+			result = 2;
+		}
+		
+		test_end(result);
+	}
 
-            DWORD dataSize = GetEnvironmentVariableW(Environment_Variable_2, NULL, 0);
-            if (dataSize != 0)
-            {
-                trace_message(L"GetEnvironmentVariable successfully got size ", console::color::blue, true);
+	{
+		test_begin("Middleware test GetEnvironmentVariable able to get data created by the fixup with proper replacements with dynamic buffer");
 
-                wchar_t* data = new wchar_t[dataSize];
+		DWORD dataSize = GetEnvironmentVariableW(Environment_Variable_2, NULL, 0);
+		if (dataSize != 0)
+		{
+			trace_message(L"GetEnvironmentVariable successfully got size ", console::color::blue, true);
 
-                if (GetEnvironmentVariableW(Environment_Variable_2, data, dataSize) != 0)
-                {
-                    std::wstring expected = L"v" + vclib_package->pkg_version;
+			wchar_t* data = new wchar_t[dataSize];
 
-                    if (expected.compare(data) == 0)
-                    {
-                        trace_message(L"GetEnvironmentVariable successfully got expected data", console::color::blue, true);
-                        result = ERROR_SUCCESS;
-                    }
-                    else
-                    {
-                        std::wstring msg = L"GetEnvironmentVariable got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
-                        trace_message(msg, console::color::red, true);
-                        result = 1;
-                    }
-                }
-                else
-                {
-                    trace_message(L"GetEnvironmentVariable failed to get value data", console::color::red, true);
-                    result = ERROR_FILE_NOT_FOUND;
-                }
+			if (GetEnvironmentVariableW(Environment_Variable_2, data, dataSize) != 0)
+			{
+				std::wstring expected = L"v" + vclib_package->pkg_version;
 
-                delete data;
-            }
-            else
-            {
-                trace_message(L"GetEnvironmentVariable failed to get value data size", console::color::red, true);
-                result = 2;
-            }
-            
-            test_end(result);
-        }
-    }
-    else
-    {
-        trace_message(L"VCLibs package not found", console::color::red, true);
-        result = ERROR_FILE_NOT_FOUND;
-    }
+				if (expected.compare(data) == 0)
+				{
+					trace_message(L"GetEnvironmentVariable successfully got expected data", console::color::blue, true);
+					result = ERROR_SUCCESS;
+				}
+				else
+				{
+					std::wstring msg = L"GetEnvironmentVariable got incorrect data. Expected: \"" + expected + L"\" Found: \"" + data + L"\"";
+					trace_message(msg, console::color::red, true);
+					result = 1;
+				}
+			}
+			else
+			{
+				trace_message(L"GetEnvironmentVariable failed to get value data", console::color::red, true);
+				result = ERROR_FILE_NOT_FOUND;
+			}
+
+			delete data;
+		}
+		else
+		{
+			trace_message(L"GetEnvironmentVariable failed to get value data size", console::color::red, true);
+			result = 2;
+		}
+		
+		test_end(result);
+	}
 
     test_cleanup();
     return result;

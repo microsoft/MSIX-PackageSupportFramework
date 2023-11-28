@@ -44,6 +44,7 @@ int __stdcall PSFUninitialize() noexcept try
 }
 catch (...)
 {
+    psf::TraceLogExceptions("RegLegacyFixupException", "RegLegacyFixup configuration unintialization exception");
     return win32_from_caught_exception();
 }
 
