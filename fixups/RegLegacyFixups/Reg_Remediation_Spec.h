@@ -60,8 +60,8 @@ struct Deletion_Marker
 
 struct Redirect_Registry
 {
-	std::unordered_set<std::string> redirectedHivePaths;
-	std::vector<std::wstring> orderedRedirectedKeys;
+    std::unordered_set<std::string> redirectedHivePaths;
+    std::vector<std::wstring> orderedRedirectedKeys;
 };
 
 struct Reg_Remediation_Record
