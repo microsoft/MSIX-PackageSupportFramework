@@ -17,8 +17,6 @@
 
 
 DWORD g_RegIntceptInstance = 0;
-std::unordered_set<std::string> g_regRedirectedHivePaths;
-std::vector<std::wstring> g_regCreatedKeysOrdered;
 
 
 enum Action {
@@ -262,7 +260,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 }
 
 template <typename CharT>
-const char* ReplaceRegistryQueryPath(PHKEY key, const CharT* subKey)
+std::tuple<const char*, std::string> ReplaceRegistryQueryPath(PHKEY key, const CharT* subKey)
 {
     std::string keypath = InterpretKeyPath(*key) + "\\" + InterpretStringA(subKey);
 
@@ -271,15 +269,27 @@ const char* ReplaceRegistryQueryPath(PHKEY key, const CharT* subKey)
     if (subkeyOffset != std::wstring_view::npos)
     {
         std::string requestedSubkey = normalizedKeypath.substr(subkeyOffset + 1);
-        auto it = g_regRedirectedHivePaths.find(requestedSubkey);
-        if (it != g_regRedirectedHivePaths.end())
+
+        for (auto& spec : g_regRemediationSpecs)
         {
-            *key = HKEY_CURRENT_USER;
-            return it->c_str();
+            for (auto& specitem : spec.remediationRecords)
+            {
+                if (specitem.remeditaionType != Reg_Remediation_Type_Redirect)
+                {
+                    continue;
+                }
+
+                auto it = specitem.redirectRegistry.redirectedHivePaths.find(requestedSubkey);
+                if (it != specitem.redirectRegistry.redirectedHivePaths.end())
+                {
+                    *key = HKEY_CURRENT_USER;
+                    return { it->c_str(), keypath };
+                }
+            }
         }
     }
 
-    return nullptr;
+    return { nullptr, keyath };
 }
 
 
@@ -468,7 +478,7 @@ bool RegFixupDeletionMarker(std::string keyPath, const CharT* keyValue)
             Action result = Continue;
             switch (specitem.remeditaionType)
             {
-            case Reg_Remediation_type_DeletionMarker:
+            case Reg_Remediation_Type_DeletionMarker:
 #ifdef _DEBUG
                 Log("[%d] RegFixupDeletionMarker: is Check DeletionMarker...\n", RegLocalInstance);
 #endif  
@@ -593,13 +603,11 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     auto entry = LogFunctionEntry();
 
     Log("[%d] RegOpenKeyEx:\n", RegLocalInstance);
-    const char* updatedSubKey = ReplaceRegistryQueryPath(&key, subKey);
+    auto [updatedSubKey, keypath] = ReplaceRegistryQueryPath(&key, subKey);
     if (updatedSubKey)
     {
         return RegOpenKeyExImpl(key, updatedSubKey, options, samDesired, resultKey);
     }
-
-    std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
 
     std::string registryPath = ReplaceRegistrySyntax(keypath);
 
@@ -677,13 +685,11 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     Log("[%d] RegOpenKeyTransacted:\n", RegLocalInstance);
 #endif
 
-    const char* updatedSubKey = ReplaceRegistryQueryPath(&key, subKey);
+    auto [updatedSubKey, keypath] = ReplaceRegistryQueryPath(&key, subKey);
     if (updatedSubKey)
     {
         return RegOpenKeyTransactedImpl(key, updatedSubKey, options, samDesired, resultKey, hTransaction, pExtendedParameter);
     }
-
-    std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
 
     std::string registryPath = ReplaceRegistrySyntax(keypath);
 
@@ -1130,7 +1136,7 @@ LSTATUS __stdcall  RegGetValueFixup(
 #endif
 
         // If subkey is in redirected path, use it to get Registry Value
-        const char* updatedSubKey = ReplaceRegistryQueryPath(&key, SubKey);
+        auto [updatedSubKey, keypath] = ReplaceRegistryQueryPath(&key, subKey);
         if (updatedSubKey)
         {
             if constexpr (psf::is_ansi<CharT>) 
@@ -1145,7 +1151,6 @@ LSTATUS __stdcall  RegGetValueFixup(
         }
 
         //Get Registry Path from hkey
-        std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(SubKey);
         keypath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG

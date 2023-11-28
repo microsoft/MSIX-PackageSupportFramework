@@ -17,7 +17,8 @@ enum  Reg_Remediation_Types
     Reg_Remediation_Type_Unknown = 0,
     Reg_Remediation_Type_ModifyKeyAccess,
     Reg_Remediation_Type_FakeDelete,
-    Reg_Remediation_type_DeletionMarker
+    Reg_Remediation_Type_DeletionMarker,
+    Reg_Remediation_Type_Redirect,
 };
 
 enum Modify_Key_Access_Types
@@ -57,12 +58,19 @@ struct Deletion_Marker
     std::vector<std::wstring> values;
 };
 
+struct Redirect_Registry
+{
+	std::unordered_set<std::string> redirectedHivePaths;
+	std::vector<std::wstring> orderedRedirectedKeys;
+};
+
 struct Reg_Remediation_Record
 {
     Reg_Remediation_Types remeditaionType;
     Modify_Key_Access modifyKeyAccess;
     Fake_Delete_Key fakeDeleteKey;
     Deletion_Marker deletionMarker;
+    Redirect_Registry redirectRegistry;
 };
 
 struct Reg_Remediation_Spec
@@ -71,5 +79,3 @@ struct Reg_Remediation_Spec
 };
 
 extern std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
-extern std::unordered_set<std::string> g_regRedirectedHivePaths;
-extern std::vector<std::wstring> g_regCreatedKeysOrdered;

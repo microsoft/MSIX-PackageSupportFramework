@@ -128,8 +128,10 @@ struct EntryToCreate
 };
 
 
-void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vector<EntryToCreate> entries)
+Redirect_Registry CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vector<EntryToCreate> entries)
 {
+    Redirect_Registry redirect;
+
     Log("RegLegacyFixups Create redirected registry values\n");
 
     Package pkg = Package::Current();
@@ -161,7 +163,7 @@ void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vecto
     if (!dependency) 
     {
         Log("No package with name %.*LS found\n", static_cast<int>(dependency_name.length()), dependency_name.data());
-        return;
+        return redirect;
     }
 
     std::wstring dependency_path(dependency.EffectivePath());
@@ -178,11 +180,12 @@ void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vecto
         if (st != ERROR_SUCCESS)
         {
             Log("Create key %LS failed\n", reg_entry.path.c_str());
+            psf::TraceLogExceptions("RegLegacyFixup", "Creating key failed");
             return;
         }
 
-        g_regRedirectedHivePaths.insert(narrow(reg_path));
-        g_regCreatedKeysOrdered.push_back(reg_path);
+        redirect.redirectedHivePaths.insert(narrow(reg_path));
+        redirect.orderedRedirectedKeys.push_back(reg_path);
 
         for (const auto& it : reg_entry.values)
         {
@@ -194,12 +197,13 @@ void CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vecto
 
             if (st != ERROR_SUCCESS)
             {
-#ifdef _DEBUG
                 Log("set value %s failed\n", it.first.c_str());
-#endif
+                psf::TraceLogExceptions("RegLegacyFixup", "Setting value for a key failed");
             }
         }
     }
+
+    return redirect;
 }
 
 void CleanupFixups()
@@ -207,12 +211,24 @@ void CleanupFixups()
     Log("RegLegacyFixups CleanupFixups()\n");
 
     // Deleted the created keys in reverse order
-    for (auto redirected_path = g_regCreatedKeysOrdered.rbegin(); redirected_path != g_regCreatedKeysOrdered.rend(); ++redirected_path)
+    for (auto& specItem : g_regRemediationSpecs)
     {
-        LSTATUS st = ::RegDeleteTreeW(HKEY_CURRENT_USER, redirected_path->c_str());
-        if (st != ERROR_SUCCESS)
+        for (auto& record : specItem.remediationRecords)
         {
-            Log("Delete key %LS failed\n", redirected_path->c_str());
+            if (record.remeditaionType != Reg_Remediation_Type_Redirect)
+            {
+                continue;
+            }
+
+            for (auto redirected_path = record.redirectRegistry.orderedRedirectedKeys.rbegin(); redirected_path != record.redirectRegistry.orderedRedirectedKeys.rend(); ++redirected_path)
+            {
+                LSTATUS st = ::RegDeleteTreeW(HKEY_CURRENT_USER, redirected_path->c_str());
+                if (st != ERROR_SUCCESS)
+                {
+                    Log("Delete key %LS failed\n", redirected_path->c_str());
+                    psf::TraceLogExceptions("RegLegacyFixup", "Cleaning created key failed");
+                }
+            }
         }
     }
 }
@@ -349,6 +365,9 @@ void InitializeConfiguration()
                         }
                         else if (type.compare(L"Redirect") == 0)
                         {
+                            Log("RegLegacyFixups: \t is Redirect\n");
+                            recordItem.remeditaionType = Reg_Remediation_Type_Redirect;
+
                             std::wstring_view dependency = regItemObject.get("dependency").as_string().wstring();
                             const psf::json_array& data = regItemObject.get("data").as_array();
 
@@ -374,13 +393,14 @@ void InitializeConfiguration()
                                 entriesTtoCreate.push_back(toCreate);
                             }
 
-                            CreateRegistryRedirectEntries(dependency, entriesTtoCreate);
+                            recordItem.redirectRegistry = CreateRegistryRedirectEntries(dependency, entriesTtoCreate);
+                            specItem.remediationRecords.push_back(recordItem);
                         }
                         // Look for DeletionMarker remediation
                         else if (type.compare(L"DeletionMarker") == 0)
                         {
                             Log("RegLegacyFixups: \t is DeletionMarker\n");
-                            recordItem.remeditaionType = Reg_Remediation_type_DeletionMarker;
+                            recordItem.remeditaionType = Reg_Remediation_Type_DeletionMarker;
 
                             // Look for hive - data
                             auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
