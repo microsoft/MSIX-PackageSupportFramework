@@ -142,20 +142,14 @@ Redirect_Registry CreateRegistryRedirectEntries(std::wstring_view dependency_nam
 
     Package dependency = nullptr;
 
-#ifdef _DEBUG
     Log("Filtering required dependency\n");
-#endif
     for (auto&& dep : dependencies)
     {
         std::wstring_view name = dep.Id().Name();
-#ifdef _DEBUG
         Log("Checking package dependency %.*LS\n", name.length(), name.data());
-#endif
 
         if (name.find(dependency_name) != std::wstring::npos) {
-#ifdef _DEBUG
             Log("Found required dependency\n");
-#endif
             dependency = dep;
             break;
         }
@@ -163,6 +157,7 @@ Redirect_Registry CreateRegistryRedirectEntries(std::wstring_view dependency_nam
     if (!dependency) 
     {
         Log("No package with name %.*LS found\n", static_cast<int>(dependency_name.length()), dependency_name.data());
+        psf::TraceLogExceptions("RegLegacyFixup", "No configured dependency found");
         return redirect;
     }
 
@@ -181,7 +176,7 @@ Redirect_Registry CreateRegistryRedirectEntries(std::wstring_view dependency_nam
         {
             Log("Create key %LS failed\n", reg_entry.path.c_str());
             psf::TraceLogExceptions("RegLegacyFixup", "Creating key failed");
-            return;
+            return redirect;
         }
 
         redirect.redirectedHivePaths.insert(narrow(reg_path));

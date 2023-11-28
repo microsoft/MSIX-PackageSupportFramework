@@ -289,7 +289,7 @@ std::tuple<const char*, std::string> ReplaceRegistryQueryPath(PHKEY key, const C
         }
     }
 
-    return { nullptr, keyath };
+    return { nullptr, keypath };
 }
 
 
@@ -1136,7 +1136,7 @@ LSTATUS __stdcall  RegGetValueFixup(
 #endif
 
         // If subkey is in redirected path, use it to get Registry Value
-        auto [updatedSubKey, keypath] = ReplaceRegistryQueryPath(&key, subKey);
+        auto [updatedSubKey, keypath] = ReplaceRegistryQueryPath(&key, SubKey);
         if (updatedSubKey)
         {
             if constexpr (psf::is_ansi<CharT>) 

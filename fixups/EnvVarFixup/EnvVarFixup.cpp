@@ -218,20 +218,13 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                         IVectorView<Package> dependencies = pkg.Dependencies();
 
                         Package depedency = nullptr;
-
-#ifdef _DEBUG
                         Log("Filtering required dependency\n");
-#endif
                         for (auto&& dep : dependencies) {
                             std::wstring_view name = dep.Id().Name();
-#ifdef _DEBUG
                             Log("Checking package dependency %.*LS\n", name.length(), name.data());
-#endif
 
                             if (name.find(spec.dependency) != std::wstring::npos) {
-#ifdef _DEBUG
                                 Log("Found required dependency\n");
-#endif
                                 depedency = dep;
                                 break;
                             }
@@ -239,6 +232,7 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                         if (!depedency)
                         {
                             Log("No package with name %LS found\n", spec.dependency.c_str());
+							psf::TraceLogExceptions("EnvVarFixup", "No configured dependency found");
                             continue;
                         }
 
