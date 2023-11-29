@@ -176,11 +176,11 @@ void InitializeConfiguration()
 
                     if (registry && dependency)
                     {
-						throw std::logic_error("EnvVarFixup: Bad config. Both 'useregistry' and 'dependency' specified");
+                        throw std::logic_error("EnvVarFixup: Bad config. Both 'useregistry' and 'dependency' specified");
                     }
                     else if (!registry && !dependency)
                     {
-						throw std::logic_error("EnvVarFixup: Bad config. Neither 'useregistry' and 'dependency' specified");
+                        throw std::logic_error("EnvVarFixup: Bad config. Neither 'useregistry' and 'dependency' specified");
                     }
                     else if (registry)
                     {
