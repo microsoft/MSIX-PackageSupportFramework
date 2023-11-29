@@ -108,6 +108,10 @@ void LogString(DWORD inst, const char* name, const wchar_t* value)
 {
     Log("[%d] %s=%ls\n", inst, name, value);
 }
+void LogString(DWORD inst, const char* name, std::string_view value)
+{
+    Log("[%d] %s=%.*s\n", inst, name, value.length(), value.data());
+}
 void LogString(DWORD inst, const wchar_t* name, const char* value)
 {
     Log("[%d] %ls=%s\n", inst, name, value);
@@ -115,6 +119,10 @@ void LogString(DWORD inst, const wchar_t* name, const char* value)
 void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
 {
     Log(L"[%d] %ls=%ls\n", inst, name, value);
+}
+void LogString(DWORD inst, const char* name, std::wstring_view value)
+{
+    Log("[%d] %s=%.*ls\n", inst, name, value.length(), value.data());
 }
 
 void InitializeFixups()
@@ -168,21 +176,19 @@ void InitializeConfiguration()
 
                     if (registry && dependency)
                     {
-                        Log("EnvVarFixup: Bad config. Both 'useregistry' and 'dependency' specified");
-                        continue;
+						throw std::logic_error("EnvVarFixup: Bad config. Both 'useregistry' and 'dependency' specified");
                     }
                     else if (!registry && !dependency)
                     {
-                        Log("EnvVarFixup: Bad config. Neither 'useregistry' and 'dependency' specified");
-                        continue;
+						throw std::logic_error("EnvVarFixup: Bad config. Neither 'useregistry' and 'dependency' specified");
                     }
                     else if (registry)
                     {
                         auto useRegistry = registry->as_string().wstring();
                         traceDataStream << " useregistry: " << useRegistry << " ;";
-                        LogString(0, "GetEnvFixup Config: name", variableNamePattern.data());
-                        LogString(0, "GetEnvFixup Config: value", variableValue.data());
-                        LogString(0, "GetEnvFixup Config: useregistry", useRegistry.data());
+                        LogString(0, "GetEnvFixup Config: name", variableNamePattern);
+                        LogString(0, "GetEnvFixup Config: value", variableValue);
+                        LogString(0, "GetEnvFixup Config: useregistry", useRegistry);
                         g_envvar_envVarSpecs.emplace_back();
                         g_envvar_envVarSpecs.back().remediationType = Env_Remediation_Type_Registry;
                         g_envvar_envVarSpecs.back().variablename.assign(variableNamePattern.data(), variableNamePattern.length());
@@ -202,9 +208,9 @@ void InitializeConfiguration()
                     {
                         auto dep = dependency->as_string().wstring();
                         traceDataStream << " dependency: " << dep << " ;";
-                        LogString(0, "GetEnvFixup Config: name", variableNamePattern.data());
-                        LogString(0, "GetEnvFixup Config: value", variableValue.data());
-                        LogString(0, "GetEnvFixup Config: dependency", dep.data());
+                        LogString(0, "GetEnvFixup Config: name", variableNamePattern);
+                        LogString(0, "GetEnvFixup Config: value", variableValue);
+                        LogString(0, "GetEnvFixup Config: dependency", dep);
                         g_envvar_envVarSpecs.emplace_back();
                         g_envvar_envVarSpecs.back().remediationType = Env_Remediation_Type_Dependency;
                         g_envvar_envVarSpecs.back().variablename.assign(variableNamePattern.data(), variableNamePattern.length());

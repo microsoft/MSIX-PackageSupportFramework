@@ -366,6 +366,8 @@ void InitializeConfiguration()
                             std::wstring_view dependency = regItemObject.get("dependency").as_string().wstring();
                             const psf::json_array& data = regItemObject.get("data").as_array();
 
+                            traceDataStream << " dependency: " << dependency << ";";
+
                             std::vector<EntryToCreate>entriesTtoCreate;
 
                             for (auto& entry : data)
@@ -376,6 +378,7 @@ void InitializeConfiguration()
                                 std::wstring_view key = obj.get("key").as_string().wstring();
                                 toCreate.path = key;
 
+                                traceDataStream << "\n key: " << key << ";";
                                 for (const auto& it : obj.get("values").as_object())
                                 {
                                     // RegSetValueExW expected null terminated strings. string_view cannot guarantee a null terminated string. Need to copy to a std::wstring
@@ -383,6 +386,7 @@ void InitializeConfiguration()
                                     std::wstring value_data(it.second.as_string().wstring());
 
                                     toCreate.values.insert({ value_name, value_data });
+                                    traceDataStream << " " << value_name << ": " << value_data << ";";
                                 }
 
                                 entriesTtoCreate.push_back(toCreate);

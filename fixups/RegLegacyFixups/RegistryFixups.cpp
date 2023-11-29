@@ -75,7 +75,6 @@ std::string ReplaceRegistrySyntax(std::string regPath)
 
 REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstance)
 {
-    keypath = ReplaceRegistrySyntax(keypath);
     REGSAM samModified = samDesired;
     std::string keystring;
 
@@ -260,7 +259,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 }
 
 template <typename CharT>
-std::tuple<const char*, std::string> ReplaceRegistryQueryPath(PHKEY key, const CharT* subKey)
+std::tuple<const char*, std::string> ReplaceRegistryQueryPath(_Inout_ PHKEY key, _In_opt_ const CharT* subKey)
 {
     std::string keypath = InterpretKeyPath(*key) + "\\" + InterpretStringA(subKey);
 
@@ -283,13 +282,13 @@ std::tuple<const char*, std::string> ReplaceRegistryQueryPath(PHKEY key, const C
                 if (it != specitem.redirectRegistry.redirectedHivePaths.end())
                 {
                     *key = HKEY_CURRENT_USER;
-                    return { it->c_str(), keypath };
+                    return { it->c_str(), normalizedKeypath };
                 }
             }
         }
     }
 
-    return { nullptr, keypath };
+    return { nullptr, normalizedKeypath };
 }
 
 
@@ -543,7 +542,8 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 
 
     std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
+    std::string normalizedKeypath = ReplaceRegistrySyntax(keypath);
+    REGSAM samModified = RegFixupSam(normalizedKeypath, samDesired, RegLocalInstance);
 
     auto result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
     QueryPerformanceCounter(&TickEnd);
@@ -603,13 +603,11 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     auto entry = LogFunctionEntry();
 
     Log("[%d] RegOpenKeyEx:\n", RegLocalInstance);
-    auto [updatedSubKey, keypath] = ReplaceRegistryQueryPath(&key, subKey);
+    auto [updatedSubKey, registryPath] = ReplaceRegistryQueryPath(&key, subKey);
     if (updatedSubKey)
     {
         return RegOpenKeyExImpl(key, updatedSubKey, options, samDesired, resultKey);
     }
-
-    std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
     Log("[%d] RegOpenKeyEx: Path=%s", RegLocalInstance, registryPath.c_str());
@@ -625,7 +623,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
         return ERROR_FILE_NOT_FOUND;
     }
 
-    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
+    REGSAM samModified = RegFixupSam(registryPath, samDesired, RegLocalInstance);
 
     auto result = RegOpenKeyExImpl(key, subKey, options, samModified,  resultKey);
     QueryPerformanceCounter(&TickEnd);
@@ -685,13 +683,11 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     Log("[%d] RegOpenKeyTransacted:\n", RegLocalInstance);
 #endif
 
-    auto [updatedSubKey, keypath] = ReplaceRegistryQueryPath(&key, subKey);
+    auto [updatedSubKey, registryPath] = ReplaceRegistryQueryPath(&key, subKey);
     if (updatedSubKey)
     {
         return RegOpenKeyTransactedImpl(key, updatedSubKey, options, samDesired, resultKey, hTransaction, pExtendedParameter);
     }
-
-    std::string registryPath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
     Log("[%d] RegOpenKeyTransacted: Path=%s", RegLocalInstance, registryPath.c_str());
@@ -707,7 +703,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         return ERROR_FILE_NOT_FOUND;
     }
 
-    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
+    REGSAM samModified = RegFixupSam(registryPath, samDesired, RegLocalInstance);
 
     auto result = RegOpenKeyTransactedImpl(key, subKey, options, samModified, resultKey, hTransaction, pExtendedParameter);
     QueryPerformanceCounter(&TickEnd);
@@ -1149,9 +1145,6 @@ LSTATUS __stdcall  RegGetValueFixup(
                 return RegGetValueImpl(key, wideSubKey.c_str(), Value, dwFlags, pdwType, pvData, pcbData);
             }
         }
-
-        //Get Registry Path from hkey
-        keypath = ReplaceRegistrySyntax(keypath);
 
 #ifdef _DEBUG
         Log("[%d] RegGetValue: path=%s", RegLocalInstance, keypath.c_str());
