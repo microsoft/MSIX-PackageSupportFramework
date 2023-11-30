@@ -128,7 +128,7 @@ struct EntryToCreate
 };
 
 
-Redirect_Registry CreateRegistryRedirectEntries(std::wstring_view dependency_name, std::vector<EntryToCreate> entries)
+Redirect_Registry CreateRegistryRedirectEntries(std::wstring_view dependency_name, const std::vector<EntryToCreate>& entries)
 {
     Redirect_Registry redirect;
 

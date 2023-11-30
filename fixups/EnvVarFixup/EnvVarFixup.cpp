@@ -255,12 +255,12 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                             {
                                 ZeroMemory(lpValue, lenBuf);
                                 value_data_ansi.copy(lpValue, lenBuf);
-                                return (DWORD)value_data_ansi.size();
+                                return static_cast<DWORD>(value_data_ansi.size());
                             }
                             else
                             {
                                 SetLastError(ERROR_BUFFER_OVERFLOW);
-                                return (DWORD)value_data.size() + 1 /* To include NULL terminator */;
+                                return static_cast<DWORD>(value_data_ansi.size() + 1 /* To include NULL terminator */);
                             }
                         }
                         else
@@ -269,12 +269,12 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                             {
                                 ZeroMemory(lpValue, lenBuf * sizeof(wchar_t));
                                 value_data.copy(lpValue, lenBuf);
-                                return (DWORD)value_data.size();
+                                return static_cast<DWORD>(value_data.size());
                             }
                             else
                             {
                                 SetLastError(ERROR_BUFFER_OVERFLOW);
-                                return (DWORD)value_data.size() + 1 /* To include NULL terminator */;
+                                return static_cast<DWORD>(value_data.size() + 1 /* To include NULL terminator */);
                             }
                         }
                     }
