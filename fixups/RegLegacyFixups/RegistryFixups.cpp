@@ -281,6 +281,11 @@ std::tuple<const char*, std::string> ReplaceRegistryQueryPath(_Inout_ PHKEY key,
                 auto it = specitem.redirectRegistry.redirectedHivePaths.find(requestedSubkey);
                 if (it != specitem.redirectRegistry.redirectedHivePaths.end())
                 {
+                    // If application is trying to do something with registry path that is configured to be redirected,
+                    // we need to change the hive to HKCU since thats where the entries are created during 
+                    // InitializeConfiguration function. We could have created them in HKLM but that would require
+                    // admin privileges and would modify global registry. Redirecting to HKCU allows us to bypass
+                    // the priviledge requirement and also keep the changes local to per user per app.
                     *key = HKEY_CURRENT_USER;
                     return { it->c_str(), normalizedKeypath };
                 }

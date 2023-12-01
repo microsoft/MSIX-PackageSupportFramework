@@ -128,11 +128,13 @@ The following Windows API calls are supported for this fixup type.
 ### Configuration for Redirect
 When the `type` is specified as `Redirect`, the `remediation` element is an array of remediations with a structure shown here:
 | Tag | Purpose |
+| --- | ------- |
 | `dependency` | The dependency to use when resolving the registry data in `data` field. |
 | `data` | Contains an array of objects which specifies keys and values to emulate `dependency`. |
 
 The `data` field is an array of objects with the following structure:
 | Tag | Purpose |
+| --- | ------- |
 | `key` | The full name of the `key` which will be used by the application to query about the `dependency`. |
 | `values` | Contains a objects which specifies the values read by the application to get information about a `dependency`. The field name specifies the value name and the field value specifies the data of that value. |
 
@@ -252,7 +254,7 @@ Here is the equivalent config section when using XML to specify.
 				</remediation>
 				<remediation>
 					<type>Redirect</type>
-					<dependency>java</hive>
+					<dependency>java</dependency>
 					<data>
 						<key>Software\\random_key\\abc\\%dependency_version%</key>
 						<values>
