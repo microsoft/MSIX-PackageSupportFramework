@@ -21,7 +21,7 @@ Each remediation array object starts with a type field:
 | `ModifyKeyAccess` | Allows for modification of access parameters in calls to open registry keys.  This remediation targets the `samDesired` parameter that specifies the permissions granted to the application when opening the key. This remediation type does not target calls for registry values.|
 | `FakeDelete`      | Returns success to the application if it attempts to delete a key or registry item and "ACCESS_DENIED" occurs.  The app may or may not depend upon the delete occuring at some later point of running the application, so significant testing of the app is suggested when attempting this fixup.|
 | `DeletionMarker`  | Allows for the hiding of specific registry keys or registry values in the virtual environment.|
-| `Redirect`  | Allows for reading of registry values created in the context of a dependency |
+| `Redirect`  | Allows for reading of registry values created in the context of a dependency. This would work on OS post version 1903 as the solution looks for EffectivePath which was part of this OS version. |
 
 ## ModifyKeyAccess Remediation Type
 The following Windows API calls are supported for this fixup type. 
