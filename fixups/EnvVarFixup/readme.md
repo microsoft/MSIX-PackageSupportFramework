@@ -16,7 +16,7 @@ This `config` element contains a an array called "EnvVars".  Each Envar contains
 | `name` | Regex pattern for the name(s) of the environment variable being defined.|
 | `value`| If the value is to be defined in the json, the value is entered here. Otherwise this may be specified as an empty string.|
 | `useregistry`| A boolean, when set to true it instructs that the environment variable should be extracted from the package registry for Environment variables, first checking HKCU and then HKLM. When specified, the intercept will first look in the HKCU registry, then HKLM, and finally the `value` field in the JSON entry. Cannot be used with `dependency` field. |
-| `dependency`| A string, when specified, instructs that the environment variable should be resolved in the context of this dependency. In such cases, `value` is returned after replacing meta-variables like **%dependency_root_path%** and **%dependency_version%** which will be replaced with `dependency`'s root path and version respectively. Cannot be used with `useregistry` field. |
+| `dependency`| A string, when specified, instructs that the environment variable should be resolved in the context of this dependency. In such cases, `value` is returned after replacing meta-variables like **%dependency_root_path%** and **%dependency_version%** which will be replaced with `dependency`'s root path and version respectively. Cannot be used with `useregistry` field. . This would work on OS post version 1903 as the solution looks for EffectivePath which was part of this OS version. |
 
 
 # JSON Examples
