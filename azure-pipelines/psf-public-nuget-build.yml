@@ -279,7 +279,7 @@ extends:
                   OverWrite: true
 
               # sign binaries
-              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@3
+              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
                 displayName: ESRP CodeSigning Binaries
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
