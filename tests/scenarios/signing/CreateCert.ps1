@@ -121,7 +121,11 @@ function CreateCert()
 	
 	Write-host "Exporting cert to build"
 
-    $Password = ConvertTo-SecureString $passwordAsPlainText -AsPlainText -Force
+    $Password = New-Object SecureString
+    foreach ($char in $passwordAsPlainText.ToCharArray()) {
+        $Password.AppendChar($char)
+    }
+
     if (-not (Test-Path "$certFile"))
     {
         Export-PfxCertificate -Cert $cert -FilePath $certFile -Password $Password | Out-Null
