@@ -1,0 +1,352 @@
+name: $(MajorVersion).$(MinorVersion).$(date:yyMMdd)$(rev:.r)
+variables:
+  - name: BuildConfiguration
+    value: release
+  - name: CertFriendlyName
+    value: CentennialFixups Test Signing Certificate
+  - name: CertPassword
+    value: CentennialFixupsTestSigning
+  - name: CertStoreLocation
+    value: Cert:\LocalMachine\My
+  - name: MajorVersion
+    value: "1"
+  - name: MinorVersion
+    value: "0"
+resources:
+  repositories:
+    - repository: 1esPipelines
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+trigger: none
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
+  parameters:
+    pool:
+      os: windows
+      image: windows-2019
+      name: Azure-Pipelines-1ESPT-ExDShared
+    sdl:
+      baseline:
+        baselineFile: $(Build.SourcesDirectory)\guardian\SDL\.gdnbaselines
+    customBuildTags:
+      - MigrationTooling-microsoft-Dart-26928-Tool
+    stages:
+      - stage: Stage
+        jobs:
+          - job: Phase_1
+            displayName: Phase 1
+            timeoutInMinutes: 30
+            cancelTimeoutInMinutes: 1
+            strategy:
+              maxParallel: 4
+              matrix:
+                release:
+                  BuildConfiguration: release
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  artifactName: drop
+                  targetPath: $(build.artifactstagingdirectory)
+                  displayName: Publish Artifacts
+                  condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                - output: nuget
+                  displayName: "NuGet Publisher "
+                  condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                  publishVstsFeed: 2d59d878-551d-4bd7-a797-e4c1eca9ea33
+                  packageParentPath: "$(build.artifactstagingdirectory)"
+                  packagesToPush: "$(build.artifactstagingdirectory)/**/*.nupkg;!$(build.artifactstagingdirectory)/**/packages/**/*.nupkg;!$(build.artifactstagingdirectory)/**/*.symbols.nupkg"
+                  allowPackageConflicts: true
+            steps:
+              - checkout: self
+                clean: true
+                fetchTags: false
+                persistCredentials: true
+
+              # Use NuGet to install dependencies
+              - task: NuGetToolInstaller@0
+                displayName: Use NuGet 6.2.1
+                inputs:
+                  versionSpec: 6.2.1
+              - task: NuGetCommand@2
+                displayName: NuGet restore
+
+              # Update telemetry data
+              - task: PowerShell@2
+                displayName: PowerShell Script
+                inputs:
+                  targetType: inline
+                  script: |-
+                    
+                    $telemetry = Get-Content "include\Telemetry.h"
+                    # Replace with official telemetry provider id
+                    # Set the variable $(TelemetryProviderId) with its value
+                    $telemetry = $telemetry.replace("0000000000, 00000, 00000, 0000, 0000, 0000, 0000, 0000, 000, 0000, 0000", "$(TelemetryProviderId)")
+                    $telemetry | out-file -FilePath "include\Telemetry.h" -Force
+
+
+                    $psfVersion = Get-Content "include\psf_constants.h"
+                    $psfVersion = $psfVersion.replace("0.0.000000.0", "$(Build.BuildNumber)")
+                    $psfVersion | out-file -FilePath "include\psf_constants.h" -Force
+
+              # Build solutions
+              - task: VSBuild@1
+                displayName: Build CentennialFixups Solution (x64)
+                inputs:
+                  solution: CentennialFixups.sln
+                  vsVersion: "16.0"
+                  platform: x64
+                  configuration: $(BuildConfiguration)
+                  maximumCpuCount: true
+              - task: VSBuild@1
+                displayName: Build Tests Solution (x64)
+                inputs:
+                  solution: tests/tests.sln
+                  vsVersion: "16.0"
+                  platform: x64
+                  configuration: $(BuildConfiguration)
+                  maximumCpuCount: true
+              - task: VSBuild@1
+                displayName: Build CentennialFixups Solution (x86)
+                inputs:
+                  solution: CentennialFixups.sln
+                  vsVersion: "16.0"
+                  platform: x86
+                  configuration: $(BuildConfiguration)
+                  maximumCpuCount: true
+              - task: VSBuild@1
+                displayName: Build Tests Solution (x86)
+                inputs:
+                  solution: tests/tests.sln
+                  vsVersion: "16.0"
+                  platform: x86
+                  configuration: $(BuildConfiguration)
+                  maximumCpuCount: true
+
+              # create and test packages
+              - task: CmdLine@2
+                displayName: Make Appx (x64)
+                inputs:
+                  script: |-
+                    if "%VSCMD_VER%"=="" (
+                        pushd c:
+                        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" >nul 2>&1
+                        popd
+                    )
+
+                    powershell .\MakeAppx -PasswordAsPlainText "CentennialFixupsTestSigning" -All -Architecture x64 -Configuration %BUILDCONFIGURATION%
+                  workingDirectory: tests/scenarios
+              - task: PowerShell@2
+                displayName: Run Tests (x64)
+                inputs:
+                  targetType: inline
+                  script: |-
+                    foreach ($appx in (Get-ChildItem ".\scenarios\Appx\*.appx"))
+                    {
+                        Write-Host ("Adding package " + $appx)
+                        Add-AppxPackage $appx
+                    }
+
+                     Write-Host ("Running Tests")
+                    . x64\Release\TestRunner.exe
+                    $result = $LASTEXITCODE
+                    Write-Host $result tests failed
+                    Exit $result
+                  errorActionPreference: continue
+                  ignoreLASTEXITCODE: true
+                  workingDirectory: tests
+                continueOnError: true
+              - task: PowerShell@2
+                displayName: Uninstall Appx (x64)
+                condition: always()
+                inputs:
+                  targetType: inline
+                  script: Get-AppxPackage *Test* | Remove-AppxPackage
+              - task: CmdLine@2
+                displayName: Make Appx (x86)
+                inputs:
+                  script: |-
+                    if "%VSCMD_VER%"=="" (
+                        pushd c:
+                        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" >nul 2>&1
+                        popd
+                    )
+
+                    powershell .\MakeAppx -PasswordAsPlainText  "CentennialFixupsTestSigning" -All -Architecture x86 -Configuration %BUILDCONFIGURATION%
+                  workingDirectory: tests/scenarios
+              - task: PowerShell@2
+                displayName: Run Tests (x86)
+                inputs:
+                  targetType: inline
+                  script: |-
+                    foreach ($appx in (Get-ChildItem ".\scenarios\Appx\*.appx"))
+                    {
+                        Write-Host ("Adding package " + $appx)
+                        Add-AppxPackage $appx
+                    }
+
+                     Write-Host ("Running Tests")
+                    . Win32\Release\TestRunner.exe
+                    $result = $LASTEXITCODE
+                    Write-Host $result tests failed
+                    Exit $result
+                  errorActionPreference: continue
+                  ignoreLASTEXITCODE: true
+                  workingDirectory: tests
+                continueOnError: true
+              - task: PowerShell@2
+                displayName: Uninstall Appx (x86)
+                condition: always()
+                inputs:
+                  targetType: inline
+                  script: Get-AppxPackage *Test* | Remove-AppxPackage
+
+              # stage files
+              - task: CopyFiles@2
+                displayName: Stage Nuget
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  SourceFolder: $(system.defaultworkingdirectory)
+                  Contents: |
+                    Microsoft.PackageSupportFramework.targets
+                    readme.txt
+                  TargetFolder: $(Build.BinariesDirectory)
+                  OverWrite: true
+              - task: CopyFiles@2
+                displayName: Stage Headers
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  SourceFolder: $(system.defaultworkingdirectory)
+                  Contents: |-
+                    include\psf_config.h
+                    include\psf_framework.h
+                    include\psf_runtime.h
+                    include\psf_utils.h
+                    include\utilities.h
+                    include\win32_error.h
+                  TargetFolder: $(Build.BinariesDirectory)
+                  OverWrite: true
+              - task: CopyFiles@2
+                displayName: Stage Libraries
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  SourceFolder: $(system.defaultworkingdirectory)
+                  Contents: "*\\Release\\PSFRuntime*.lib"
+                  TargetFolder: $(Build.BinariesDirectory)
+                  OverWrite: true
+              - task: CopyFiles@2
+                displayName: Stage Binaries
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  SourceFolder: $(system.defaultworkingdirectory)
+                  Contents: |-
+                    *\Release\PSFLauncher*.exe
+                    *\Release\PSFRunDll*.exe
+                    *\Release\PSFRuntime*.dll
+                    *\Release\FileRedirectionFixup*.dll
+                    *\Release\RegLegacyFixups*.dll
+                    *\Release\EnvVarFixup*.dll
+                    *\Release\TraceFixup*.dll
+                    *\Release\WaitForDebuggerFixup*.dll
+                    *\Release\TraceLoggerLib.dll
+                    *\Release\StartingScriptWrapper.ps1
+                    *\Release\DynamicLibraryFixup*.dll
+                  TargetFolder: $(Build.BinariesDirectory)
+                  OverWrite: true
+              - task: CopyFiles@2
+                displayName: StageXmlToJsonFiles
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  SourceFolder: xmlToJsonConverter
+                  Contents: "*"
+                  TargetFolder: $(Build.BinariesDirectory)
+                  OverWrite: true
+              - task: CopyFiles@2
+                displayName: StagePSFMonitor
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  SourceFolder: $(system.defaultworkingdirectory)
+                  Contents: |-
+                    *\Release\amd64\*
+                    *\Release\x86\*
+                    *\Release\PsfMonitor*.exe
+                    *\Release\Dia2Lib.dll
+                    *\Release\Microsoft.Diagnostics.FastSerialization.dll
+                    *\Release\Microsoft.Diagnostics.Tracing.TraceEvent.dll
+                    *\Release\OSExtensions.dll
+                    *\Release\TraceReloggerLib.dll
+                  TargetFolder: $(Build.BinariesDirectory)
+                  OverWrite: true
+
+              # sign binaries
+              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+                displayName: ESRP CodeSigning Binaries
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  ConnectedServiceName: PSFCodeSignServiceConnection
+                  FolderPath: $(Build.BinariesDirectory)
+                  Pattern: StartingScriptWrapper.ps1, PsfLauncher*.exe, PsfRunDll*.exe, PsfRuntime*.dll, FileRedirectionFixup*.dll, RegLegacyFixups*.dll, EnvVarFixup*.dll, TraceFixup*.dll, WaitForDebuggerFixup*.dll, DynamicLibraryFixup*.dll, PsfMonitorX*.exe
+                  signConfigType: inlineSignParams
+                  inlineOperation: |-
+                    [
+                            {
+                                "KeyCode" : "CP-230012",
+                                "OperationCode" : "SigntoolSign",
+                                "Parameters" : {
+                                    "OpusName" : "Microsoft",
+                                    "OpusInfo" : "http://www.microsoft.com",
+                                    "FileDigest" : "/fd \"SHA256\"",
+                                    "PageHash" : "/NPH",
+                                    "TimeStamp" : "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                                },
+                                "ToolName" : "sign",
+                                "ToolVersion" : "1.0"
+                            },
+                            {
+                                "KeyCode" : "CP-230012",
+                                "OperationCode" : "SigntoolVerify",
+                                "Parameters" : {},
+                                "ToolName" : "sign",
+                                "ToolVersion" : "1.0"
+                            }
+                        ]
+                  MaxRetryAttempts: "1"
+                  VerboseLogin: true
+
+              # create and sign nuget package
+              - task: NuGetCommand@2
+                displayName: NuGet Package
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  command: pack
+                  searchPatternPack: Microsoft.PackageSupportFramework.nuspec
+                  versioningScheme: byBuildNumber
+                  basePath: $(Build.BinariesDirectory)
+              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+                displayName: ESRP CodeSigning Nuget Packages
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  ConnectedServiceName: PSFNugetPackageCodeSignServiceConnection
+                  FolderPath: ./
+                  Pattern: Microsoft.PackageSupportFramework.*.nupkg
+                  signConfigType: inlineSignParams
+                  inlineOperation: |-
+                    [
+                            {
+                                "KeyCode" : "CP-401405",
+                                "OperationCode" : "NuGetSign",
+                                "Parameters" : {},
+                                "ToolName" : "sign",
+                                "ToolVersion" : "1.0"
+                            },
+                            {
+                                "KeyCode" : "CP-401405",
+                                "OperationCode" : "NuGetVerify",
+                                "Parameters" : {},
+                                "ToolName" : "sign",
+                                "ToolVersion" : "1.0"
+                            }
+                        ]
+                  MaxRetryAttempts: "1"
+                  VerboseLogin: true
+                continueOnError: true
