@@ -5,7 +5,6 @@
 //-------------------------------------------------------------------------------------------------------
 #include "pch.h"
 
-#define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
 #include "psf_tracelogging.h"
 
@@ -19,11 +18,35 @@ bool trace_function_entry = false;
 bool m_inhibitOutput = false;
 bool m_shouldLog = true;
 
-void InitializeFixups();
 void InitializeConfiguration();
+void CleanupFixups();
 void Log(const char* fmt, ...);
 
 extern "C" {
+
+int __stdcall PSFInitialize() noexcept try
+{
+    InitializeConfiguration();
+    psf::attach_all();
+    return ERROR_SUCCESS;
+}
+catch (...)
+{
+    psf::TraceLogExceptions("RegLegacyFixupException", "RegLegacyFixup configuration intialization exception");
+    return win32_from_caught_exception();
+}
+
+int __stdcall PSFUninitialize() noexcept try
+{
+    CleanupFixups();
+    psf::detach_all();
+    return ERROR_SUCCESS;
+}
+catch (...)
+{
+    psf::TraceLogExceptions("RegLegacyFixupException", "RegLegacyFixup configuration unintialization exception");
+    return win32_from_caught_exception();
+}
 
 
 #ifdef _M_IX86
@@ -44,15 +67,14 @@ extern "C" {
         {
         case DLL_PROCESS_ATTACH:
             TraceLoggingRegister(g_Log_ETW_ComponentProvider);
-            Log("Attaching RegLegacyFixups\n");
+            Log("RegLegacyFixups attached\n");
 
-            InitializeFixups();
-            InitializeConfiguration();
             break;
         case DLL_THREAD_ATTACH:
         case DLL_THREAD_DETACH:
         case DLL_PROCESS_DETACH:
             TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+
             break;
         }
         return TRUE;

@@ -5,7 +5,7 @@ When injected into a process, RegLegacyFixups supports the ability to:
 There is no guarantee that these changes will be enough to allow the application to perform properly, but often the change can solve application compatibility issues by removing request incompatible parameters that the application did not need.
 
 # General Configuration
-The configuration for the Registry Legacy Fixups is specified in the element `config` of the fixup structure within the `proceses` section of the json file when RegLegacyFixups.dll is requested.
+The configuration for the Registry Legacy Fixups is specified in the element `config` of the fixup structure within the `processes` section of the json file when RegLegacyFixups.dll is requested.
 
 The `config` element for RegLegacyFixups.dll is an array of remediations.  Each remediation has two elements:
 
@@ -21,6 +21,7 @@ Each remediation array object starts with a type field:
 | `ModifyKeyAccess` | Allows for modification of access parameters in calls to open registry keys.  This remediation targets the `samDesired` parameter that specifies the permissions granted to the application when opening the key. This remediation type does not target calls for registry values.|
 | `FakeDelete`      | Returns success to the application if it attempts to delete a key or registry item and "ACCESS_DENIED" occurs.  The app may or may not depend upon the delete occuring at some later point of running the application, so significant testing of the app is suggested when attempting this fixup.|
 | `DeletionMarker`  | Allows for the hiding of specific registry keys or registry values in the virtual environment.|
+| `Redirect`  | Allows for reading of registry values created in the context of a dependency. This would work on OS post version 1903 as the solution looks for EffectivePath which was part of this OS version. |
 
 ## ModifyKeyAccess Remediation Type
 The following Windows API calls are supported for this fixup type. 
@@ -114,6 +115,31 @@ The value for the element `key` is a regex pattern string that specifies the reg
 
 The value for the element `values` is a regex pattern string that specifies the registry-value to be affected.  This regex string is applied against the name of the registry value in the pattern key specified.
 
+## Redirect Remediation Type
+The following Windows API calls are supported for this fixup type. 
+
+> * RegOpenKeyEx
+> * RegOpenKeyTransacted
+> * RegGetValue
+> * RegEnumValue
+> * RegQueryValueEx
+> * RegQueryMultipleValues
+
+### Configuration for Redirect
+When the `type` is specified as `Redirect`, the `remediation` element is an array of remediations with a structure shown here:
+| Tag | Purpose |
+| --- | ------- |
+| `dependency` | The dependency to use when resolving the registry data in `data` field. |
+| `data` | Contains an array of objects which specifies keys and values to emulate `dependency`. |
+
+The `data` field is an array of objects with the following structure:
+| Tag | Purpose |
+| --- | ------- |
+| `key` | The full name of the `key` which will be used by the application to query about the `dependency`. |
+| `values` | Contains a objects which specifies the values read by the application to get information about a `dependency`. The field name specifies the value name and the field value specifies the data of that value. |
+
+The `key` can contain meta-variable **%dependency_version%** which will be replaced with the version of the `dependency`. The field values in `values` can contain meta-variable **%dependency_root_path%** and **%dependency_version%** which will be replaced with the root path and version of the `dependency` respectively. These entries are created during the loading of RegLegacyFixups.dll in HKCU and are deleted during the unloading. When application tries to read registry values specified in the config, the call is redirected to HKCU.
+
 # JSON Example
 Here is an example of using this fixup to address an application that contains a vendor key under the HKEY_CURRENT_USER hive and the application requests for full access control to that key. While permissible in a native installation of the application, such a request is denied by some versions of the MSIX runtime (OS version specific) because the request would allow the applicaiton make modifications. The json file shown could address this by causing a change to the requested access to give the application contol for read/write purposes only.
 
@@ -123,7 +149,6 @@ Here is an example of using this fixup to address an application that contains a
 		"dll":"RegLegacyFixups.dll",
 		"config": [
 		  {
-				"type": "ModifyKeyAccess",
 			"remediation": [
 				{
 					"type": "ModifyKeyAccess",
@@ -160,6 +185,19 @@ Here is an example of using this fixup to address an application that contains a
 					"values": [
 						"^SubKey"
 					]
+				},
+				{
+					"type": "Redirect",
+					"dependency": "java",
+					"data": [
+						{
+							"key": "Software\\random_key\\abc\\%dependency_version%",
+							"values": {
+								"version": "%dependency_version%-SNAPSHOT"
+								"path": "%dependency_root_path%\\bin"
+							}
+						}
+					]
 				}
 			]
 		  }
@@ -176,7 +214,6 @@ Here is the equivalent config section when using XML to specify.
 	<fixup>
 		<dll>RegLegacyFixups</dll>
 		<config>
-			<type>ModifyKeyAccess</type>
 			<rediations>
 				<remediation>
 					<type>ModifyKeyAccess</type>
@@ -215,9 +252,18 @@ Here is the equivalent config section when using XML to specify.
 						<value>"^SubKey"</value>
 					</values>
 				</remediation>
+				<remediation>
+					<type>Redirect</type>
+					<dependency>java</dependency>
+					<data>
+						<key>Software\\random_key\\abc\\%dependency_version%</key>
+						<values>
+							<version>%dependency_version%-SNAPSHOT</version>
+							<path>%dependency_root_path%\\bin</path>
+						</values>
+					</data>
+				</remediation>
 			</remediations>
 		</config>
 	</fixup>
 </fixups>
-
-

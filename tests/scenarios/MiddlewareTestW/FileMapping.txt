@@ -1,0 +1,16 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+
+"..\..\${Architecture}${Configuration}\MiddlewareTestW.exe" "MiddlewareTestW.exe"
+
+
+"..\..\..\${Architecture}${Configuration}\PsfLauncher${Bitness}.exe" "PsfLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\PsfRuntime${Bitness}.dll" "PsfRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\RegLegacyFixups${Bitness}.dll" "RegLegacyFixups${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\EnvVarFixup${Bitness}.dll" "EnvVarFixup${Bitness}.dll"
+
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
