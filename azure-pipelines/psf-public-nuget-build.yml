@@ -24,7 +24,7 @@ extends:
   parameters:
     pool:
       os: windows
-      image: windows-2019
+      image: windows-2022
       name: Azure-Pipelines-1ESPT-ExDShared
     sdl:
       baseline:
@@ -130,7 +130,7 @@ extends:
                   script: |-
                     if "%VSCMD_VER%"=="" (
                         pushd c:
-                        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" >nul 2>&1
+                        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" >nul 2>&1
                         popd
                     )
 
@@ -168,7 +168,7 @@ extends:
                   script: |-
                     if "%VSCMD_VER%"=="" (
                         pushd c:
-                        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" >nul 2>&1
+                        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" >nul 2>&1
                         popd
                     )
 
