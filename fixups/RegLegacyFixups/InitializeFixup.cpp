@@ -24,6 +24,8 @@ using namespace std::literals;
 using namespace winrt::Windows::Management::Deployment;
 using namespace winrt::Windows::ApplicationModel;
 using namespace winrt::Windows::Foundation::Collections;
+using namespace winrt::Windows::Foundation::Metadata;
+using namespace winrt::Windows::System::Profile;
 
 std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
 
@@ -131,6 +133,14 @@ struct EntryToCreate
 Redirect_Registry CreateRegistryRedirectEntries(std::wstring_view dependency_name, const std::vector<EntryToCreate>& entries)
 {
     Redirect_Registry redirect;
+
+    if (!ApiInformation::IsPropertyPresent(L"Windows.ApplicationModel.Package", L"EffectivePath"))
+    {
+        std::wstringstream msgStream;
+        msgStream << "Redirect fixup type is not supported on " << AnalyticsInfo::VersionInfo().DeviceFamilyVersion().c_str() << " version of windows";
+        psf::TraceLogExceptions("RegLegacyFixup", msgStream.str().c_str());
+        return redirect;
+    }
 
     Log("RegLegacyFixups Create redirected registry values\n");
 
