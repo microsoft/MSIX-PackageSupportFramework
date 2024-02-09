@@ -321,7 +321,6 @@ extends:
                   command: pack
                   searchPatternPack: Microsoft.PackageSupportFramework.nuspec
                   versioningScheme: byBuildNumber
-                  basePath: $(Build.BinariesDirectory)
               - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
                 displayName: ESRP CodeSigning Nuget Packages
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
