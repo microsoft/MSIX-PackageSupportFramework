@@ -328,7 +328,7 @@ extends:
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
                   ConnectedServiceName: PSFNugetPackageCodeSignServiceConnection
-                  FolderPath: ./
+                  FolderPath: $(system.defaultworkingdirectory)
                   Pattern: Microsoft.PackageSupportFramework.*.nupkg
                   signConfigType: inlineSignParams
                   inlineOperation: |-
