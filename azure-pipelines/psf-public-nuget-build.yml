@@ -55,7 +55,7 @@ extends:
                   condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                   publishVstsFeed: 2d59d878-551d-4bd7-a797-e4c1eca9ea33
                   packageParentPath: "$(build.artifactstagingdirectory)"
-                  packagesToPush: "$(build.artifactstagingdirectory)/**/*.nupkg;$(system.defaultworkingdirectory)/**/*.nupkg;!$(build.artifactstagingdirectory)/**/packages/**/*.nupkg;!$(build.artifactstagingdirectory)/**/*.symbols.nupkg"
+                  packagesToPush: "$(build.artifactstagingdirectory)/**/*.nupkg;!$(build.artifactstagingdirectory)/**/packages/**/*.nupkg;!$(build.artifactstagingdirectory)/**/*.symbols.nupkg"
                   allowPackageConflicts: true
             steps:
               - checkout: self
@@ -351,3 +351,13 @@ extends:
                   MaxRetryAttempts: "1"
                   VerboseLogin: true
                 continueOnError: true
+
+              # copy the nuget package to ArtifactStagingDirectory for publishing
+              - task: CopyFiles@2
+                displayName: Stage created nuget
+                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
+                inputs:
+                  SourceFolder: $(system.defaultworkingdirectory)
+                  Contents: "Microsoft.PackageSupportFramework*.nupkg"
+                  TargetFolder: $(Build.artifactstagingdirectory)
+                  OverWrite: true
