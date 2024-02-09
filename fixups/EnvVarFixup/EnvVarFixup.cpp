@@ -16,6 +16,8 @@ extern std::vector<env_var_spec> g_envvar_envVarSpecs;
 using namespace winrt::Windows::Management::Deployment;
 using namespace winrt::Windows::ApplicationModel;
 using namespace winrt::Windows::Foundation::Collections;
+using namespace winrt::Windows::Foundation::Metadata;
+using namespace winrt::Windows::System::Profile;
 
 DWORD g_EnvVarInterceptInstance = 0;
 
@@ -214,6 +216,14 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                     }
                     else if (spec.remediationType == Env_Remediation_Type_Dependency)
                     {
+                        if (!ApiInformation::IsPropertyPresent(L"Windows.ApplicationModel.Package", L"EffectivePath"))
+                        {
+                            std::wstringstream msgStream;
+                            msgStream << "Redirect fixup type is not supported on " << AnalyticsInfo::VersionInfo().DeviceFamilyVersion().c_str() << " version of windows";
+                            psf::TraceLogExceptions("EnvVarFixup", msgStream.str().c_str());
+                            return 0;
+                        }
+
                         Package pkg = Package::Current();
                         IVectorView<Package> dependencies = pkg.Dependencies();
 
@@ -232,7 +242,7 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                         if (!depedency)
                         {
                             Log("No package with name %LS found\n", spec.dependency.c_str());
-							psf::TraceLogExceptions("EnvVarFixup", "No configured dependency found");
+                            psf::TraceLogExceptions("EnvVarFixup", "No configured dependency found");
                             continue;
                         }
 
