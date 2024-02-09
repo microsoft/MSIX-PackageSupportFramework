@@ -55,7 +55,7 @@ extends:
                   condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                   publishVstsFeed: 2d59d878-551d-4bd7-a797-e4c1eca9ea33
                   packageParentPath: "$(build.artifactstagingdirectory)"
-                  packagesToPush: "$(build.artifactstagingdirectory)/**/*.nupkg;!$(build.artifactstagingdirectory)/**/packages/**/*.nupkg;!$(build.artifactstagingdirectory)/**/*.symbols.nupkg"
+                  packagesToPush: "$(build.artifactstagingdirectory)/**/*.nupkg;$(system.defaultworkingdirectory)/*.nupkg;!$(build.artifactstagingdirectory)/**/packages/**/*.nupkg;!$(build.artifactstagingdirectory)/**/*.symbols.nupkg"
                   allowPackageConflicts: true
             steps:
               - checkout: self
@@ -328,7 +328,7 @@ extends:
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
                   ConnectedServiceName: PSFNugetPackageCodeSignServiceConnection
-                  FolderPath: $(system.defaultworkingdirectory)
+                  FolderPath: ./
                   Pattern: Microsoft.PackageSupportFramework.*.nupkg
                   signConfigType: inlineSignParams
                   inlineOperation: |-
