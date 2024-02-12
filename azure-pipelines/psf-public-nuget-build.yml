@@ -320,7 +320,7 @@ extends:
                 inputs:
                   command: pack
                   searchPatternPack: Microsoft.PackageSupportFramework.nuspec
-                  packDestination: ./
+                  packDestination: $(Build.artifactstagingdirectory)
                   versioningScheme: byBuildNumber
                   
               - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
@@ -328,7 +328,7 @@ extends:
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
                   ConnectedServiceName: PSFNugetPackageCodeSignServiceConnection
-                  FolderPath: ./
+                  FolderPath: $(Build.artifactstagingdirectory)
                   Pattern: Microsoft.PackageSupportFramework.*.nupkg
                   signConfigType: inlineSignParams
                   inlineOperation: |-
@@ -351,13 +351,3 @@ extends:
                   MaxRetryAttempts: "1"
                   VerboseLogin: true
                 continueOnError: true
-
-              # copy the nuget package to ArtifactStagingDirectory for publishing
-              - task: CopyFiles@2
-                displayName: Stage created nuget
-                condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
-                inputs:
-                  SourceFolder: $(system.defaultworkingdirectory)
-                  Contents: "Microsoft.PackageSupportFramework*.nupkg"
-                  TargetFolder: $(Build.artifactstagingdirectory)
-                  OverWrite: true
