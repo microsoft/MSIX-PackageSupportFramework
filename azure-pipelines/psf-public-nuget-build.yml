@@ -320,14 +320,15 @@ extends:
                 inputs:
                   command: pack
                   searchPatternPack: Microsoft.PackageSupportFramework.nuspec
+                  packDestination: $(Build.artifactstagingdirectory)
                   versioningScheme: byBuildNumber
-                  basePath: $(Build.BinariesDirectory)
+                  
               - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
                 displayName: ESRP CodeSigning Nuget Packages
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
                   ConnectedServiceName: PSFNugetPackageCodeSignServiceConnection
-                  FolderPath: ./
+                  FolderPath: $(Build.artifactstagingdirectory)
                   Pattern: Microsoft.PackageSupportFramework.*.nupkg
                   signConfigType: inlineSignParams
                   inlineOperation: |-
