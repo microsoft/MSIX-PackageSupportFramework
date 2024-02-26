@@ -23,6 +23,14 @@
 #include <wil\result.h>
 #include <wil\resource.h>
 #include <debug.h>
+#include <string_view>
+#include <vector>
+
+#include <windows.h>
+#include <detours.h>
+#include <psf_constants.h>
+#include <psf_framework.h>
+#include "psf_tracelogging.h"
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -42,6 +50,7 @@ void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path 
 void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t arguments[], bool wait, int cmdShow, LPCWSTR dirStr); 
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 bool IsCurrentOSRS2OrGreater();
+std::wstring FixupDllBitness(std::wstring originalName, USHORT bitness);
 std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
@@ -264,26 +273,25 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
     THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), shExInfo.hProcess == INVALID_HANDLE_VALUE);
 
     // possibly inject the runtime now?
-#if INECTIONFROMHEREREADY
     try
     {
         BOOL b;
         BOOL res = IsProcessInJob(shExInfo.hProcess, nullptr, &b);
         if (res != 0)
         {
-            if (b == true)
+            if (b == TRUE)
             {
-                Log(L"\tPsfLaunch: New process is in a job, allow injection.");
+                Log("\tPsfLaunch: New process is in a job, allow injection.");
                 // Fix for issue #167: allow subprocess to be a different bitness than this process.
                 USHORT bitness = ProcessBitness(shExInfo.hProcess);
                 DWORD procId = GetProcessId(shExInfo.hProcess);
                 std::filesystem::path packageRoot = PSFQueryPackageRootPath();
 #if _DEBUG
-                Log(L"\tPsfLaunch: Injection for PID=%d Bitness=%d", procId, bitness);
+                Log("\tPsfLaunch: Injection for PID=%d Bitness=%d", procId, bitness);
 #endif  
-                std::wstring wtargetDllName = FixDllBitness(std::wstring(psf::runtime_dll_name), bitness);
+                std::wstring wtargetDllName = FixupDllBitness(std::wstring(psf::runtime_dll_name), bitness);
 #if _DEBUG
-                Log(L"\tPsfLaunch: Use runtime %ls", wtargetDllName.c_str());
+                Log("\tPsfLaunch: Use runtime %ls", wtargetDllName.c_str());
 #endif
                 static const auto pathToPsfRuntime = (packageRoot / wtargetDllName.c_str()).string();
                 const char* targetDllPath = NULL;
@@ -298,12 +306,12 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                 else
                 {
                     // Possibly the dll is in the folder with the exe and not at the package root.
-                    Log(L"\tPsfLaunch: %ls not found at package root, try target folder.", wtargetDllName.c_str());
+                    Log("\tPsfLaunch: %ls not found at package root, try target folder.", wtargetDllName.c_str());
 
                     std::filesystem::path altPathToExeRuntime = executable;
                     static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / pathToPsfRuntime.c_str()).string();
 #if _DEBUG
-                    Log(L"\tPsfLaunch: alt target filename is now %ls", altPathToPsfRuntime.c_str());
+                    Log("\tPsfLaunch: alt target filename is now %ls", altPathToPsfRuntime.c_str());
 #endif
                     if (std::filesystem::exists(altPathToPsfRuntime))
                     {
@@ -312,7 +320,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                     else
                     {
 #if _DEBUG
-                        Log(L"\tPsfLaunch: Not present there either, try elsewhere in package.");
+                        Log("\tPsfLaunch: Not present there either, try elsewhere in package.");
 #endif
                         // If not in those two locations, must check everywhere in package.
                         // The child process might also be in another package folder, so look elsewhere in the package.
@@ -324,7 +332,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                                 {
                                     static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
 #if _DEBUG
-                                    Log(L"\tPsfLaunch: Found match as %ls", dentry.path().c_str());
+                                    Log("\tPsfLaunch: Found match as %ls", dentry.path().c_str());
 #endif
                                     targetDllPath = altDirPathToPsfRuntime.c_str();
                                     break;
@@ -332,7 +340,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                             }
                             catch (...)
                             {
-                                Log(L"\tPsfLaunch: Non-fatal error enumerating directories while looking for PsfRuntime.");
+                                Log("\tPsfLaunch: Non-fatal error enumerating directories while looking for PsfRuntime.");
                             }
                         }
 
@@ -342,22 +350,22 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                 if (targetDllPath != NULL)
                 {
                     Log("\tPsfLaunch: Attempt injection into %d using %s", procId, targetDllPath);
-                    if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
+                    if (!::DetourUpdateProcessWithDll(shExInfo.hProcess, &targetDllPath, 1))
                     {
                         Log("\tPsfLaunch: %s unable to inject, err=0x%x.", targetDllPath, ::GetLastError());
-                        if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
+                        if (!::DetourProcessViaHelperDllsW(procId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
                         {
                             Log("\tPsfLaunch: %s unable to inject with RunDll either (Skipping), err=0x%x.", targetDllPath, ::GetLastError());
                         }
                     }
                     else
                     {
-                        Log(L"\tPsfLaunch: Injected %ls into PID=%d\n", wtargetDllName.c_str(), processInformation->dwProcessId);
+                        Log("\tPsfLaunch: Injected %ls into PID=%d\n", wtargetDllName.c_str(), procId);
                     }
                 }
                 else
                 {
-                    Log(L"\tPsfLaunch: %ls not found, skipping.", wtargetDllName.c_str());
+                    Log("\tPsfLaunch: %ls not found, skipping.", wtargetDllName.c_str());
                 }
             }
         }
@@ -365,11 +373,10 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
     catch (...)
     {
 #if _DEBUG
-        Log(L"\tPsfLaunch: Exception while trying to determine job status of new process. Do not inject.");
+        Log("\tPsfLaunch: Exception while trying to determine job status of new process. Do not inject.");
 #endif
 
     }
-#endif
 
 
     if (wait)
@@ -387,6 +394,22 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
 
 }
 
+std::wstring FixupDllBitness(std::wstring originalName, USHORT bitness)
+{
+    std::wstring targetDll = originalName.substr(0, originalName.length() - 6);
+    switch (bitness)
+    {
+    case 32:
+        targetDll = targetDll.append(L"32.dll");
+        break;
+    case 64:
+        targetDll = targetDll.append(L"64.dll");
+        break;
+    default:
+        targetDll = std::wstring(originalName);
+    }
+    return targetDll;
+}
 
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr)
 {

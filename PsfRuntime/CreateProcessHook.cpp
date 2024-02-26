@@ -21,6 +21,7 @@
 #include <windows.h>
 #include <detours.h>
 #include <psf_constants.h>
+#include <psf_runtime.h>
 #include <psf_framework.h>
 
 #include "Config.h"
@@ -31,6 +32,7 @@ using namespace std::literals;
 
 void Log(const char* fmt, ...);
 
+    
 // Function to determine if this process should get 32 or 64bit dll injections
 // Returns 32 or 64 (or 0 for error)
 typedef BOOL(WINAPI* LPFN_ISWOW64PROCESS2) (HANDLE, PUSHORT, PUSHORT);

@@ -59,4 +59,19 @@ inline const psf::json_value* PSFQueryCurrentDllConfig()
 
 PSFAPI void __stdcall PSFReportError(const wchar_t* error) noexcept;
 
+
+
 }
+
+PSFAPI extern USHORT ProcessBitness(HANDLE hProcess);
+PSFAPI extern BOOL WINAPI CreateProcessWithPsfRunDll(
+    [[maybe_unused]] _In_opt_ LPCWSTR applicationName,
+    _Inout_opt_ LPWSTR commandLine,
+    _In_opt_ LPSECURITY_ATTRIBUTES processAttributes,
+    _In_opt_ LPSECURITY_ATTRIBUTES threadAttributes,
+    _In_ BOOL inheritHandles,
+    _In_ DWORD creationFlags,
+    _In_opt_ LPVOID environment,
+    _In_opt_ LPCWSTR currentDirectory,
+    _In_ LPSTARTUPINFOW startupInfo,
+    _Out_ LPPROCESS_INFORMATION processInformation) noexcept;
