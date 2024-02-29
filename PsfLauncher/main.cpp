@@ -177,9 +177,6 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         if (hr != ERROR_SUCCESS)
         {
             Log("Error return from launching process second try, try again 0x%x.", GetLastError());
-        }
-        if (hr != ERROR_SUCCESS)
-        {
             LaunchInBackgroundAsAdmin(exePath.c_str(), args, true, cmdShow, currentDirectory.c_str());
         }
     }
