@@ -266,8 +266,15 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
         , 0           // hInstApp
     };
     Log("PsfLaunch: Unable to launch with injection (possibly due to elevation).  Launch using shell launch without injection.");
-    THROW_LAST_ERROR_IF_MSG(!ShellExecuteEx(&shExInfo), "Error starting monitor using ShellExecuteEx");
-    THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), shExInfo.hProcess == INVALID_HANDLE_VALUE);
+    try
+    {
+        THROW_LAST_ERROR_IF_MSG(!ShellExecuteEx(&shExInfo), "Error starting monitor using ShellExecuteEx");
+        THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), shExInfo.hProcess == INVALID_HANDLE_VALUE);
+    }
+    catch(...)
+    {
+        return;
+    }
 
     // possibly inject the runtime now?
     try
