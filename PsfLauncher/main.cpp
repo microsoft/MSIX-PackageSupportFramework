@@ -279,12 +279,15 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
     // possibly inject the runtime now?
     try
     {
-        BOOL b;
-        BOOL res = IsProcessInJob(shExInfo.hProcess, nullptr, &b);
-        if (res != 0)
+        BOOL isProcessInJob;
+        BOOL res = IsProcessInJob(shExInfo.hProcess, nullptr, &isProcessInJob);
+
+        if (res == 0 || isProcessInJob == FALSE)
         {
-            if (b == TRUE)
-            {
+            return;
+        }
+        else
+        {
                 Log("\tPsfLaunch: New process is in a job, allow injection.");
                 // Fix for issue #167: allow subprocess to be a different bitness than this process.
                 USHORT bitness = ProcessBitness(shExInfo.hProcess);
@@ -298,7 +301,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                 Log("\tPsfLaunch: Use runtime %ls", wtargetDllName.c_str());
 #endif
                 static const auto pathToPsfRuntime = (packageRoot / wtargetDllName.c_str()).string();
-                const char* targetDllPath = NULL;
+                const char* targetDllPath = nullptr;
 #if _DEBUG
                 Log("\tPsfLaunch: Inject %s into PID=%d", pathToPsfRuntime.c_str(), procId);
 #endif
@@ -351,7 +354,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                     }
                 }
 
-                if (targetDllPath != NULL)
+                if (targetDllPath != nullptr)
                 {
                     Log("\tPsfLaunch: Attempt injection into %d using %s", procId, targetDllPath);
                     if (!::DetourUpdateProcessWithDll(shExInfo.hProcess, &targetDllPath, 1))
@@ -372,7 +375,6 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                     Log("\tPsfLaunch: %ls not found, skipping.", wtargetDllName.c_str());
                 }
             }
-        }
     }
     catch (...)
     {
@@ -392,7 +394,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
     {
         WaitForInputIdle(shExInfo.hProcess, 1000);
         // Due to elevation, the process starts, relaunches, and the main process ends in under 1ms.
-        // So we'll just toss in an ugly sleep here for now.
+        // So we'll just toss in sleep here for now.
         Sleep(5000);
     }
 
