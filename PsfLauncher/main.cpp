@@ -293,18 +293,12 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                 USHORT bitness = ProcessBitness(shExInfo.hProcess);
                 DWORD procId = GetProcessId(shExInfo.hProcess);
                 std::filesystem::path packageRoot = PSFQueryPackageRootPath();
-#if _DEBUG
                 Log("\tPsfLaunch: Injection for PID=%d Bitness=%d", procId, bitness);
-#endif  
                 std::wstring wtargetDllName = FixupDllBitness(std::wstring(psf::runtime_dll_name), bitness);
-#if _DEBUG
                 Log("\tPsfLaunch: Use runtime %ls", wtargetDllName.c_str());
-#endif
                 static const auto pathToPsfRuntime = (packageRoot / wtargetDllName.c_str()).string();
                 const char* targetDllPath = nullptr;
-#if _DEBUG
                 Log("\tPsfLaunch: Inject %s into PID=%d", pathToPsfRuntime.c_str(), procId);
-#endif
 
                 if (std::filesystem::exists(pathToPsfRuntime))
                 {
@@ -317,18 +311,14 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
 
                     std::filesystem::path altPathToExeRuntime = executable;
                     static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / pathToPsfRuntime.c_str()).string();
-#if _DEBUG
                     Log("\tPsfLaunch: alt target filename is now %ls", altPathToPsfRuntime.c_str());
-#endif
                     if (std::filesystem::exists(altPathToPsfRuntime))
                     {
                         targetDllPath = altPathToPsfRuntime.c_str();
                     }
                     else
                     {
-#if _DEBUG
                         Log("\tPsfLaunch: Not present there either, try elsewhere in package.");
-#endif
                         // If not in those two locations, must check everywhere in package.
                         // The child process might also be in another package folder, so look elsewhere in the package.
                         for (auto& dentry : std::filesystem::recursive_directory_iterator(packageRoot))
@@ -338,9 +328,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
                                 if (dentry.path().filename().compare(wtargetDllName) == 0)
                                 {
                                     static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
-#if _DEBUG
                                     Log("\tPsfLaunch: Found match as %ls", dentry.path().c_str());
-#endif
                                     targetDllPath = altDirPathToPsfRuntime.c_str();
                                     break;
                                 }
@@ -378,10 +366,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
     }
     catch (...)
     {
-#if _DEBUG
         Log("\tPsfLaunch: Exception while trying to determine job status of new process. Do not inject.");
-#endif
-
     }
 
 
