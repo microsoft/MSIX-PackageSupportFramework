@@ -32,6 +32,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Detours\Detours.vcxproj">
+      <Project>{79db420c-0c71-4948-a93c-821761a8105b}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\PsfRuntime\PsfRuntime.vcxproj">
       <Project>{87cce0ac-a7fb-4a31-89d3-c0acdb315ee0}</Project>
     </ProjectReference>
