@@ -279,11 +279,16 @@ extends:
                   OverWrite: true
 
               # sign binaries
-              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
                 displayName: ESRP CodeSigning Binaries
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
-                  ConnectedServiceName: PSFCodeSignServiceConnection
+                  ConnectedServiceName: $(ConnectedServiceName_Code)
+                  AppRegistrationClientId: $(AppRegistrationClientId_Code)
+                  AppRegistrationTenantId: $(AppRegistrationTenantId_Code)
+                  AuthAKVName: $(AuthAKVName_Code) 
+                  AuthCertName: $(AuthCertName_Code)
+                  AuthSignCertName: $(AuthSignCertName_Code)
                   FolderPath: $(Build.BinariesDirectory)
                   Pattern: StartingScriptWrapper.ps1, PsfLauncher*.exe, PsfRunDll*.exe, PsfRuntime*.dll, FileRedirectionFixup*.dll, RegLegacyFixups*.dll, EnvVarFixup*.dll, TraceFixup*.dll, WaitForDebuggerFixup*.dll, DynamicLibraryFixup*.dll, PsfMonitorX*.exe
                   signConfigType: inlineSignParams
@@ -323,11 +328,16 @@ extends:
                   packDestination: $(Build.artifactstagingdirectory)
                   versioningScheme: byBuildNumber
                   
-              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@4
+              - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@5
                 displayName: ESRP CodeSigning Nuget Packages
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
-                  ConnectedServiceName: PSFNugetPackageCodeSignServiceConnection
+                  ConnectedServiceName: $(ConnectedServiceName_NuGet)
+                  AppRegistrationClientId: $(AppRegistrationClientId_NuGet)
+                  AppRegistrationTenantId: $(AppRegistrationTenantId_NuGet)
+                  AuthAKVName: $(AuthAKVName_NuGet) 
+                  AuthCertName: $(AuthCertName_NuGet)
+                  AuthSignCertName: $(AuthSignCertName_NuGet)
                   FolderPath: $(Build.artifactstagingdirectory)
                   Pattern: Microsoft.PackageSupportFramework.*.nupkg
                   signConfigType: inlineSignParams
