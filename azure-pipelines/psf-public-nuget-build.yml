@@ -36,7 +36,7 @@ extends:
         jobs:
           - job: Phase_1
             displayName: Phase 1
-            timeoutInMinutes: 30
+            timeoutInMinutes: 180
             cancelTimeoutInMinutes: 1
             strategy:
               maxParallel: 4
