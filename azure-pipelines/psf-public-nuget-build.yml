@@ -12,10 +12,6 @@ variables:
     value: "1"
   - name: MinorVersion
     value: "0"
-  - name: SessionTimeout
-    value: 180
-  - name: PendingAnalysisWaitTimeoutMinutes
-    value: 120
 resources:
   repositories:
     - repository: 1esPipelines
@@ -294,6 +290,8 @@ extends:
                   EsrpClientId: $(AppRegistrationClientId_Code_Old)
                   AuthAKVName: $(AuthAKVName_Code) 
                   AuthSignCertName: $(AuthSignCertName_Code)
+                  SessionTimeout: 180
+                  PendingAnalysisWaitTimeoutMinutes: 120
                   FolderPath: $(Build.BinariesDirectory)
                   Pattern: StartingScriptWrapper.ps1, PsfLauncher*.exe, PsfRunDll*.exe, PsfRuntime*.dll, FileRedirectionFixup*.dll, RegLegacyFixups*.dll, EnvVarFixup*.dll, TraceFixup*.dll, WaitForDebuggerFixup*.dll, DynamicLibraryFixup*.dll, PsfMonitorX*.exe
                   signConfigType: inlineSignParams
@@ -344,6 +342,8 @@ extends:
                   EsrpClientId: $(AppRegistrationClientId_Nuget_Old)
                   AuthAKVName: $(AuthAKVName_NuGet)
                   AuthSignCertName: $(AuthSignCertName_NuGet)
+                  SessionTimeout: 180
+                  PendingAnalysisWaitTimeoutMinutes: 120
                   FolderPath: $(Build.artifactstagingdirectory)
                   Pattern: Microsoft.PackageSupportFramework.*.nupkg
                   signConfigType: inlineSignParams
