@@ -36,7 +36,7 @@ extends:
         jobs:
           - job: Phase_1
             displayName: Phase 1
-            timeoutInMinutes: 30
+            timeoutInMinutes: 180
             cancelTimeoutInMinutes: 1
             strategy:
               maxParallel: 4
@@ -284,11 +284,14 @@ extends:
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
                   ConnectedServiceName: $(ConnectedServiceName_Code)
+                  UseMSIAuthentication: true
                   AppRegistrationClientId: $(AppRegistrationClientId_Code)
                   AppRegistrationTenantId: $(AppRegistrationTenantId_Code)
+                  EsrpClientId: $(AppRegistrationClientId_Code_Old)
                   AuthAKVName: $(AuthAKVName_Code) 
-                  AuthCertName: $(AuthCertName_Code)
                   AuthSignCertName: $(AuthSignCertName_Code)
+                  SessionTimeout: 180
+                  PendingAnalysisWaitTimeoutMinutes: 120
                   FolderPath: $(Build.BinariesDirectory)
                   Pattern: StartingScriptWrapper.ps1, PsfLauncher*.exe, PsfRunDll*.exe, PsfRuntime*.dll, FileRedirectionFixup*.dll, RegLegacyFixups*.dll, EnvVarFixup*.dll, TraceFixup*.dll, WaitForDebuggerFixup*.dll, DynamicLibraryFixup*.dll, PsfMonitorX*.exe
                   signConfigType: inlineSignParams
@@ -333,11 +336,14 @@ extends:
                 condition: and(succeeded(), eq(variables['BuildConfiguration'], 'release'))
                 inputs:
                   ConnectedServiceName: $(ConnectedServiceName_NuGet)
+                  UseMSIAuthentication: true
                   AppRegistrationClientId: $(AppRegistrationClientId_NuGet)
                   AppRegistrationTenantId: $(AppRegistrationTenantId_NuGet)
-                  AuthAKVName: $(AuthAKVName_NuGet) 
-                  AuthCertName: $(AuthCertName_NuGet)
+                  EsrpClientId: $(AppRegistrationClientId_Nuget_Old)
+                  AuthAKVName: $(AuthAKVName_NuGet)
                   AuthSignCertName: $(AuthSignCertName_NuGet)
+                  SessionTimeout: 180
+                  PendingAnalysisWaitTimeoutMinutes: 120
                   FolderPath: $(Build.artifactstagingdirectory)
                   Pattern: Microsoft.PackageSupportFramework.*.nupkg
                   signConfigType: inlineSignParams
