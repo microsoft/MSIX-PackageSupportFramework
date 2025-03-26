@@ -12,16 +12,16 @@ variables:
     value: "1"
   - name: MinorVersion
     value: "0"
+  - name: SessionTimeout
+    value: 180
+  - name: PendingAnalysisWaitTimeoutMinutes
+    value: 120
 resources:
   repositories:
     - repository: 1esPipelines
       type: git
       name: 1ESPipelineTemplates/1ESPipelineTemplates
       ref: refs/tags/release
-Build:
-  properties:
-    SessionTimeout: 60
-    PendingAnalysisWaitTimeoutMinutes: 120
 trigger: none
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
