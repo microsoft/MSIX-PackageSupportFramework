@@ -237,9 +237,9 @@ ere is a second example:
                 "base": "configs",
                 "patterns": [
                     "AutoUpdate\\.ini$"
-                ]
-				"redirectTargetBase": "H:"
-				"IsReadOnly": "true" 
+                ],
+				"redirectTargetBase": "H:",
+				"isReadOnly": "true" 
             },
             {
                 "base": "configs",
@@ -248,14 +248,14 @@ ere is a second example:
                     ".*\\.[dD][lL][lL]$"
                     ".*\\.[tT][lL][bB]$"
                     ".*\\.[cC][oO][mM]$"
-                ]
-				"IsExclusion": "true" 
+                ],
+				"isExclusion": "true" 
             },
 			{
                 "base": "configs",
                 "patterns": [
                     ".*"
-                ]
+                ],
 				"redirectTargetBase": "H:"
             },
 			{
